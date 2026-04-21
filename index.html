@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>TuiGo — Student Ride Sharing</title>
+  <meta name="theme-color" content="#0f1923" />
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     LOADING SCREEN
+════════════════════════════════════════════ -->
+<div id="loading-screen">
+  <div class="loader-inner">
+    <div class="logo-mark">
+      <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+        <circle cx="26" cy="26" r="24" stroke="#00e5a0" stroke-width="2" stroke-dasharray="6 3"/>
+        <path d="M16 32 L26 16 L36 32" stroke="#00e5a0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="26" cy="34" r="3" fill="#00e5a0"/>
+      </svg>
+    </div>
+    <h1 class="brand-name">TuiGo</h1>
+    <p class="brand-tagline">Student Rides · Real Routes</p>
+    <div class="loader-bar"><div class="loader-fill"></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     AUTH SCREEN
+════════════════════════════════════════════ -->
+<div id="auth-screen" class="screen hidden">
+  <div class="auth-bg">
+    <div class="auth-blob blob1"></div>
+    <div class="auth-blob blob2"></div>
+  </div>
+  <div class="auth-card">
+    <div class="auth-logo">
+      <svg width="38" height="38" viewBox="0 0 52 52" fill="none">
+        <circle cx="26" cy="26" r="24" stroke="#00e5a0" stroke-width="2" stroke-dasharray="6 3"/>
+        <path d="M16 32 L26 16 L36 32" stroke="#00e5a0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="26" cy="34" r="3" fill="#00e5a0"/>
+      </svg>
+      <span>TuiGo</span>
+    </div>
+    <h2>Sign In</h2>
+    <p class="auth-sub">Connect with your tuition classmates</p>
+
+    <div id="auth-step-google" class="auth-step">
+      <p class="google-hint">Use your Google account to sign in instantly — no OTP needed.</p>
+      <button class="btn-google" id="google-signin-btn">
+        <svg width="20" height="20" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+          <path fill="none" d="M0 0h48v48H0z"/>
+        </svg>
+        <span>Continue with Google</span>
+      </button>
+    </div>
+
+    <div id="auth-step-profile" class="auth-step hidden">
+      <h3>Complete Profile</h3>
+      <input type="text" id="profile-name" placeholder="Your full name" />
+      <input type="text" id="profile-tuition" placeholder="Tuition center name" />
+      <input type="time" id="profile-time" />
+      <select id="profile-zone">
+        <option value="">Select zone</option>
+        <option value="A">Zone A (0–2 km)</option>
+        <option value="B">Zone B (2–4 km)</option>
+        <option value="C">Zone C (4–6 km)</option>
+      </select>
+      <button class="btn-primary" id="save-profile-btn">Save &amp; Start</button>
+    </div>
+
+    <div id="auth-error" class="auth-error hidden"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     MAIN APP
+════════════════════════════════════════════ -->
+<div id="app-screen" class="screen hidden">
+
+  <!-- TOP NAV -->
+  <header class="top-nav">
+    <div class="nav-left">
+      <div class="nav-logo">
+        <svg width="22" height="22" viewBox="0 0 52 52" fill="none">
+          <circle cx="26" cy="26" r="24" stroke="#00e5a0" stroke-width="2" stroke-dasharray="6 3"/>
+          <path d="M16 32 L26 16 L36 32" stroke="#00e5a0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="26" cy="34" r="3" fill="#00e5a0"/>
+        </svg>
+        <span>TuiGo</span>
+      </div>
+    </div>
+    <div class="nav-right">
+      <button class="going-toggle" id="going-toggle" title="Toggle visibility">
+        <span class="going-dot"></span>
+        <span class="going-label">I'm Going</span>
+      </button>
+      <button class="icon-btn" id="profile-btn" title="Profile">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- TAB BAR -->
+  <nav class="tab-bar">
+    <button class="tab-btn active" data-tab="map">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l6-3 6 3 6-3v13l-6 3-6-3-6 3V7z"/><path d="M9 4v13M15 7v13"/></svg>
+      Map
+    </button>
+    <button class="tab-btn" data-tab="list">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      Students
+    </button>
+    <button class="tab-btn" data-tab="filter">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+      Filter
+    </button>
+  </nav>
+
+  <!-- MAP TAB -->
+  <div id="tab-map" class="tab-content active">
+    <div id="map"></div>
+    <div class="map-status-bar" id="map-status-bar">
+      <span id="map-status-text">Acquiring location…</span>
+      <span id="nearby-count" class="nearby-badge">0 nearby</span>
+    </div>
+  </div>
+
+  <!-- STUDENT LIST TAB -->
+  <div id="tab-list" class="tab-content hidden">
+    <div class="list-header">
+      <h3>Nearby Students</h3>
+      <span id="list-count" class="list-count">0</span>
+    </div>
+    <div id="student-list" class="student-list">
+      <div class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        <p>No students found nearby</p>
+        <small>Toggle "I'm Going" to become visible</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILTER TAB -->
+  <div id="tab-filter" class="tab-content hidden">
+    <div class="filter-panel">
+      <h3>Filter Students</h3>
+      <div class="filter-section">
+        <label class="filter-label">Zone</label>
+        <div class="filter-chips" id="zone-filter">
+          <button class="chip active" data-zone="all">All</button>
+          <button class="chip" data-zone="A">Zone A <small>0–2 km</small></button>
+          <button class="chip" data-zone="B">Zone B <small>2–4 km</small></button>
+          <button class="chip" data-zone="C">Zone C <small>4–6 km</small></button>
+        </div>
+      </div>
+      <div class="filter-section">
+        <label class="filter-label">Tuition Center</label>
+        <input type="text" id="tuition-filter" placeholder="Search tuition name…" />
+      </div>
+      <div class="filter-section">
+        <label class="filter-label">Match Type</label>
+        <div class="filter-chips" id="match-filter">
+          <button class="chip active" data-match="all">All</button>
+          <button class="chip" data-match="same"><span class="dot green"></span>Same Tuition</button>
+          <button class="chip" data-match="route"><span class="dot yellow"></span>Same Route</button>
+          <button class="chip" data-match="other"><span class="dot blue"></span>Other</button>
+        </div>
+      </div>
+      <button class="btn-primary btn-full" id="apply-filter-btn">Apply Filters</button>
+      <button class="btn-ghost btn-full" id="reset-filter-btn">Reset</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════
+     STUDENT DETAIL MODAL
+════════════════════════════════════════════ -->
+<div id="student-modal" class="modal-overlay hidden">
+  <div class="modal-card">
+    <button class="modal-close" id="modal-close">✕</button>
+    <div class="modal-avatar" id="modal-avatar">?</div>
+    <h2 id="modal-name">—</h2>
+    <p id="modal-tuition" class="modal-meta"></p>
+    <div class="modal-tags" id="modal-tags"></div>
+    <div class="modal-info-grid">
+      <div class="info-item">
+        <span class="info-label">Distance</span>
+        <span class="info-val" id="modal-dist">—</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Zone</span>
+        <span class="info-val" id="modal-zone">—</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Time</span>
+        <span class="info-val" id="modal-time">—</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Est. Fare</span>
+        <span class="info-val" id="modal-fare">—</span>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <a id="modal-call-btn" class="btn-action btn-call" href="#">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        Email
+      </a>
+      <a id="modal-whatsapp-btn" class="btn-action btn-whatsapp" href="#" target="_blank">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Message
+      </a>
+    </div>
+    <button class="btn-ghost btn-full" id="show-on-map-btn">Show on Map →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     PROFILE MODAL
+════════════════════════════════════════════ -->
+<div id="profile-modal" class="modal-overlay hidden">
+  <div class="modal-card">
+    <button class="modal-close" id="profile-modal-close">✕</button>
+    <h2>My Profile</h2>
+    <div class="modal-avatar" id="profile-avatar-display">?</div>
+    <div class="profile-edit-fields">
+      <input type="text" id="edit-name" placeholder="Full name" />
+      <input type="text" id="edit-tuition" placeholder="Tuition center" />
+      <input type="time" id="edit-time" />
+      <select id="edit-zone">
+        <option value="A">Zone A</option>
+        <option value="B">Zone B</option>
+        <option value="C">Zone C</option>
+      </select>
+    </div>
+    <button class="btn-primary btn-full" id="update-profile-btn">Update Profile</button>
+    <button class="btn-danger btn-full" id="signout-btn">Sign Out</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     TOAST
+════════════════════════════════════════════ -->
+<div id="toast" class="toast hidden"></div>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getAuth, GoogleAuthProvider, signInWithPopup,
+    onAuthStateChanged, signOut
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import {
+    getFirestore, doc, setDoc, getDoc, updateDoc,
+    collection, onSnapshot, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  // ══════════════════════════════════════════
+  // 🔥 FIREBASE CONFIG — PASTE YOUR CONFIG HERE
+  // ══════════════════════════════════════════
+  const firebaseConfig = {
+    apiKey: "AIzaSyAFDqCvk94sNIGZIsY7Rj_tZnOZOeioc_s",
+    authDomain: "tuigo-app.firebaseapp.com",
+    projectId: "tuigo-app",
+    storageBucket: "tuigo-app.firebasestorage.app",
+    messagingSenderId: "699449096848",
+    appId: "1:699449096848:web:cbcb7b80d356ab64cb7615",
+    measurementId: "G-NLYMB14LRR"
+  };
+  // ══════════════════════════════════════════
+
+  const app    = initializeApp(firebaseConfig);
+  const auth   = getAuth(app);
+  const db     = getFirestore(app);
+
+  // Expose to app.js (global bridge)
+  window._firebase = { auth, db, signOut, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, doc, setDoc, getDoc, updateDoc, collection, onSnapshot, serverTimestamp };
+
+  // Leaflet is loaded via CDN script below; wait for DOM then init app
+  window.addEventListener("load", () => {
+    if (window._appInit) window._appInit();
+  });
+</script>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- App JS -->
+<script src="app.js"></script>
+
+</body>
+</html>
