@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SX SPORTS LIVE</title>
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css"/>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.compiled.js"></script>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html,body{
+    width:100%;
+    height:100%;
+    background:#000;
+    overflow:hidden;
+    font-family:Arial,sans-serif;
+}
+
+.player-container{
+    position:fixed;
+    inset:0;
+    width:100%;
+    height:100%;
+    background:#000;
+}
+
+video{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    background:#000;
+}
+
+.logo{
+    position:absolute;
+    top:12px;
+    left:12px;
+    z-index:9999;
+    color:#fff;
+    background:rgba(0,0,0,0.55);
+    padding:8px 14px;
+    border-radius:10px;
+    font-size:14px;
+    font-weight:700;
+    letter-spacing:1px;
+}
+
+.shaka-spinner-container,
+.shaka-spinner,
+.shaka-spinner-svg{
+    display:none !important;
+}
+</style>
+</head>
+
+<body>
+
+<div class="logo">
+SX SPORTS LIVE
+</div>
+
+<div class="player-container"
+data-shaka-player-container>
+
+<video id="video"
+autoplay
+muted
+playsinline
+controls
+preload="auto">
+</video>
+
+</div>
+
+<script>
+
+async function initPlayer(){
+
+    shaka.polyfill.installAll();
+
+    if(!shaka.Player.isBrowserSupported()){
+        alert("Browser Not Supported");
+        return;
+    }
+
+    const video = document.getElementById("video");
+
+    video.muted = true;
+
+    const player = new shaka.Player(video);
+
+    const container =
+    document.querySelector(".player-container");
+
+    const ui = new shaka.ui.Overlay(
+        player,
+        container,
+        video
+    );
+
+    ui.configure({
+
+        controlPanelElements:[
+            'play_pause',
+            'time_and_duration',
+            'spacer',
+            'mute',
+            'volume',
+            'quality',
+            'fullscreen'
+        ],
+
+        seekBarColors:{
+            base:'rgba(255,255,255,0.2)',
+            buffered:'rgba(255,255,255,0.4)',
+            played:'#00aaff'
+        }
+
+    });
+
+    player.configure({
+
+        drm:{
+            clearKeys:{
+                "708a98b352bd4418a73a028edd84da8f":
+                "b1fa5c2bca4c4b57b924b748564532cb"
+            }
+        },
+
+        streaming:{
+            lowLatencyMode:true,
+            bufferingGoal:10,
+            rebufferingGoal:2
+        }
+
+    });
+
+    player.addEventListener('error', e => {
+        console.log("Shaka Error", e.detail);
+    });
+
+    try{
+
+        await player.load(
+        "https://dice-live-oc.akamaized.net/hdntl=exp=1778407475~acl=%2f*~id=abb506c5-4e11-4f2a-8f4c-bc87e14db85a~data=hdntl,aXA9MjA4Ljg3LjI0Mi4yMyZleHA9MTc3ODMyMTEwNSZlaWQ9OTM2NDI0Jm9pZD0xNTQmdHlwZT1WT0QmdWlkPXhSUnFvOXxiY2FlYTdjZi1jMzM3LTQwMzktODE1OC0zYzFjZTQ5ZTcyOTMmY2lkPWRjZS5maXNmZWQmcHQ9bnVsbA~hmac=06e99f1f8445fdc9f801ffe190da453128aff20c7541f4ab80fcdadfecb29663/dash/live/2093715/219027-321028/manifest-d.mpd"
+        );
+
+        await video.play();
+
+        console.log("Stream Loaded");
+
+    }catch(error){
+
+        console.log("Load Error", error);
+
+    }
+
+}
+
+document.addEventListener(
+'DOMContentLoaded',
+initPlayer
+);
+
+</script>
+
+</body>
+</html>
