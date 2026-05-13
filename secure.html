@@ -228,6 +228,30 @@
       z-index: 3;
     }
 
+    .back-btn {
+      margin-top: 28px;
+      padding: 14px 34px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.18);
+      color: white;
+      text-decoration: none;
+      font-size: clamp(13px, 1vw, 18px);
+      font-weight: 600;
+      letter-spacing: 1px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: all 0.3s ease;
+      z-index: 3;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+    }
+
+    .back-btn:hover {
+      transform: translateY(-3px) scale(1.03);
+      background: rgba(255,255,255,0.18);
+      box-shadow: 0 8px 28px rgba(0,0,0,0.35);
+    }
+
     @media (max-width: 768px) {
       .glass {
         width: 96vw;
@@ -265,6 +289,10 @@
     <div class="subtitle" style="margin-top: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;">
       We Will Be Back At Match Time
     </div>
+
+    <a href="https://saptarshiorg.github.io" class="back-btn">
+      ← Back To Home
+    </a>
 
     <div class="footer">
       STREAM STARTING SOON • PLEASE WAIT
