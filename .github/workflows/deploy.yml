@@ -1,1 +1,23 @@
+name: Deploy to InfinityFree
+on:
+  push:
+    branches:
+      - main # Make sure your repository branch is named 'main'
+
+jobs:
+  web-deploy:
+    name: FTP Deploy
+    runs-on: ubuntu-latest
+    steps:
+    - name: Get latest code
+      uses: actions/checkout@v4
+    
+    - name: Sync files to InfinityFree
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        local-dir: ./
+        server-dir: ./htdocs/
 
