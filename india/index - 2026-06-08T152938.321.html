@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SX Sports – Live TV</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%;background:#020c06;font-family:-apple-system,'Google Sans','Helvetica Neue',sans-serif;color:#e4f0ea;}
+
+/* HEADER */
+header{
+  display:flex;align-items:center;gap:10px;
+  padding:0 16px;height:52px;
+  background:rgba(6,20,16,0.97);
+  border-bottom:1px solid rgba(34,197,94,0.18);
+  position:sticky;top:0;z-index:100;
+  backdrop-filter:blur(20px);
+}
+header::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,#22c55e 40%,#84cc16 60%,transparent);
+  opacity:.4;
+}
+.brand{display:flex;align-items:center;gap:8px;}
+.brand img{height:26px;object-fit:contain;}
+.brand-text{
+  font-size:1.05rem;font-weight:800;letter-spacing:.6px;
+  background:linear-gradient(120deg,#22c55e,#84cc16);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.tagline{font-size:.7rem;color:#4a7a5a;margin-left:auto;letter-spacing:.04em;}
+
+/* SEARCH */
+.search-wrap{
+  padding:14px 16px 10px;
+  position:sticky;top:52px;z-index:99;
+  background:rgba(2,12,6,0.95);
+  backdrop-filter:blur(12px);
+}
+.search-box{
+  display:flex;align-items:center;gap:8px;
+  background:rgba(34,197,94,0.07);
+  border:1px solid rgba(34,197,94,0.2);
+  border-radius:12px;padding:9px 14px;
+}
+.search-box svg{flex-shrink:0;opacity:.45;}
+.search-box input{
+  background:none;border:none;outline:none;
+  font-size:.88rem;color:#e4f0ea;width:100%;
+  font-family:inherit;
+}
+.search-box input::placeholder{color:#3a6a4a;}
+
+/* FILTER TABS */
+.tabs{
+  display:flex;gap:6px;padding:0 16px 12px;
+  overflow-x:auto;scrollbar-width:none;
+}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{
+  flex-shrink:0;padding:5px 14px;border-radius:100px;
+  font-size:.72rem;font-weight:600;letter-spacing:.04em;
+  border:1px solid rgba(34,197,94,0.2);
+  background:rgba(34,197,94,0.05);
+  color:#4a9a6a;cursor:pointer;
+  transition:all .15s;white-space:nowrap;
+}
+.tab.active,.tab:hover{
+  background:rgba(34,197,94,0.15);
+  border-color:rgba(34,197,94,0.45);
+  color:#86efac;
+}
+
+/* CHANNEL GRID */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  gap:10px;padding:0 16px 24px;
+}
+@media(max-width:400px){
+  .grid{grid-template-columns:repeat(2,1fr);}
+}
+
+/* CHANNEL CARD */
+.card{
+  display:flex;flex-direction:column;align-items:center;
+  gap:8px;padding:14px 10px;
+  background:rgba(10,30,20,0.7);
+  border:1px solid rgba(34,197,94,0.1);
+  border-radius:14px;cursor:pointer;
+  text-decoration:none;color:inherit;
+  transition:all .18s;
+  position:relative;
+  overflow:hidden;
+}
+.card::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at top,rgba(34,197,94,0.06),transparent 70%);
+  opacity:0;transition:opacity .2s;
+}
+.card:hover::before,.card:active::before{opacity:1;}
+.card:hover,.card:active{
+  border-color:rgba(34,197,94,0.35);
+  transform:translateY(-2px);
+  box-shadow:0 6px 20px rgba(0,0,0,0.4);
+}
+
+/* Logo containers */
+.card-logo-wrap{
+  width:64px;height:64px;
+  border-radius:14px;
+  overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+/* No-bg: transparent, just the logo image clipped to rounded rect */
+.card-logo-wrap.nobg{
+  background:transparent;
+}
+/* White square curved */
+.card-logo-wrap.white-sq{
+  background:#ffffff;
+}
+/* Black square curved */
+.card-logo-wrap.black-sq{
+  background:#000000;
+}
+.card-logo-wrap img{
+  width:100%;height:100%;object-fit:contain;
+  padding:6px;
+}
+/* For nobg logos give more room */
+.card-logo-wrap.nobg img{
+  padding:2px;
+  object-fit:contain;
+}
+
+.card-logo-placeholder{
+  width:64px;height:64px;border-radius:14px;
+  background:rgba(34,197,94,0.1);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.6rem;font-weight:700;color:#22c55e;letter-spacing:.05em;
+}
+.card-name{
+  font-size:.72rem;font-weight:600;color:#c4dece;
+  text-align:center;line-height:1.3;
+}
+.hd-badge{
+  position:absolute;top:7px;right:7px;
+  font-size:.55rem;font-weight:800;
+  background:rgba(34,197,94,0.2);border:1px solid rgba(34,197,94,0.4);
+  color:#4ade80;border-radius:4px;padding:1px 4px;letter-spacing:.06em;
+}
+.live-dot{
+  position:absolute;top:8px;left:8px;
+  width:6px;height:6px;background:#ef4444;
+  border-radius:50%;animation:blink 1.4s infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* NO RESULTS */
+.no-results{
+  text-align:center;padding:40px 20px;
+  color:#3a6a4a;font-size:.88rem;
+}
+
+/* GROUP LABEL */
+.grp-label{
+  grid-column:1/-1;
+  font-size:.68rem;font-weight:700;letter-spacing:.1em;
+  color:#2a5a3a;text-transform:uppercase;
+  padding:4px 2px 2px;
+  border-bottom:1px solid rgba(34,197,94,0.08);
+  margin-bottom:-2px;
+}
+
+/* SUB-GROUP LABEL (Regional under Star Sports etc.) */
+.subgrp-label{
+  grid-column:1/-1;
+  font-size:.62rem;font-weight:600;letter-spacing:.08em;
+  color:#1f4a2a;text-transform:uppercase;
+  padding:6px 2px 2px;
+  margin-top:4px;
+  border-bottom:1px solid rgba(34,197,94,0.05);
+  margin-bottom:-2px;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <img src="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/main/logo.png" alt="SX" onerror="this.style.display='none'">
+    <span class="brand-text">SX SPORTS</span>
+  </div>
+  <span class="tagline">LIVE TV</span>
+</header>
+
+<div class="search-wrap">
+  <div class="search-box">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input id="searchInput" type="text" placeholder="Search channels…" autocomplete="off" oninput="filterChannels()">
+  </div>
+</div>
+
+<div class="tabs" id="tabs">
+  <div class="tab active" data-grp="All" onclick="setTab(this)">All</div>
+  <div class="tab" data-grp="Star Sports" onclick="setTab(this)">Star Sports</div>
+  <div class="tab" data-grp="Sony Sports" onclick="setTab(this)">Sony</div>
+  <div class="tab" data-grp="Unite8" onclick="setTab(this)">Unite8</div>
+  <div class="tab" data-grp="International" onclick="setTab(this)">International</div>
+  <div class="tab" data-grp="Other" onclick="setTab(this)">Other</div>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<script>
+// Logo URLs
+const STAR_LOGO   = 'https://indiantelevision.com/wp-content/uploads/2025/12/Untitled-1_23-33.jpg';
+const SONY_LOGO   = 'https://upload.wikimedia.org/wikipedia/en/thumb/c/cd/Sony_Sports_Network.svg/1280px-Sony_Sports_Network.svg.png';
+const UNITED_LOGO = 'https://img-cdn.publive.online/fit-in/640x430/filters:format(webp)/bmi/media/media_files/2026/06/02/unite8-sports-logo-2026-06-02-11-18-06.jpg';
+const OTHERS_LOGO = 'https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/main/logo.png';
+const TNT_LOGO    = 'https://img.etimg.com/thumb/width-640,height-480,imgsize-6060,resizemode-75,msid-119107113/industry/media/entertainment/media/sports18-channels-rebranded-as-star-sports-in-major-expansion-move-before-ipl-2025/star-sports.jpg'; // placeholder until real
+const WILLOW_LOGO = 'https://static.wikia.nocookie.net/logopedia/images/7/7d/Willow_2023_stacked.svg/revision/latest?cb=20240927132511';
+const WILLOWCB_LOGO = 'https://static.toiimg.com/thumb/msid-108693714,width-1280,height-720,resizemode-4/108693714.jpg';
+const FOX_LOGO    = 'https://upload.wikimedia.org/wikipedia/en/f/f4/Fox_Cricket_Logo.png';
+const SKY_LOGO    = 'https://upload.wikimedia.org/wikipedia/commons/0/0e/Sky-sports-main-cricket.jpg';
+const KAYO_LOGO   = 'https://upload.wikimedia.org/wikipedia/commons/0/0e/Sky-sports-main-cricket.jpg'; // fallback
+const TNT_REAL    = 'https://img.etimg.com/thumb/width-640,height-480,imgsize-6060,resizemode-75,msid-119107113/industry/media/entertainment/media/sports18-channels-rebranded-as-star-sports-in-major-expansion-move-before-ipl-2025/star-sports.jpg';
+
+// logoStyle: 'nobg' | 'white-sq' | 'black-sq'
+const CHANNELS=[
+  // ── Star Sports ──────────────────────────────────────────────
+  {id:'ss1',     name:'Star Sports 1',            grp:'Star Sports', subgrp:'Star Sports',          hd:false, logo:STAR_LOGO,   logoStyle:'black-sq'},
+  {id:'ss1hd',   name:'Star Sports 1 HD',          grp:'Star Sports', subgrp:'Star Sports',          hd:true,  logo:STAR_LOGO,   logoStyle:'black-sq'},
+  {id:'ss1hi',   name:'Star Sports 1 Hindi',       grp:'Star Sports', subgrp:'Star Sports',          hd:false, logo:STAR_LOGO,   logoStyle:'black-sq'},
+  {id:'ss1hihd', name:'Star Sports 1 Hindi HD',    grp:'Star Sports', subgrp:'Star Sports',          hd:true,  logo:STAR_LOGO,   logoStyle:'black-sq'},
+  {id:'ss2',     name:'Star Sports 2',             grp:'Star Sports', subgrp:'Star Sports',          hd:false, logo:STAR_LOGO,   logoStyle:'black-sq'},
+  {id:'ss2hd',   name:'Star Sports 2 HD',          grp:'Star Sports', subgrp:'Star Sports',          hd:true,  logo:STAR_LOGO,   logoStyle:'black-sq'},
+  {id:'ss2hi',   name:'Star Sports 2 Hindi',       grp:'Star Sports', subgrp:'Star Sports',          hd:false, logo:STAR_LOGO,   logoStyle:'black-sq'},
+  {id:'ss2hihd', name:'Star Sports 2 Hindi HD',    grp:'Star Sports', subgrp:'Star Sports',          hd:true,  logo:STAR_LOGO,   logoStyle:'black-sq'},
+  {id:'ss3',     name:'Star Sports 3',             grp:'Star Sports', subgrp:'Star Sports',          hd:false, logo:STAR_LOGO,   logoStyle:'black-sq'},
+  {id:'sss1',    name:'Star Sports Select 1',      grp:'Star Sports', subgrp:'Star Sports',          hd:false, logo:STAR_LOGO,   logoStyle:'black-sq'},
+  {id:'sss1hd',  name:'Star Sports Select 1 HD',   grp:'Star Sports', subgrp:'Star Sports',          hd:true,  logo:STAR_LOGO,   logoStyle:'black-sq'},
+  {id:'sss2',    name:'Star Sports Select 2',      grp:'Star Sports', subgrp:'Star Sports',          hd:false, logo:STAR_LOGO,   logoStyle:'black-sq'},
+  {id:'sss2hd',  name:'Star Sports Select 2 HD',   grp:'Star Sports', subgrp:'Star Sports',          hd:true,  logo:STAR_LOGO,   logoStyle:'black-sq'},
+  // ── Star Sports Regional ─────────────────────────────────────
+  {id:'ss1ta',   name:'Star Sports 1 Tamil',       grp:'Star Sports', subgrp:'Regional',             hd:false, logo:STAR_LOGO,   logoStyle:'black-sq'},
+  {id:'ss1tahd', name:'Star Sports 1 Tamil HD',    grp:'Star Sports', subgrp:'Regional',             hd:true,  logo:STAR_LOGO,   logoStyle:'black-sq'},
+  {id:'ss1te',   name:'Star Sports 1 Telugu',      grp:'Star Sports', subgrp:'Regional',             hd:false, logo:STAR_LOGO,   logoStyle:'black-sq'},
+  {id:'ss1tehd', name:'Star Sports 1 Telugu HD',   grp:'Star Sports', subgrp:'Regional',             hd:true,  logo:STAR_LOGO,   logoStyle:'black-sq'},
+  {id:'ss1kn',   name:'Star Sports 1 Kannada',     grp:'Star Sports', subgrp:'Regional',             hd:false, logo:STAR_LOGO,   logoStyle:'black-sq'},
+  {id:'ss2ta',   name:'Star Sports 2 Tamil',       grp:'Star Sports', subgrp:'Regional',             hd:false, logo:STAR_LOGO,   logoStyle:'black-sq'},
+  {id:'ss2tahd', name:'Star Sports 2 Tamil HD',    grp:'Star Sports', subgrp:'Regional',             hd:true,  logo:STAR_LOGO,   logoStyle:'black-sq'},
+  {id:'ss2te',   name:'Star Sports 2 Telugu',      grp:'Star Sports', subgrp:'Regional',             hd:false, logo:STAR_LOGO,   logoStyle:'black-sq'},
+  {id:'ss2tehd', name:'Star Sports 2 Telugu HD',   grp:'Star Sports', subgrp:'Regional',             hd:true,  logo:STAR_LOGO,   logoStyle:'black-sq'},
+  {id:'ss2kn',   name:'Star Sports 2 Kannada',     grp:'Star Sports', subgrp:'Regional',             hd:false, logo:STAR_LOGO,   logoStyle:'black-sq'},
+  // ── Sony Sports ──────────────────────────────────────────────
+  {id:'sliv1',   name:'Sony Sports Ten 1',         grp:'Sony Sports', subgrp:'Sony Sports',          hd:false, logo:SONY_LOGO,   logoStyle:'nobg'},
+  {id:'sliv2',   name:'Sony Sports Ten 2',         grp:'Sony Sports', subgrp:'Sony Sports',          hd:false, logo:SONY_LOGO,   logoStyle:'nobg'},
+  {id:'sliv3',   name:'Sony Sports Ten 3',         grp:'Sony Sports', subgrp:'Sony Sports',          hd:false, logo:SONY_LOGO,   logoStyle:'nobg'},
+  {id:'sliv4ta', name:'Sony Sports Ten 4 Tamil',   grp:'Sony Sports', subgrp:'Regional',             hd:false, logo:SONY_LOGO,   logoStyle:'nobg'},
+  {id:'sliv4te', name:'Sony Sports Ten 4 Telugu',  grp:'Sony Sports', subgrp:'Regional',             hd:false, logo:SONY_LOGO,   logoStyle:'nobg'},
+  {id:'sliv4kn', name:'Sony Sports Ten 4 Kannada', grp:'Sony Sports', subgrp:'Regional',             hd:false, logo:SONY_LOGO,   logoStyle:'nobg'},
+  {id:'sliv5',   name:'Sony Sports Ten 5',         grp:'Sony Sports', subgrp:'Sony Sports',          hd:false, logo:SONY_LOGO,   logoStyle:'nobg'},
+  // ── Unite8 ───────────────────────────────────────────────────
+  {id:'u81hd',   name:'Unite8 Sports 1 HD',        grp:'Unite8',      subgrp:'Unite8',               hd:true,  logo:UNITED_LOGO, logoStyle:'black-sq'},
+  {id:'u82hd',   name:'Unite8 Sports 2 HD',        grp:'Unite8',      subgrp:'Unite8',               hd:true,  logo:UNITED_LOGO, logoStyle:'black-sq'},
+  // ── International ────────────────────────────────────────────
+  {id:'tnt1',    name:'TNT Sports',                grp:'International',subgrp:'International',        hd:false, logo:'https://img.etimg.com/thumb/width-640,height-480,imgsize-6060,resizemode-75,msid-119107113/industry/media/entertainment/media/sports18-channels-rebranded-as-star-sports-in-major-expansion-move-before-ipl-2025/star-sports.jpg', logoStyle:'white-sq', logoOverride:'https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/TNT_Sports_%282023%29.svg/3840px-TNT_Sports_%282023%29.svg.png'},
+  {id:'willow1', name:'Willow Sports',             grp:'International',subgrp:'International',        hd:false, logo:WILLOW_LOGO, logoStyle:'white-sq'},
+  {id:'willowcb',name:'Willow by Cricbuzz',        grp:'International',subgrp:'International',        hd:false, logo:WILLOWCB_LOGO,logoStyle:'white-sq'},
+  {id:'fox1',    name:'Fox Sports Cricket',        grp:'International',subgrp:'International',        hd:false, logo:FOX_LOGO,    logoStyle:'white-sq'},
+  {id:'sky1',    name:'Sky Sports Cricket',        grp:'International',subgrp:'International',        hd:false, logo:SKY_LOGO,    logoStyle:'nobg'},
+  {id:'kayo1',   name:'Kayo Sports',               grp:'International',subgrp:'International',        hd:false, logo:'https://upload.wikimedia.org/wikipedia/en/4/47/Kayo_Sports_logo.svg', logoStyle:'black-sq'},
+  // ── Other ────────────────────────────────────────────────────
+  {id:'awsn',    name:'AWSN',                      grp:'Other',       subgrp:'Other',                 hd:false, logo:OTHERS_LOGO, logoStyle:'nobg'},
+];
+
+let activeGrp='All';
+
+function setTab(el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  activeGrp=el.dataset.grp;
+  filterChannels();
+}
+
+function makeLogoHTML(ch){
+  const url = ch.logoOverride || ch.logo;
+  const style = ch.logoStyle || 'nobg';
+  return `<div class="card-logo-wrap ${style}">
+    <img src="${url}" alt="${ch.name}" onerror="this.parentElement.outerHTML='<div class=\\'card-logo-placeholder\\'>${ch.id.toUpperCase()}</div>'">
+  </div>`;
+}
+
+function filterChannels(){
+  const q=document.getElementById('searchInput').value.toLowerCase().trim();
+  const grid=document.getElementById('grid');
+  grid.innerHTML='';
+
+  let filtered=CHANNELS.filter(ch=>{
+    const matchGrp=activeGrp==='All'||ch.grp===activeGrp;
+    const matchQ=!q||ch.name.toLowerCase().includes(q)||ch.id.toLowerCase().includes(q);
+    return matchGrp&&matchQ;
+  });
+
+  if(!filtered.length){
+    grid.innerHTML='<div class="no-results">No channels found</div>';
+    return;
+  }
+
+  // Group by grp, then subgrp
+  const grpMap={};
+  filtered.forEach(ch=>{
+    if(!grpMap[ch.grp])grpMap[ch.grp]={};
+    if(!grpMap[ch.grp][ch.subgrp])grpMap[ch.grp][ch.subgrp]=[];
+    grpMap[ch.grp][ch.subgrp].push(ch);
+  });
+
+  Object.entries(grpMap).forEach(([grp, subgrps])=>{
+    // Main group label (only in All view)
+    if(activeGrp==='All'){
+      const lbl=document.createElement('div');
+      lbl.className='grp-label';
+      lbl.textContent=grp;
+      grid.appendChild(lbl);
+    }
+
+    const subgrpNames=Object.keys(subgrps);
+    const hasMultipleSubgrps=subgrpNames.length>1;
+
+    subgrpNames.forEach(subgrp=>{
+      // Sub-group label: always show in All view if multiple subgrps,
+      // or when viewing a specific group that has multiple subgrps
+      const showSubLabel = hasMultipleSubgrps;
+      if(showSubLabel){
+        const slbl=document.createElement('div');
+        slbl.className='subgrp-label';
+        slbl.textContent=subgrp;
+        grid.appendChild(slbl);
+      }
+
+      subgrps[subgrp].forEach(ch=>{
+        const a=document.createElement('a');
+        a.className='card';
+        a.href=ch.id+'.html';
+        a.innerHTML=`
+          <div class="live-dot"></div>
+          ${ch.hd?'<div class="hd-badge">HD</div>':''}
+          ${makeLogoHTML(ch)}
+          <span class="card-name">${ch.name}</span>
+        `;
+        grid.appendChild(a);
+      });
+    });
+  });
+}
+
+filterChannels();
+</script>
+</body>
+</html>
