@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer">
+<title>FIFA World Cup 2026 — Live Streams | SX Sports</title>
+<link rel="icon" href="https://upload.wikimedia.org/wikipedia/en/1/17/2026_FIFA_World_Cup_emblem.svg" type="image/png">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#1a1200;
+  --navy2:#241a00;
+  --navy3:#2a1f00;
+  --blue:#f5c518;
+  --blue2:#ffe69a;
+  --cyan:#f5c518;
+  --gold:#f5c518;
+  --red:#ff2442;
+  --white:#ffffff;
+  --muted:rgba(245,210,140,0.65);
+  --card-bg:rgba(50,38,0,0.30);
+  --border:rgba(245,197,24,0.30);
+  --font-d:'Chakra Petch',sans-serif;
+  --font-b:'Space Grotesk',sans-serif;
+  --grad:linear-gradient(135deg,#3a2a00 0%,#b8860b 45%,#f5c518 100%);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:var(--font-b);
+  background:radial-gradient(ellipse 100% 60% at 50% 0%,#3a2a00 0%,#1a1200 55%,#100c00 100%);
+  background-attachment:fixed;
+  min-height:100vh;
+  color:var(--white);
+  overflow-x:hidden;
+}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:#04061a;}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#f5c518,#fff3c4);border-radius:3px;}
+
+/* ── HEADER ── */
+header{
+  background:linear-gradient(180deg,rgba(50,38,0,0.75) 0%,rgba(26,18,0,0.80) 100%);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid rgba(245,197,24,0.25);
+  box-shadow:0 4px 32px rgba(184,134,11,0.25);
+  padding:0 20px;
+  height:58px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:300;
+  backdrop-filter:blur(12px);
+}
+.hdr-left{display:flex;align-items:center;gap:14px;}
+.hdr-back{
+  display:flex;align-items:center;gap:6px;
+  text-decoration:none;
+  font-family:var(--font-d);font-size:11px;font-weight:700;letter-spacing:.08em;
+  color:rgba(150,200,255,0.7);
+  border:1px solid rgba(245,197,24,0.2);
+  padding:5px 12px;border-radius:100px;
+  transition:all .18s;
+}
+.hdr-back:hover{color:#fff;border-color:rgba(245,197,24,0.5);background:rgba(184,134,11,0.15);}
+.hdr-logo-wrap{display:flex;align-items:center;gap:10px;}
+.hdr-fifa-logo{height:32px;width:auto;filter:drop-shadow(0 0 8px rgba(245,197,24,0.55));}
+.hdr-title{font-family:var(--font-d);font-weight:900;font-size:14px;letter-spacing:.1em;color:#fff;}
+.hdr-title span{color:var(--gold);}
+.hdr-live-badge{
+  display:flex;align-items:center;gap:5px;
+  background:rgba(255,36,66,0.12);
+  border:1px solid rgba(255,36,66,0.35);
+  color:#ff4060;
+  font-family:var(--font-d);font-size:10px;font-weight:800;letter-spacing:1.5px;
+  padding:4px 10px;border-radius:100px;
+}
+.hdr-dot{width:6px;height:6px;border-radius:50%;background:#ff2442;box-shadow:0 0 6px #ff2442;animation:dotPulse 1.2s ease-in-out infinite;}
+@keyframes dotPulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(1.5);}}
+
+/* ── HERO BANNER ── */
+.hero{
+  position:relative;overflow:hidden;
+  padding:36px 20px 28px;
+  text-align:center;
+}
+.hero::before{
+  content:'';position:absolute;inset:0;
+  background:url('https://a3.espncdn.com/combiner/i?img=%2Fphoto%2F2026%2F0608%2Fr1669698_1296x729_16%2D9.png&w=1140&cquality=20&format=jpg') center/cover no-repeat;
+  opacity:0.06;
+}
+.hero::after{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 70% at 50% 40%,rgba(184,134,11,0.22),transparent 70%);
+}
+.hero-inner{position:relative;z-index:1;max-width:700px;margin:0 auto;}
+.hero-eyebrow{
+  display:inline-flex;align-items:center;gap:7px;
+  font-family:var(--font-d);font-size:10px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;
+  color:var(--gold);margin-bottom:16px;
+}
+.hero-eyebrow::before,.hero-eyebrow::after{content:'';display:block;width:28px;height:1px;background:linear-gradient(90deg,transparent,var(--gold));}
+.hero-eyebrow::after{transform:scaleX(-1);}
+.hero-big-logo{height:80px;width:auto;margin:0 auto 18px;display:block;filter:drop-shadow(0 0 24px rgba(245,197,24,0.7)) drop-shadow(0 0 60px rgba(184,134,11,0.5));animation:logoPulse 2s ease-in-out infinite;}
+@keyframes logoPulse{0%,100%{filter:drop-shadow(0 0 20px rgba(245,197,24,0.65)) drop-shadow(0 0 50px rgba(184,134,11,0.4));}50%{filter:drop-shadow(0 0 40px rgba(245,197,24,0.9)) drop-shadow(0 0 80px rgba(245,197,24,0.6));}}
+.hero-headline{font-family:var(--font-d);font-weight:900;font-size:clamp(22px,5vw,36px);letter-spacing:.04em;line-height:1.1;color:#fff;margin-bottom:8px;}
+.hero-headline span{background:linear-gradient(90deg,#fff3c4,#f5c518,#fff3c4);background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimText 3s linear infinite;}
+@keyframes shimText{0%{background-position:0%}100%{background-position:200%}}
+.hero-sub{font-size:13px;color:var(--muted);letter-spacing:.02em;}
+
+/* ── PLAYER SECTION ── */
+.player-section{
+  max-width:1100px;margin:0 auto;
+  padding:0 16px 32px;
+}
+.player-wrap{
+  background:var(--navy3);
+  border:1px solid var(--border);
+  border-radius:16px;
+  overflow:hidden;
+  box-shadow:0 8px 40px rgba(184,134,11,0.35);
+}
+.player-topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px;
+  background:rgba(50,38,0,0.7);
+  border-bottom:1px solid var(--border);
+}
+.player-ch-name{
+  font-family:var(--font-d);font-weight:800;font-size:13px;letter-spacing:.08em;color:#fff;
+  display:flex;align-items:center;gap:8px;
+}
+.player-ch-name .dot{width:7px;height:7px;border-radius:50%;background:#ff2442;box-shadow:0 0 6px #ff2442;animation:dotPulse 1.2s ease-in-out infinite;}
+.player-ch-badge{font-family:var(--font-d);font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--cyan);background:rgba(245,197,24,0.1);border:1px solid rgba(245,197,24,0.25);padding:2px 8px;border-radius:100px;}
+#iframe-container{
+  position:relative;width:100%;padding-top:56.25%;
+  background:#000;
+}
+#main-iframe{
+  position:absolute;inset:0;width:100%;height:100%;
+  border:none;
+  background:#000;
+}
+.iframe-placeholder{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  background:linear-gradient(135deg,#241a00,#3a2a00);
+  color:var(--muted);
+  font-family:var(--font-d);font-size:13px;letter-spacing:.04em;
+}
+.iframe-placeholder svg{opacity:.35;}
+
+/* ── CHANNEL GRID ── */
+.channels-section{
+  max-width:1100px;margin:0 auto;
+  padding:0 16px 48px;
+}
+.ch-section-hdr{
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:16px;
+}
+.ch-section-title{font-family:var(--font-d);font-weight:800;font-size:15px;letter-spacing:.1em;text-transform:uppercase;color:#fff;}
+.ch-section-title::before{content:'';display:inline-block;width:4px;height:18px;background:linear-gradient(180deg,#f5c518,#fff3c4);border-radius:2px;margin-right:8px;vertical-align:middle;}
+.ch-count{font-family:var(--font-d);font-size:10px;font-weight:700;letter-spacing:1px;color:var(--cyan);background:rgba(245,197,24,0.1);border:1px solid rgba(245,197,24,0.2);padding:2px 10px;border-radius:100px;}
+.ch-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:10px;
+}
+.ch-card{
+  position:relative;
+  background:var(--card-bg);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border:1px solid var(--border);
+  border-radius:12px;
+  overflow:hidden;
+  cursor:pointer;
+  transition:all .2s;
+  text-decoration:none;
+  display:flex;flex-direction:column;
+}
+.ch-card::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at top left,rgba(245,197,24,0.08),transparent 60%);
+  opacity:0;transition:opacity .2s;
+}
+.ch-card:hover{border-color:rgba(245,197,24,0.55);transform:translateY(-3px);box-shadow:0 8px 28px rgba(184,134,11,0.30);}
+.ch-card:hover::before{opacity:1;}
+.ch-card.active-ch{border-color:rgba(245,197,24,0.7);box-shadow:0 0 0 2px rgba(245,197,24,0.25),0 8px 28px rgba(0,100,255,0.40);}
+.ch-card.active-ch::after{
+  content:'NOW PLAYING';
+  position:absolute;top:6px;right:6px;
+  font-family:var(--font-d);font-size:8px;font-weight:800;letter-spacing:1.2px;
+  color:#fff;background:linear-gradient(90deg,#f5c518,#fff3c4);
+  padding:2px 7px;border-radius:100px;
+}
+.ch-thumb-wrap{position:relative;width:100%;padding-top:56.25%;overflow:hidden;background:#1a1200;}
+.ch-thumb{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .3s;}
+.ch-card:hover .ch-thumb{transform:scale(1.06);}
+.ch-thumb-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(180deg,transparent 40%,rgba(26,18,0,0.85) 100%);
+}
+.ch-live-dot{
+  position:absolute;top:7px;left:8px;
+  width:7px;height:7px;border-radius:50%;
+  background:#ff2442;box-shadow:0 0 6px #ff2442;
+  animation:dotPulse 1.2s ease-in-out infinite;
+}
+.ch-body{padding:10px 12px 12px;}
+.ch-name{font-family:var(--font-d);font-weight:800;font-size:12px;letter-spacing:.06em;color:#fff;margin-bottom:5px;}
+.ch-meta{display:flex;align-items:center;gap:6px;}
+.ch-pill{
+  font-family:var(--font-d);font-size:9px;font-weight:700;letter-spacing:1px;
+  background:rgba(245,197,24,0.12);border:1px solid rgba(245,197,24,0.3);
+  color:var(--cyan);padding:2px 7px;border-radius:100px;
+}
+.ch-live-label{font-size:10px;color:var(--muted);}
+
+/* ── Channel sub-labels & badges ── */
+.ch-sub-label{
+  font-family:var(--font-d);font-size:8px;font-weight:700;letter-spacing:.8px;
+  color:rgba(120,180,255,0.7);text-transform:uppercase;margin-top:1px;
+}
+.ch-premium-badge{
+  display:inline-flex;align-items:center;gap:3px;
+  font-family:var(--font-d);font-size:8px;font-weight:800;letter-spacing:1px;
+  color:#1a1200;
+  background:linear-gradient(135deg,#fff3c4,#f5c518 45%,#b8860b);
+  border:1px solid rgba(245,197,24,0.6);
+  padding:1px 7px;border-radius:100px;
+  white-space:nowrap;
+  box-shadow:0 0 8px rgba(245,197,24,0.35),inset 0 1px 0 rgba(255,255,255,0.5);
+  text-shadow:0 1px 0 rgba(255,255,255,0.3);
+}
+.ch-premium-badge svg{flex-shrink:0;}
+
+/* ── FIFA WATERMARK ── */
+.fifa-wm{
+  position:fixed;bottom:16px;right:16px;z-index:10;
+  opacity:0.12;pointer-events:none;
+}
+.fifa-wm img{height:48px;width:auto;}
+
+/* ── FOOTER ── */
+footer{
+  text-align:center;padding:20px;
+  font-size:11px;color:rgba(100,140,200,0.5);
+  letter-spacing:.04em;font-family:var(--font-d);
+  border-top:1px solid rgba(184,134,11,0.12);
+}
+footer a{color:rgba(100,160,255,0.6);text-decoration:none;}
+footer a:hover{color:#fff;}
+
+/* ══════════════════════════════════════════
+   MOBILE — completely different layout
+   ══════════════════════════════════════════ */
+@media(max-width:700px){
+
+  /* ── Header: slimmer ── */
+  header{height:48px;padding:0 12px;}
+  .hdr-back{font-size:10px;padding:4px 10px;}
+  .hdr-fifa-logo{height:26px;}
+  .hdr-title{display:none;}
+  .hdr-live-badge{font-size:9px;padding:3px 8px;}
+
+  /* ── Hide desktop hero entirely ── */
+  .hero{display:none;}
+
+  /* ── Player: sticky top, edge-to-edge, no padding ── */
+  .player-section{
+    padding:0;
+    position:sticky;
+    top:48px;
+    z-index:100;
+  }
+  .player-wrap{
+    border-radius:0;
+    border-left:none;border-right:none;border-top:none;
+    box-shadow:0 4px 20px rgba(184,134,11,0.5);
+  }
+  .player-topbar{padding:8px 12px;}
+  .player-ch-name{font-size:11px;}
+  .player-ch-badge{font-size:8px;padding:2px 6px;}
+  #iframe-container{padding-top:52vw;} /* taller ratio on mobile */
+  .iframe-placeholder{font-size:11px;gap:10px;}
+  .iframe-placeholder svg{width:36px;height:36px;}
+
+  /* ── Channels: horizontal scroll strip ── */
+  .channels-section{
+    padding:0 0 80px;
+    background:rgba(2,6,20,0.95);
+  }
+  .ch-section-hdr{
+    padding:12px 14px 8px;
+    margin-bottom:0;
+    border-top:1px solid rgba(245,197,24,0.15);
+    background:rgba(4,8,28,0.98);
+    position:sticky;
+    top:calc(48px + 52vw + 42px);
+    z-index:50;
+  }
+  .ch-section-title{font-size:12px;}
+  .ch-count{font-size:9px;}
+
+  /* vertical single-column full-width list */
+  .ch-grid{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    padding:10px 12px 16px;
+  }
+
+  /* each card: full-width horizontal row */
+  .ch-card{
+    flex:none;
+    width:100%;
+    flex-direction:row;
+    align-items:center;
+    border-radius:10px;
+    min-height:64px;
+  }
+
+  .ch-thumb-wrap{
+    flex:0 0 96px;
+    width:96px;
+    padding-top:0;
+    height:64px;
+    border-radius:8px 0 0 8px;
+    overflow:hidden;
+    position:relative;
+  }
+  .ch-thumb{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  .ch-thumb-overlay{
+    position:absolute;inset:0;
+    background:linear-gradient(90deg,transparent 60%,rgba(26,18,0,0.7) 100%);
+  }
+  .ch-live-dot{top:5px;left:6px;}
+
+  .ch-body{flex:1;padding:0 12px;display:flex;flex-direction:column;gap:4px;}
+  .ch-name{font-size:12px;letter-spacing:.05em;margin-bottom:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .ch-meta{gap:5px;}
+  .ch-pill{font-size:8px;padding:1px 6px;}
+  .ch-live-label{font-size:10px;}
+
+  .ch-card.active-ch::after{font-size:7px;padding:2px 5px;top:auto;bottom:6px;right:8px;}
+
+  /* active card glow stronger on mobile */
+  .ch-card.active-ch{
+    border-color:rgba(245,197,24,0.8);
+    box-shadow:0 0 0 2px rgba(245,197,24,0.3),0 4px 16px rgba(0,100,255,0.45);
+  }
+  .ch-card.active-ch::after{
+    font-size:7px;padding:2px 5px;top:4px;right:4px;
+  }
+
+  /* hide desktop watermark + footer on mobile */
+  .fifa-wm{display:none;}
+  footer{font-size:10px;padding:14px;}
+
+  /* bottom safe area spacer */
+  body::after{
+    content:'';display:block;height:env(safe-area-inset-bottom,16px);
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="hdr-left">
+    <a class="hdr-back" href="https://saptarshiorg.github.io/" >
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      SX Sports
+    </a>
+    <div class="hdr-logo-wrap">
+      <img class="hdr-fifa-logo" src="https://upload.wikimedia.org/wikipedia/en/1/17/2026_FIFA_World_Cup_emblem.svg" alt="FIFA 2026">
+      <div class="hdr-title">FIFA <span>2026</span> LIVE</div>
+    </div>
+  </div>
+  <div class="hdr-live-badge">
+    <span class="hdr-dot"></span>
+    LIVE
+  </div>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">⚽ FIFA World Cup 2026 ⚽</div>
+    <img class="hero-big-logo" src="https://upload.wikimedia.org/wikipedia/en/1/17/2026_FIFA_World_Cup_emblem.svg" alt="FIFA 2026 World Cup">
+    <h1 class="hero-headline">Watch <span>Live Streams</span></h1>
+    <p class="hero-sub">All channels · USA / Canada / Mexico 2026 · Click any channel below to watch</p>
+  </div>
+</div>
+
+<!-- PLAYER -->
+<div class="player-section">
+  <div class="player-wrap">
+    <div class="player-topbar">
+      <div class="player-ch-name">
+        <span class="dot"></span>
+        <span id="active-ch-name">Select a Channel</span>
+      </div>
+      <span class="player-ch-badge">LIVE STREAM</span>
+    </div>
+    <div id="iframe-container">
+      <div class="iframe-placeholder" id="iframe-placeholder">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <span>Pick a channel below to start watching</span>
+      </div>
+      <iframe id="main-iframe" src="" allowfullscreen allow="autoplay; fullscreen" scrolling="no" style="display:none;"></iframe>
+    </div>
+  </div>
+</div>
+
+<!-- CHANNELS -->
+<div class="channels-section">
+  <div class="ch-section-hdr">
+    <h2 class="ch-section-title">All Channels</h2>
+    <span class="ch-count">11 CHANNELS</span>
+  </div>
+  <div class="ch-grid" id="ch-grid">
+
+    <!-- HINDI -->
+    <div class="ch-card" onclick="loadChannel(this,'https://fifa-world-cup-live.pages.dev/hindi.html','HINDI')">
+      <div class="ch-thumb-wrap">
+        <img class="ch-thumb" src="https://akm-img-a-in.tosshub.com/businesstoday/images/story/202404/661fb99c585c6-zee-entertainment-enterprises-will-continue-to-take-all-the-strategic-steps-that-are-aimed-towards-g-032448673-16x9.jpg?size=948:533" alt="HINDI" onerror="this.src='https://via.placeholder.com/320x180/020818/1a6fff?text=HINDI'">
+        <div class="ch-thumb-overlay"></div>
+        <div class="ch-live-dot"></div>
+      </div>
+      <div class="ch-body">
+        <div class="ch-name">HINDI</div>
+        <div class="ch-sub-label">ZEE SPORTS INDIA</div>
+        <div class="ch-meta"><span class="ch-pill">HD</span><span class="ch-live-label">Live Stream</span></div>
+      </div>
+    </div>
+
+    <!-- ENGLISH -->
+    <div class="ch-card" onclick="loadChannel(this,'https://fifa-world-cup-live.pages.dev/english.html','ENGLISH')">
+      <div class="ch-thumb-wrap">
+        <img class="ch-thumb" src="https://akm-img-a-in.tosshub.com/businesstoday/images/story/202404/661fb99c585c6-zee-entertainment-enterprises-will-continue-to-take-all-the-strategic-steps-that-are-aimed-towards-g-032448673-16x9.jpg?size=948:533" alt="ENGLISH" onerror="this.src='https://via.placeholder.com/320x180/020818/1a6fff?text=ENGLISH'">
+        <div class="ch-thumb-overlay"></div>
+        <div class="ch-live-dot"></div>
+      </div>
+      <div class="ch-body">
+        <div class="ch-name">ENGLISH</div>
+        <div class="ch-sub-label">ZEE SPORTS INDIA</div>
+        <div class="ch-meta"><span class="ch-pill">HD</span><span class="ch-live-label">Live Stream</span></div>
+      </div>
+    </div>
+
+    <!-- TSN -->
+    <div class="ch-card" onclick="loadChannel(this,'https://fifa-world-cup-live.pages.dev/tsn.html','TSN')">
+      <div class="ch-thumb-wrap">
+        <img class="ch-thumb" src="https://bellmedia-images.imgix.net/lede/wp-content/uploads/2024/09/18581592_10155403529061055_8240563011649656197_n.jpg" alt="TSN" onerror="this.src='https://via.placeholder.com/320x180/020818/1a6fff?text=TSN'">
+        <div class="ch-thumb-overlay"></div>
+        <div class="ch-live-dot"></div>
+      </div>
+      <div class="ch-body">
+        <div class="ch-name">TSN</div>
+        <div class="ch-meta"><span class="ch-pill">HD</span><span class="ch-live-label">Live Stream</span></div>
+      </div>
+    </div>
+
+    <!-- FOX SPORTS -->
+    <div class="ch-card" onclick="loadChannel(this,'https://fifa-world-cup-live.pages.dev/fox-sports','FOX SPORTS')">
+      <div class="ch-thumb-wrap">
+        <img class="ch-thumb" src="https://static0.srcdn.com/wordpress/wp-content/uploads/2025/05/fox-sports-1-logo-1200x674.jpg?q=70&fit=crop&w=1200&h=628&dpr=1" alt="FOX SPORTS" onerror="this.src='https://via.placeholder.com/320x180/020818/1a6fff?text=FOX'">
+        <div class="ch-thumb-overlay"></div>
+        <div class="ch-live-dot"></div>
+      </div>
+      <div class="ch-body">
+        <div class="ch-name">FOX SPORTS</div>
+        <div class="ch-meta"><span class="ch-pill">HD</span><span class="ch-live-label">Live Stream</span></div>
+      </div>
+    </div>
+
+    <!-- TELEMUNDO -->
+    <div class="ch-card" onclick="loadChannel(this,'https://fifa-world-cup-live.pages.dev/telemundo.html','TELEMUNDO')">
+      <div class="ch-thumb-wrap">
+        <img class="ch-thumb" src="https://media-cldnry.s-nbcnews.com/image/upload/newscms/2020_20/3352176/telemundo-social-default.png" alt="TELEMUNDO" onerror="this.src='https://via.placeholder.com/320x180/020818/1a6fff?text=TELEMUNDO'">
+        <div class="ch-thumb-overlay"></div>
+        <div class="ch-live-dot"></div>
+      </div>
+      <div class="ch-body">
+        <div class="ch-name">TELEMUNDO</div>
+        <div class="ch-meta"><span class="ch-pill">HD</span><span class="ch-live-label">Live Stream</span></div>
+      </div>
+    </div>
+
+    <!-- CAZE TV -->
+    <div class="ch-card" style="background:linear-gradient(135deg,rgba(80,60,10,0.55),rgba(40,30,0,0.85));border-color:rgba(245,197,24,0.5);box-shadow:0 0 14px rgba(245,197,24,0.18);" onclick="loadChannel(this,'https://fifa-world-cup-live.pages.dev/caze-tv.html','CAZE TV')">
+      <div class="ch-thumb-wrap">
+        <img class="ch-thumb" src="https://static.wikia.nocookie.net/logopedia/images/a/a3/CazeTV2022_qatar.jpg" alt="CAZE TV" onerror="this.src='https://via.placeholder.com/320x180/020818/1a6fff?text=CAZE+TV'">
+        <div class="ch-thumb-overlay"></div>
+        <div class="ch-live-dot"></div>
+      </div>
+      <div class="ch-body">
+        <div class="ch-name">CAZE TV</div>
+        <div class="ch-meta">
+          <span class="ch-pill">HD</span>
+          <span class="ch-premium-badge">
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            🇧🇷
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPORTV -->
+    <div class="ch-card" onclick="loadChannel(this,'https://fifa-world-cup-live.pages.dev/sportv.html','SPORTV')">
+      <div class="ch-thumb-wrap">
+        <img class="ch-thumb" src="https://via.placeholder.com/320x180/020818/1a6fff?text=SPORTV" alt="SPORTV" onerror="this.src='https://via.placeholder.com/320x180/020818/1a6fff?text=SPORTV'">
+        <div class="ch-thumb-overlay"></div>
+        <div class="ch-live-dot"></div>
+      </div>
+      <div class="ch-body">
+        <div class="ch-name">SPORTV</div>
+        <div class="ch-meta"><span class="ch-pill">HD</span><span class="ch-live-label">Live Stream</span></div>
+      </div>
+    </div>
+
+    <!-- DSPORTS -->
+    <div class="ch-card" onclick="loadChannel(this,'https://fifa-world-cup-live.pages.dev/dsports.html','DSPORTS')">
+      <div class="ch-thumb-wrap">
+        <img class="ch-thumb" src="https://m.media-amazon.com/images/S/le-target-images-prod/amzn1.dv.gti.e524621f-1786-4d81-bfd1-40a07d8d997f/7/BOXART-16X9/da-DK._UR1920,1080_.jpg" alt="DSPORTS" onerror="this.src='https://via.placeholder.com/320x180/020818/1a6fff?text=DSPORTS'">
+        <div class="ch-thumb-overlay"></div>
+        <div class="ch-live-dot"></div>
+      </div>
+      <div class="ch-body">
+        <div class="ch-name">DSPORTS</div>
+        <div class="ch-meta"><span class="ch-pill">HD</span><span class="ch-live-label">Live Stream</span></div>
+      </div>
+    </div>
+
+    <!-- BENIN (beIN) -->
+    <div class="ch-card" onclick="loadChannel(this,'https://fifa-world-cup-live.pages.dev/benin.html','beIN SPORTS')">
+      <div class="ch-thumb-wrap">
+        <img class="ch-thumb" src="https://www.sportspro.com/wp-content/uploads/2023/03/bein-edit-2.png" alt="beIN SPORTS" onerror="this.src='https://via.placeholder.com/320x180/020818/1a6fff?text=beIN'">
+        <div class="ch-thumb-overlay"></div>
+        <div class="ch-live-dot"></div>
+      </div>
+      <div class="ch-body">
+        <div class="ch-name">beIN SPORTS</div>
+        <div class="ch-meta"><span class="ch-pill">HD</span><span class="ch-live-label">Live Stream</span></div>
+      </div>
+    </div>
+
+    <!-- IOS -->
+    <div class="ch-card" onclick="loadChannel(this,'https://fifa-world-cup-live.pages.dev/ios.html','IOS')">
+      <div class="ch-thumb-wrap">
+        <img class="ch-thumb" src="https://www.sportspro.com/wp-content/uploads/2023/03/bein-edit-2.png" alt="IOS" onerror="this.src='https://via.placeholder.com/320x180/020818/1a6fff?text=IOS'">
+        <div class="ch-thumb-overlay"></div>
+        <div class="ch-live-dot"></div>
+      </div>
+      <div class="ch-body">
+        <div class="ch-name">IOS</div>
+        <div class="ch-meta"><span class="ch-pill">HD</span><span class="ch-live-label">Live Stream</span></div>
+      </div>
+    </div>
+
+    <!-- FIFA -->
+    <div class="ch-card" onclick="loadChannel(this,'https://fifa-world-cup-live.pages.dev/fifa1.html','FIFA OFFICIAL')">
+      <div class="ch-thumb-wrap">
+        <img class="ch-thumb" src="https://play-lh.googleusercontent.com/q00cVXVqf0jSYbfG6AKqTPY1gui7cXleyBbjUoOctz_Bk-IfazSorqKRP8ey_aNGoxIVrcnWQTZktrvAAkuH" alt="FIFA" onerror="this.src='https://via.placeholder.com/320x180/020818/1a6fff?text=FIFA'">
+        <div class="ch-thumb-overlay"></div>
+        <div class="ch-live-dot"></div>
+      </div>
+      <div class="ch-body">
+        <div class="ch-name">FIFA OFFICIAL</div>
+        <div class="ch-meta"><span class="ch-pill">HD</span><span class="ch-live-label">Live Stream</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FIFA watermark -->
+<div class="fifa-wm"><img src="https://upload.wikimedia.org/wikipedia/en/1/17/2026_FIFA_World_Cup_emblem.svg" alt=""></div>
+
+<footer>
+  <a href="https://saptarshiorg.github.io/">SX Sports</a> &nbsp;·&nbsp; FIFA World Cup 2026™ Live Streams &nbsp;·&nbsp; Powered by <strong style="color:rgba(150,200,255,0.6)">Saptarshi XTRA</strong>
+</footer>
+
+<script>
+function loadChannel(card, url, name) {
+  // Remove active from all
+  document.querySelectorAll('.ch-card').forEach(c => c.classList.remove('active-ch'));
+  card.classList.add('active-ch');
+
+  // Update player name
+  document.getElementById('active-ch-name').textContent = name;
+
+  // Hide placeholder, show iframe
+  const placeholder = document.getElementById('iframe-placeholder');
+  const iframe = document.getElementById('main-iframe');
+  placeholder.style.display = 'none';
+  iframe.style.display = 'block';
+  iframe.src = url;
+
+  // Scroll to player smoothly
+  document.querySelector('.player-section').scrollIntoView({behavior:'smooth', block:'start'});
+}
+</script>
+</body>
+</html>
