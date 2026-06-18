@@ -171,6 +171,45 @@ header::before{
   position:absolute;inset:0;width:100%;height:100%;border:none;display:block;
 }
 
+/* ── MOBILE / iOS NOTICE ── */
+.mobile-notice{
+  position:absolute;inset:0;z-index:6;
+  display:none;
+  flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:32px 24px;
+  gap:14px;
+}
+.mobile-notice.active{display:flex;}
+.mobile-notice .mn-icon{
+  width:54px;height:54px;border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(212,160,23,0.1);
+  border:1px solid rgba(212,160,23,0.3);
+  box-shadow:0 0 18px rgba(212,160,23,0.18),inset 0 1px 0 rgba(255,255,255,0.06);
+  font-size:1.5rem;
+}
+.mobile-notice .mn-title{
+  font-size:.92rem;font-weight:800;letter-spacing:.03em;
+  background:linear-gradient(135deg,#f5d76e 0%,#d4a017 50%,#f5d76e 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 6px rgba(212,160,23,0.4));
+}
+.mobile-notice .mn-text{
+  font-size:.74rem;line-height:1.5;
+  color:rgba(240,224,160,0.78);
+  max-width:280px;
+}
+.mobile-notice .mn-btn{
+  margin-top:6px;
+  font-size:.68rem;font-weight:700;letter-spacing:.05em;
+  color:#0a0701;
+  background:linear-gradient(135deg,#f5d76e 0%,#d4a017 100%);
+  border:none;border-radius:100px;
+  padding:9px 20px;cursor:pointer;
+  box-shadow:0 0 14px rgba(212,160,23,0.3);
+}
+.mobile-notice .mn-btn:active{transform:scale(0.97);}
+
 /* ── BOTTOM BAR ── */
 .bottom-bar{
   flex-shrink:0;
@@ -209,13 +248,20 @@ header::before{
 <div class="player-outer">
   <div class="player-glass">
     <iframe
-      src="https://xyzstreams.shop/wc-5-embed"
+      id="streamFrame"
+      data-src="https://xyzstreams.shop/wc-5-embed"
       allowfullscreen
       allow="autoplay; fullscreen; encrypted-media; picture-in-picture; clipboard-write; web-share; accelerometer; gyroscope; payment"
       referrerpolicy="no-referrer-when-downgrade"
       sandbox="allow-scripts allow-same-origin allow-presentation allow-orientation-lock allow-top-navigation-by-user-activation"
       scrolling="no">
     </iframe>
+    <div class="mobile-notice" id="mobileNotice">
+      <div class="mn-icon">🖥️</div>
+      <div class="mn-title">4K Feed — PC / TV Only</div>
+      <div class="mn-text">This 4K feed only works on PC or TV. For mobile, please use another feed.</div>
+      <button class="mn-btn" onclick="history.back()">Browse Other Feeds</button>
+    </div>
   </div>
 </div>
 
@@ -225,5 +271,26 @@ header::before{
   <span class="wc-label">SX Sports Live</span>
 </div>
 
+<script>
+(function(){
+  function isMobileOrIOS(){
+    var ua = navigator.userAgent || navigator.vendor || window.opera || '';
+    var isIOS = /iPad|iPhone|iPod/i.test(ua) && !window.MSStream;
+    var isIPadOS13Up = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+    var isAndroidOrGenericMobile = /android|webos|blackberry|iemobile|opera mini|mobile/i.test(ua);
+    return isIOS || isIPadOS13Up || isAndroidOrGenericMobile;
+  }
+
+  var frame = document.getElementById('streamFrame');
+  var notice = document.getElementById('mobileNotice');
+
+  if(isMobileOrIOS()){
+    notice.classList.add('active');
+    frame.style.display = 'none';
+  } else {
+    frame.src = frame.getAttribute('data-src');
+  }
+})();
+</script>
 </body>
 </html>
