@@ -33,114 +33,6 @@
 }
 
 
-
-/* ── FIFA TAP-TO-PLAY BANNER ── */
-#fifa-banner {
-  position: absolute;
-  inset: 0;
-  z-index: 6;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  overflow: hidden;
-  background: #000;
-  -webkit-tap-highlight-color: transparent;
-}
-#fifa-banner.gone { display: none !important; }
-#fifa-banner-bg {
-  position: absolute;
-  inset: 0;
-  background-image: url('https://images.indianexpress.com/2026/06/Fifa_adcc7e.jpg?w=1200');
-  background-size: cover;
-  background-position: center top;
-  filter: brightness(0.55);
-  transform: scale(1.04);
-  transition: transform 6s ease;
-}
-#fifa-banner.ready #fifa-banner-bg { transform: scale(1.0); }
-#fifa-banner-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to top,
-    rgba(0,0,0,0.72) 0%,
-    rgba(0,0,0,0.18) 40%,
-    rgba(0,0,0,0.08) 100%
-  );
-}
-#fifa-play-btn {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
-  pointer-events: none;
-}
-.fifa-play-ring {
-  width: 82px;
-  height: 82px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.12);
-  border: 2.5px solid rgba(255,255,255,0.75);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background .18s, transform .15s, border-color .18s;
-  box-shadow: 0 0 40px rgba(0,0,0,0.5), 0 0 0 0 rgba(255,255,255,0.2);
-  animation: ring-pulse 2.4s ease-in-out infinite;
-}
-@keyframes ring-pulse {
-  0%, 100% { box-shadow: 0 0 40px rgba(0,0,0,0.5), 0 0 0 0 rgba(255,255,255,0.18); }
-  50%       { box-shadow: 0 0 40px rgba(0,0,0,0.5), 0 0 0 14px rgba(255,255,255,0); }
-}
-#fifa-banner:hover .fifa-play-ring {
-  background: rgba(255,255,255,0.22);
-  border-color: #fff;
-  transform: scale(1.07);
-}
-#fifa-banner:active .fifa-play-ring { transform: scale(0.94); }
-.fifa-play-ring svg { margin-left: 5px; }
-.fifa-play-label {
-  font-size: 13px;
-  font-weight: 700;
-  color: rgba(255,255,255,0.82);
-  letter-spacing: 1.4px;
-  text-transform: uppercase;
-  text-shadow: 0 1px 8px rgba(0,0,0,0.8);
-  font-family: 'Google Sans','Product Sans',Roboto,sans-serif;
-}
-#fifa-banner-live {
-  position: absolute;
-  top: max(14px, env(safe-area-inset-top, 14px));
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(255,0,80,0.78);
-  border: 1px solid rgba(255,0,80,0.5);
-  border-radius: 6px;
-  padding: 4px 10px;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 1.4px;
-  color: #fff;
-  font-family: 'Google Sans','Product Sans',Roboto,sans-serif;
-  z-index: 3;
-}
-#fifa-banner-live .live-dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: #fff;
-  animation: live-pulse 1.6s ease-in-out infinite;
-}
-@media (max-width: 480px) and (orientation: portrait) {
-  .fifa-play-ring { width: 66px; height: 66px; }
-  .fifa-play-ring svg { width: 26px; height: 26px; }
-  .fifa-play-label { font-size: 11px; }
-}
-
 /* ── SX SPORTS LOGO ── */
 #sx-logo { opacity: 0.82 !important; } /* always visible at slight opacity */
 #player.ui-visible #sx-logo { opacity: 1 !important; }
@@ -1619,19 +1511,6 @@ video { will-change: filter; }
 <body>
 <div id="player" class="show-cursor" data-fs="0">
 
-  <!-- FIFA Tap-to-Play Banner -->
-  <div id="fifa-banner">
-    <div id="fifa-banner-bg"></div>
-    <div id="fifa-banner-overlay"></div>
-    <div id="fifa-banner-live"><span class="live-dot"></span>LIVE</div>
-    <div id="fifa-play-btn">
-      <div class="fifa-play-ring">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="#fff"><polygon points="6,3 20,12 6,21"/></svg>
-      </div>
-      <span class="fifa-play-label">Tap to Watch</span>
-    </div>
-  </div>
-
   <!--
     SVG Quality Enhancement Filter Pipeline
     ─────────────────────────────────────────
@@ -2342,15 +2221,13 @@ const iframeWrap   = document.getElementById('iframe-wrap');
 const iframePlayer = document.getElementById('iframe-player');
 
 function enterIframeMode(url) {
+  // Set iframe src — player chrome (controls, logo, gradients) remains visible on top
+  iframePlayer.src = url;
   iframeWrap.classList.add('active');
   player.classList.add('iframe-mode');
+  // Hide native video element (iframe is the content now)
   video.style.display = 'none';
-  // Banner handles first load — only set src if banner already dismissed
-  var banner = document.getElementById('fifa-banner');
-  if (!banner || banner.classList.contains('gone')) {
-    iframePlayer.src = url;
-  }
-  // If banner is still showing, dismissBanner() will set iframePlayer.src = SRC
+  // Show controls so user can at least use fullscreen & lang switcher
   showUI();
 }
 
@@ -3703,36 +3580,5 @@ window.addEventListener("blur", function() {
   });
 })();
 </script>
-
-// ── FIFA BANNER: tap-to-play (iOS safe) ──
-(function() {
-  var banner = document.getElementById('fifa-banner');
-  if (!banner) return;
-
-  // Animate bg on load
-  setTimeout(function() { banner.classList.add('ready'); }, 100);
-
-  var _dismissed = false;
-
-  function dismissBanner() {
-    if (_dismissed) return;
-    _dismissed = true;
-    banner.classList.add('gone');
-    // SRC is set by initCMS() — read it at tap time, not at script parse time
-    var iframePlayer = document.getElementById('iframe-player');
-    if (iframePlayer) {
-      // Use the global SRC variable (set by initCMS before user can tap)
-      var src = (typeof SRC !== 'undefined' && SRC) ? SRC : FALLBACK_STREAMS[0].stream_url;
-      iframePlayer.src = src;
-    }
-  }
-
-  banner.addEventListener('click', dismissBanner);
-  banner.addEventListener('touchend', function(e) {
-    e.preventDefault();
-    dismissBanner();
-  }, { passive: false });
-})();
-
 </body>
 </html>
