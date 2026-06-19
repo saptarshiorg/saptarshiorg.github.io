@@ -596,7 +596,7 @@ video { will-change: filter; }
 
 #cast-overlay .co-note {
   font-size:12px; color:rgba(255,255,255,0.35); font-weight:400;
-  text-align:center; line-height:1.6; max-width:240px;
+  text-align:center; line-height:1.6; max-width:290px;
 }
 .seek-popup {
   position:absolute;
@@ -3563,21 +3563,20 @@ document.addEventListener('webkitfullscreenchange', updateFullscreenLayout);
 window.addEventListener("blur", function() {
   setTimeout(function() { try { window.focus(); } catch(e) {} }, 50);
 }, false);
-// Show shield notice if blur fires while playing
+window.addEventListener("beforeunload", function(e) {
+  e.preventDefault(); e.returnValue = ""; return "";
+}, false);
+// Small DNS tip shown briefly at page load
 (function() {
-  var _notice = null;
-  function showShield() {
-    if (_notice) return;
-    _notice = document.createElement("div");
-    _notice.style.cssText = "position:fixed;top:16px;left:50%;transform:translateX(-50%);background:rgba(10,10,10,0.88);border:1px solid rgba(0,255,0,0.25);color:#00FF00;font-size:12px;font-weight:700;padding:6px 16px;border-radius:20px;z-index:99999;pointer-events:none;font-family:Google Sans,sans-serif;letter-spacing:0.3px;white-space:nowrap;";
-    _notice.textContent = "⚡ Redirect blocked";
-    document.body.appendChild(_notice);
-    setTimeout(function() { if (_notice) { _notice.remove(); _notice = null; } }, 2200);
-  }
-  window.addEventListener("blur", showShield, false);
-  window.addEventListener("beforeunload", function(e) {
-    e.preventDefault(); e.returnValue = ""; showShield(); return "";
-  });
+  var _tip = document.createElement("div");
+  _tip.style.cssText = "position:fixed;top:16px;right:16px;max-width:290px;background:rgba(10,10,10,0.88);border:1px solid rgba(255,255,255,0.12);color:#cfd6e4;font-size:11px;font-weight:500;line-height:1.4;padding:8px 12px;border-radius:10px;z-index:99999;pointer-events:none;font-family:'Google Sans',sans-serif;letter-spacing:0.2px;box-shadow:0 4px 16px rgba(0,0,0,0.4);opacity:0;transition:opacity .3s ease;";
+  _tip.textContent = "Stream may take 5-8 sec to fully load. If it doesn\u2019t, try switching your DNS to 1.1.1.1 or 94.140.14.14 / 94.140.15.15";
+  document.body.appendChild(_tip);
+  requestAnimationFrame(function() { _tip.style.opacity = "1"; });
+  setTimeout(function() {
+    _tip.style.opacity = "0";
+    setTimeout(function() { _tip.remove(); }, 300);
+  }, 8000);
 })();
 </script>
 </body>
