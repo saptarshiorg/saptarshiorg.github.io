@@ -1,23 +1,3560 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="preload" as="image" href="https://i.postimg.cc/vHPg7Ltt/Chat-GPT-Image-May-18-2026-08-33-34-AM.png" fetchpriority="high">
+<meta name="referrer" content="no-referrer">
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>WC 8</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.7/hls.min.js"></script>
+<link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet">
+<script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
+<script>window['__onGCastApiAvailable'] = function(isAvailable) { if (isAvailable) initCast(); };</script>
+<script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1" async></script>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Google+Sans+Display:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
-html,body{width:100%;height:100%;background:#000;overflow:hidden;}
-iframe{position:fixed;inset:0;width:100%;height:100%;border:none;display:block;}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --accent: #00FF00;
+  --accent2: #00FF00;
+  --red: #f43f5e;
+  --white: rgba(255,255,255,0.97);
+  --dim: rgba(255,255,255,0.45);
+  --dim2: rgba(255,255,255,0.25);
+  --glass: transparent;
+  --glass-b: transparent;
+  --glass-hover: rgba(0,255,0,0.08);
+  --panel-bg: rgba(17,50,28,0.97);
+  --blur: blur(8px);
+  --r: 14px;
+  --ea-green: #00FF00;
+  --ea-forest: #11321C;
+}
+
+
+/* ── SX SPORTS LOGO ── */
+#sx-logo { opacity: 0.82 !important; } /* always visible at slight opacity */
+#player.ui-visible #sx-logo { opacity: 1 !important; }
+
+html, body { width:100%; height:100%; background:#000; font-family:'Google Sans','Product Sans',Roboto,sans-serif; overflow:hidden; }
+
+#player {
+  position:relative; width:100vw;
+  height: 100vh;
+  height: 100dvh;
+  background:#000; overflow:hidden; cursor:none;
+}
+#player.show-cursor { cursor:default; }
+
+video {
+  width:100%; height:100%; object-fit:contain; display:block; background:#000;
+  /* Dedicated GPU layer — hardware decode + direct composition path */
+  will-change: transform;
+  transform: translate3d(0,0,0);
+  -webkit-transform: translate3d(0,0,0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  /* Strongest containment — prevents ANY surrounding repaint from touching video */
+  contain: strict;
+  isolation: isolate;
+  image-rendering: auto;
+}
+
+.grad-top {
+  position:absolute; top:0; left:0; right:0; height:160px;
+  background:linear-gradient(to bottom,rgba(0,0,0,0.82) 0%,transparent 100%);
+  pointer-events:none; opacity:0; transition:opacity .35s; z-index:5;
+}
+.grad-bottom {
+  position:absolute; bottom:0; left:0; right:0; height:260px;
+  background:linear-gradient(to top,rgba(0,0,0,0.92) 0%,transparent 100%);
+  pointer-events:none; opacity:0; transition:opacity .35s; z-index:5;
+}
+#player.ui-visible .grad-top,
+#player.ui-visible .grad-bottom { opacity:1; }
+
+/* ── SPINNER ── */
+#spinner {
+  position:absolute; top:50%; left:50%;
+  transform:translate(-50%,-50%); z-index:12; display:none;
+}
+#spinner.show { display:block; }
+#spinner svg { width:56px; height:56px; animation:spin .9s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* ── DOUBLE TAP RIPPLE ── */
+.dt-ripple {
+  position:absolute; top:0; bottom:0; width:45%;
+  display:flex; align-items:center; justify-content:center;
+  pointer-events:none; z-index:19; opacity:0;
+  flex-direction:column; gap:10px;
+}
+#dt-left  { left:0;  background:radial-gradient(ellipse at 25% 50%, rgba(0,255,0,0.18) 0%, transparent 68%); }
+#dt-right { right:0; background:radial-gradient(ellipse at 75% 50%, rgba(0,255,0,0.18) 0%, transparent 68%); }
+.dt-ripple .dt-icon {
+  display:flex; gap:-4px;
+}
+.dt-ripple .dt-icon svg { width:28px; height:28px; fill:rgba(255,255,255,0.9); filter:drop-shadow(0 0 6px rgba(0,255,0,0.7)); }
+.dt-ripple .dt-label {
+  font-size:14px; font-weight:700; color:#fff;
+  letter-spacing:0.4px; text-shadow:0 1px 8px rgba(0,0,0,0.9);
+}
+.dt-ripple.flash { animation:dt-anim .5s ease forwards; }
+@keyframes dt-anim { 0%{opacity:0} 15%{opacity:1} 75%{opacity:1} 100%{opacity:0} }
+
+/* ── CENTER CLUSTER ── */
+#center-cluster {
+  position:absolute; top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  display:flex; align-items:center; gap:32px;
+  z-index:20;
+  opacity:0; transition:opacity .25s;
+  pointer-events:none;
+}
+#center-cluster.visible { opacity:1; pointer-events:all; }
+
+.tap-side-btn {
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  cursor:pointer;
+  transition:transform .12s;
+}
+.tap-side-btn:active { transform:scale(0.87); }
+.tap-circle {
+  width:58px; height:58px; border-radius:50%;
+  background: transparent;
+  border: none;
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow: none;
+  transition: background .15s;
+}
+.tap-side-btn:hover .tap-circle {
+  background: rgba(0,255,0,0.1);
+  box-shadow: none;
+}
+.tap-side-btn svg { width:24px; height:24px; fill:#ffffff; }
+.tap-label { font-size:11px; font-weight:700; color:rgba(255,255,255,0.75); letter-spacing:0.4px; }
+
+#center-btn {
+  width:82px; height:82px; border-radius:50%;
+  background: transparent;
+  border: none;
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer;
+  box-shadow: none;
+  transition: background .15s, transform .12s;
+  flex-shrink:0;
+}
+#center-btn:hover {
+  background: rgba(0,255,133,0.12);
+  box-shadow: none;
+}
+#center-btn:active { transform:scale(0.91); }
+#center-btn svg { width:32px; height:32px; fill:#00FF85; }
+#center-btn:not(.is-playing) svg { margin-left:4px; }
+
+/* ── CONTROLS ── */
+#controls {
+  position:absolute; bottom:0; left:0; right:0;
+  padding:0 12px 12px;
+  z-index:25; opacity:0; transform:translateY(14px);
+  transition:opacity .3s, transform .3s;
+  pointer-events:none;
+}
+#player.ui-visible #controls { opacity:1; transform:translateY(0); pointer-events:all; }
+
+#ctrl-glass {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: none;
+  border-radius: 0;
+  padding: 8px 4px 10px;
+  box-shadow: none;
+}
+
+/* ── PROGRESS BAR ── */
+#progress-wrap {
+  width:100%; height:24px;
+  display:flex; align-items:center;
+  cursor:pointer; margin-bottom:10px; padding:0 2px;
+  position:relative;
+}
+#progress-track {
+  position:relative; width:100%; height:3.5px;
+  background:rgba(255,255,255,0.14); border-radius:99px;
+  transition:height .18s;
+}
+#progress-wrap:hover #progress-track,
+#progress-wrap.dragging #progress-track { height:6px; }
+#progress-buffer { position:absolute; left:0; top:0; height:100%; width:0; background:rgba(255,255,255,0.18); border-radius:99px; pointer-events:none; will-change:width; }
+#progress-fill {
+  position:absolute; left:0; top:0; height:100%; width:0;
+  background:linear-gradient(90deg, #11321C, #00FF00);
+  border-radius:99px; pointer-events:none;
+  will-change: width;
+}
+#progress-thumb {
+  position:absolute; top:50%; left:0; width:15px; height:15px; border-radius:50%;
+  background:#00FF00; transform:translate(0,-50%) scale(0); transition:transform .18s;
+  pointer-events:none;
+  box-shadow:0 0 10px rgba(0,255,0,0.95),0 0 0 3px rgba(0,255,0,0.22);
+  will-change: transform;
+}
+#progress-wrap:hover #progress-thumb,
+#progress-wrap.dragging #progress-thumb { transform:translate(var(--thumb-x,0px),-50%) scale(1); }
+#time-tooltip {
+  position:absolute; bottom:26px;
+  background:rgba(6,8,20,0.9); backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,0.13);
+  color:#fff; font-size:11px; font-weight:600; font-family:'Roboto Mono',monospace;
+  padding:4px 9px; border-radius:8px;
+  pointer-events:none; display:none;
+  transform:translateX(-50%); white-space:nowrap;
+}
+
+/* ── BOTTOM ROW ── */
+#bottom-row { display:flex; align-items:center; gap:5px; }
+
+.ctrl-btn {
+  background: transparent;
+  border: none;
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+  cursor: pointer; padding: 8px; border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  transition: color .15s, transform .12s, opacity .15s;
+  flex-shrink: 0;
+  box-shadow: none;
+  color: rgba(255,255,255,0.85);
+}
+.ctrl-btn:hover {
+  background: rgba(0,255,0,0.08); transform: scale(1.09);
+  box-shadow: none;
+  color: #fff;
+}
+.ctrl-btn:active { transform: scale(0.93); }
+.ctrl-btn svg { width: 20px; height: 20px; display: block; }
+.ctrl-btn.sm svg { width: 18px; height: 18px; }
+.ctrl-btn.btn-on { color: var(--ea-green); }
+.ctrl-btn.btn-on:hover { color: var(--ea-green); }
+
+/* volume */
+#vol-group { display:flex; align-items:center; gap:4px; }
+#vol-slider-wrap { width:0; overflow:hidden; transition:width .28s cubic-bezier(.4,0,.2,1); display:flex; align-items:center; }
+#vol-group:hover #vol-slider-wrap,
+#vol-group:focus-within #vol-slider-wrap { width:74px; }
+#vol-slider {
+  -webkit-appearance:none; appearance:none;
+  width:70px; height:3.5px; border-radius:99px;
+  background:rgba(255,255,255,0.2); outline:none; cursor:pointer;
+}
+#vol-slider::-webkit-slider-thumb {
+  -webkit-appearance:none; width:13px; height:13px; border-radius:50%;
+  background:#00FF00; box-shadow:0 0 8px rgba(0,255,0,0.85);
+}
+
+/* time */
+#time-display {
+  color:var(--dim); font-size:12px; font-weight:500;
+  white-space:nowrap; padding:0 5px; letter-spacing:.3px;
+  font-family:'Roboto Mono',monospace;
+}
+#time-display b { color:var(--white); font-weight:700; }
+.spacer { flex:1; }
+
+/* ── SPEED BADGE ── */
+#speed-badge {
+  font-size:10px; font-weight:700; color:var(--ea-green);
+  background:rgba(0,255,0,0.08); border:1px solid rgba(0,255,0,0.25);
+  border-radius:7px; padding:3px 7px; letter-spacing:.6px; cursor:pointer;
+  transition:background .15s, transform .12s;
+  display:none;
+}
+#speed-badge.visible { display:inline-block; }
+#speed-badge:hover { background:rgba(0,255,0,0.18); transform:scale(1.04); }
+
+/* ── QUALITY BADGE ── */
+#quality-badge {
+  font-size:10px; font-weight:700; color:var(--ea-green);
+  background:rgba(0,255,0,0.08); border:1px solid rgba(0,255,0,0.25);
+  border-radius:7px; padding:3px 7px; letter-spacing:.7px; cursor:pointer;
+  transition:background .15s, transform .12s;
+}
+#quality-badge:hover { background:rgba(0,255,0,0.18); transform:scale(1.04); }
+
+/* live badge */
+#live-badge {
+  font-size:10px; font-weight:700; letter-spacing:1.2px; color:#fff;
+  background:rgba(255,0,122,0.75); border:1px solid rgba(255,0,122,0.5);
+  backdrop-filter:blur(8px); border-radius:7px; padding:4px 9px;
+  display:inline-flex; align-items:center; gap:5px; cursor:default;
+}
+#live-badge .live-dot {
+  width:7px; height:7px; border-radius:50%;
+  background:#fff;
+  box-shadow:0 0 0 0 rgba(255,255,255,0.6);
+  animation:live-pulse 1.6s ease-in-out infinite;
+}
+@keyframes live-pulse {
+  0%   { box-shadow:0 0 0 0 rgba(255,0,122,0.75); }
+  60%  { box-shadow:0 0 0 5px rgba(255,0,122,0); }
+  100% { box-shadow:0 0 0 0 rgba(255,0,122,0); }
+}
+
+/* ── SETTINGS PANEL ── */
+#settings-panel {
+  position:absolute; bottom:90px; right:12px;
+  background: rgba(0,0,0,0.28);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:16px; padding:8px 0; min-width:200px;
+  z-index:200; display:none;
+  box-shadow:0 20px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
+  max-height:72vh; overflow-y:auto;
+}
+#settings-panel::-webkit-scrollbar { width:3px; }
+#settings-panel::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.15); border-radius:99px; }
+#settings-panel.open { display:block; animation:panel-in .18s cubic-bezier(.4,0,.2,1); }
+@keyframes panel-in { from{opacity:0;transform:translateY(8px) scale(0.97)} to{opacity:1;transform:none} }
+
+.setting-section {
+  padding:8px 18px 4px;
+  font-size:9px; font-weight:700; letter-spacing:1.6px;
+  color:rgba(255,255,255,0.28); text-transform:uppercase;
+  display:flex; align-items:center; gap:8px;
+}
+.setting-section::after {
+  content:''; flex:1; height:1px;
+  background:rgba(255,255,255,0.07);
+}
+
+.setting-item {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:9px 18px; color:rgba(255,255,255,0.8); font-size:13.5px;
+  cursor:pointer; transition:background .12s; gap:14px;
+  position:relative;
+}
+.setting-item:hover { background:rgba(0,255,0,0.07); }
+.setting-item .val { color:var(--ea-green); font-size:13px; font-weight:700; }
+.setting-item.active-item { color:var(--ea-green); }
+.setting-item .q-res {
+  font-size:10px; color:rgba(255,255,255,0.35);
+  font-family:'Roboto Mono',monospace; font-weight:500;
+}
+.setting-item .q-badge {
+  font-size:9px; font-weight:700; padding:2px 5px; border-radius:4px;
+  letter-spacing:.5px;
+}
+.q-hd { background:rgba(0,255,0,0.12); color:var(--ea-green); border:1px solid rgba(0,255,0,0.25); }
+.q-4k { background:rgba(0,255,0,0.18); color:#fff; border:1px solid rgba(0,255,0,0.35); }
+.q-sd { background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.5); border:1px solid rgba(255,255,255,0.1); }
+
+/* speed section styling */
+.speed-pills {
+  display:flex; flex-wrap:wrap; gap:6px;
+  padding:8px 14px 12px;
+}
+.speed-pill {
+  flex:1; min-width:52px;
+  background:transparent; border:1px solid rgba(0,255,0,0.15);
+  color:rgba(255,255,255,0.75); font-size:12px; font-weight:600;
+  padding:7px 4px; border-radius:9px; text-align:center; cursor:pointer;
+  transition:background .14s, border-color .14s, color .14s, transform .1s;
+}
+.speed-pill:hover { background:rgba(0,255,0,0.1); border-color:rgba(0,255,0,0.35); color:#fff; }
+.speed-pill:active { transform:scale(0.94); }
+.speed-pill.active-speed {
+  background:rgba(0,255,0,0.15);
+  border-color:rgba(0,255,0,0.6);
+  color:var(--ea-green);
+  box-shadow:0 0 14px rgba(0,255,0,0.2);
+}
+
+/* ── 4K ENHANCE — settings panel row ── */
+#enhance-ctrl {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 18px; cursor: pointer; gap: 12px; transition: background .12s;
+}
+#enhance-ctrl:hover { background: rgba(0,255,0,0.07); }
+.ec-left { display: flex; align-items: center; gap: 9px; }
+.ec-icon { font-size: 14px; line-height: 1; color: rgba(255,255,255,0.45); }
+.ec-text { display: flex; flex-direction: column; gap: 1px; }
+.ec-name { font-size: 13.5px; color: rgba(255,255,255,0.8); font-weight: 600; }
+.ec-sub  { font-size: 10px; color: rgba(255,255,255,0.30); font-weight: 500; }
+.ec-pill {
+  font-size: 10px; font-weight: 800; letter-spacing: .6px;
+  padding: 3px 9px; border-radius: 6px;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.35);
+  transition: background .15s, color .15s, border-color .15s;
+}
+#enhance-ctrl.active .ec-icon { color: var(--ea-green); }
+#enhance-ctrl.active .ec-name { color: #fff; }
+#enhance-ctrl.active .ec-pill {
+  background: rgba(0,255,0,0.12); border-color: rgba(0,255,0,0.40); color: var(--ea-green);
+}
+
+/* ── CAST BUTTON ── */
+#cast-btn {
+  background: transparent; border: none;
+  cursor: pointer; padding: 8px; border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity .15s, transform .12s, color .15s;
+  flex-shrink: 0; box-shadow: none;
+  opacity: 0.30; pointer-events: none;
+  color: rgba(255,255,255,0.85);
+}
+#cast-btn svg { width: 20px; height: 20px; display: block; }
+#cast-btn.available { opacity: 1; pointer-events: auto; }
+#cast-btn.available:hover { background: rgba(0,255,0,0.08); transform: scale(1.09); color: #fff; }
+#cast-btn:active { transform: scale(0.93); }
+#cast-btn.casting { color: #00FF00; box-shadow: 0 0 10px rgba(0,255,0,0.35); }
+
+/* ── PIP BUTTON ── */
+#pip-btn {
+  background: transparent; border: none;
+  cursor: pointer; padding: 8px; border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity .15s, transform .12s, color .15s;
+  flex-shrink: 0; box-shadow: none;
+  color: rgba(255,255,255,0.85);
+}
+#pip-btn svg { width: 20px; height: 20px; display: block; }
+#pip-btn:hover { background: rgba(0,255,0,0.08); transform: scale(1.09); color: #fff; }
+#pip-btn:active { transform: scale(0.93); }
+#pip-btn.pip-active { color: #00FF00; box-shadow: 0 0 10px rgba(0,255,0,0.35); }
+#pip-btn.pip-unsupported { opacity: 0.25; pointer-events: none; }
+
+/* enhance toast */
+#enhance-toast {
+  position:absolute; top:18px; left:50%; transform:translateX(-50%) translateY(-6px);
+  background:rgba(6,8,20,0.88); backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,0.12); border-radius:12px;
+  padding:8px 18px; color:#fff; font-size:12px; font-weight:600;
+  white-space:nowrap; z-index:40; opacity:0; pointer-events:none;
+  transition: opacity .3s, transform .3s;
+  display:flex; align-items:center; gap:8px;
+}
+#enhance-toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+#enhance-toast .et-dot { width:8px; height:8px; border-radius:50%; background:var(--accent2); flex-shrink:0; }
+
+/* canvas unused — SVG filter applied directly on video, no fade */
+#enhance-canvas { display:none !important; }
+
+/* ── IFRAME MODE ── */
+#iframe-wrap {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  background: transparent;
+  display: none;
+}
+#iframe-wrap.active { display: block; }
+#iframe-player {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+  background: transparent;
+}
+
+/* ── VIDEO.JS MODE ── */
+/* VJS runs on a hidden #vjs-video element. Custom controls proxy to it directly.
+   Suppress all VJS UI chrome completely. */
+#vjs-video { display: none !important; }   /* hidden — we use #video as display */
+.video-js .vjs-big-play-button    { display: none !important; }
+.video-js .vjs-control-bar        { display: none !important; }
+.video-js .vjs-loading-spinner    { display: none !important; }
+.video-js .vjs-text-track-display { display: none !important; }
+.video-js .vjs-error-display      { display: none !important; }
+/* In iframe mode: hide gradients — they darken the embedded player */
+#player.iframe-mode .grad-top,
+#player.iframe-mode .grad-bottom {
+  display: none !important;
+}
+/* In iframe mode on PC: hide the fullscreen button — iframe has its own */
+@media(min-width:901px){
+  #player.iframe-mode #fs-btn { display: none !important; }
+}
+/* In iframe mode: player background transparent so iframe shows fully */
+#player.iframe-mode { background: transparent !important; pointer-events: none; }
+/* Full passthrough to iframe — everything none except bottom controls */
+#player.iframe-mode #sx-logo,
+#player.iframe-mode #dt-left,
+#player.iframe-mode #dt-right,
+#player.iframe-mode #seek-popup-left,
+#player.iframe-mode #seek-popup-right,
+#player.iframe-mode #spinner,
+#player.iframe-mode #stream-loading,
+#player.iframe-mode #cast-overlay {
+  pointer-events: none !important;
+  display: none !important;
+}
+#player.iframe-mode #iframe-wrap { pointer-events: all !important; }
+#player.iframe-mode #controls { pointer-events: all !important; }
+/* In iframe mode: keep all player chrome visible over the iframe.
+   Only hide things that require direct video element access. */
+#player.iframe-mode #spinner,
+#player.iframe-mode #cast-overlay,
+#player.iframe-mode #stream-loading,
+#player.iframe-mode #dt-left,
+#player.iframe-mode #dt-right,
+#player.iframe-mode #seek-popup-left,
+#player.iframe-mode #seek-popup-right {
+  display: none !important;
+}
+/* Keep lang switcher visible in iframe mode */
+#player.iframe-mode #lang-switcher {
+  display: block;
+  opacity: 1 !important;
+  pointer-events: all;
+}
+/* In iframe mode: hide video-only controls that don't apply to embedded player */
+#player.iframe-mode #skip-back-btn,
+#player.iframe-mode #skip-fwd-btn,
+#player.iframe-mode #vol-group,
+#player.iframe-mode #time-display,
+#player.iframe-mode #progress-wrap,
+#player.iframe-mode #rewind-btn,
+#player.iframe-mode #forward-btn,
+#player.iframe-mode #live-badge,
+#player.iframe-mode #speed-badge,
+#player.iframe-mode #quality-badge,
+#player.iframe-mode #cc-btn,
+#player.iframe-mode #cast-btn,
+#player.iframe-mode #pip-btn,
+#player.iframe-mode #settings-btn,
+#player.iframe-mode #play-btn,
+#player.iframe-mode #enhance-toast,
+#player.iframe-mode #center-cluster {
+  display: none !important;
+}
+/* In iframe mode: controls bar floats at bottom with just fullscreen */
+#player.iframe-mode #ctrl-glass {
+  padding: 4px 4px 6px;
+}
+#player.iframe-mode #bottom-row {
+  justify-content: flex-end;
+}
+/* enhanced video: filter applied via JS, no opacity change */
+video { will-change: filter; }
+
+/* ── CASTING OVERLAY ── */
+#cast-overlay {
+  position:absolute; inset:0; z-index:50;
+  background:rgba(4,6,18,0.96);
+  backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px);
+  display:none; flex-direction:column;
+  align-items:center; justify-content:center; gap:20px;
+  animation:cast-fadein .35s ease;
+}
+#cast-overlay.active { display:flex; }
+@keyframes cast-fadein { from{opacity:0;transform:scale(0.97)} to{opacity:1;transform:none} }
+
+#cast-overlay .co-icon {
+  width:72px; height:72px; border-radius:50%;
+  background:rgba(56,189,248,0.12);
+  border:1.5px solid rgba(56,189,248,0.35);
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 0 40px rgba(56,189,248,0.25);
+  animation:cast-pulse 2.4s ease-in-out infinite;
+}
+@keyframes cast-pulse {
+  0%,100%{ box-shadow:0 0 30px rgba(56,189,248,0.2); }
+  50%    { box-shadow:0 0 55px rgba(56,189,248,0.45); }
+}
+#cast-overlay .co-icon svg { width:34px; height:34px; fill:#38bdf8; }
+
+#cast-overlay .co-title {
+  font-size:18px; font-weight:700; color:#fff; letter-spacing:.2px;
+}
+#cast-overlay .co-device {
+  font-size:13px; color:rgba(255,255,255,0.45); font-weight:500;
+  margin-top:-12px;
+}
+#cast-overlay .co-line {
+  width:48px; height:1.5px;
+  background:linear-gradient(90deg, transparent, rgba(56,189,248,0.5), transparent);
+}
+
+#cast-stop-btn {
+  margin-top:6px;
+  background:rgba(244,63,94,0.1); border:1.5px solid rgba(244,63,94,0.35);
+  color:#f43f5e; font-size:13px; font-weight:700; letter-spacing:.4px;
+  padding:11px 28px; border-radius:12px; cursor:pointer;
+  transition:background .15s, transform .12s, box-shadow .15s;
+  backdrop-filter:blur(10px);
+}
+#cast-stop-btn:hover {
+  background:rgba(244,63,94,0.22);
+  box-shadow:0 0 20px rgba(244,63,94,0.3);
+}
+#cast-stop-btn:active { transform:scale(0.95); }
+
+#cast-overlay .co-note {
+  font-size:12px; color:rgba(255,255,255,0.35); font-weight:400;
+  text-align:center; line-height:1.6; max-width:240px;
+}
+.seek-popup {
+  position:absolute;
+  background:rgba(6,10,24,0.78);
+  backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,0.13);
+  color:#fff; font-size:13px; font-weight:700;
+  padding:6px 15px; border-radius:22px;
+  pointer-events:none; opacity:0; z-index:22;
+  transition:opacity .18s;
+  white-space:nowrap; font-family:'Roboto Mono',monospace;
+}
+.seek-popup.show { opacity:1; }
+#seek-popup-left  { top:50%; left:14%; transform:translateY(-50%); }
+#seek-popup-right { top:50%; right:14%; transform:translateY(-50%); }
+
+/* ══════════════════════════════════════════════
+   RESPONSIVE / MOBILE CONTROLS
+   All sizing via clamp() — scales smoothly across
+   every screen width. Safe-area handled once here.
+   ══════════════════════════════════════════════ */
+
+/* ── Base: safe-area insets (applies everywhere) ── */
+#controls {
+  padding-left:   max(12px, env(safe-area-inset-left,   0px));
+  padding-right:  max(12px, env(safe-area-inset-right,  0px));
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
+}
+
+/* Non-fullscreen mobile: push above browser nav bar */
+@media (max-width: 768px) {
+  #player:not([data-fs="1"]) #controls {
+    bottom: 0;
+    padding-bottom: max(56px, env(safe-area-inset-bottom, 56px));
+  }
+  /* Fullscreen: exactly like PC — bottom of video, normal position */
+  #player[data-fs="1"] #controls {
+    bottom: 0 !important;
+    top: auto !important;
+    margin-top: 0 !important;
+    padding-bottom: max(12px, env(safe-area-inset-bottom, 12px)) !important;
+  }
+}
+
+/* ── Fluid button + icon sizing ── */
+.ctrl-btn {
+  padding: clamp(6px, 1.8vw, 10px);
+  border-radius: clamp(8px, 2vw, 12px);
+}
+.ctrl-btn svg        { width: clamp(16px, 4.2vw, 22px); height: clamp(16px, 4.2vw, 22px); }
+.ctrl-btn.sm svg     { width: clamp(15px, 3.8vw, 20px); height: clamp(15px, 3.8vw, 20px); }
+
+/* ── Fluid bottom-row gap ── */
+#bottom-row { gap: clamp(3px, 1.2vw, 7px); flex-wrap: nowrap; }
+
+/* ── Badges scale fluidly ── */
+#live-badge, #speed-badge, #quality-badge {
+  font-size: clamp(8px, 2vw, 11px);
+  padding: clamp(2px, 0.5vw, 4px) clamp(4px, 1.2vw, 9px);
+}
+
+/* ── Center cluster scales ── */
+#center-btn        { width: clamp(58px, 14vw, 82px); height: clamp(58px, 14vw, 82px); }
+#center-btn svg    { width: clamp(24px, 6vw, 32px);  height: clamp(24px, 6vw, 32px); }
+.tap-circle        { width: clamp(44px, 11vw, 58px); height: clamp(44px, 11vw, 58px); }
+.tap-side-btn svg  { width: clamp(18px, 4.5vw, 24px); height: clamp(18px, 4.5vw, 24px); }
+.tap-label         { font-size: clamp(9px, 2.2vw, 12px); }
+#center-cluster    { gap: clamp(16px, 5vw, 32px); }
+
+/* ── Ctrl-glass padding scales ── */
+#ctrl-glass {
+  padding: clamp(8px, 2vw, 14px) clamp(10px, 2.5vw, 18px) clamp(10px, 2.5vw, 16px);
+  border-radius: clamp(12px, 3vw, 18px);
+}
+
+/* ── Settings panel: never overflow screen ── */
+#settings-panel {
+  min-width: min(92vw, 220px);
+  max-width:  92vw;
+  right: max(8px, env(safe-area-inset-right, 8px));
+  bottom: calc(clamp(68px, 16vw, 96px) + env(safe-area-inset-bottom, 0px));
+}
+
+/* ── Settings panel on mobile: always position over video ── */
+@media (max-width: 768px) {
+  #settings-panel {
+    bottom: 80px;
+    right: max(8px, env(safe-area-inset-right, 8px));
+    max-height: 60vh;
+  }
+  #player[data-fs="1"] #settings-panel {
+    bottom: 72px;
+    max-height: 65vh;
+  }
+}
+/* Landscape mobile — non-fullscreen: anchor above control bar */
+@media (max-width: 900px) and (orientation: landscape) {
+  #settings-panel {
+    bottom: 62px !important;
+    top: auto !important;
+    max-height: calc(100dvh - 78px) !important;
+    max-height: calc(100vh  - 78px) !important;
+    overflow-y: auto !important;
+  }
+  /* Fullscreen landscape handled by sidebar rule above */
+}
+
+/* ── Narrow phones (<480px): hide vol slider, shrink badges ── */
+@media (max-width: 480px) {
+  #vol-slider-wrap { display: none; }
+  #time-display    { display: none; }
+  #speed-badge     { display: none; }
+  .ctrl-btn        { min-width: 36px; min-height: 36px; }
+}
+
+/* ── Very narrow (<360px): hide quality badge too ── */
+@media (max-width: 360px) {
+  #quality-badge { display: none; }
+}
+
+/* ── Landscape phone (short viewport) ── */
+@media (max-height: 440px) and (orientation: landscape) {
+  #controls {
+    padding-left:  max(8px, env(safe-area-inset-left,   0px));
+    padding-right: max(8px, env(safe-area-inset-right,  0px));
+    padding-bottom: max(6px, env(safe-area-inset-bottom, 6px));
+  }
+  #ctrl-glass    { padding: 6px 12px 8px; }
+  .grad-bottom   { height: 130px; }
+  #center-cluster { gap: 20px; }
+  #center-btn    { width: 54px; height: 54px; }
+  .tap-circle    { width: 42px; height: 42px; }
+  .tap-side-btn .tap-label { display: none; }
+  #progress-wrap { margin-bottom: 6px; }
+
+  /* ── Settings / Quality panel: non-fullscreen landscape fix ── */
+  #settings-panel {
+    bottom: 62px !important;
+    top: auto !important;
+    max-height: calc(100dvh - 80px) !important;
+    max-height: calc(100vh - 80px) !important;
+    overflow-y: auto !important;
+    display: none;
+  }
+  #settings-panel.open {
+    display: block !important;
+  }
+  /* Fullscreen landscape: sidebar rule (orientation:landscape above) handles it */
+}
+
+/* ── Portrait tablet (600–900px): restore slider ── */
+@media (min-width: 600px) {
+  #vol-slider-wrap { width: 74px; }
+  #time-display    { display: inline; }
+  #speed-badge     { display: inline-block; }
+}
+
+/* ══════════════════════════════════════════════
+   LANGUAGE DROPDOWN SWITCHER
+   ══════════════════════════════════════════════ */
+#lang-switcher {
+  position: absolute;
+  top: 14px;
+  right: max(14px, env(safe-area-inset-right, 14px));
+  z-index: 32;
+  opacity: 0.10;
+  transition: opacity .35s;
+  pointer-events: none;
+}
+#player.ui-visible #lang-switcher {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* Trigger button */
+#lang-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+  cursor: pointer;
+  transition: opacity .15s, transform .15s;
+  min-width: 80px;
+  user-select: none;
+}
+#lang-trigger:hover { opacity: 0.75; }
+#lang-trigger:active { transform: scale(0.96); }
+
+#lang-globe {
+  font-size: 14px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+#lang-current {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.3px;
+  flex: 1;
+  white-space: nowrap;
+  font-family: 'Google Sans','Product Sans',Roboto,sans-serif;
+}
+#lang-arrow {
+  width: 14px; height: 14px;
+  fill: rgba(255,255,255,0.5);
+  flex-shrink: 0;
+  transition: transform .22s cubic-bezier(.4,0,.2,1);
+}
+#lang-switcher.open #lang-arrow { transform: rotate(180deg); }
+
+/* Dropdown menu */
+#lang-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 140px;
+  background: rgba(0,0,0,0.22);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 13px;
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+  padding: 6px 0;
+  display: none;
+  animation: lang-drop .18s cubic-bezier(.4,0,.2,1);
+  overflow: hidden;
+}
+@keyframes lang-drop {
+  from { opacity:0; transform: translateY(-6px) scale(0.97); }
+  to   { opacity:1; transform: none; }
+}
+#lang-switcher.open #lang-menu { display: block; }
+
+/* Section label inside dropdown */
+.lang-menu-header {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  color: rgba(255,255,255,0.28);
+  text-transform: uppercase;
+  padding: 6px 14px 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.lang-menu-header::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,0.07);
+}
+
+.lang-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  cursor: pointer;
+  transition: background .12s;
+  font-family: 'Google Sans','Product Sans',Roboto,sans-serif;
+}
+.lang-option:hover { background: rgba(0,255,0,0.07); }
+.lang-option:active { background: rgba(0,255,0,0.12); }
+
+.lang-option.active {
+  background: rgba(0,255,0,0.1);
+}
+.lang-option.active .lo-label { color: #00FF00; }
+.lang-option.active .lo-check { opacity: 1; }
+
+.lo-flag {
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+  width: 22px;
+  text-align: center;
+}
+.lo-text { flex: 1; }
+.lo-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.9);
+  display: block;
+  line-height: 1.2;
+  font-family: 'Google Sans','Product Sans',Roboto,sans-serif;
+}
+.lo-sublabel {
+  font-size: 10px;
+  color: rgba(255,255,255,0.38);
+  font-weight: 400;
+  display: block;
+  margin-top: 1px;
+  font-family: 'Google Sans','Product Sans',Roboto,sans-serif;
+}
+.lo-check {
+  width: 14px; height: 14px;
+  fill: #00FF00;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity .15s;
+}
+
+/* Loading overlay for stream switch */
+#stream-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 45;
+  background: rgba(0,0,0,0.72);
+  backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .3s;
+}
+#stream-loading.show { opacity: 1; pointer-events: all; }
+#stream-loading .sl-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.7);
+  letter-spacing: 0.4px;
+}
+#stream-loading svg {
+  width: 44px; height: 44px;
+  animation: spin .9s linear infinite;
+}
+
+/* CMS Error toast */
+#cms-error {
+  position: absolute;
+  bottom: 110px;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  background: rgba(244,63,94,0.12);
+  border: 1px solid rgba(244,63,94,0.35);
+  color: #f87171;
+  font-size: 12px; font-weight: 600;
+  padding: 8px 18px; border-radius: 12px;
+  white-space: nowrap; z-index: 48;
+  opacity: 0; pointer-events: none;
+  transition: opacity .3s, transform .3s;
+  backdrop-filter: blur(12px);
+}
+#cms-error.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+@media (max-width: 480px) {
+  #lang-trigger { min-width: 76px; padding: 6px 10px; }
+  #lang-current { font-size: 11px; }
+  #lang-menu    { min-width: 130px; }
+  .lo-label     { font-size: 12px; }
+}
+
+/* ══════════════════════════════════════════════
+   MOBILE PORTRAIT — SX SPORTS LAYOUT
+   Top: video player (~42% height)
+   Bottom: DMCA disclaimer panel (scrollable)
+   Controls: 5-button bar inside video area
+   ══════════════════════════════════════════════ */
+
+/* ── Mobile portrait page shell ── */
+@media (max-width: 480px) and (orientation: portrait) {
+  html, body {
+    overflow: hidden !important;
+    background: #0a0a0a !important;
+  }
+
+  /* Player becomes top portion only */
+  #player {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: 42dvh !important;
+    height: 42vh !important;
+    overflow: hidden !important;
+    border-bottom: 1px solid rgba(0,255,0,0.12) !important;
+  }
+
+  /* Logo: below status bar */
+  #sx-logo {
+    top: max(10px, calc(env(safe-area-inset-top, 0px) + 6px)) !important;
+    left: 10px !important;
+    z-index: 30 !important;
+  }
+  #sx-logo img {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  /* Lang switcher: same row as logo */
+  #lang-switcher {
+    top: max(10px, calc(env(safe-area-inset-top, 0px) + 6px)) !important;
+    right: max(10px, env(safe-area-inset-right, 10px)) !important;
+  }
+  #lang-trigger { padding: 5px 8px !important; min-width: 68px !important; }
+  #lang-current { font-size: 10px !important; }
+
+  /* Controls bar — sits at very bottom of the video */
+  #controls {
+    padding: 0 10px 8px !important;
+    bottom: 0 !important;
+  }
+
+  #ctrl-glass {
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border-radius: 0 !important;
+    border: none !important;
+    padding: 6px 8px 8px !important;
+    box-shadow: none !important;
+  }
+
+  /* Slim progress bar */
+  #progress-wrap {
+    height: 20px !important;
+    margin-bottom: 4px !important;
+    padding: 0 2px !important;
+  }
+  #progress-track { height: 2.5px !important; }
+  #progress-wrap:hover #progress-track,
+  #progress-wrap.dragging #progress-track { height: 4px !important; }
+
+  /* Bottom row — 5 essential buttons evenly spaced */
+  #bottom-row {
+    justify-content: space-between !important;
+    gap: 0 !important;
+    align-items: center !important;
+  }
+
+  /* Hide non-essential controls */
+  #skip-back-btn, #skip-fwd-btn,
+  #vol-group, #time-display,
+  #speed-badge, #quality-badge,
+  #live-badge, #cc-btn, .spacer {
+    display: none !important;
+  }
+
+  /* 5 visible buttons */
+  #play-btn, #cast-btn, #settings-btn, #pip-btn, #fs-btn {
+    display: flex !important;
+    flex: 1 !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 3px !important;
+    padding: 5px 2px !important;
+    border-radius: 10px !important;
+    background: transparent !important;
+    border: none !important;
+    cursor: pointer !important;
+    transition: background .14s, transform .1s !important;
+  }
+  #play-btn:active, #cast-btn:active,
+  #settings-btn:active, #pip-btn:active, #fs-btn:active {
+    transform: scale(0.85) !important;
+    background: rgba(0,255,0,0.1) !important;
+  }
+  #play-btn svg, #cast-btn svg,
+  #settings-btn svg, #pip-btn svg, #fs-btn svg {
+    width: 19px !important; height: 19px !important;
+    color: rgba(255,255,255,0.9) !important;
+    fill: none !important; stroke: currentColor !important;
+    stroke-width: 1.8 !important;
+  }
+  #cast-btn svg { fill: currentColor !important; stroke: none !important; }
+
+  #play-btn::after    { content: 'Play'; }
+  #cast-btn::after    { content: 'Cast'; }
+  #settings-btn::after { content: 'Quality'; }
+  #pip-btn::after     { content: 'PiP'; }
+  #fs-btn::after      { content: 'Full'; }
+  #play-btn::after, #cast-btn::after, #settings-btn::after,
+  #pip-btn::after, #fs-btn::after {
+    font-size: 8px !important; font-weight: 600 !important;
+    color: rgba(255,255,255,0.38) !important;
+    letter-spacing: 0.2px !important;
+    font-family: 'Google Sans','Product Sans',Roboto,sans-serif !important;
+  }
+
+  #cast-btn.casting { color: #00FF00 !important; }
+  #cast-btn.casting::after { color: #00FF00 !important; }
+  #pip-btn.pip-active { color: #00FF00 !important; }
+  #pip-btn.pip-active::after { color: #00FF00 !important; }
+  #cast-btn:not(.available) { opacity: 0.28 !important; pointer-events: none !important; }
+
+  /* Center cluster — tighter for small video height */
+  #center-cluster { gap: 22px !important; }
+  #center-btn {
+    width: 56px !important; height: 56px !important;
+    background: transparent !important;
+    border: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+  }
+  #center-btn svg { width: 24px !important; height: 24px !important; fill: #00FF85 !important; }
+  .tap-circle { width: 44px !important; height: 44px !important; }
+  .tap-side-btn svg { width: 18px !important; height: 18px !important; }
+  .tap-label { font-size: 9px !important; }
+
+  /* Settings panel — appears BELOW the player in the disclaimer zone, no scroll */
+  #settings-panel {
+    position: fixed !important;
+    top: calc(42dvh + 6px) !important;
+    bottom: unset !important;
+    left: 50% !important;
+    right: unset !important;
+    transform: translateX(-50%) !important;
+    width: 152px !important;
+    min-width: unset !important;
+    max-width: 152px !important;
+    border-radius: 12px !important;
+    max-height: none !important;
+    overflow: visible !important;
+    overflow-y: unset !important;
+    padding: 3px 0 5px !important;
+    z-index: 200 !important;
+  }
+  #settings-panel.open {
+    display: block !important;
+    animation: panel-in-mob .16s cubic-bezier(.4,0,.2,1) !important;
+  }
+  @keyframes panel-in-mob {
+    from { opacity:0; transform: translateX(-50%) translateY(-6px) scale(0.95); }
+    to   { opacity:1; transform: translateX(-50%) scale(1); }
+  }
+
+  /* Section headers — tiny, minimal */
+  #settings-panel .setting-section {
+    font-size: 7.5px !important;
+    letter-spacing: 1.2px !important;
+    padding: 6px 12px 3px !important;
+    color: rgba(255,255,255,0.22) !important;
+  }
+
+  /* Quality rows — compact, no bitrate clutter */
+  #settings-panel .setting-item {
+    padding: 7px 12px !important;
+    font-size: 11.5px !important;
+    gap: 8px !important;
+  }
+  #settings-panel .setting-item .val {
+    font-size: 11px !important;
+  }
+
+  /* Hide bitrate labels (q-res) on mobile — YouTube doesn't show these */
+  #settings-panel .q-res { display: none !important; }
+
+  /* Hide the quality badge pill on mobile rows — keep it clean */
+  #settings-panel .setting-item .q-badge { display: none !important; }
+
+  /* 4K enhance row — compact */
+  #settings-panel #enhance-ctrl {
+    padding: 7px 12px !important;
+    gap: 8px !important;
+  }
+  #settings-panel .ec-name { font-size: 11.5px !important; }
+  #settings-panel .ec-sub  { font-size: 9px !important; }
+  #settings-panel .ec-pill { font-size: 9px !important; padding: 2px 7px !important; }
+
+  /* Speed pills — tighter */
+  #settings-panel .speed-pills {
+    padding: 5px 10px 8px !important;
+    gap: 5px !important;
+  }
+  #settings-panel .speed-pill {
+    font-size: 10.5px !important;
+    padding: 5px 3px !important;
+    border-radius: 7px !important;
+    min-width: 40px !important;
+  }
+
+  /* Disclaimer panel — below the video */
+  #mob-disclaimer {
+    display: block !important;
+  }
+}
+
+/* ══════════════════════════════════════════════
+   FULLSCREEN OVERRIDES — reset portrait layout
+   When fullscreen is active on mobile, ignore
+   all the 42vh portrait constraints
+   ══════════════════════════════════════════════ */
+#player[data-fs="1"] {
+  position: fixed !important;
+  top: 0 !important; left: 0 !important;
+  right: 0 !important; bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  contain: none !important;
+  z-index: 9999 !important;
+}
+
+/* Controls — full width, bottom of fullscreen video */
+#player[data-fs="1"] #controls {
+  bottom: 0 !important;
+  top: auto !important;
+  margin-top: 0 !important;
+  padding: 0 12px max(12px, env(safe-area-inset-bottom, 12px)) !important;
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* Hide portrait-only labels on buttons in fullscreen */
+#player[data-fs="1"] #play-btn::after,
+#player[data-fs="1"] #cast-btn::after,
+#player[data-fs="1"] #settings-btn::after,
+#player[data-fs="1"] #pip-btn::after,
+#player[data-fs="1"] #fs-btn::after {
+  display: none !important;
+}
+
+/* Quality/settings panel — drop down from top-right in fullscreen PORTRAIT */
+#player[data-fs="1"] #settings-panel {
+  position: absolute !important;
+  top: max(60px, calc(env(safe-area-inset-top, 0px) + 52px)) !important;
+  bottom: auto !important;
+  right: 12px !important;
+  left: auto !important;
+  transform: none !important;
+  width: auto !important;
+  min-width: 200px !important;
+  max-width: 260px !important;
+  max-height: 70vh !important;
+  overflow-y: auto !important;
+  z-index: 200 !important;
+}
+#player[data-fs="1"] #settings-panel.open {
+  display: block !important;
+  animation: panel-in .18s cubic-bezier(.4,0,.2,1) !important;
+}
+
+/* ── FULLSCREEN LANDSCAPE: Quality panel becomes a RIGHT SIDEBAR ── */
+@media (orientation: landscape) {
+  #player[data-fs="1"] #settings-panel {
+    position: fixed !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    right: 0 !important;
+    left: auto !important;
+    width: 220px !important;
+    min-width: 220px !important;
+    max-width: 220px !important;
+    max-height: 100vh !important;
+    max-height: 100dvh !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    border-radius: 0 !important;
+    border-left: 1px solid rgba(0,255,0,0.13) !important;
+    border-top: none !important;
+    border-bottom: none !important;
+    border-right: none !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 16px 0 24px !important;
+    transform: translateX(100%) !important;
+    transition: transform .22s cubic-bezier(.4,0,.2,1) !important;
+    display: block !important;
+    animation: none !important;
+    z-index: 300 !important;
+    background: rgba(8,20,12,0.97) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    box-shadow: -6px 0 32px rgba(0,0,0,0.55) !important;
+  }
+  #player[data-fs="1"] #settings-panel.open {
+    transform: translateX(0) !important;
+    animation: none !important;
+    display: block !important;
+  }
+  /* Sidebar header label at top */
+  #player[data-fs="1"] #settings-panel::before {
+    content: 'SETTINGS';
+    display: block;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: rgba(0,255,0,0.45);
+    padding: 0 18px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    margin-bottom: 4px;
+    font-family: 'Google Sans','Product Sans',Roboto,sans-serif;
+  }
+}
+
+/* Hide disclaimer panel in fullscreen */
+#player[data-fs="1"] ~ #mob-disclaimer,
+#mob-disclaimer.fs-hidden {
+  display: none !important;
+}
+
+/* Disclaimer panel — hidden on desktop, shown mobile portrait */
+#mob-disclaimer {
+  display: none;
+  position: fixed;
+  top: 42dvh;
+  top: 42vh;
+  left: 0; right: 0;
+  bottom: 0;
+  background: #0d0d0d;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  z-index: 5;
+  border-top: 1px solid rgba(0,255,0,0.14);
+}
+#mob-disclaimer::-webkit-scrollbar { width: 3px; }
+#mob-disclaimer::-webkit-scrollbar-thumb { background: rgba(0,255,0,0.2); border-radius: 99px; }
+
+.mob-disc-inner {
+  padding: 20px 18px 36px;
+}
+
+.mob-disc-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.mob-disc-brand-name {
+  font-size: 17px;
+  font-weight: 800;
+  color: #00FF00;
+  letter-spacing: 1.5px;
+  font-family: 'Google Sans Display','Google Sans',sans-serif;
+  text-shadow: 0 0 18px rgba(0,255,0,0.35);
+}
+.mob-disc-brand-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #00FF00;
+  box-shadow: 0 0 8px rgba(0,255,0,0.7);
+  flex-shrink: 0;
+}
+
+.mob-disc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(244,63,94,0.1);
+  border: 1px solid rgba(244,63,94,0.28);
+  border-radius: 8px;
+  padding: 5px 10px;
+  margin-bottom: 14px;
+}
+.mob-disc-badge-icon {
+  font-size: 12px; line-height: 1;
+}
+.mob-disc-badge-text {
+  font-size: 10px; font-weight: 800;
+  color: #f87171; letter-spacing: 1px;
+  font-family: 'Google Sans','Product Sans',Roboto,sans-serif;
+  text-transform: uppercase;
+}
+
+.mob-disc-section-title {
+  font-size: 11px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.55);
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  font-family: 'Google Sans','Product Sans',Roboto,sans-serif;
+}
+
+.mob-disc-body {
+  font-size: 12.5px;
+  line-height: 1.75;
+  color: rgba(255,255,255,0.52);
+  font-family: 'Google Sans','Product Sans',Roboto,sans-serif;
+  font-weight: 400;
+  margin-bottom: 18px;
+}
+.mob-disc-body b {
+  color: rgba(255,255,255,0.82);
+  font-weight: 600;
+}
+
+.mob-disc-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.05);
+  margin: 14px 0;
+}
+
+.mob-disc-footer {
+  font-size: 11px;
+  color: rgba(255,255,255,0.25);
+  font-family: 'Roboto Mono',monospace;
+  letter-spacing: 0.4px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(0,255,0,0.08);
+}
+.mob-disc-footer span {
+  color: rgba(0,255,0,0.5);
+}
+
+/* ── DMCA SIDEBAR BUTTON (Desktop/PC only) ── */
+#dmca-sidebar {
+  display: none;
+}
+@media (min-width: 769px) {
+  #dmca-sidebar {
+    display: flex;
+    position: fixed;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 9999;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+  #dmca-tab {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+    background: rgba(17,50,28,0.82);
+    border: 1px solid rgba(0,255,0,0.18);
+    border-right: none;
+    border-radius: 8px 0 0 8px;
+    color: rgba(255,255,255,0.7);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    padding: 14px 7px;
+    cursor: pointer;
+    opacity: 0.10;
+    transition: opacity .25s;
+    user-select: none;
+    font-family: 'Google Sans','Product Sans',Roboto,sans-serif;
+    text-transform: uppercase;
+  }
+  #dmca-tab:hover { opacity: 0.22; }
+
+  #dmca-flyout {
+    position: fixed;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 320px;
+    max-height: 80vh;
+    overflow-y: auto;
+    background: rgba(8,18,12,0.97);
+    border: 1px solid rgba(0,255,0,0.14);
+    border-right: none;
+    border-radius: 14px 0 0 14px;
+    padding: 22px 20px 20px;
+    z-index: 9998;
+    display: none;
+    animation: dmca-slide-in .22s cubic-bezier(.4,0,.2,1);
+    box-shadow: -8px 0 40px rgba(0,0,0,0.55);
+  }
+  #dmca-flyout::-webkit-scrollbar { width: 3px; }
+  #dmca-flyout::-webkit-scrollbar-thumb { background: rgba(0,255,0,0.18); border-radius: 99px; }
+  #dmca-flyout.open { display: block; }
+  @keyframes dmca-slide-in {
+    from { opacity: 0; transform: translateX(30px) translateY(-50%); }
+    to   { opacity: 1; transform: translateX(0) translateY(-50%); }
+  }
+  #dmca-close {
+    position: absolute;
+    top: 12px; right: 14px;
+    background: transparent; border: none;
+    color: rgba(255,255,255,0.45);
+    font-size: 18px; cursor: pointer; line-height: 1;
+    transition: color .15s;
+    padding: 2px 5px;
+  }
+  #dmca-close:hover { color: #fff; }
+}
+
+/* Landscape on phone — hide disclaimer, full-screen player */
+@media (max-width: 900px) and (orientation: landscape) {
+  #mob-disclaimer { display: none !important; }
+  #player {
+    position: fixed !important;
+    top: 0 !important; left: 0 !important;
+    width: 100vw !important; height: 100dvh !important;
+    height: 100vh !important;
+  }
+  #skip-back-btn, #skip-fwd-btn,
+  #vol-group, #live-badge,
+  #cast-btn, #settings-btn, #pip-btn, #fs-btn {
+    display: flex !important;
+  }
+  #play-btn::after, #cast-btn::after, #settings-btn::after,
+  #pip-btn::after, #fs-btn::after { content: none !important; }
+  #ctrl-glass {
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 6px 12px 8px !important;
+  }
+  .spacer { display: flex !important; }
+  #bottom-row { justify-content: flex-start !important; gap: 4px !important; }
+}
 </style>
 </head>
 <body>
-<iframe src="https://xyzstreams.shop/wc-8-embed"
-  allowfullscreen
-  allow="autoplay; fullscreen; encrypted-media; picture-in-picture; clipboard-write; web-share; accelerometer; gyroscope; payment; screen-wake-lock; display-capture; media-playback-quality; high-resolution-time"
-  referrerpolicy="no-referrer-when-downgrade"
-  scrolling="no"
-  loading="eager"
-  importance="high">
-</iframe>
+<div id="player" class="show-cursor" data-fs="0">
+
+  <!--
+    SVG Quality Enhancement Filter Pipeline
+    ─────────────────────────────────────────
+    Stage 1 (feGaussianBlur): soft 0.45px blur → reduces DCT block artifacts & noise
+    Stage 2 (feComposite arithmetic k2=2 k3=-1): 2×original − blurred
+             = classic unsharp mask → sharpens edges only, leaves flat areas untouched
+    Stage 3 (feColorMatrix saturate 1.04): minimal +4% saturation nudge only
+             S-curve contrast removed — color/contrast change is negligible
+    Applied directly on <video> via CSS filter — zero canvas, zero opacity fade, GPU-accelerated.
+  -->
+  <svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+    <defs>
+      <filter id="vsharp" color-interpolation-filters="sRGB" x="0%" y="0%" width="100%" height="100%">
+        <!--
+          DUAL-PASS UNSHARP MASK — optimised for compressed streaming video
+          ──────────────────────────────────────────────────────────────────
+          Pass A (fine, r=0.3): recovers pixel-level detail lost to codec
+          Pass B (coarse, r=0.9): targets DCT 8×8 block-edge artifacts
+          Amount A=1.2, Amount B=0.7 → strong overall sharpness, no ringing
+          Color/contrast: unchanged (saturate 1.04 = negligible)
+        -->
+
+        <!-- Pass A: fine-detail sharpening (sub-pixel edges) -->
+        <feGaussianBlur in="SourceGraphic" stdDeviation="0.3" result="blur_fine"/>
+        <feComposite in="SourceGraphic" in2="blur_fine"
+                     operator="arithmetic" k1="0" k2="2.2" k3="-1.2" k4="0"
+                     result="sharp_fine"/>
+
+        <!-- Pass B: coarse deblock sharpening (compression block edges) -->
+        <feGaussianBlur in="sharp_fine" stdDeviation="0.9" result="blur_coarse"/>
+        <feComposite in="sharp_fine" in2="blur_coarse"
+                     operator="arithmetic" k1="0" k2="1.7" k3="-0.7" k4="0"
+                     result="sharp_dual"/>
+
+        <!-- Negligible saturation nudge — no contrast/color change -->
+        <feColorMatrix in="sharp_dual" type="saturate" values="1.04"/>
+      </filter>
+    </defs>
+  </svg>
+  <video id="video" playsinline webkit-playsinline x5-playsinline muted preload="none" crossorigin="anonymous"></video>
+  <!-- Hidden Video.js media element — VJS decodes here, custom controls proxy to it -->
+  <video id="vjs-video" playsinline webkit-playsinline preload="none" crossorigin="anonymous"></video>
+  <script>
+  // Hint to browser: prefer the hardware decode path and GPU compositing
+  (function() {
+    var v = document.getElementById('video');
+    // Enable video frame presentation latency monitoring (Chromium 83+)
+    if (typeof v.requestVideoFrameCallback === 'function') {
+      var lastMs = 0;
+      function onFrame(now, meta) {
+        // No-op loop — simply keeping the rVFC chain alive ensures
+        // the browser uses the direct-composition (120 Hz) path
+        lastMs = meta.mediaTime;
+        v.requestVideoFrameCallback(onFrame);
+      }
+      v.requestVideoFrameCallback(onFrame);
+    }
+  })();
+  </script>
+  <canvas id="enhance-canvas"></canvas>
+  <!-- Iframe mode container -->
+  <div id="iframe-wrap">
+    <iframe id="iframe-player" allowfullscreen allow="autoplay; fullscreen; encrypted-media; picture-in-picture; clipboard-write; web-share; accelerometer; gyroscope; payment; screen-wake-lock; display-capture; media-playback-quality; high-resolution-time" referrerpolicy="no-referrer-when-downgrade" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation" scrolling="no"></iframe>
+  </div>
+  <div id="enhance-toast"><span class="et-dot"></span><span id="enhance-toast-msg">4K Enhance ON</span></div>
+
+  <!-- Casting overlay — shown when stream is playing on TV -->
+  <div id="cast-overlay">
+    <div class="co-icon">
+      <svg viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v3h2V5h18v14h-7v2h7c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM1 18v3h3c0-1.66-1.34-3-3-3zm0-4v2c2.76 0 5 2.24 5 5h2c0-3.87-3.13-7-7-7zm0-4v2c4.97 0 9 4.03 9 9h2c0-6.08-4.93-11-11-11z"/></svg>
+    </div>
+    <div class="co-title">Casting to TV</div>
+    <div class="co-device" id="cast-device-name">Your TV</div>
+    <div class="co-line"></div>
+    <div class="co-note">You can close this app on your phone or PC —<br>the stream will keep playing on your TV.</div>
+    <button id="cast-stop-btn">⏹ Stop Casting</button>
+  </div>
+
+  <!-- SX Sports Logo - Top Left -->
+  <div id="sx-logo" style="position:absolute;top:14px;left:16px;z-index:30;pointer-events:none;opacity:0;transition:opacity .35s;">
+    <img src="https://i.postimg.cc/vHPg7Ltt/Chat-GPT-Image-May-18-2026-08-33-34-AM.png" alt="SX Sports" style="width:clamp(60px,6vw,100px);height:clamp(60px,6vw,100px);object-fit:contain;image-rendering:high-quality;filter:drop-shadow(0 2px 12px rgba(0,0,0,0.75)) drop-shadow(0 0 20px rgba(255,185,0,0.45));border-radius:12px;" draggable="false" decoding="async" fetchpriority="high">
+  </div>
+
+  <!-- Language Dropdown Switcher - Top Right -->
+  <div id="lang-switcher">
+    <div id="lang-trigger">
+      <span id="lang-globe">🌐</span>
+      <span id="lang-current">Language</span>
+      <svg id="lang-arrow" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+    </div>
+    <div id="lang-menu">
+      <div class="lang-menu-header">Select Language</div>
+      <!-- Options injected by JS -->
+    </div>
+  </div>
+
+  <!-- Stream switch loading -->
+  <div id="stream-loading">
+    <svg viewBox="0 0 50 50">
+      <circle cx="25" cy="25" r="20" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="4"/>
+      <circle cx="25" cy="25" r="20" fill="none" stroke="url(#sg2)" stroke-width="4" stroke-dasharray="78 50" stroke-linecap="round"/>
+      <defs>
+        <linearGradient id="sg2" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#11321C"/>
+          <stop offset="100%" stop-color="#00FF00"/>
+        </linearGradient>
+      </defs>
+    </svg>
+    <span class="sl-label" id="stream-loading-label">Switching stream…</span>
+  </div>
+
+  <!-- CMS error toast -->
+  <div id="cms-error"></div>
+
+  <!-- DNS Help Popup -->
+  <div id="dns-popup" style="display:none;position:absolute;inset:0;z-index:80;background:rgba(0,0,0,0.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);align-items:center;justify-content:center;">
+    <div style="background:rgba(8,10,24,0.97);border:1px solid rgba(255,255,255,0.13);border-radius:18px;padding:24px 22px 20px;max-width:310px;width:calc(100% - 40px);box-shadow:0 24px 60px rgba(0,0,0,0.85),inset 0 1px 0 rgba(255,255,255,0.07);display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;">
+      <div style="width:46px;height:46px;border-radius:50%;background:rgba(244,63,94,0.12);border:1.5px solid rgba(244,63,94,0.35);display:flex;align-items:center;justify-content:center;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="#f43f5e"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+      </div>
+      <div>
+        <div style="font-family:'Google Sans','Product Sans',Roboto,sans-serif;font-size:15px;font-weight:700;color:#fff;margin-bottom:8px;line-height:1.3;">Stream Not Loading?</div>
+        <div style="font-family:'Google Sans','Product Sans',Roboto,sans-serif;font-size:12.5px;color:rgba(255,255,255,0.62);line-height:1.65;">
+          Try changing your DNS to<br>
+          <span style="display:inline-block;margin-top:7px;font-family:'Roboto Mono',monospace;font-size:11.5px;font-weight:700;color:#38bdf8;background:rgba(56,189,248,0.09);border:1px solid rgba(56,189,248,0.25);border-radius:8px;padding:5px 10px;letter-spacing:0.3px;">1dot1dot1dot1.cloudflare&#8209;dns.com</span><br>
+          <span style="display:inline-block;margin-top:8px;font-size:11.5px;color:rgba(255,255,255,0.38);">Cloudflare DNS helps bypass<br>network restrictions.</span>
+        </div>
+      </div>
+      <button id="dns-ok-btn" style="width:100%;background:linear-gradient(135deg,rgba(56,189,248,0.18),rgba(129,140,248,0.18));border:1px solid rgba(56,189,248,0.35);color:#fff;font-family:'Google Sans','Product Sans',Roboto,sans-serif;font-size:14px;font-weight:700;letter-spacing:0.3px;padding:12px;border-radius:12px;cursor:pointer;transition:background .15s,transform .12s,box-shadow .15s;box-shadow:0 4px 18px rgba(56,189,248,0.18);">Got it</button>
+    </div>
+  </div>
+
+  <div class="grad-top"></div>
+  <div class="grad-bottom"></div>
+
+  <!-- Double-tap ripples -->
+  <div class="dt-ripple" id="dt-left">
+    <div class="dt-icon">
+      <svg viewBox="0 0 24 24"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg>
+    </div>
+    <span class="dt-label">-10s</span>
+  </div>
+  <div class="dt-ripple" id="dt-right">
+    <div class="dt-icon">
+      <svg viewBox="0 0 24 24"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg>
+    </div>
+    <span class="dt-label">+10s</span>
+  </div>
+
+  <!-- Seek popups -->
+  <div class="seek-popup" id="seek-popup-left">◀◀ −10s</div>
+  <div class="seek-popup" id="seek-popup-right">+10s ▶▶</div>
+
+  <!-- Spinner -->
+  <div id="spinner">
+    <svg viewBox="0 0 50 50">
+      <circle cx="25" cy="25" r="20" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="4"/>
+      <circle cx="25" cy="25" r="20" fill="none" stroke="url(#sg)" stroke-width="4" stroke-dasharray="78 50" stroke-linecap="round"/>
+      <defs>
+        <linearGradient id="sg" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#11321C"/>
+          <stop offset="100%" stop-color="#00FF00"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  </div>
+
+  <!-- Center cluster -->
+  <div id="center-cluster">
+    <div class="tap-side-btn" id="rewind-btn">
+      <div class="tap-circle">
+        <svg viewBox="0 0 24 24"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg>
+      </div>
+      <span class="tap-label">−10s</span>
+    </div>
+
+    <div id="center-btn">
+      <svg id="center-icon" viewBox="0 0 24 24"><polygon points="6,3 20,12 6,21"/></svg>
+    </div>
+
+    <div class="tap-side-btn" id="forward-btn">
+      <div class="tap-circle">
+        <svg viewBox="0 0 24 24"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg>
+      </div>
+      <span class="tap-label">+10s</span>
+    </div>
+  </div>
+
+  <!-- Floating 4K Enhance Button REMOVED - now inline in controls -->
+
+  <!-- Controls bar -->
+  <div id="controls">
+    <div id="ctrl-glass">
+      <div id="progress-wrap">
+        <div id="progress-track">
+          <div id="progress-buffer"></div>
+          <div id="progress-fill"></div>
+          <div id="progress-thumb"></div>
+          <div id="time-tooltip"></div>
+        </div>
+      </div>
+      <div id="bottom-row">
+
+        <!-- ① Play/Pause — outline morphing icon -->
+        <button class="ctrl-btn" id="play-btn" title="Play/Pause">
+          <svg id="play-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <polygon id="play-poly" points="6,3 20,12 6,21" stroke="currentColor" fill="none"/>
+          </svg>
+        </button>
+
+        <!-- ② Skip back 10s -->
+        <button class="ctrl-btn" id="skip-back-btn" title="Skip back 10s">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 5V2L7 7l5 5V8a7 7 0 1 1-7 7"/>
+            <text x="8.5" y="18.5" font-size="5.5" font-weight="700" fill="currentColor" stroke="none" font-family="Google Sans,Product Sans,Roboto,sans-serif" text-anchor="middle">10</text>
+          </svg>
+        </button>
+
+        <!-- ③ Skip forward 10s -->
+        <button class="ctrl-btn" id="skip-fwd-btn" title="Skip forward 10s">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 5V2l5 5-5 5V8a7 7 0 1 0 7 7"/>
+            <text x="15.5" y="18.5" font-size="5.5" font-weight="700" fill="currentColor" stroke="none" font-family="Google Sans,Product Sans,Roboto,sans-serif" text-anchor="middle">10</text>
+          </svg>
+        </button>
+
+        <!-- ④ Volume + hover-expanding slider -->
+        <div id="vol-group">
+          <button class="ctrl-btn" id="mute-btn" title="Mute/Unmute">
+            <svg id="vol-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="11,5 6,9 2,9 2,15 6,15 11,19" stroke="currentColor" fill="none"/>
+              <path id="vol-wave1" d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+              <path id="vol-wave2" d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+            </svg>
+          </button>
+          <div id="vol-slider-wrap">
+            <input type="range" id="vol-slider" min="0" max="1" step="0.02" value="1">
+          </div>
+        </div>
+
+        <!-- ⑤ Time display -->
+        <span id="time-display"><b>0:00</b> / --:--</span>
+
+        <div class="spacer"></div>
+
+        <!-- ⑤ Live badge — #ff007a when active -->
+        <span id="live-badge"><span class="live-dot"></span>LIVE</span>
+
+        <!-- Speed & Quality badges -->
+        <span id="speed-badge" class="visible" title="Playback speed">1×</span>
+        <span id="quality-badge" title="Quality">AUTO</span>
+
+        <!-- ⑦ CC / Subtitles — hidden until available -->
+        <button class="ctrl-btn" id="cc-btn" title="Subtitles / CC" style="display:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="5" width="20" height="14" rx="2"/>
+            <path d="M7 12h2m2 0h2M7 15h4m2 0h2" stroke-linecap="round"/>
+          </svg>
+        </button>
+
+        <!-- Cast to TV -->
+        <button id="cast-btn" title="Cast to TV">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M1 18v3h3c0-1.66-1.34-3-3-3zm0-4v2c2.76 0 5 2.24 5 5h2c0-3.87-3.13-7-7-7zm18-7H5c-1.1 0-2 .9-2 2v3h2v-3h14v10h-5v2h5c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zm-18 3v2c4.97 0 9 4.03 9 9h2c0-6.08-4.93-11-11-11z"/>
+          </svg>
+        </button>
+
+        <!-- ⑧ PiP -->
+        <button id="pip-btn" title="Picture in Picture">
+          <svg id="pip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="4" width="20" height="16" rx="2"/>
+            <rect x="12" y="12" width="8" height="6" rx="1" fill="none"/>
+          </svg>
+        </button>
+
+        <!-- Settings -->
+        <button class="ctrl-btn sm" id="settings-btn" title="Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
+
+        <!-- ⑧ Fullscreen -->
+        <button class="ctrl-btn" id="fs-btn" title="Fullscreen">
+          <svg id="fs-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <polyline id="fs-tl" points="4,14 4,20 10,20"/>
+            <polyline id="fs-tr" points="20,14 20,20 14,20"/>
+            <polyline id="fs-bl" points="4,10 4,4 10,4"/>
+            <polyline id="fs-br" points="20,10 20,4 14,4"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Settings panel (outside #player to escape stacking context on mobile) -->
+<div id="settings-panel">
+  <div class="setting-section">Quality</div>
+  <div id="quality-list"></div>
+
+  <div class="setting-section" style="margin-top:2px">Enhancement</div>
+  <div id="enhance-ctrl" title="Toggle 4K Enhancement">
+    <div class="ec-left">
+      <span class="ec-icon">✦</span>
+      <div class="ec-text">
+        <span class="ec-name">4K Enhance</span>
+        <span class="ec-sub">Sharpen · Contrast · Audio</span>
+      </div>
+    </div>
+    <span class="ec-pill">OFF</span>
+  </div>
+
+  <div class="setting-section" style="margin-top:4px">Speed</div>
+  <div class="speed-pills" id="speed-pills">
+    <div class="speed-pill" data-speed="0.25">0.25×</div>
+    <div class="speed-pill" data-speed="0.5">0.5×</div>
+    <div class="speed-pill" data-speed="0.75">0.75×</div>
+    <div class="speed-pill active-speed" data-speed="1">Normal</div>
+    <div class="speed-pill" data-speed="1.25">1.25×</div>
+    <div class="speed-pill" data-speed="1.5">1.5×</div>
+    <div class="speed-pill" data-speed="2">2×</div>
+    <div class="speed-pill" data-speed="3">3×</div>
+  </div>
+</div>
+
+<!-- DMCA Sidebar Button (Desktop only) -->
+<div id="dmca-sidebar">
+  <div id="dmca-tab" onclick="toggleDmcaFlyout(event)">⚖ DMCA</div>
+</div>
+<div id="dmca-flyout">
+  <button id="dmca-close" onclick="closeDmcaFlyout()" title="Close">✕</button>
+  <div class="mob-disc-brand" style="margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.06);">
+    <div class="mob-disc-brand-dot"></div>
+    <div class="mob-disc-brand-name">SX SPORTS</div>
+  </div>
+  <!-- DM Button -->
+  <a href="https://www.instagram.com/sxsportsindia" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;gap:10px;width:100%;background:linear-gradient(135deg,rgba(225,48,108,0.18),rgba(193,53,132,0.18));border:1px solid rgba(225,48,108,0.4);border-radius:12px;padding:11px 14px;margin-bottom:14px;text-decoration:none;cursor:pointer;transition:background .15s,transform .12s,box-shadow .15s;" onmouseover="this.style.background='linear-gradient(135deg,rgba(225,48,108,0.32),rgba(193,53,132,0.32))';this.style.boxShadow='0 0 18px rgba(225,48,108,0.3)'" onmouseout="this.style.background='linear-gradient(135deg,rgba(225,48,108,0.18),rgba(193,53,132,0.18))';this.style.boxShadow='none'">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e1306c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+    <div style="display:flex;flex-direction:column;gap:1px;">
+      <span style="font-size:12px;font-weight:800;color:#fff;font-family:'Google Sans','Product Sans',Roboto,sans-serif;letter-spacing:0.3px;">Want any match?</span>
+      <span style="font-size:11px;color:rgba(255,255,255,0.6);font-family:'Google Sans','Product Sans',Roboto,sans-serif;">DM <b style="color:#e1306c;">@sxsportsindia</b> on Instagram</span>
+    </div>
+  </a>
+  <div class="mob-disc-badge" style="margin-bottom:12px;">
+    <span class="mob-disc-badge-icon">⚖️</span>
+    <span class="mob-disc-badge-text">DMCA Notice</span>
+  </div>
+  <div class="mob-disc-section-title">Official DMCA &amp; Copyright Disclaimer</div>
+  <div class="mob-disc-body"><b>SX SPORTS</b> does not host, upload, store, transmit, or broadcast any live streams, videos, or media files on its own servers.</div>
+  <div class="mob-disc-body">We only provide links to <b>publicly available streams</b> and media content that are hosted by independent third-party websites.</div>
+  <div class="mob-disc-divider"></div>
+  <div class="mob-disc-body">All trademarks, copyrights, logos, streaming rights, and broadcasting rights belong to their respective owners. SX SPORTS has no control over, and assumes no responsibility for, the content hosted on external websites.</div>
+  <div class="mob-disc-body">If you are a copyright owner or authorized representative and believe that any content infringes your rights, please <b>contact the original third-party hosting provider directly</b>, as they are solely responsible for the hosted content.</div>
+  <div class="mob-disc-divider"></div>
+  <div class="mob-disc-footer"><span>©</span> 2026 SX SPORTS &nbsp;•&nbsp; All Rights Reserved</div>
+</div>
+
+<!-- Mobile Portrait Disclaimer Panel -->
+<div id="mob-disclaimer">
+  <div class="mob-disc-inner">
+
+    <div class="mob-disc-brand">
+      <div class="mob-disc-brand-dot"></div>
+      <div class="mob-disc-brand-name">SX SPORTS</div>
+    </div>
+
+    <div class="mob-disc-badge">
+      <span class="mob-disc-badge-icon">⚖️</span>
+      <span class="mob-disc-badge-text">DMCA Notice</span>
+    </div>
+
+    <!-- DM Button -->
+    <a href="https://www.instagram.com/sxsportsindia" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;gap:10px;width:100%;background:linear-gradient(135deg,rgba(225,48,108,0.18),rgba(193,53,132,0.18));border:1px solid rgba(225,48,108,0.4);border-radius:12px;padding:11px 14px;margin-bottom:14px;text-decoration:none;-webkit-tap-highlight-color:transparent;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e1306c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+      <div style="display:flex;flex-direction:column;gap:1px;">
+        <span style="font-size:12px;font-weight:800;color:#fff;font-family:'Google Sans','Product Sans',Roboto,sans-serif;letter-spacing:0.3px;">Want any match?</span>
+        <span style="font-size:11px;color:rgba(255,255,255,0.6);font-family:'Google Sans','Product Sans',Roboto,sans-serif;">DM <b style="color:#e1306c;">@sxsportsindia</b> on Instagram</span>
+      </div>
+    </a>
+
+    <div class="mob-disc-section-title">Official DMCA &amp; Copyright Disclaimer</div>
+
+    <div class="mob-disc-body">
+      <b>SX SPORTS</b> does not host, upload, store, transmit, or broadcast any live streams, videos, or media files on its own servers.
+    </div>
+
+    <div class="mob-disc-body">
+      We only provide links to <b>publicly available streams</b> and media content that are hosted by independent third-party websites.
+    </div>
+
+    <div class="mob-disc-divider"></div>
+
+    <div class="mob-disc-body">
+      All trademarks, copyrights, logos, streaming rights, and broadcasting rights belong to their respective owners. SX SPORTS has no control over, and assumes no responsibility for, the content hosted on external websites.
+    </div>
+
+    <div class="mob-disc-body">
+      If you are a copyright owner or authorized representative and believe that any content infringes your rights, please <b>contact the original third-party hosting provider directly</b>, as they are solely responsible for the hosted content.
+    </div>
+
+    <div class="mob-disc-divider"></div>
+
+    <div class="mob-disc-footer">
+      <span>©</span> 2026 SX SPORTS &nbsp;•&nbsp; All Rights Reserved
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  GOOGLE SHEETS CMS — STREAM LINK MANAGER
+//  Sheet URL: https://docs.google.com/spreadsheets/d/19ttDVhaRvV1bYoSAvEjUftz5tI7_b2ZLoGDMV7x41YU
+//
+//  Sheet columns (Row 1 = headers):
+//    A: lang_code   (e.g. EN, HI, BN, TA, TE)
+//    B: lang_label  (e.g. English, हिन्दी, বাংলা)
+//    C: stream_url  (HLS .m3u8 URL, iframe URL, or any Video.js-compatible URL)
+//    D: active      (TRUE / FALSE — set FALSE to hide a language)
+//    E: stream_type (hls | iframe | videojs — default is "hls" if left blank)
+//
+//  stream_type values:
+//    hls     → plays via HLS.js (or native Safari HLS) — for .m3u8 streams (DEFAULT)
+//    iframe  → embeds the URL in a sandboxed <iframe> (for embed links)
+//    videojs → plays via Video.js player (for MP4, WebM, direct HLS w/ Video.js UI)
+//
+//  To update a stream link: just edit column C for that language row.
+//  To add a language: add a new row with all 5 columns filled.
+//  To disable a language: set column D to FALSE.
+// ══════════════════════════════════════════════
+
+const SHEET_ID  = '19ttDVhaRvV1bYoSAvEjUftz5tI7_b2ZLoGDMV7x41YU';
+const SHEET_GID = '0'; // change if your data is on a different sheet tab (gid= in the URL)
+
+// ─────────────────────────────────────────────────────────────────────
+//  FALLBACK — used only if Google Sheets is unreachable / sheet is empty
+//  Replace these URLs with real stream URLs as needed.
+// ─────────────────────────────────────────────────────────────────────
+const FALLBACK_STREAMS = [
+  { lang_code: 'EN', lang_label: 'Live',
+    stream_url: 'https://xyzstreams.shop/wc-8-embed',
+    stream_type: 'iframe', active: true },
+];
+
+let streams       = [];    // loaded from Sheets
+let activeLang    = null;  // currently selected lang_code
+let SRC           = '';    // active stream URL
+
+// ── DOM refs ──
+const player        = document.getElementById('player');
+const video         = document.getElementById('video');
+const centerCluster = document.getElementById('center-cluster');
+const centerBtn     = document.getElementById('center-btn');
+const centerIcon    = document.getElementById('center-icon');
+const playBtn       = document.getElementById('play-btn');
+const playIcon      = document.getElementById('play-icon');
+const muteBtn       = document.getElementById('mute-btn');
+const volIcon       = document.getElementById('vol-icon');
+const volSlider     = document.getElementById('vol-slider');
+const progressWrap  = document.getElementById('progress-wrap');
+const progressFill  = document.getElementById('progress-fill');
+const progressBuf   = document.getElementById('progress-buffer');
+const progressThumb = document.getElementById('progress-thumb');
+const timeTooltip   = document.getElementById('time-tooltip');
+const timeDisplay   = document.getElementById('time-display');
+const fsBtn         = document.getElementById('fs-btn');
+const fsIcon        = document.getElementById('fs-icon');
+const spinner       = document.getElementById('spinner');
+const settingsBtn   = document.getElementById('settings-btn');
+const settingsPanel = document.getElementById('settings-panel');
+const qualityBadge  = document.getElementById('quality-badge');
+const qualityList   = document.getElementById('quality-list');
+const liveBadge     = document.getElementById('live-badge');
+const rewindBtn     = document.getElementById('rewind-btn');
+const forwardBtn    = document.getElementById('forward-btn');
+const dtLeft        = document.getElementById('dt-left');
+const dtRight       = document.getElementById('dt-right');
+const seekPopupL    = document.getElementById('seek-popup-left');
+const seekPopupR    = document.getElementById('seek-popup-right');
+const speedBadge    = document.getElementById('speed-badge');
+const langSwitcher  = document.getElementById('lang-switcher');
+const streamLoading = document.getElementById('stream-loading');
+const streamLoadLbl = document.getElementById('stream-loading-label');
+const cmsError      = document.getElementById('cms-error');
+
+let hls, hlsLevels = [], hideTimer, scrubbing = false;
+let vjsPlayer = null; // Video.js instance
+let retryCount = 0;
+let lastTap = 0, tapTimer = null;
+let seekPopupTimerL, seekPopupTimerR;
+
+// ── CMS: Fetch from Google Sheets (public sheet required) ──
+// Uses the Sheets Visualization Query API — no API key needed, no CORS issues.
+// Sheet must be: File → Share → "Anyone with the link" can VIEW.
+async function fetchStreamsFromSheets() {
+  // Method 1: Google Visualization / Query API (most reliable, no API key)
+  const queryUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=${SHEET_GID}`;
+  try {
+    const res = await fetch(queryUrl, { cache: 'no-cache' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const raw  = await res.text();
+    // Response is wrapped: google.visualization.Query.setResponse({...})
+    const json = JSON.parse(raw.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
+    const table = json.table;
+    if (!table || !table.rows || table.rows.length === 0) throw new Error('Sheet is empty');
+
+    // Read header labels from cols
+    const colLabels = table.cols.map(c => (c.label || c.id || '').toLowerCase().trim());
+    const cCode   = colLabels.indexOf('lang_code');
+    const cLabel  = colLabels.indexOf('lang_label');
+    const cUrl    = colLabels.indexOf('stream_url');
+    const cActive = colLabels.indexOf('active');
+
+    if (cCode < 0 || cUrl < 0) throw new Error('Sheet missing required columns: lang_code, stream_url');
+
+    const parsed = [];
+    for (const row of table.rows) {
+      const cells = row.c || [];
+      const getVal = i => (i >= 0 && cells[i] && cells[i].v !== null && cells[i].v !== undefined)
+                          ? String(cells[i].v).trim() : '';
+      const code   = getVal(cCode).toUpperCase();
+      const url    = getVal(cUrl);
+      if (!code || !url || url.startsWith('https://your-')) continue;
+      const activeRaw = getVal(cActive).toUpperCase();
+      if (activeRaw === 'FALSE') continue;
+      const cType = colLabels.indexOf('stream_type');
+      parsed.push({
+        lang_code:   code,
+        lang_label:  getVal(cLabel) || code,
+        stream_url:  url,
+        stream_type: cType >= 0 ? (getVal(cType).toLowerCase() || 'hls') : 'hls',
+        active:      true,
+      });
+    }
+    if (parsed.length === 0) throw new Error('No active/valid streams found in sheet');
+    console.log('[CMS] Loaded', parsed.length, 'streams from Google Sheets ✓');
+    return parsed;
+
+  } catch (err) {
+    // Method 2: CSV export fallback
+    console.warn('[CMS] gviz failed:', err.message, '— trying CSV export…');
+    try {
+      const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${SHEET_GID}`;
+      const res2   = await fetch(csvUrl, { cache: 'no-cache' });
+      if (!res2.ok) throw new Error('CSV HTTP ' + res2.status);
+      const text   = await res2.text();
+      const rows   = text.trim().split('\n').map(r => parseCSVRow(r));
+      if (rows.length < 2) throw new Error('CSV empty');
+
+      const headers = rows[0].map(h => h.toLowerCase().trim());
+      const cCode   = headers.indexOf('lang_code');
+      const cLabel  = headers.indexOf('lang_label');
+      const cUrl    = headers.indexOf('stream_url');
+      const cActive = headers.indexOf('active');
+      if (cCode < 0 || cUrl < 0) throw new Error('CSV missing columns');
+
+      const parsed2 = [];
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        const code = (row[cCode] || '').trim().toUpperCase();
+        const url  = (row[cUrl]  || '').trim();
+        if (!code || !url || url.startsWith('https://your-')) continue;
+        const activeRaw = cActive >= 0 ? (row[cActive] || '').trim().toUpperCase() : 'TRUE';
+        if (activeRaw === 'FALSE') continue;
+        const cType2 = headers.indexOf('stream_type');
+        parsed2.push({ lang_code: code, lang_label: (row[cLabel] || code).trim(), stream_url: url, stream_type: (cType2 >= 0 ? (row[cType2] || 'hls').trim().toLowerCase() : 'hls'), active: true });
+      }
+      if (parsed2.length === 0) throw new Error('No valid rows in CSV');
+      console.log('[CMS] Loaded', parsed2.length, 'streams via CSV export ✓');
+      return parsed2;
+    } catch (err2) {
+      console.warn('[CMS] Both methods failed. Using fallback streams.', err2.message);
+      showCmsError('Could not load streams from sheet — using defaults.');
+      return null;
+    }
+  }
+}
+
+// Minimal CSV row parser (handles quoted fields with commas)
+function parseCSVRow(row) {
+  const result = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < row.length; i++) {
+    const ch = row[i];
+    if (ch === '"') {
+      if (inQ && row[i+1] === '"') { cur += '"'; i++; }
+      else inQ = !inQ;
+    } else if (ch === ',' && !inQ) { result.push(cur); cur = ''; }
+    else cur += ch;
+  }
+  result.push(cur);
+  return result;
+}
+
+function showCmsError(msg) {
+  cmsError.textContent = msg;
+  cmsError.classList.add('show');
+  setTimeout(() => cmsError.classList.remove('show'), 4000);
+}
+
+// ── Dropdown DOM refs ──
+const langTrigger = document.getElementById('lang-trigger');
+const langCurrent = document.getElementById('lang-current');
+const langMenu    = document.getElementById('lang-menu');
+
+// Language flags & English sub-labels
+const LANG_FLAGS = { HI:'🇮🇳', EN:'🏴', BN:'🇧🇩', TA:'🇮🇳', TE:'🇮🇳', KN:'🇮🇳', ML:'🇮🇳', MR:'🇮🇳', PA:'🇮🇳', GU:'🇮🇳', OR:'🇮🇳', UR:'🇵🇰' };
+const LANG_SUBS  = { HI:'Hindi', EN:'English', BN:'Bengali', TA:'Tamil', TE:'Telugu', KN:'Kannada', ML:'Malayalam', MR:'Marathi', PA:'Punjabi', GU:'Gujarati', OR:'Odia', UR:'Urdu' };
+
+// ── Build language dropdown options ──
+function buildLangSwitcher() {
+  // Remove old options, keep header
+  Array.from(langMenu.querySelectorAll('.lang-option')).forEach(el => el.remove());
+
+  streams.forEach(s => {
+    const opt = document.createElement('div');
+    opt.className  = 'lang-option' + (s.lang_code === activeLang ? ' active' : '');
+    opt.dataset.code = s.lang_code;
+    const sub = LANG_SUBS[s.lang_code] && LANG_SUBS[s.lang_code] !== s.lang_label
+      ? `<span class="lo-sublabel">${LANG_SUBS[s.lang_code]}</span>` : '';
+    opt.innerHTML = `
+      <span class="lo-flag">${LANG_FLAGS[s.lang_code] || '🌐'}</span>
+      <span class="lo-text">
+        <span class="lo-label">${s.lang_label}</span>${sub}
+      </span>
+      <svg class="lo-check" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`;
+    opt.addEventListener('click', e => {
+      e.stopPropagation();
+      closeLangMenu();
+      if (s.lang_code === activeLang) return;
+      switchStream(s.lang_code);
+      showUI();
+    });
+    langMenu.appendChild(opt);
+  });
+
+  // Update trigger label
+  const cur = streams.find(s => s.lang_code === activeLang);
+  if (cur) langCurrent.textContent = cur.lang_label;
+}
+
+// ── Dropdown open/close ──
+function openLangMenu()  { langSwitcher.classList.add('open'); }
+function closeLangMenu() { langSwitcher.classList.remove('open'); }
+function toggleLangMenu(e) {
+  e.stopPropagation();
+  langSwitcher.classList.contains('open') ? closeLangMenu() : openLangMenu();
+  showUI();
+}
+langTrigger.addEventListener('click', toggleLangMenu);
+document.addEventListener('click', e => { if (!langSwitcher.contains(e.target)) closeLangMenu(); });
+
+// ── Switch stream to given lang_code ──
+function switchStream(code) {
+  const s = streams.find(x => x.lang_code === code);
+  if (!s) return;
+  activeLang    = code;
+  SRC           = s.stream_url;
+  const streamType = (s.stream_type || 'hls').toLowerCase();
+  const isIframe   = streamType === 'iframe';
+  const isVideoJs  = streamType === 'videojs';
+
+  // Update dropdown active state
+  langCurrent.textContent = s.lang_label;
+  document.querySelectorAll('.lang-option').forEach(o => {
+    const isActive = o.dataset.code === code;
+    o.classList.toggle('active', isActive);
+    o.querySelector('.lo-label').style.color = isActive ? '#38bdf8' : '';
+  });
+
+  // Show loading indicator
+  streamLoadLbl.textContent = `Switching to ${s.lang_label}…`;
+  if (!isIframe && !isVideoJs) streamLoading.classList.add('show');
+
+  // Destroy old HLS + pause video
+  if (hls) { try { hls.destroy(); } catch(e) {} hls = null; }
+  hlsLevels = [];
+  qualityBadge.textContent = 'AUTO';
+  qualityList.innerHTML = '';
+  video.pause();
+
+  // If stream_type=videojs but URL is .m3u8 — use HLS.js (faster, quality, captions)
+  const forceHls = isVideoJs && s.stream_url.includes('.m3u8');
+
+  if (isIframe) {
+    exitVideoJsMode();
+    enterIframeMode(s.stream_url);
+    showUI();
+  } else if (isVideoJs && !forceHls) {
+    exitIframeMode();
+    enterVideoJsMode(s.stream_url);
+  } else {
+    exitIframeMode();
+    exitVideoJsMode();
+    setTimeout(() => {
+      retryCount = 0;
+      setupHls();
+      streamLoading.classList.remove('show');
+    }, 320);
+  }
+}
+
+// ── Iframe mode helpers ──
+const iframeWrap   = document.getElementById('iframe-wrap');
+const iframePlayer = document.getElementById('iframe-player');
+
+function enterIframeMode(url) {
+  // Set iframe src — player chrome (controls, logo, gradients) remains visible on top
+  iframePlayer.src = url;
+  iframeWrap.classList.add('active');
+  player.classList.add('iframe-mode');
+  // Hide native video element (iframe is the content now)
+  video.style.display = 'none';
+  // Show controls so user can at least use fullscreen & lang switcher
+  showUI();
+}
+
+function exitIframeMode() {
+  // Clear iframe to stop it playing
+  iframePlayer.src = '';
+  iframeWrap.classList.remove('active');
+  player.classList.remove('iframe-mode');
+  video.style.display = '';
+}
+
+// ── Video.js mode helpers ──
+// VJS runs on a hidden #vjs-video element.
+// Its decoded frames are mirrored into the visible #video via captureStream()
+// (with srcObject fallback), so every existing custom control keeps targeting
+// #video unchanged — play/pause, volume, seek, progress, spinner, fullscreen all just work.
+let vjsMediaEl = null;
+let _vjsPipTarget = null;  // PiP target: vjsMediaEl in VJS mode, video otherwise
+
+function enterVideoJsMode(url) {
+  exitVideoJsMode();
+
+  const vjsEl = document.getElementById('vjs-video');
+  const mimeType = url.match(/\.mp4/i)  ? 'video/mp4'
+                 : url.match(/\.webm/i) ? 'video/webm'
+                 : 'video/mp4';
+
+  vjsPlayer = videojs(vjsEl, {
+    autoplay:  false,
+    muted:     false,
+    controls:  false,
+    preload:   'auto',
+    fluid:     false,
+    fill:      false,
+    techOrder: ['html5'],
+    html5: {
+      nativeVideoTracks: false,
+      nativeAudioTracks: false,
+      nativeTextTracks:  false,
+    }
+  });
+
+  vjsPlayer.src({ src: url, type: mimeType });
+
+  vjsPlayer.ready(() => {
+    // Get the real <video> element VJS created internally
+    vjsMediaEl = vjsPlayer.tech(true) && vjsPlayer.tech(true).el();
+
+    if (vjsMediaEl) {
+      if (typeof vjsMediaEl.captureStream === 'function') {
+        // ── Best path: pipe decoded frames into visible #video via MediaStream ──
+        try {
+          video.srcObject = vjsMediaEl.captureStream();
+          video.volume    = vjsMediaEl.volume;
+          video.muted     = vjsMediaEl.muted;
+          // Mirror volume/mute from custom controls back to VJS source
+          video.addEventListener('volumechange', _syncVjsVolume);
+          video.play().catch(() => {});
+        } catch(e) { _vjsFallback(url); }
+      } else {
+        // ── Fallback: set #video.src to same URL natively — VJS still decodes ──
+        _vjsFallback(url);
+      }
+    }
+
+    vjsPlayer.play().catch(() => {});
+
+    vjsPlayer.one('loadedmetadata', () => {
+      const dur = vjsPlayer.duration();
+      const isLive = !isFinite(dur) || dur === Infinity;
+
+      // Quality: MP4/WebM have no adaptive levels — show format badge only
+      qualityBadge.style.display = '';
+      qualityBadge.textContent   = url.match(/\.webm/i) ? 'WEBM' : 'MP4';
+      qualityList.innerHTML = '';
+
+      // Time/progress: show for VOD, hide for live
+      timeDisplay.style.display  = isLive ? 'none' : '';
+      progressWrap.style.display = isLive ? 'none' : '';
+
+      // PiP: use vjsMediaEl directly (srcObject path blocks PiP on #video)
+      _vjsPipTarget = vjsMediaEl || video;
+    });
+  });
+
+  showUI();
+}
+
+function _syncVjsVolume() {
+  if (!vjsMediaEl) return;
+  vjsMediaEl.volume = video.volume;
+  vjsMediaEl.muted  = video.muted;
+}
+
+function _vjsFallback(url) {
+  // Direct src on #video — browser plays natively, VJS is unused but harmless
+  video.srcObject = null;
+  video.src = url;
+  video.load();
+  video.play().catch(() => {});
+}
+
+function exitVideoJsMode() {
+  video.removeEventListener('volumechange', _syncVjsVolume);
+  if (video.srcObject) {
+    video.srcObject = null;
+    video.removeAttribute('src');
+    video.load();
+  }
+  if (vjsPlayer) {
+    try { vjsPlayer.dispose(); } catch(e) {}
+    vjsPlayer  = null;
+    vjsMediaEl = null;
+  }
+  // Re-init #vjs-video element after VJS dispose() mutates it
+  const wrap = document.getElementById('vjs-video');
+  if (!wrap) {
+    const v = document.createElement('video');
+    v.id = 'vjs-video';
+    v.setAttribute('playsinline', '');
+    v.setAttribute('preload', 'none');
+    v.setAttribute('crossorigin', 'anonymous');
+    v.style.display = 'none';
+    document.getElementById('iframe-wrap').insertAdjacentElement('afterend', v);
+  }
+  _vjsPipTarget = null;
+  hlsLevels = [];
+  qualityBadge.textContent = 'AUTO';
+  qualityList.innerHTML = '';
+}
+
+// ── Init: load CMS then build UI ──
+async function initCMS() {
+  // Static single-channel iframe mode — no Google Sheets CMS lookup.
+  streams = FALLBACK_STREAMS;
+
+  activeLang = streams[0].lang_code;
+  SRC        = streams[0].stream_url;
+
+  buildLangSwitcher();
+
+  const firstType = (streams[0].stream_type || 'hls').toLowerCase();
+  if (firstType === 'iframe') {
+    enterIframeMode(SRC);
+    showUI();
+  } else if (firstType === 'videojs') {
+    enterVideoJsMode(SRC);
+  } else {
+    setupHls();
+  }
+}
+
+// ── Auto-refresh CMS disabled — static single-channel iframe mode ──
+
+// ── OUTLINE ICON CONSTANTS ──
+// Play: outline triangle  |  Pause: outline two rects
+const PLAY_SVG  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="6,3 20,12 6,21"/></svg>`;
+const PAUSE_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="5" x2="8" y2="19"/><line x1="16" y1="5" x2="16" y2="19"/></svg>`;
+const VOL_ON    = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="11,5 6,9 2,9 2,15 6,15 11,19"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>`;
+const VOL_OFF   = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="11,5 6,9 2,9 2,15 6,15 11,19"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`;
+const FS_ENTER  = `<polyline id="fs-tl" points="4,14 4,20 10,20"/><polyline id="fs-tr" points="20,14 20,20 14,20"/><polyline id="fs-bl" points="4,10 4,4 10,4"/><polyline id="fs-br" points="20,10 20,4 14,4"/>`;
+const FS_EXIT   = `<polyline id="fs-tl" points="10,20 4,20 4,14"/><polyline id="fs-tr" points="14,20 20,20 20,14"/><polyline id="fs-bl" points="10,4 4,4 4,10"/><polyline id="fs-br" points="14,4 20,4 20,10"/>`;
+const PIP_ENTER = `<rect x="2" y="4" width="20" height="16" rx="2"/><rect x="12" y="12" width="8" height="6" rx="1" fill="none"/>`;
+const PIP_EXIT  = `<rect x="2" y="4" width="20" height="16" rx="2"/><rect x="4" y="6" width="8" height="6" rx="1" fill="none"/>`;
+
+// ── QUALITY HELPERS ──
+function qualityLabel(l) {
+  if (!l) return 'Unknown';
+  const h = l.height;
+  if (!h) return l.bitrate ? Math.round(l.bitrate/1000)+'k bps' : 'Level';
+  if (h >= 2160) return '4K Ultra HD';
+  if (h >= 1440) return '2K  (1440p)';
+  if (h >= 1080) return 'Full HD  (1080p)';
+  if (h >= 720)  return 'HD  (720p)';
+  if (h >= 480)  return 'SD  (480p)';
+  if (h >= 360)  return '360p';
+  if (h >= 240)  return '240p';
+  return h + 'p';
+}
+function badgeLabel(l) {
+  if (!l) return 'HD';
+  const h = l.height;
+  if (!h) return 'HD';
+  if (h >= 2160) return '4K';
+  if (h >= 1440) return '1440p';
+  if (h >= 1080) return '1080p';
+  if (h >= 720)  return '720p';
+  if (h >= 480)  return '480p';
+  if (h >= 360)  return '360p';
+  if (h >= 240)  return '240p';
+  return h + 'p';
+}
+function qBadgeClass(l) {
+  if (!l) return 'q-hd';
+  const h = l.height;
+  if (h >= 2160) return 'q-4k';
+  if (h >= 720)  return 'q-hd';
+  return 'q-sd';
+}
+function qShortLabel(l) {
+  if (!l) return '';
+  const h = l.height;
+  if (h >= 2160) return '4K';
+  if (h >= 1440) return '2K';
+  if (h >= 1080) return 'FHD';
+  if (h >= 720)  return 'HD';
+  return 'SD';
+}
+
+// ── HLS SETUP ──
+// Track whether first user gesture has happened (for autoplay unlock)
+let userGestured = false;
+let pendingPlay  = false;
+
+function tryPlay() {
+  if (!userGestured) { pendingPlay = true; return; }
+  video.play().catch(err => {
+    // Muted autoplay fallback — unmute on next tap
+    if (err.name === 'NotAllowedError') {
+      video.muted = true;
+      muteBtn.innerHTML = VOL_OFF;
+      volSlider.value = 0;
+      video.play().catch(() => {});
+      showMutedBanner();
+    }
+  });
+}
+
+function showMutedBanner() {
+  // On mobile portrait: skip banner, auto-unmute at full volume instead
+  if (window.__mobileSuppressMutedBanner) {
+    video.muted = false;
+    video.volume = 1;
+    muteBtn.innerHTML = VOL_ON;
+    volSlider.value = 1;
+    return;
+  }
+  let b = document.getElementById('muted-banner');
+  if (b) return;
+  b = document.createElement('div');
+  b.id = 'muted-banner';
+  b.style.cssText = `
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    background:rgba(6,8,20,0.82);border:1px solid rgba(255,255,255,0.15);
+    border-radius:14px;padding:14px 22px;color:#fff;font-size:14px;font-weight:600;
+    text-align:center;z-index:60;backdrop-filter:blur(16px);pointer-events:none;
+    display:flex;flex-direction:column;align-items:center;gap:8px;
+  `;
+  b.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="rgba(255,255,255,0.7)"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
+  <span>Tap anywhere to unmute</span>`;
+  player.appendChild(b);
+}
+
+function dismissMutedBanner() {
+  const b = document.getElementById('muted-banner');
+  if (b) b.remove();
+  if (video.muted) {
+    video.muted = false;
+    muteBtn.innerHTML = VOL_ON;
+    volSlider.value = video.volume || 1;
+  }
+}
+
+// Unlock on first user gesture
+function onFirstGesture() {
+  if (userGestured) return;
+  userGestured = true;
+  dismissMutedBanner();
+  if (pendingPlay) { pendingPlay = false; tryPlay(); }
+  document.removeEventListener('touchstart', onFirstGesture);
+  document.removeEventListener('click', onFirstGesture);
+}
+document.addEventListener('touchstart', onFirstGesture, { passive: true });
+document.addEventListener('click', onFirstGesture);
+
+// Also unmute on any tap after muted autoplay
+player.addEventListener('touchstart', () => {
+  if (userGestured) dismissMutedBanner();
+}, { passive: true });
+
+function setupHls() {
+  // ── iOS Safari & Chrome iOS: native HLS (HLS.js not supported) ──
+  if (!Hls.isSupported() && video.canPlayType('application/vnd.apple.mpegurl')) {
+    video.src = SRC;
+    video.muted = false;
+    video.load();
+    // iOS needs a user gesture — show tap-to-play UI
+    video.addEventListener('loadedmetadata', () => {
+      timeDisplay.style.display = 'none';
+      progressWrap.style.display = 'none';
+      // iOS native HLS: no HLS.js level data available — hide quality selector
+      qualityBadge.style.display = 'none';
+      tryPlay();
+    }, { once: true });
+    video.addEventListener('error', (e) => {
+      console.error('[iOS HLS] Video error:', video.error);
+    });
+    return;
+  }
+
+  // ── Android Chrome / Desktop: HLS.js ──
+  if (!Hls.isSupported()) return;
+
+  hls = new Hls({
+    startLevel:               -1,      // auto-start at best level
+    autoLevelEnabled:         true,
+    capLevelToPlayerSize:     false,
+    // Larger buffer = less rebuffering = smoother playback
+    maxBufferLength:          60,
+    maxMaxBufferLength:       120,
+    maxBufferSize:            60 * 1000 * 1000,  // 60 MB
+    maxBufferHole:            0.1,
+    // Live settings
+    liveSyncDurationCount:    3,
+    liveMaxLatencyDurationCount: 6,
+    // Workers & threading
+    enableWorker:             true,
+    workerPath:               null,
+    // Latency & smoothness
+    lowLatencyMode:           false,
+    nudgeMaxRetry:            5,
+    nudgeOffset:              0.1,
+    // Stall recovery — recover quickly without a full restart
+    highBufferWatchdogPeriod: 2,
+    abrEwmaFastLive:          3,
+    abrEwmaSlowLive:          9,
+    // Reduce back-buffer to free memory (keeps current + 30s behind)
+    backBufferLength:         30,
+    // ── Airtel mobile fix: aggressive retry on manifest/frag load failures ──
+    manifestLoadingTimeOut:      20000,
+    manifestLoadingMaxRetry:     10,
+    manifestLoadingRetryDelay:   500,
+    levelLoadingTimeOut:         20000,
+    levelLoadingMaxRetry:        10,
+    levelLoadingRetryDelay:      500,
+    fragLoadingTimeOut:          20000,
+    fragLoadingMaxRetry:         10,
+    fragLoadingRetryDelay:       500,
+    xhrSetup: function(xhr) {
+      xhr.withCredentials = false;
+    }
+  });
+
+  hls.loadSource(SRC);
+  hls.attachMedia(video);
+
+  hls.on(Hls.Events.MANIFEST_PARSED, () => {
+    hlsLevels = hls.levels;
+    hls.currentLevel = hlsLevels.length - 1;
+    buildQualityMenu();
+    timeDisplay.style.display = 'none';
+    progressWrap.style.display = 'none';
+    tryPlay();
+  });
+
+  hls.on(Hls.Events.LEVEL_SWITCHED, (e, data) => {
+    const l = hlsLevels[data.level];
+    qualityBadge.textContent = badgeLabel(l);
+    document.querySelectorAll('.q-item').forEach((el) => {
+      const isAuto = el.dataset.level === 'auto';
+      const match  = !isAuto && parseInt(el.dataset.level) === data.level;
+      el.querySelector('.val') && el.querySelector('.val').remove();
+      if (match && hls.manualLevel !== -1) {
+        const c = document.createElement('span'); c.className = 'val'; c.textContent = '✓'; el.appendChild(c);
+      }
+    });
+  });
+
+  hls.on(Hls.Events.ERROR, (e, data) => {
+    console.warn('[HLS Error]', data.type, data.details, data.fatal);
+    if (data.fatal) {
+      retryCount++;
+      if (retryCount > 4) { console.error('[HLS] Too many fatal errors, giving up'); showDnsPopup(); return; }
+      if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+        setTimeout(() => hls && hls.startLoad(), 1000 * retryCount);
+      } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+        hls.recoverMediaError();
+      } else {
+        // Reload stream
+        setTimeout(() => { if (hls) { hls.destroy(); hls = null; } setupHls(); }, 2000);
+      }
+    }
+  });
+}
+
+function buildQualityMenu() {
+  // On iOS native HLS, hls is null and hlsLevels is empty — hide quality UI
+  if (!hls || !hlsLevels || hlsLevels.length === 0) {
+    qualityBadge.style.display = 'none';
+    return;
+  }
+  qualityList.innerHTML = '';
+
+  // AUTO entry
+  const autoDiv = document.createElement('div');
+  autoDiv.className = 'setting-item q-item active-item';
+  autoDiv.dataset.level = 'auto';
+  autoDiv.innerHTML = `
+    <span style="display:flex;align-items:center;gap:8px">
+      <span>Auto</span>
+      <span class="q-badge q-hd">BEST</span>
+    </span>
+    <span class="val" id="q-auto-check">✓</span>`;
+  autoDiv.addEventListener('click', () => {
+    hls.currentLevel = hlsLevels.length - 1;
+    hls.manualLevel  = -1;
+    qualityBadge.textContent = 'AUTO';
+    setQualityCheck(autoDiv);
+    settingsPanel.classList.remove('open');
+  });
+  qualityList.appendChild(autoDiv);
+
+  // Divider
+  const div0 = document.createElement('div');
+  div0.style.cssText = 'height:1px;background:rgba(255,255,255,0.07);margin:2px 0';
+  qualityList.appendChild(div0);
+
+  const sorted = hlsLevels
+    .map((l, i) => ({ l, i }))
+    .sort((a, b) => (b.l.height || 0) - (a.l.height || 0));
+
+  sorted.forEach(({ l, i }) => {
+    const div = document.createElement('div');
+    div.className = 'setting-item q-item';
+    div.dataset.level = i;
+    const bps = l.bitrate ? `${(l.bitrate/1000).toFixed(0)}k` : '';
+    div.innerHTML = `
+      <span style="display:flex;align-items:center;gap:8px">
+        <span>${qualityLabel(l)}</span>
+        ${bps ? `<span class="q-res">${bps}</span>` : ''}
+      </span>
+      <span class="q-badge ${qBadgeClass(l)}">${qShortLabel(l)}</span>`;
+    div.addEventListener('click', () => {
+      hls.currentLevel = i;
+      hls.manualLevel  = i;
+      qualityBadge.textContent = badgeLabel(l);
+      setQualityCheck(div);
+      settingsPanel.classList.remove('open');
+    });
+    qualityList.appendChild(div);
+  });
+}
+
+function setQualityCheck(activeEl) {
+  document.querySelectorAll('.q-item .val').forEach(v => v.remove());
+  const c = document.createElement('span'); c.className = 'val'; c.textContent = '✓';
+  activeEl.appendChild(c);
+}
+
+// ── PLAY/PAUSE ──
+function updateIcons() {
+  const p = video.paused;
+  // Morph the center cluster icon
+  centerIcon.innerHTML = p
+    ? `<polygon points="6,3 20,12 6,21" fill="#00FF85" stroke="none"/>`
+    : `<line x1="8" y1="5" x2="8" y2="19" stroke="#00FF85" stroke-width="2.5" stroke-linecap="round"/><line x1="16" y1="5" x2="16" y2="19" stroke="#00FF85" stroke-width="2.5" stroke-linecap="round"/>`;
+  // Swap the bottom-row play button entire SVG for smooth morph feel
+  playBtn.innerHTML = p ? PLAY_SVG : PAUSE_SVG;
+  centerBtn.classList.toggle('is-playing', !p);
+}
+function togglePlay() {
+  dismissMutedBanner();
+  if (video.paused) {
+    video.play().catch(err => {
+      if (err.name === 'NotAllowedError') { video.muted = true; video.play().catch(() => {}); showMutedBanner(); }
+    });
+  } else {
+    video.pause();
+  }
+}
+
+centerBtn.addEventListener('click', e => { e.stopPropagation(); togglePlay(); });
+playBtn.addEventListener('click', togglePlay);
+
+// ── NEW SKIP BUTTONS in controls bar ──
+const skipBackBtn = document.getElementById('skip-back-btn');
+const skipFwdBtn  = document.getElementById('skip-fwd-btn');
+if (skipBackBtn) skipBackBtn.addEventListener('click', e => { e.stopPropagation(); doSeek(-1); showUI(); });
+if (skipFwdBtn)  skipFwdBtn.addEventListener('click',  e => { e.stopPropagation(); doSeek(+1); showUI(); });
+
+// ── SPINNER — only show if truly stalled, hide the moment frames move ──
+let spinnerTimer = null;
+
+function showSpinner() {
+  // Only show after 300 ms of continuous stall — avoids flash on normal segment fetches
+  if (spinnerTimer) return;
+  spinnerTimer = setTimeout(() => {
+    if (video.paused) return; // paused intentionally — don't show
+    spinner.classList.add('show');
+  }, 300);
+}
+function hideSpinner() {
+  clearTimeout(spinnerTimer);
+  spinnerTimer = null;
+  spinner.classList.remove('show');
+}
+
+video.addEventListener('play',       () => { updateIcons(); hideSpinner(); });
+video.addEventListener('playing',    hideSpinner);   // real frames rendering
+video.addEventListener('canplay',    hideSpinner);
+video.addEventListener('canplaythrough', hideSpinner);
+video.addEventListener('timeupdate', hideSpinner);   // proof time is actually moving
+video.addEventListener('pause',      () => { updateIcons(); hideSpinner(); });
+video.addEventListener('waiting',    showSpinner);
+video.addEventListener('stalled',    showSpinner);
+
+// ── SEEK BUTTONS ──
+function doSeek(dir) {
+  const delta = dir * 10;
+  video.currentTime = Math.max(0, Math.min(video.duration || Infinity, video.currentTime + delta));
+  if (dir < 0) {
+    flashEl(dtLeft);
+    showSeekPopup(seekPopupL, seekPopupTimerL, t => seekPopupTimerL = t);
+  } else {
+    flashEl(dtRight);
+    showSeekPopup(seekPopupR, seekPopupTimerR, t => seekPopupTimerR = t);
+  }
+}
+
+function flashEl(el) { el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
+function showSeekPopup(el, timer, setTimer) {
+  el.classList.add('show');
+  clearTimeout(timer);
+  setTimer(setTimeout(() => el.classList.remove('show'), 900));
+}
+
+rewindBtn.addEventListener('click',  e => { e.stopPropagation(); doSeek(-1); showUI(); });
+forwardBtn.addEventListener('click', e => { e.stopPropagation(); doSeek(+1); showUI(); });
+
+// ── PROGRESS ──
+function fmt(s) {
+  if (!isFinite(s)) return '--:--';
+  const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+  return m + ':' + String(sec).padStart(2, '0');
+}
+// ── PROGRESS — rAF loop for 120 fps smooth scrubbing ──
+let rafId = null;
+function rafProgress() {
+  if (!scrubbing && video.duration) {
+    const pct = video.currentTime / video.duration * 100;
+    progressFill.style.width  = pct + '%';
+    progressThumb.style.left  = pct + '%';
+    timeDisplay.innerHTML = `<b>${fmt(video.currentTime)}</b> / ${fmt(video.duration)}`;
+  }
+  // Buffer bar
+  const buf = video.buffered;
+  if (buf.length && video.duration) {
+    progressBuf.style.width = (buf.end(buf.length - 1) / video.duration * 100) + '%';
+  }
+  rafId = requestAnimationFrame(rafProgress);
+}
+// Start the loop immediately; it runs every frame (up to display refresh rate)
+rafId = requestAnimationFrame(rafProgress);
+
+function getPct(e) {
+  const rect = progressWrap.getBoundingClientRect();
+  const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+  return Math.max(0, Math.min(1, x / rect.width));
+}
+function setProgress(p) {
+  progressFill.style.width  = (p * 100) + '%';
+  progressThumb.style.left  = (p * 100) + '%';
+}
+
+progressWrap.addEventListener('mousedown', e => { scrubbing = true; progressWrap.classList.add('dragging'); setProgress(getPct(e)); showTooltip(getPct(e)); });
+progressWrap.addEventListener('mousemove', e => { const p = getPct(e); if (scrubbing) setProgress(p); showTooltip(p); });
+progressWrap.addEventListener('mouseleave', () => timeTooltip.style.display = 'none');
+progressWrap.addEventListener('mouseup', e => {
+  if (scrubbing) {
+    const p = getPct(e); setProgress(p);
+    if (video.duration) video.currentTime = p * video.duration;
+    scrubbing = false; progressWrap.classList.remove('dragging');
+  }
+});
+document.addEventListener('mouseup', () => { scrubbing = false; progressWrap.classList.remove('dragging'); });
+progressWrap.addEventListener('touchstart', e => { scrubbing = true; progressWrap.classList.add('dragging'); setProgress(getPct(e)); }, { passive: true });
+progressWrap.addEventListener('touchmove',  e => { if (scrubbing) setProgress(getPct(e)); }, { passive: true });
+progressWrap.addEventListener('touchend',   e => {
+  if (scrubbing) {
+    const p = getPct({ clientX: e.changedTouches[0].clientX });
+    if (video.duration) video.currentTime = p * video.duration;
+    scrubbing = false; progressWrap.classList.remove('dragging'); timeTooltip.style.display = 'none';
+  }
+});
+function showTooltip(p) {
+  if (!video.duration) return;
+  timeTooltip.textContent = fmt(p * video.duration);
+  timeTooltip.style.left  = (p * 100) + '%';
+  timeTooltip.style.display = 'block';
+}
+
+// ── VOLUME ──
+muteBtn.addEventListener('click', () => {
+  video.muted = !video.muted;
+  muteBtn.innerHTML = video.muted ? VOL_OFF : VOL_ON;
+  volSlider.value   = video.muted ? 0 : video.volume;
+});
+volSlider.addEventListener('input', () => {
+  video.volume = parseFloat(volSlider.value);
+  video.muted  = video.volume === 0;
+  muteBtn.innerHTML = video.muted ? VOL_OFF : VOL_ON;
+});
+
+// ── CC / SUBTITLES — custom styled captions overlay ──
+const ccBtn = document.getElementById('cc-btn');
+let ccActive  = false;
+let _ccTrack  = null;   // active TextTrack
+let _ccCue    = null;   // current cue cleanup fn
+
+// Inject caption overlay div + Google Sans styled CSS once
+(function setupCaptionOverlay() {
+  if (document.getElementById('cc-overlay')) return;
+  const el = document.createElement('div');
+  el.id = 'cc-overlay';
+  el.style.cssText = [
+    'position:absolute',
+    'bottom:90px',
+    'left:50%',
+    'transform:translateX(-50%)',
+    'z-index:22',
+    'pointer-events:none',
+    'text-align:center',
+    'max-width:82%',
+    'display:none',
+  ].join(';');
+  document.getElementById('player').appendChild(el);
+
+  // Inject caption CSS
+  const style = document.createElement('style');
+  style.textContent = `
+    #cc-overlay {
+      font-family: 'Google Sans','Product Sans',Roboto,sans-serif;
+      font-size: clamp(11px, 1.8vw, 14px);
+      font-weight: 500;
+      line-height: 1.3;
+      letter-spacing: 0.01em;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.95);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 90vw;
+    }
+    #cc-overlay span {
+      background: rgba(0,0,0,0.52);
+      border-radius: 4px;
+      padding: 2px 8px 3px;
+      display: inline-block;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+    #player[data-fs="1"] #cc-overlay,
+    #player.ui-visible #cc-overlay {
+      bottom: 90px;
+    }
+    #player:not(.ui-visible) #cc-overlay {
+      bottom: 22px;
+    }
+    /* Hide browser's native caption rendering entirely */
+    video::cue { color: transparent; background: transparent; text-shadow: none; }
+    ::cue       { color: transparent; background: transparent; text-shadow: none; }
+  `;
+  document.head.appendChild(style);
+})();
+
+function _showCaption(text) {
+  const el = document.getElementById('cc-overlay');
+  if (!el) return;
+  el.innerHTML = text ? '<span>' + text + '</span>' : '';
+  el.style.display = (text && ccActive) ? 'block' : 'none';
+}
+
+function _attachTrack(track) {
+  if (_ccTrack) {
+    _ccTrack.mode = 'hidden';
+    _ccTrack.removeEventListener('cuechange', _onCueChange);
+  }
+  _ccTrack = track;
+  if (!track) { _showCaption(''); return; }
+  track.mode = 'hidden';  // hidden = parsed but not natively rendered
+  track.addEventListener('cuechange', _onCueChange);
+}
+
+function _onCueChange() {
+  if (!_ccTrack || !ccActive) return;
+  const cues = _ccTrack.activeCues;
+  if (!cues || cues.length === 0) { _showCaption(''); return; }
+  const lines = [];
+  for (let i = 0; i < cues.length; i++) {
+    const txt = cues[i].text || '';
+    // Strip VTT tags like <c.color>, <i>, timestamps
+    lines.push(txt.replace(/<[^>]+>/g, '').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').trim());
+  }
+  _showCaption(lines.filter(Boolean).join(' '));  // single line — join with space
+}
+
+// Get text tracks from the right element (video or vjsMediaEl in VJS mode)
+function _getTrackSource() {
+  return (vjsMediaEl && vjsMediaEl.textTracks && vjsMediaEl.textTracks.length > 0)
+    ? vjsMediaEl : video;
+}
+
+function detectAndSetupCC() {
+  const src = _getTrackSource();
+  const tracks = src.textTracks;
+
+  // Find first subtitle/caption track
+  let found = null;
+  for (let i = 0; i < (tracks ? tracks.length : 0); i++) {
+    const t = tracks[i];
+    if (t.kind === 'subtitles' || t.kind === 'captions' || t.kind === 'metadata') {
+      if (t.kind !== 'metadata') { found = t; break; }
+    }
+  }
+
+  if (!found) {
+    if (ccBtn) ccBtn.style.display = 'none';
+    return;
+  }
+
+  if (ccBtn) {
+    ccBtn.style.display = '';
+    // Remove old listener before re-adding
+    const newBtn = ccBtn.cloneNode(true);
+    ccBtn.replaceWith(newBtn);
+    newBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      ccActive = !ccActive;
+      newBtn.classList.toggle('btn-on', ccActive);
+      if (ccActive) {
+        _attachTrack(found);
+        _showCaption('');
+      } else {
+        _showCaption('');
+      }
+      showUI();
+    });
+  }
+
+  _attachTrack(found);
+}
+
+video.addEventListener('loadedmetadata', detectAndSetupCC);
+video.addEventListener('loadedmetadata', () => {
+  // Also watch vjsMediaEl tracks if available
+  if (vjsMediaEl && vjsMediaEl.textTracks) {
+    vjsMediaEl.textTracks.addEventListener('addtrack', detectAndSetupCC);
+  }
+});
+
+// ── UI SHOW/HIDE ──
+function showUI() {
+  player.classList.add('ui-visible', 'show-cursor');
+  if (!player.classList.contains('iframe-mode')) centerCluster.classList.add('visible');
+  clearTimeout(hideTimer);
+  hideTimer = setTimeout(() => {
+    if (!video.paused) {
+      player.classList.remove('ui-visible', 'show-cursor');
+      centerCluster.classList.remove('visible');
+    }
+  }, 3500);
+}
+function forceShowUI() {
+  player.classList.add('ui-visible', 'show-cursor');
+  if (!player.classList.contains('iframe-mode')) centerCluster.classList.add('visible');
+}
+forceShowUI();
+
+player.addEventListener('mousemove', showUI);
+player.addEventListener('touchstart', showUI, { passive: true });
+player.addEventListener('click', e => {
+  if (player.classList.contains('iframe-mode')) return;
+  if (e.target === video || e.target === player) { togglePlay(); showUI(); }
+});
+
+// ── DOUBLE TAP (mobile) ──
+player.addEventListener('touchend', e => {
+  if (e.target.closest('#center-cluster') || e.target.closest('#controls') || e.target.closest('#settings-panel')) return;
+  const now = Date.now();
+  const x   = e.changedTouches[0].clientX;
+  if (now - lastTap < 280) {
+    clearTimeout(tapTimer);
+    doSeek(x < window.innerWidth / 2 ? -1 : 1);
+    lastTap = 0;
+  } else {
+    lastTap  = now;
+    tapTimer = setTimeout(() => {}, 290);
+  }
+});
+
+// ── FULLSCREEN + ORIENTATION LOCK ──
+const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+
+async function enterFullscreen() {
+  try {
+    if (player.requestFullscreen) await player.requestFullscreen();
+    else if (player.webkitRequestFullscreen) await player.webkitRequestFullscreen();
+    else if (player.mozRequestFullScreen) await player.mozRequestFullScreen();
+  } catch(e) {}
+
+  // Lock to landscape on mobile
+  if (isMobile) {
+    try {
+      if (screen.orientation && screen.orientation.lock) {
+        await screen.orientation.lock('landscape');
+      }
+    } catch(e) {
+      // Not supported (iOS Safari) — apply CSS rotation trick
+      applyRotationFallback(true);
+    }
+  }
+}
+
+async function exitFullscreen() {
+  try {
+    if (document.exitFullscreen) await document.exitFullscreen();
+    else if (document.webkitExitFullscreen) await document.webkitExitFullscreen();
+    else if (document.mozCancelFullScreen) await document.mozCancelFullScreen();
+  } catch(e) {}
+  applyRotationFallback(false);
+  try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch(e) {}
+}
+
+// CSS rotation fallback for iOS (can't lock orientation without fullscreen API)
+function applyRotationFallback(on) {
+  if (on && window.innerHeight > window.innerWidth) {
+    // portrait → rotate player 90deg to fake landscape
+    player.style.cssText = `
+      position:fixed; top:0; left:0;
+      width:100vh; height:100vw;
+      transform:rotate(90deg) translateY(-100%);
+      transform-origin:top left;
+      z-index:9999;
+    `;
+    document.body.style.overflow = 'hidden';
+  } else {
+    player.style.cssText = '';
+    document.body.style.overflow = '';
+  }
+}
+
+// Listen for actual orientation changes to undo fake rotation if user rotates
+window.addEventListener('orientationchange', () => {
+  setTimeout(() => {
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      applyRotationFallback(false);
+    }
+  }, 200);
+});
+
+fsBtn.addEventListener('click', async () => {
+  const inFS = document.fullscreenElement || document.webkitFullscreenElement;
+  if (!inFS) await enterFullscreen();
+  else await exitFullscreen();
+});
+
+document.addEventListener('fullscreenchange', () => {
+  const inFS = document.fullscreenElement || document.webkitFullscreenElement;
+  fsIcon.innerHTML = inFS ? FS_EXIT : FS_ENTER;
+  player.dataset.fs = inFS ? '1' : '0';
+  // Strip transform in fullscreen so position:fixed children (settings panel sidebar)
+  // correctly anchor to the viewport rather than the transformed ancestor
+  player.style.transform = inFS ? '' : 'translateZ(0)';
+  player.style.webkitTransform = inFS ? '' : 'translateZ(0)';
+  if (!inFS) applyRotationFallback(false);
+});
+document.addEventListener('webkitfullscreenchange', () => {
+  const inFS = document.fullscreenElement || document.webkitFullscreenElement;
+  fsIcon.innerHTML = inFS ? FS_EXIT : FS_ENTER;
+  player.dataset.fs = inFS ? '1' : '0';
+  player.style.transform = inFS ? '' : 'translateZ(0)';
+  player.style.webkitTransform = inFS ? '' : 'translateZ(0)';
+  if (!inFS) applyRotationFallback(false);
+});
+
+// ── SETTINGS ──
+settingsBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  settingsPanel.classList.toggle('open');
+  clearTimeout(hideTimer);
+  repositionSettingsPanel();
+});
+qualityBadge.addEventListener('click', e => {
+  e.stopPropagation();
+  settingsPanel.classList.toggle('open');
+  clearTimeout(hideTimer);
+  repositionSettingsPanel();
+});
+speedBadge.addEventListener('click', e => {
+  e.stopPropagation();
+  settingsPanel.classList.toggle('open');
+  clearTimeout(hideTimer);
+  repositionSettingsPanel();
+});
+
+// Move settings panel to body on mobile portrait so it escapes overflow:hidden player
+function repositionSettingsPanel() {
+  const isMobPortrait = window.innerWidth <= 480 && window.innerHeight > window.innerWidth;
+  const inFS = document.fullscreenElement || document.webkitFullscreenElement;
+  if (isMobPortrait && !inFS) {
+    if (settingsPanel.parentElement !== document.body) {
+      document.body.appendChild(settingsPanel);
+    }
+  } else {
+    if (settingsPanel.parentElement !== player) {
+      player.appendChild(settingsPanel);
+    }
+  }
+}
+// Restore panel into player on orientation change / fullscreen
+window.addEventListener('resize', repositionSettingsPanel);
+document.addEventListener('fullscreenchange', repositionSettingsPanel);
+document.addEventListener('webkitfullscreenchange', repositionSettingsPanel);
+document.addEventListener('click', e => {
+  if (!settingsPanel.contains(e.target) && e.target !== settingsBtn && e.target !== qualityBadge && e.target !== speedBadge)
+    settingsPanel.classList.remove('open');
+});
+
+// ── SPEED PILLS ──
+document.querySelectorAll('.speed-pill').forEach(el => {
+  el.addEventListener('click', e => {
+    e.stopPropagation();
+    const speed = parseFloat(el.dataset.speed);
+    video.playbackRate = speed;
+
+    // Update pills
+    document.querySelectorAll('.speed-pill').forEach(p => p.classList.remove('active-speed'));
+    el.classList.add('active-speed');
+
+    // Update badge
+    if (speed === 1) {
+      speedBadge.textContent = '1×';
+      speedBadge.style.color = '';
+      speedBadge.style.borderColor = '';
+      speedBadge.style.background = '';
+    } else {
+      speedBadge.textContent = speed + '×';
+      speedBadge.style.color = 'var(--accent2)';
+    }
+
+    settingsPanel.classList.remove('open');
+    showUI();
+  });
+});
+
+// ── KEYBOARD ──
+document.addEventListener('keydown', e => {
+  if (player.classList.contains('iframe-mode')) return;
+  switch (e.code) {
+    case 'Space':      e.preventDefault(); togglePlay(); break;
+    case 'ArrowRight': doSeek(+1); break;
+    case 'ArrowLeft':  doSeek(-1); break;
+    case 'ArrowUp':    video.volume = Math.min(1, video.volume + 0.1); volSlider.value = video.volume; break;
+    case 'ArrowDown':  video.volume = Math.max(0, video.volume - 0.1); volSlider.value = video.volume; break;
+    case 'KeyF':       fsBtn.click(); break;
+    case 'KeyM':       muteBtn.click(); break;
+    case 'KeyS':       settingsBtn.click(); break;
+  }
+  showUI();
+});
+
+// ══════════════════════════════════════════════
+//  CHROMECAST
+// ══════════════════════════════════════════════
+const castBtn        = document.getElementById('cast-btn');
+const castOverlay    = document.getElementById('cast-overlay');
+const castDeviceName = document.getElementById('cast-device-name');
+const castStopBtn    = document.getElementById('cast-stop-btn');
+let castSession  = null;
+let castAvailable = false;
+
+function enterCastMode(deviceName) {
+  // Pause & silence local playback — TV is the screen now
+  video.pause();
+  video.muted = true;
+  castOverlay.classList.add('active');
+  // Show device name + highest quality label
+  const topLabel = hlsLevels && hlsLevels.length
+    ? badgeLabel(hlsLevels[hlsLevels.length - 1])
+    : '';
+  castDeviceName.textContent = (deviceName || 'Your TV') + (topLabel ? '  ·  ' + topLabel : '');
+  castBtn.classList.add('casting');
+}
+
+function exitCastMode() {
+  castOverlay.classList.remove('active');
+  castBtn.classList.remove('casting');
+  // Restore local playback
+  video.muted = false;
+  video.play().catch(() => {});
+}
+
+function initCast() {
+  try {
+    cast.framework.CastContext.getInstance().setOptions({
+      receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
+      autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+    });
+    castAvailable = true;
+    castBtn.classList.add('available');
+
+    const ctx = cast.framework.CastContext.getInstance();
+    ctx.addEventListener(cast.framework.CastContextEventType.SESSION_STATE_CHANGED, e => {
+      const s = e.sessionState;
+      if (s === cast.framework.SessionState.SESSION_STARTED ||
+          s === cast.framework.SessionState.SESSION_RESUMED) {
+        castSession = ctx.getCurrentSession();
+        const deviceName = castSession.getCastDevice().friendlyName;
+        enterCastMode(deviceName);
+        castToTV();
+      } else if (s === cast.framework.SessionState.SESSION_ENDED) {
+        castSession = null;
+        exitCastMode();
+      }
+    });
+  } catch(e) { console.warn('Cast init failed:', e); }
+}
+
+function castToTV() {
+  if (!castSession) return;
+  try {
+    // Pick the highest-quality rendition URL available from HLS manifest.
+    // HLS.js sorts levels by bitrate ascending → last index = highest quality.
+    // Fall back to master playlist if levels aren't loaded yet.
+    let castSrc = SRC;
+    if (hlsLevels && hlsLevels.length > 0) {
+      const topLevel = hlsLevels[hlsLevels.length - 1];
+      const levelUrl = Array.isArray(topLevel.url) ? topLevel.url[0] : topLevel.url;
+      if (levelUrl) castSrc = levelUrl;
+    }
+
+    const mediaInfo = new chrome.cast.media.MediaInfo(castSrc, 'application/x-mpegurl');
+    mediaInfo.streamType = chrome.cast.media.StreamType.LIVE;
+    mediaInfo.metadata   = new chrome.cast.media.TvShowMediaMetadata();
+    mediaInfo.metadata.title = document.title;
+    const req = new chrome.cast.media.LoadRequest(mediaInfo);
+    castSession.loadMedia(req);
+
+    console.log('[Cast] Sending highest quality stream:', castSrc,
+      hlsLevels.length ? `(${badgeLabel(hlsLevels[hlsLevels.length-1])})` : '(master fallback)');
+  } catch(e) { console.warn('Cast loadMedia failed:', e); }
+}
+
+castBtn.addEventListener('click', async e => {
+  e.stopPropagation();
+  if (!castAvailable) return;
+  try {
+    if (castSession) {
+      await cast.framework.CastContext.getInstance().endCurrentSession(true);
+    } else {
+      await cast.framework.CastContext.getInstance().requestSession();
+    }
+  } catch(e) {}
+  showUI();
+});
+
+// Stop casting from the overlay button
+castStopBtn.addEventListener('click', async e => {
+  e.stopPropagation();
+  try {
+    await cast.framework.CastContext.getInstance().endCurrentSession(true);
+  } catch(e) {}
+});
+
+// ══════════════════════════════════════════════
+//  4K ENHANCEMENT ENGINE
+//
+//  Video: SVG filter pipeline applied directly on
+//         <video> via CSS — zero canvas, zero fade
+//         Stages: deblock blur → unsharp mask →
+//                 S-curve contrast → saturation
+//
+//  Audio: Web Audio compressor + 5-band EQ +
+//         loudness boost
+// ══════════════════════════════════════════════
+
+const enhanceBtn      = document.getElementById('enhance-ctrl');
+const enhanceToast    = document.getElementById('enhance-toast');
+const enhanceToastMsg = document.getElementById('enhance-toast-msg');
+let enhanceActive = false;
+
+// ── AUDIO CHAIN ──
+let audioCtx, sourceNode, compressor, gainNode,
+    bassFilter, midFilter, presenceFilter, airFilter, highFilter,
+    audioReady = false;
+
+function setupAudio() {
+  if (audioReady) return;
+  try {
+    audioCtx   = new (window.AudioContext || window.webkitAudioContext)();
+    sourceNode = audioCtx.createMediaElementSource(video);
+
+    compressor = audioCtx.createDynamicsCompressor();
+    compressor.threshold.value = -24;
+    compressor.knee.value      = 8;
+    compressor.ratio.value     = 4;
+    compressor.attack.value    = 0.003;
+    compressor.release.value   = 0.18;
+
+    bassFilter = audioCtx.createBiquadFilter();
+    bassFilter.type            = 'lowshelf';
+    bassFilter.frequency.value = 80;
+    bassFilter.gain.value      = 3.5;
+
+    midFilter = audioCtx.createBiquadFilter();
+    midFilter.type             = 'peaking';
+    midFilter.frequency.value  = 400;
+    midFilter.Q.value          = 0.8;
+    midFilter.gain.value       = -1.5;
+
+    presenceFilter = audioCtx.createBiquadFilter();
+    presenceFilter.type            = 'peaking';
+    presenceFilter.frequency.value = 3000;
+    presenceFilter.Q.value         = 1.2;
+    presenceFilter.gain.value      = 4;
+
+    airFilter = audioCtx.createBiquadFilter();
+    airFilter.type             = 'peaking';
+    airFilter.frequency.value  = 8000;
+    airFilter.Q.value          = 1.0;
+    airFilter.gain.value       = 3;
+
+    highFilter = audioCtx.createBiquadFilter();
+    highFilter.type            = 'highshelf';
+    highFilter.frequency.value = 12000;
+    highFilter.gain.value      = 2.5;
+
+    gainNode = audioCtx.createGain();
+    gainNode.gain.value = 1.6;
+
+    sourceNode.connect(compressor);
+    compressor.connect(bassFilter);
+    bassFilter.connect(midFilter);
+    midFilter.connect(presenceFilter);
+    presenceFilter.connect(airFilter);
+    airFilter.connect(highFilter);
+    highFilter.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    audioReady = true;
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  } catch(e) { console.warn('Web Audio setup failed:', e); }
+}
+
+function enableAudio(on) {
+  if (!audioReady) return;
+  bassFilter.gain.value     = on ? 3.5  : 0;
+  midFilter.gain.value      = on ? -1.5 : 0;
+  presenceFilter.gain.value = on ? 4    : 0;
+  airFilter.gain.value      = on ? 3    : 0;
+  highFilter.gain.value     = on ? 2.5  : 0;
+  gainNode.gain.value       = on ? 1.6  : 1.0;
+  compressor.ratio.value    = on ? 4    : 1;
+}
+
+function showToastMsg(msg, duration = 2400) {
+  enhanceToastMsg.textContent = msg;
+  enhanceToast.classList.add('show');
+  setTimeout(() => enhanceToast.classList.remove('show'), duration);
+}
+
+function toggleEnhance() {
+  enhanceActive = !enhanceActive;
+  if (enhanceActive) {
+    setupAudio();
+    enableAudio(true);
+    // Apply SVG filter directly on video — instant, no opacity change, no fade
+    video.style.filter = 'url(#vsharp)';
+    enhanceBtn.classList.add('active');
+    enhanceBtn.querySelector('.ec-pill').textContent = 'ON';
+    showToastMsg('✦ 4K Enhancement ON');
+  } else {
+    video.style.filter = '';
+    enhanceBtn.classList.remove('active');
+    enhanceBtn.querySelector('.ec-pill').textContent = 'OFF';
+    enableAudio(false);
+    showToastMsg('Enhancement OFF');
+  }
+}
+
+enhanceBtn.addEventListener('click', e => { e.stopPropagation(); toggleEnhance(); showUI(); });
+document.addEventListener('click', () => { if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); });
+
+// ══════════════════════════════════════════════
+//  PICTURE-IN-PICTURE
+// ══════════════════════════════════════════════
+const pipBtn = document.getElementById('pip-btn');
+
+// Hide button if API not supported
+if (!document.pictureInPictureEnabled) {
+  pipBtn.classList.add('pip-unsupported');
+}
+
+function updatePipIcon(inPip) {
+  document.getElementById('pip-icon').innerHTML = inPip ? PIP_EXIT : PIP_ENTER;
+  pipBtn.classList.toggle('pip-active', inPip);
+  pipBtn.title = inPip ? 'Exit Picture in Picture' : 'Picture in Picture';
+}
+
+pipBtn.addEventListener('click', async e => {
+  e.stopPropagation();
+  try {
+    if (document.pictureInPictureElement) {
+      await document.exitPictureInPicture();
+    } else {
+      // In VJS mode use vjsMediaEl — srcObject on #video blocks PiP in most browsers
+      const pipEl = (_vjsPipTarget && _vjsPipTarget !== video) ? _vjsPipTarget : video;
+      await pipEl.requestPictureInPicture();
+    }
+  } catch(err) {
+    console.warn('PiP failed:', err);
+  }
+  showUI();
+});
+
+video.addEventListener('enterpictureinpicture', () => updatePipIcon(true));
+video.addEventListener('leavepictureinpicture', () => updatePipIcon(false));
+// Also track PiP on vjsMediaEl
+function _onVjsPipEnter() { updatePipIcon(true); }
+function _onVjsPipExit()  { updatePipIcon(false); }
+
+// ── DNS POPUP ──
+function showDnsPopup() {
+  // Only show on mobile (width <= 768px) and only once per session
+  if (window.__dnsPopupShown) return;
+  if (window.innerWidth > 768) return;
+  window.__dnsPopupShown = true;
+  var popup = document.getElementById('dns-popup');
+  if (!popup) return;
+  popup.style.display = 'flex';
+}
+document.addEventListener('DOMContentLoaded', function() {
+  var okBtn = document.getElementById('dns-ok-btn');
+  if (okBtn) {
+    okBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var popup = document.getElementById('dns-popup');
+      if (popup) popup.style.display = 'none';
+    });
+    okBtn.addEventListener('touchstart', function() {
+      this.style.transform = 'scale(0.96)';
+    }, {passive:true});
+    okBtn.addEventListener('touchend', function() {
+      this.style.transform = '';
+    }, {passive:true});
+  }
+});
+
+// Also hook iOS native HLS error to show DNS popup
+video.addEventListener('error', function() {
+  if (video.error && window.innerWidth <= 768) {
+    setTimeout(showDnsPopup, 8000);
+  }
+});
+
+// ── DMCA FLYOUT (Desktop) ──
+function toggleDmcaFlyout(e) {
+  if (e) e.stopPropagation();
+  const flyout = document.getElementById('dmca-flyout');
+  if (!flyout) return;
+  flyout.classList.toggle('open');
+}
+function closeDmcaFlyout() {
+  const flyout = document.getElementById('dmca-flyout');
+  if (flyout) flyout.classList.remove('open');
+}
+// Close flyout on click outside
+document.addEventListener('click', function(e) {
+  const flyout = document.getElementById('dmca-flyout');
+  const tab = document.getElementById('dmca-tab');
+  if (flyout && flyout.classList.contains('open')) {
+    if (!flyout.contains(e.target) && e.target !== tab) {
+      flyout.classList.remove('open');
+    }
+  }
+});
+
+// ── MOBILE AUTO-UNMUTE (portrait) ──
+// On mobile portrait, auto set full volume without showing muted banner
+(function() {
+  const isMobilePortrait = () => window.innerWidth <= 480 && window.innerHeight > window.innerWidth;
+  if (isMobilePortrait()) {
+    // Override showMutedBanner to be a no-op on portrait mobile
+    window.__mobileSuppressMutedBanner = true;
+  }
+  window.addEventListener('orientationchange', function() {
+    setTimeout(function() {
+      window.__mobileSuppressMutedBanner = isMobilePortrait();
+    }, 100);
+  });
+  window.addEventListener('resize', function() {
+    window.__mobileSuppressMutedBanner = isMobilePortrait();
+  });
+})();
+
+// ── BOOT ──
+initCMS();
+// Apply GPU compositing layer hint on player (non-fullscreen initial state)
+player.style.transform = 'translateZ(0)';
+player.style.webkitTransform = 'translateZ(0)';
+
+// Keep controls above browser nav bar when viewport height changes
+function updateControlsPadding() {
+  const inFS = document.fullscreenElement || document.webkitFullscreenElement;
+  const ctrl = document.getElementById('controls');
+  if (inFS) {
+    ctrl.style.paddingBottom = '';
+  } else if (window.visualViewport) {
+    const gap = window.innerHeight - window.visualViewport.height;
+    if (gap > 10) ctrl.style.paddingBottom = (gap + 12) + 'px';
+    else ctrl.style.paddingBottom = '';
+  }
+}
+
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', updateControlsPadding);
+}
+document.addEventListener('fullscreenchange', updateControlsPadding);
+document.addEventListener('webkitfullscreenchange', updateControlsPadding);
+
+// Hide mob-disclaimer in fullscreen, restore on exit
+function updateFullscreenLayout() {
+  const inFS = document.fullscreenElement || document.webkitFullscreenElement;
+  const disc = document.getElementById('mob-disclaimer');
+  if (disc) disc.classList.toggle('fs-hidden', !!inFS);
+}
+document.addEventListener('fullscreenchange', updateFullscreenLayout);
+document.addEventListener('webkitfullscreenchange', updateFullscreenLayout);
+</script>
 </body>
 </html>
