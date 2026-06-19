@@ -478,6 +478,7 @@ video {
 @media(min-width:901px){
   #player.iframe-mode #fs-btn { display: none !important; }
 }
+#lang-switcher { display: none !important; }
 /* In iframe mode: player background transparent so iframe shows fully */
 #player.iframe-mode { background: transparent !important; pointer-events: none; }
 /* Full passthrough to iframe — everything none except bottom controls */
@@ -505,12 +506,7 @@ video {
 #player.iframe-mode #seek-popup-right {
   display: none !important;
 }
-/* Keep lang switcher visible in iframe mode */
-#player.iframe-mode #lang-switcher {
-  display: block;
-  opacity: 1 !important;
-  pointer-events: all;
-}
+/* Lang switcher removed permanently */
 /* In iframe mode: hide video-only controls that don't apply to embedded player */
 #player.iframe-mode #skip-back-btn,
 #player.iframe-mode #skip-fwd-btn,
@@ -1593,19 +1589,6 @@ video { will-change: filter; }
     <img src="https://i.postimg.cc/vHPg7Ltt/Chat-GPT-Image-May-18-2026-08-33-34-AM.png" alt="SX Sports" style="width:clamp(60px,6vw,100px);height:clamp(60px,6vw,100px);object-fit:contain;image-rendering:high-quality;filter:drop-shadow(0 2px 12px rgba(0,0,0,0.75)) drop-shadow(0 0 20px rgba(255,185,0,0.45));border-radius:12px;" draggable="false" decoding="async" fetchpriority="high">
   </div>
 
-  <!-- Language Dropdown Switcher - Top Right -->
-  <div id="lang-switcher">
-    <div id="lang-trigger">
-      <span id="lang-globe">🌐</span>
-      <span id="lang-current">Language</span>
-      <svg id="lang-arrow" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
-    </div>
-    <div id="lang-menu">
-      <div class="lang-menu-header">Select Language</div>
-      <!-- Options injected by JS -->
-    </div>
-  </div>
-
   <!-- Stream switch loading -->
   <div id="stream-loading">
     <svg viewBox="0 0 50 50">
@@ -1993,7 +1976,7 @@ const dtRight       = document.getElementById('dt-right');
 const seekPopupL    = document.getElementById('seek-popup-left');
 const seekPopupR    = document.getElementById('seek-popup-right');
 const speedBadge    = document.getElementById('speed-badge');
-const langSwitcher  = document.getElementById('lang-switcher');
+const langSwitcher  = null; // Language switcher removed permanently
 const streamLoading = document.getElementById('stream-loading');
 const streamLoadLbl = document.getElementById('stream-loading-label');
 const cmsError      = document.getElementById('cms-error');
@@ -2113,10 +2096,10 @@ function showCmsError(msg) {
   setTimeout(() => cmsError.classList.remove('show'), 4000);
 }
 
-// ── Dropdown DOM refs ──
-const langTrigger = document.getElementById('lang-trigger');
-const langCurrent = document.getElementById('lang-current');
-const langMenu    = document.getElementById('lang-menu');
+// ── Dropdown DOM refs (removed permanently) ──
+const langTrigger = null;
+const langCurrent = null;
+const langMenu    = null;
 
 // Language flags & English sub-labels
 const LANG_FLAGS = { HI:'🇮🇳', EN:'🏴', BN:'🇧🇩', TA:'🇮🇳', TE:'🇮🇳', KN:'🇮🇳', ML:'🇮🇳', MR:'🇮🇳', PA:'🇮🇳', GU:'🇮🇳', OR:'🇮🇳', UR:'🇵🇰' };
