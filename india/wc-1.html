@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WC 1 – SX Sports Live</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#020c06;font-family:-apple-system,'Google Sans','Helvetica Neue',sans-serif;overflow:hidden}
+body{display:flex;flex-direction:column}
+header{
+  display:flex;align-items:center;
+  padding:0 10px;height:42px;flex-shrink:0;
+  background:rgba(6,20,16,0.95);
+  border-bottom:1px solid rgba(34,197,94,0.18);
+  position:relative;z-index:10;
+  gap:0;
+  overflow:hidden;
+}
+header::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent 0%,#22c55e 40%,#84cc16 60%,transparent 100%);
+  opacity:.35;
+}
+.brand{
+  display:flex;align-items:center;gap:5px;
+  flex-shrink:0;
+  text-decoration:none;
+  margin-right:8px;
+}
+.brand img{height:20px;width:20px;object-fit:contain;border-radius:3px;flex-shrink:0;}
+.brand-text{
+  font-size:.7rem;font-weight:800;letter-spacing:.8px;
+  background:linear-gradient(120deg,#22c55e 0%,#84cc16 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  white-space:nowrap;
+}
+.div{width:1px;height:22px;background:rgba(34,197,94,0.2);flex-shrink:0;margin-right:8px;}
+.ch-logo{
+  height:22px;max-width:44px;object-fit:contain;
+  border-radius:3px;flex-shrink:0;margin-right:7px;
+}
+.ch-name{
+  font-size:.75rem;font-weight:600;color:#d4eadb;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  flex:1;min-width:0;
+}
+.live-pill{
+  display:flex;align-items:center;gap:4px;
+  background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.28);
+  border-radius:100px;padding:2px 7px;
+  flex-shrink:0;margin-left:6px;
+}
+.live-dot{width:5px;height:5px;background:#ef4444;border-radius:50%;animation:blink 1.4s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+.live-txt{font-size:.58rem;font-weight:700;color:#ef4444;letter-spacing:.06em;}
+.player-wrap{flex:1;position:relative;background:#000;overflow:hidden;}
+.player-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:none;}
+</style>
+</head>
+<body>
+<header>
+  <a class="brand" href="javascript:history.back()">
+    <img src="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/main/logo.png" alt="SX" onerror="this.style.display='none'">
+    <span class="brand-text">SX</span>
+  </a>
+  <div class="div"></div>
+  <img class="ch-logo" src="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/main/logo.png" alt="" onerror="this.style.display='none'">
+  <span class="ch-name">WC Stream 1</span>
+  <div class="live-pill">
+    <div class="live-dot"></div>
+    <span class="live-txt">LIVE</span>
+  </div>
+</header>
+<div class="player-wrap">
+  <iframe id="frm"
+    src="https://xyzstreams.shop/wc-1-embed"
+    allowfullscreen
+    allow="autoplay; fullscreen; encrypted-media; picture-in-picture; clipboard-write; web-share; accelerometer; gyroscope; payment"
+    referrerpolicy="no-referrer-when-downgrade"
+    scrolling="no">
+  </iframe>
+</div>
+</body>
+</html>
