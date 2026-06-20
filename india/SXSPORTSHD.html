@@ -189,7 +189,7 @@ input[type=range]::-webkit-slider-thumb {
     box-shadow: 0 0 5px rgba(0,0,0,0.3);
 }
 
-/* DMCA Button (90 Deg Rotated & 20% Opacity) */
+/* DMCA Button */
 #dmca-btn {
     position: absolute;
     right: -34px; 
@@ -437,11 +437,28 @@ volumeBar.addEventListener('input', () => {
     muteBtn.textContent = video.muted ? '🔇' : '🔊';
 });
 
+// Fullscreen & Orientation Lock Logic
 fullscreenBtn.addEventListener('click', () => {
     if (!document.fullscreenElement) {
-        playerWrapper.requestFullscreen().catch(err => console.log(err));
+        playerWrapper.requestFullscreen().then(() => {
+            // Attempt to force landscape orientation on supported mobile devices
+            if (screen.orientation && screen.orientation.lock) {
+                screen.orientation.lock('landscape').catch((err) => {
+                    console.log('Orientation lock failed or not supported:', err);
+                });
+            }
+        }).catch(err => console.log(err));
     } else {
         document.exitFullscreen();
+    }
+});
+
+// Unlock orientation when exiting fullscreen by any means (e.g., Back button, Esc key)
+document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement) {
+        if (screen.orientation && screen.orientation.unlock) {
+            screen.orientation.unlock();
+        }
     }
 });
 
