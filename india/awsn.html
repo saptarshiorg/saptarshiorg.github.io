@@ -2,90 +2,291 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AWSN – SX Sports Live</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>SX SPORTS - Ultra Enhanced Live Player</title>
+
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;background:#020c06;font-family:-apple-system,'Google Sans','Helvetica Neue',sans-serif;overflow:hidden}
-body{display:flex;flex-direction:column}
-header{
-  display:flex;align-items:center;
-  padding:0 10px;height:42px;flex-shrink:0;
-  background:rgba(6,20,16,0.95);
-  border-bottom:1px solid rgba(34,197,94,0.18);
-  position:relative;z-index:10;
-  gap:0;
-  overflow:hidden;
+html,body{
+    margin:0;
+    width:100%;
+    height:100%;
+    background:#000;
+    overflow:hidden;
+    font-family:Arial,sans-serif;
 }
-header::after{
-  content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
-  background:linear-gradient(90deg,transparent 0%,#22c55e 40%,#84cc16 60%,transparent 100%);
-  opacity:.35;
+
+#player-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: radial-gradient(circle at center, #1a1a1a 0%, #000 80%);
 }
-/* LEFT: site brand — fixed, never shrinks */
-.brand{
-  display:flex;align-items:center;gap:5px;
-  flex-shrink:0;
-  text-decoration:none;
-  margin-right:8px;
+
+/* --- THE 4K HDR ENHANCEMENT ENGINE --- */
+#video-frame {
+    width: 100%;
+    height: 100%;
+    border: none;
+    
+    /* This stack forces an HDR-like pop. 
+       Contrast sharpens the luma curve, saturate boosts the colors to OLED levels,
+       and brightness slightly lifts the image.
+    */
+    filter: 
+        contrast(1.22)    
+        saturate(1.35)    
+        brightness(1.08)
+        drop-shadow(0 0 30px rgba(255, 255, 255, 0.05)); /* Subtle ambient glow */
+        
+    /* Forces the GPU to handle the heavy filters, preventing lag */
+    transform: translateZ(0);
+    will-change: filter, transform;
 }
-.brand img{height:20px;width:20px;object-fit:contain;border-radius:3px;flex-shrink:0;}
-.brand-text{
-  font-size:.7rem;font-weight:800;letter-spacing:.8px;
-  background:linear-gradient(120deg,#22c55e 0%,#84cc16 100%);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  white-space:nowrap;
+
+/* SX SPORTS Branding */
+#branding {
+    position: absolute;
+    top: 15px;
+    left: 20px;
+    z-index: 9999;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 11px;
+    font-weight: 900;
+    font-style: italic;
+    letter-spacing: 2px;
+    text-shadow: 0 2px 10px rgba(0,0,0,1);
+    pointer-events: none;
+    transition: opacity 0.4s ease;
 }
-/* DIVIDER */
-.div{width:1px;height:22px;background:rgba(34,197,94,0.2);flex-shrink:0;margin-right:8px;}
-/* MIDDLE: channel logo — fixed */
-.ch-logo{
-  height:22px;max-width:44px;object-fit:contain;
-  border-radius:3px;flex-shrink:0;margin-right:7px;
+
+/* Loading Popup */
+#loading-popup {
+    position: absolute;
+    top: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10000;
+    
+    background: rgba(0, 0, 0, 0.75);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 1.5px;
+    text-align: center;
+    
+    padding: 12px 24px;
+    border-radius: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
-/* channel name — takes remaining space, truncates */
-.ch-name{
-  font-size:.75rem;font-weight:600;color:#d4eadb;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  flex:1;min-width:0;
+
+#loading-popup.active {
+    opacity: 1;
 }
-/* RIGHT: LIVE pill — fixed */
-.live-pill{
-  display:flex;align-items:center;gap:4px;
-  background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.28);
-  border-radius:100px;padding:2px 7px;
-  flex-shrink:0;margin-left:6px;
+
+/* DMCA Button (90 Deg Rotated & 20% Opacity) */
+#dmca-btn {
+    position: absolute;
+    right: -34px; 
+    top: 150px;
+    z-index: 9999;
+    
+    height: 34px;
+    line-height: 16px;
+    box-sizing: border-box;
+    
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-align: center;
+    
+    padding: 8px 16px;
+    border-radius: 8px 8px 0 0;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom: none;
+    cursor: pointer;
+    
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    
+    transform-origin: bottom right;
+    transform: rotate(-90deg);
+    
+    opacity: 0.2;
+    transition: right 0.3s ease, opacity 0.3s ease, background 0.2s;
 }
-.live-dot{width:5px;height:5px;background:#ef4444;border-radius:50%;animation:blink 1.4s infinite;}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
-.live-txt{font-size:.58rem;font-weight:700;color:#ef4444;letter-spacing:.06em;}
-/* PLAYER */
-.player-wrap{flex:1;position:relative;background:#000;overflow:hidden;}
-.player-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:none;}
+
+#dmca-btn:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.35);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+}
+
+/* DMCA Modal */
+#dmca-modal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.95);
+    z-index: 10000;
+    
+    width: 85%;
+    max-width: 550px;
+    padding: 35px;
+    
+    background: rgba(10, 10, 10, 0.85);
+    color: white;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+    
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#dmca-modal.active {
+    opacity: 1;
+    pointer-events: all;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+#dmca-modal h2 { margin: 0 0 8px; font-size: 20px; font-style: italic; letter-spacing: 1px;}
+#dmca-modal h3 { margin: 0 0 18px; font-size: 14px; color: #ff3b30; text-transform: uppercase; letter-spacing: 0.5px;}
+#dmca-modal p { font-size: 14px; line-height: 1.6; margin-bottom: 14px; color: rgba(255,255,255,0.85); }
+#dmca-modal .footer { margin-top: 25px; font-size: 11px; color: rgba(255,255,255,0.4); text-align: center; }
+
+#close-dmca {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.6);
+    font-size: 28px;
+    cursor: pointer;
+    line-height: 1;
+    transition: transform 0.2s, color 0.2s;
+}
+#close-dmca:hover { transform: scale(1.1); color: #ff3b30; }
+
+@media (max-width: 480px) {
+    #branding {
+        font-size: 9px;
+        top: 10px;
+        left: 10px;
+    }
+    #loading-popup {
+        font-size: 10px;
+        top: 15px;
+        padding: 10px 18px;
+    }
+    #dmca-modal { padding: 25px; }
+    #dmca-modal h2 { font-size: 18px; }
+    #dmca-modal p { font-size: 13px; }
+}
 </style>
 </head>
 <body>
-<header>
-  <a class="brand" href="javascript:history.back()">
-    <img src="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/main/logo.png" alt="SX" onerror="this.style.display='none'">
-    <span class="brand-text">SX</span>
-  </a>
-  <div class="div"></div>
-  <img class="ch-logo" src="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/main/logo.png" alt="" onerror="this.style.display='none'">
-  <span class="ch-name">AWSN</span>
-  <div class="live-pill">
-    <div class="live-dot"></div>
-    <span class="live-txt">LIVE</span>
-  </div>
-</header>
-<div class="player-wrap">
-  <iframe id="frm"
-    src="https://sayanchannelcdn02.pages.dev/star.html?id=awsn"
-    allowfullscreen
-    allow="autoplay; fullscreen; encrypted-media; picture-in-picture; clipboard-write; web-share; accelerometer; gyroscope; payment"
-    referrerpolicy="no-referrer-when-downgrade"
-    scrolling="no">
-  </iframe>
+
+<div id="player-wrapper">
+    <div id="branding">SX SPORTS</div>
+
+    <div id="loading-popup">WAIT 5-15 SEC TO LOAD STREAM FULLY</div>
+
+    <iframe 
+        id="video-frame" 
+        src="https://sayanchannelcdn02.pages.dev/star?id=ss1hd" 
+        allowfullscreen 
+        allow="autoplay; encrypted-media">
+    </iframe>
+
+    <div id="dmca-btn">DMCA</div>
+
+    <div id="dmca-modal">
+        <button id="close-dmca">&times;</button>
+        <h2>SX SPORTS</h2>
+        <h3>OFFICIAL DMCA & COPYRIGHT DISCLAIMER</h3>
+        <p><strong>DMCA Notice</strong></p>
+        <p>SX SPORTS does not host, upload, store, transmit, or broadcast any live streams, videos, or media files on its own servers.</p>
+        <p>We only provide links to publicly available streams and media content that are hosted by independent third-party websites.</p>
+        <p>All trademarks, copyrights, logos, streaming rights, and broadcasting rights belong to their respective owners. SX SPORTS has no control over, and assumes no responsibility for, the content hosted on external websites.</p>
+        <p>If you are a copyright owner or authorized representative and believe that any content infringes your rights, please contact the original third-party hosting provider directly, as they are solely responsible for the hosted content.</p>
+        <p class="footer">© 2026 SX SPORTS • All Rights Reserved</p>
+    </div>
 </div>
+
+<script>
+const playerWrapper = document.getElementById('player-wrapper');
+const branding = document.getElementById('branding');
+const loadingPopup = document.getElementById('loading-popup');
+const dmcaBtn = document.getElementById('dmca-btn');
+const dmcaModal = document.getElementById('dmca-modal');
+const closeDmcaBtn = document.getElementById('close-dmca');
+
+// --- Show Loading Popup on Load ---
+window.addEventListener('DOMContentLoaded', () => {
+    loadingPopup.classList.add('active');
+    setTimeout(() => {
+        loadingPopup.classList.remove('active');
+    }, 5000); 
+});
+
+// Hide branding and DMCA button when inactive
+let timeout;
+let isModalOpen = false;
+
+function resetControlsTimeout() {
+    branding.style.opacity = '1';
+    dmcaBtn.style.right = '0'; 
+    
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+        if (!isModalOpen) {
+            branding.style.opacity = '0';
+            dmcaBtn.style.right = '-34px'; 
+        }
+    }, 3000);
+}
+
+playerWrapper.addEventListener('mousemove', resetControlsTimeout);
+playerWrapper.addEventListener('mouseleave', () => {
+    if (!isModalOpen) {
+        branding.style.opacity = '0';
+        dmcaBtn.style.right = '-34px';
+    }
+});
+playerWrapper.addEventListener('touchstart', resetControlsTimeout);
+
+// DMCA Modal Logic
+dmcaBtn.addEventListener('click', () => {
+    isModalOpen = true;
+    dmcaModal.classList.add('active');
+    clearTimeout(timeout); 
+});
+
+closeDmcaBtn.addEventListener('click', () => {
+    isModalOpen = false;
+    dmcaModal.classList.remove('active');
+    resetControlsTimeout(); 
+});
+
+</script>
+
 </body>
 </html>
