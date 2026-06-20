@@ -494,7 +494,6 @@ video {
   display: none !important;
 }
 #player.iframe-mode #iframe-wrap { pointer-events: all !important; }
-#player.iframe-mode #iframe-player { pointer-events: all !important; touch-action: manipulation; }
 #player.iframe-mode #controls { pointer-events: all !important; }
 /* In iframe mode: keep all player chrome visible over the iframe.
    Only hide things that require direct video element access. */
@@ -1574,7 +1573,7 @@ video { will-change: filter; }
   <canvas id="enhance-canvas"></canvas>
   <!-- Iframe mode container -->
   <div id="iframe-wrap">
-    <iframe id="iframe-player" allowfullscreen allow="autoplay; fullscreen; encrypted-media; picture-in-picture; clipboard-write; web-share; accelerometer; gyroscope; payment; screen-wake-lock; display-capture; media-playback-quality; high-resolution-time" referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-popups allow-popups-to-escape-sandbox allow-orientation-lock allow-top-navigation-by-user-activation" playsinline webkit-playsinline scrolling="no"></iframe>
+    <iframe id="iframe-player" allowfullscreen allow="autoplay; fullscreen; encrypted-media; picture-in-picture; clipboard-write; web-share; accelerometer; gyroscope; payment; screen-wake-lock; display-capture; media-playback-quality; high-resolution-time" referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-top-navigation-by-user-activation" playsinline webkit-playsinline scrolling="no"></iframe>
   </div>
   <div id="enhance-toast"><span class="et-dot"></span><span id="enhance-toast-msg">4K Enhance ON</span></div>
 
@@ -3006,7 +3005,6 @@ player.addEventListener('click', e => {
 
 // ── DOUBLE TAP (mobile) ──
 player.addEventListener('touchend', e => {
-  if (player.classList.contains('iframe-mode')) return; // let taps pass through to embedded player
   if (e.target.closest('#center-cluster') || e.target.closest('#controls') || e.target.closest('#settings-panel')) return;
   const now = Date.now();
   const x   = e.changedTouches[0].clientX;
@@ -3055,7 +3053,6 @@ async function exitFullscreen() {
 
 // CSS rotation fallback for iOS (can't lock orientation without fullscreen API)
 function applyRotationFallback(on) {
-  if (player.classList.contains('iframe-mode')) return; // don't clobber iframe layout on mobile
   if (on && window.innerHeight > window.innerWidth) {
     // portrait → rotate player 90deg to fake landscape
     player.style.cssText = `
@@ -3561,19 +3558,14 @@ document.addEventListener('fullscreenchange', updateFullscreenLayout);
 document.addEventListener('webkitfullscreenchange', updateFullscreenLayout);
 </script>
 <script>
-// ── PC-only Redirect Ad Block ──
-// Mobile browsers throttle/suspend backgrounded media when a popup steals focus,
-// and forcing window.focus() back fights that OS-level suspension, stalling the
-// stream. Desktop tolerates the focus-steal-back trick fine, so only run it there.
-if (!isMobile) {
-  // Blocks window.blur redirect hijack (common desktop ad trick)
-  window.addEventListener("blur", function() {
-    setTimeout(function() { try { window.focus(); } catch(e) {} }, 50);
-  }, false);
-  window.addEventListener("beforeunload", function(e) {
-    e.preventDefault(); e.returnValue = ""; return "";
-  }, false);
-}
+// ── iOS Redirect Ad Block ──
+// Blocks window.blur redirect hijack (common iOS ad trick)
+window.addEventListener("blur", function() {
+  setTimeout(function() { try { window.focus(); } catch(e) {} }, 50);
+}, false);
+window.addEventListener("beforeunload", function(e) {
+  e.preventDefault(); e.returnValue = ""; return "";
+}, false);
 // Small DNS tip shown briefly at page load
 (function() {
   var _tip = document.createElement("div");
