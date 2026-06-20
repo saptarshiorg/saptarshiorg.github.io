@@ -54,6 +54,38 @@ html,body{
     transition: opacity 0.3s;
 }
 
+/* --- NEW: Loading Popup --- */
+#loading-popup {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10000;
+    
+    background: rgba(0, 0, 0, 0.65);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-align: center;
+    
+    padding: 10px 20px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+}
+
+#loading-popup.active {
+    opacity: 1;
+}
+
 /* Glassy Custom Controls */
 #controls-container {
     position: absolute;
@@ -157,10 +189,10 @@ input[type=range]::-webkit-slider-thumb {
     box-shadow: 0 0 5px rgba(0,0,0,0.3);
 }
 
-/* --- DMCA Button (90 Deg Rotated & 20% Opacity) --- */
+/* DMCA Button (90 Deg Rotated & 20% Opacity) */
 #dmca-btn {
     position: absolute;
-    right: -34px; /* Hidden off-screen (Matches button height) */
+    right: -34px; 
     top: 150px;
     z-index: 9999;
     
@@ -176,7 +208,7 @@ input[type=range]::-webkit-slider-thumb {
     text-align: center;
     
     padding: 8px 16px;
-    border-radius: 8px 8px 0 0; /* Tab shape */
+    border-radius: 8px 8px 0 0;
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-bottom: none;
     cursor: pointer;
@@ -184,22 +216,19 @@ input[type=range]::-webkit-slider-thumb {
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     
-    /* 90 Degree Rotation */
     transform-origin: bottom right;
     transform: rotate(-90deg);
     
-    /* 20% Opacity */
     opacity: 0.2;
-    
     transition: right 0.3s ease, opacity 0.3s ease, background 0.2s;
 }
 
 #dmca-btn:hover {
-    opacity: 1; /* Brighten on hover */
+    opacity: 1;
     background: rgba(255, 255, 255, 0.3);
 }
 
-/* --- DMCA Modal --- */
+/* DMCA Modal */
 #dmca-modal {
     position: absolute;
     top: 50%;
@@ -256,6 +285,11 @@ input[type=range]::-webkit-slider-thumb {
         top: 8px;
         left: 10px;
     }
+    #loading-popup {
+        font-size: 10px;
+        top: 10px;
+        padding: 8px 15px;
+    }
     input[type=range] {
         width: 60px;
     }
@@ -269,6 +303,8 @@ input[type=range]::-webkit-slider-thumb {
 
 <div id="player-wrapper">
     <div id="branding">SX SPORTS</div>
+
+    <div id="loading-popup">WAIT 5-15 SEC TO LOAD STREAM FULLY</div>
 
     <video
     id="video"
@@ -315,6 +351,7 @@ const video = document.getElementById('video');
 const playerWrapper = document.getElementById('player-wrapper');
 const controlsContainer = document.getElementById('controls-container');
 const branding = document.getElementById('branding');
+const loadingPopup = document.getElementById('loading-popup');
 const dmcaBtn = document.getElementById('dmca-btn');
 const dmcaModal = document.getElementById('dmca-modal');
 const closeDmcaBtn = document.getElementById('close-dmca');
@@ -323,6 +360,14 @@ const playPauseBtn = document.getElementById('play-pause');
 const muteBtn = document.getElementById('mute-btn');
 const volumeBar = document.getElementById('volume-bar');
 const fullscreenBtn = document.getElementById('fullscreen-btn');
+
+// --- Show Loading Popup on Load ---
+window.addEventListener('DOMContentLoaded', () => {
+    loadingPopup.classList.add('active');
+    setTimeout(() => {
+        loadingPopup.classList.remove('active');
+    }, 5000); // Hides after 5 seconds
+});
 
 // Hide controls, branding, and DMCA button when inactive
 let timeout;
@@ -338,7 +383,7 @@ function resetControlsTimeout() {
         if (!video.paused && !isModalOpen) {
             controlsContainer.style.opacity = '0';
             branding.style.opacity = '0';
-            dmcaBtn.style.right = '-34px'; // Slide out perfectly based on its height
+            dmcaBtn.style.right = '-34px'; // Slide out
         }
     }, 3000);
 }
