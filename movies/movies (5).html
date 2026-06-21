@@ -1,0 +1,2332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>SX Movies</title>
+<style>
+  :root{
+    --gold:#d4af37;
+    --gold-light:#f5d76e;
+    --gold-dark:#9c7a1f;
+    --bg-deep:#0a0805;
+    --bg-panel:rgba(20,16,8,0.55);
+    --border-glass:rgba(212,175,55,0.25);
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+
+  button{
+    font-family:inherit;
+    color:inherit;
+    background:none;
+    border:none;
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  html,body{background:var(--bg-deep);}
+
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(ellipse at top, #1a1408 0%, #0a0805 55%, #000 100%);
+    font-family:'Segoe UI', 'Google Sans', Roboto, Arial, sans-serif;
+    color:#f3e9c9;
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  a{color:inherit;}
+
+  /* ============ TOP NAV (sticky, mobile-first) ============ */
+  .topnav{
+    position:sticky;
+    top:0;
+    z-index:50;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:14px 16px;
+    background:linear-gradient(180deg, rgba(10,8,5,0.96) 0%, rgba(10,8,5,0.88) 70%, rgba(10,8,5,0.6) 100%);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border-glass);
+  }
+
+  .topnav .brand-sm{
+    font-size:1.25rem;
+    font-weight:800;
+    letter-spacing:1px;
+    background:linear-gradient(135deg, var(--gold-light), var(--gold) 50%, var(--gold-dark));
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    white-space:nowrap;
+  }
+
+  .topnav .brand-sm span{
+    color:#fff;
+    -webkit-text-fill-color:#fff;
+  }
+
+  .nav-actions{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+
+  .icon-btn{
+    width:38px;
+    height:38px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:50%;
+    border:1px solid var(--border-glass);
+    background:rgba(212,175,55,0.08);
+    cursor:pointer;
+  }
+
+  .icon-btn svg{
+    width:18px;
+    height:18px;
+    fill:none;
+    stroke:var(--gold-light);
+    stroke-width:2;
+  }
+
+  /* ============ SEARCH BAR (mobile) ============ */
+  .search-wrap{
+    padding:14px 16px 4px;
+  }
+
+  .search-box{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--bg-panel);
+    border:1px solid var(--border-glass);
+    border-radius:14px;
+    padding:11px 14px;
+  }
+
+  .search-box svg{
+    width:17px;
+    height:17px;
+    stroke:rgba(245,233,201,0.5);
+    fill:none;
+    stroke-width:2;
+    flex-shrink:0;
+  }
+
+  .search-box input{
+    flex:1;
+    background:none;
+    border:none;
+    outline:none;
+    color:#f3e9c9;
+    font-size:0.92rem;
+  }
+
+  .search-box input::placeholder{
+    color:rgba(245,233,201,0.4);
+  }
+
+  /* ============ CATEGORY CHIPS ============ */
+  .chip-row{
+    display:flex;
+    gap:10px;
+    padding:16px 16px 6px;
+    overflow-x:auto;
+    scrollbar-width:none;
+  }
+  .chip-row::-webkit-scrollbar{display:none;}
+
+  .chip{
+    flex-shrink:0;
+    padding:8px 16px;
+    border-radius:20px;
+    font-size:0.78rem;
+    font-weight:700;
+    letter-spacing:0.4px;
+    white-space:nowrap;
+    border:1px solid var(--border-glass);
+    background:rgba(212,175,55,0.06);
+    color:rgba(245,233,201,0.75);
+  }
+
+  .chip.active{
+    background:linear-gradient(135deg, var(--gold-light), var(--gold-dark));
+    color:#1a1408;
+    border-color:transparent;
+  }
+
+  /* ============ SECTION HEADINGS ============ */
+  .section-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    padding:22px 16px 12px;
+  }
+
+  .section-head h2{
+    font-size:1.05rem;
+    font-weight:800;
+    letter-spacing:0.4px;
+    color:#fff;
+  }
+
+  .section-head .see-all{
+    font-size:0.72rem;
+    font-weight:700;
+    letter-spacing:0.6px;
+    text-transform:uppercase;
+    color:var(--gold-light);
+    text-decoration:none;
+  }
+
+  /* ============ TRENDING — horizontal scroll ============ */
+  .scroll-row{
+    display:flex;
+    gap:14px;
+    padding:0 16px 6px;
+    overflow-x:auto;
+    scroll-snap-type:x mandatory;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .scroll-row::-webkit-scrollbar{display:none;}
+
+  .poster-card{
+    position:relative;
+    flex-shrink:0;
+    width:128px;
+    scroll-snap-align:start;
+    border-radius:14px;
+    overflow:hidden;
+    background:#111;
+    border:1px solid var(--border-glass);
+    text-decoration:none;
+    display:block;
+  }
+
+  .poster-card .rank{
+    position:absolute;
+    bottom:-4px;
+    left:-4px;
+    font-size:3.2rem;
+    font-weight:900;
+    line-height:1;
+    color:transparent;
+    -webkit-text-stroke:1.5px rgba(212,175,55,0.55);
+    font-style:italic;
+    z-index:2;
+    pointer-events:none;
+  }
+
+  .poster-card img{
+    width:100%;
+    aspect-ratio:2/3;
+    object-fit:cover;
+    display:block;
+  }
+
+  .poster-card .p-title{
+    font-size:0.74rem;
+    font-weight:700;
+    color:#fff;
+    padding:8px 8px 10px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  /* ============ MOVIE LIST — stacked rows (core mobile layout) ============ */
+  .movie-list{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    padding:4px 16px 20px;
+  }
+
+  .row-card{
+    position:relative;
+    display:flex;
+    gap:14px;
+    background:var(--bg-panel);
+    border:1px solid var(--border-glass);
+    border-radius:16px;
+    padding:10px;
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    box-shadow:0 4px 18px rgba(0,0,0,0.4);
+  }
+
+  .row-card:active{
+    border-color:rgba(212,175,55,0.5);
+  }
+
+  .row-poster{
+    position:relative;
+    width:84px;
+    flex-shrink:0;
+    border-radius:10px;
+    overflow:hidden;
+    background:#111;
+  }
+
+  .row-poster img{
+    width:100%;
+    height:100%;
+    aspect-ratio:2/3;
+    object-fit:cover;
+    display:block;
+  }
+
+  .row-badge{
+    position:absolute;
+    top:6px;
+    left:6px;
+    background:linear-gradient(135deg, var(--gold-light), var(--gold-dark));
+    color:#1a1408;
+    font-size:0.55rem;
+    font-weight:800;
+    letter-spacing:0.5px;
+    padding:2px 6px;
+    border-radius:6px;
+    text-transform:uppercase;
+  }
+
+  .row-info{
+    flex:1;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:4px;
+  }
+
+  .row-title{
+    font-size:1rem;
+    font-weight:700;
+    color:#fff;
+    line-height:1.25;
+  }
+
+  .row-meta{
+    font-size:0.74rem;
+    color:rgba(245,233,201,0.5);
+    letter-spacing:0.3px;
+  }
+
+  .row-rating{
+    display:flex;
+    align-items:center;
+    gap:4px;
+    font-size:0.74rem;
+    color:var(--gold-light);
+    font-weight:700;
+    margin-top:1px;
+  }
+
+  .row-rating svg{
+    width:12px;
+    height:12px;
+    fill:var(--gold-light);
+  }
+
+  /* Compact gold watch button for list rows */
+  .row-watch{
+    margin-top:6px;
+    align-self:flex-start;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:7px 14px;
+    border-radius:8px;
+    text-decoration:none;
+    font-weight:800;
+    font-size:0.72rem;
+    letter-spacing:0.8px;
+    text-transform:uppercase;
+    color:#3a2a06;
+    background:linear-gradient(180deg, #fbe9a8 0%, #f0c84b 18%, #d4af37 50%, #b3881f 82%, #8a6710 100%);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.6) inset,
+      0 -2px 0 rgba(0,0,0,0.25) inset,
+      0 3px 0 #6b4f0e,
+      0 5px 10px rgba(0,0,0,0.5);
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+
+  .row-watch svg{
+    width:11px;
+    height:11px;
+    fill:#3a2a06;
+  }
+
+  .row-watch:active{
+    transform:translateY(3px);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.6) inset,
+      0 -1px 0 rgba(0,0,0,0.25) inset,
+      0 1px 0 #6b4f0e,
+      0 2px 6px rgba(0,0,0,0.5);
+  }
+
+  /* ============ BOTTOM TAB BAR (mobile only) ============ */
+  .tabbar{
+    display:none;
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    z-index:50;
+    justify-content:space-around;
+    align-items:center;
+    padding:10px 8px calc(10px + env(safe-area-inset-bottom));
+    background:linear-gradient(180deg, rgba(15,12,6,0.85) 0%, rgba(8,6,3,0.98) 100%);
+    border-top:1px solid var(--border-glass);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+  }
+
+  .tab-item{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:3px;
+    color:rgba(245,233,201,0.45);
+    text-decoration:none;
+    font-size:0.62rem;
+    font-weight:700;
+    letter-spacing:0.3px;
+    background:none;
+    border:none;
+    padding:4px 6px;
+    font-family:inherit;
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  .tab-item svg{
+    width:20px;
+    height:20px;
+    fill:none;
+    stroke:currentColor;
+    stroke-width:2;
+  }
+
+  .tab-item.active{
+    color:var(--gold-light);
+  }
+
+  .tab-item.active svg{
+    fill:var(--gold-light);
+    stroke:var(--gold-light);
+  }
+
+  /* ======================================================================
+     DESKTOP EXPERIENCE (≥1024px) — left rail + hero + content rows
+     ====================================================================== */
+
+  .desktop-shell{display:none;}
+
+  /* ---- Left rail navigation ---- */
+  .rail{
+    position:fixed;
+    top:0;
+    left:0;
+    bottom:0;
+    width:84px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:28px 0 22px;
+    background:linear-gradient(180deg, rgba(13,10,5,0.97) 0%, rgba(8,6,3,0.99) 100%);
+    border-right:1px solid var(--border-glass);
+    z-index:60;
+  }
+
+  .rail-logo{
+    width:42px;
+    height:42px;
+    border-radius:11px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:linear-gradient(145deg, var(--gold-light), var(--gold-dark));
+    box-shadow:0 4px 14px rgba(212,175,55,0.35);
+    margin-bottom:38px;
+    font-weight:900;
+    font-size:1.05rem;
+    color:#1a1408;
+    letter-spacing:-0.5px;
+    flex-shrink:0;
+  }
+
+  .rail-nav{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    flex:1;
+  }
+
+  .rail-link{
+    width:56px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:5px;
+    padding:11px 0;
+    border-radius:12px;
+    color:rgba(245,233,201,0.42);
+    text-decoration:none;
+    font-size:0.62rem;
+    font-weight:700;
+    letter-spacing:0.3px;
+    position:relative;
+    background:none;
+    border:none;
+    font-family:inherit;
+    cursor:pointer;
+    transition:color .2s ease, background .2s ease;
+  }
+
+  .rail-link svg{
+    width:20px;
+    height:20px;
+    fill:none;
+    stroke:currentColor;
+    stroke-width:1.8;
+  }
+
+  .rail-link:hover{
+    color:rgba(245,233,201,0.75);
+    background:rgba(212,175,55,0.06);
+  }
+
+  .rail-link.active{
+    color:var(--gold-light);
+    background:rgba(212,175,55,0.1);
+  }
+
+  .rail-link.active svg{
+    fill:rgba(212,175,55,0.18);
+  }
+
+  .rail-link.active::before{
+    content:"";
+    position:absolute;
+    left:-22px;
+    top:50%;
+    transform:translateY(-50%);
+    width:3px;
+    height:22px;
+    border-radius:3px;
+    background:linear-gradient(180deg, var(--gold-light), var(--gold-dark));
+  }
+
+  .rail-avatar{
+    width:38px;
+    height:38px;
+    border-radius:50%;
+    background:linear-gradient(145deg, #3a2f18, #1a1408);
+    border:1.5px solid var(--border-glass);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .rail-avatar svg{
+    width:18px;
+    height:18px;
+    fill:none;
+    stroke:rgba(245,233,201,0.6);
+    stroke-width:1.8;
+  }
+
+  /* ---- Main column ---- */
+  .main-col{
+    margin-left:84px;
+    min-height:100vh;
+  }
+
+  /* ---- Top utility bar (search + profile chip) ---- */
+  .desktop-topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:24px;
+    padding:26px 56px 0;
+    max-width:1480px;
+  }
+
+  .desktop-topbar .wordmark{
+    font-size:1.3rem;
+    font-weight:800;
+    letter-spacing:1px;
+    background:linear-gradient(135deg, var(--gold-light), var(--gold) 50%, var(--gold-dark));
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+
+  .desktop-topbar .wordmark span{
+    color:#fff;
+    -webkit-text-fill-color:#fff;
+  }
+
+  .desktop-search{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    width:320px;
+    padding:10px 16px;
+    border-radius:24px;
+    background:rgba(255,255,255,0.04);
+    border:1px solid var(--border-glass);
+  }
+
+  .desktop-search svg{
+    width:15px;
+    height:15px;
+    stroke:rgba(245,233,201,0.45);
+    fill:none;
+    stroke-width:2;
+    flex-shrink:0;
+  }
+
+  .desktop-search input{
+    flex:1;
+    background:none;
+    border:none;
+    outline:none;
+    color:#f3e9c9;
+    font-size:0.85rem;
+  }
+
+  .desktop-search input::placeholder{
+    color:rgba(245,233,201,0.35);
+  }
+
+  /* ---- Hero banner ---- */
+  .hero{
+    position:relative;
+    margin:30px 56px 0;
+    max-width:1480px;
+    border-radius:24px;
+    overflow:hidden;
+    min-height:480px;
+    display:flex;
+    align-items:flex-end;
+    border:1px solid var(--border-glass);
+  }
+
+  .hero-bg{
+    position:absolute;
+    inset:0;
+    z-index:0;
+  }
+
+  .hero-bg img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    object-position:top center;
+    filter:saturate(1.05);
+  }
+
+  .hero-bg::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:
+      linear-gradient(90deg, rgba(8,6,3,0.97) 0%, rgba(8,6,3,0.75) 32%, rgba(8,6,3,0.15) 62%, rgba(8,6,3,0.55) 100%),
+      linear-gradient(0deg, rgba(8,6,3,0.95) 0%, rgba(8,6,3,0) 55%);
+  }
+
+  .hero-content{
+    position:relative;
+    z-index:1;
+    padding:0 56px 52px;
+    max-width:640px;
+  }
+
+  .hero-eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-size:0.72rem;
+    font-weight:800;
+    letter-spacing:2.5px;
+    text-transform:uppercase;
+    color:var(--gold-light);
+    margin-bottom:18px;
+  }
+
+  .hero-eyebrow::before{
+    content:"";
+    width:18px;
+    height:2px;
+    background:var(--gold-light);
+  }
+
+  .hero-title{
+    font-size:3.6rem;
+    font-weight:800;
+    line-height:1.02;
+    color:#fff;
+    letter-spacing:-1px;
+    margin-bottom:18px;
+    text-shadow:0 4px 24px rgba(0,0,0,0.5);
+  }
+
+  .hero-meta{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    font-size:0.85rem;
+    color:rgba(245,233,201,0.65);
+    letter-spacing:0.3px;
+    margin-bottom:22px;
+  }
+
+  .hero-meta .dot{
+    width:4px;
+    height:4px;
+    border-radius:50%;
+    background:rgba(245,233,201,0.4);
+  }
+
+  .hero-rating{
+    display:flex;
+    align-items:center;
+    gap:5px;
+    color:var(--gold-light);
+    font-weight:700;
+  }
+
+  .hero-rating svg{
+    width:14px;
+    height:14px;
+    fill:var(--gold-light);
+  }
+
+  .hero-desc{
+    font-size:0.95rem;
+    line-height:1.65;
+    color:rgba(245,233,201,0.7);
+    margin-bottom:28px;
+  }
+
+  .hero-actions{
+    display:flex;
+    align-items:center;
+    gap:14px;
+  }
+
+  .hero-watch{
+    --h:54px;
+    position:relative;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    height:var(--h);
+    padding:0 32px;
+    border:none;
+    border-radius:12px;
+    cursor:pointer;
+    text-decoration:none;
+    font-weight:800;
+    font-size:0.95rem;
+    letter-spacing:1.2px;
+    text-transform:uppercase;
+    color:#3a2a06;
+    background:linear-gradient(180deg, #fbe9a8 0%, #f0c84b 18%, #d4af37 50%, #b3881f 82%, #8a6710 100%);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.6) inset,
+      0 -3px 0 rgba(0,0,0,0.25) inset,
+      0 6px 0 #6b4f0e,
+      0 14px 28px rgba(212,175,55,0.25);
+    transition:transform .12s ease, box-shadow .12s ease, filter .2s ease;
+  }
+
+  .hero-watch svg{
+    width:17px;
+    height:17px;
+    fill:#3a2a06;
+  }
+
+  .hero-watch:hover{
+    filter:brightness(1.08);
+    transform:translateY(-2px);
+  }
+
+  .hero-watch:active{
+    transform:translateY(2px);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.6) inset,
+      0 -2px 0 rgba(0,0,0,0.25) inset,
+      0 2px 0 #6b4f0e,
+      0 6px 14px rgba(212,175,55,0.2);
+  }
+
+  .hero-secondary{
+    --h:54px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:9px;
+    height:var(--h);
+    padding:0 26px;
+    border-radius:12px;
+    border:1.5px solid rgba(245,233,201,0.25);
+    background:rgba(255,255,255,0.04);
+    color:#f3e9c9;
+    text-decoration:none;
+    font-weight:700;
+    font-size:0.88rem;
+    font-family:inherit;
+    letter-spacing:0.6px;
+    backdrop-filter:blur(6px);
+    cursor:pointer;
+    transition:border-color .2s ease, background .2s ease;
+  }
+
+  .hero-secondary svg{
+    width:16px;
+    height:16px;
+    fill:none;
+    stroke:currentColor;
+    stroke-width:2;
+  }
+
+  .hero-secondary:hover{
+    border-color:rgba(245,233,201,0.5);
+    background:rgba(255,255,255,0.08);
+  }
+
+  /* ---- Genre filter pills (desktop) ---- */
+  .desktop-pills{
+    display:flex;
+    gap:10px;
+    padding:34px 56px 0;
+    max-width:1480px;
+  }
+
+  .d-pill{
+    padding:9px 20px;
+    border-radius:22px;
+    font-size:0.78rem;
+    font-weight:700;
+    letter-spacing:0.4px;
+    border:1px solid var(--border-glass);
+    background:rgba(212,175,55,0.05);
+    color:rgba(245,233,201,0.65);
+    cursor:pointer;
+    transition:all .2s ease;
+  }
+
+  .d-pill:hover{
+    border-color:rgba(212,175,55,0.5);
+    color:#fff;
+  }
+
+  .d-pill.active{
+    background:linear-gradient(135deg, var(--gold-light), var(--gold-dark));
+    color:#1a1408;
+    border-color:transparent;
+  }
+
+  /* ---- Content rows / sections ---- */
+  .d-section{
+    padding:40px 56px 0;
+    max-width:1480px;
+  }
+
+  .d-section-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin-bottom:22px;
+  }
+
+  .d-section-head .label{
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+  }
+
+  .d-section-head h2{
+    font-size:1.5rem;
+    font-weight:800;
+    color:#fff;
+    letter-spacing:-0.3px;
+  }
+
+  .d-section-head .count{
+    font-size:0.8rem;
+    color:rgba(245,233,201,0.4);
+    font-weight:600;
+  }
+
+  .d-section-head .see-all-d{
+    font-size:0.78rem;
+    font-weight:700;
+    letter-spacing:0.5px;
+    color:var(--gold-light);
+    text-decoration:none;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    background:none;
+    border:none;
+    padding:0;
+    font-family:inherit;
+    cursor:pointer;
+  }
+
+  .d-section-head .see-all-d svg{
+    width:13px;
+    height:13px;
+    fill:none;
+    stroke:currentColor;
+    stroke-width:2.5;
+  }
+
+  /* ---- Poster grid (desktop) ---- */
+  .grid-wrap{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(210px, 1fr));
+    gap:26px;
+    padding-bottom:8px;
+  }
+
+  .card{
+    position:relative;
+    background:var(--bg-panel);
+    border:1px solid var(--border-glass);
+    border-radius:16px;
+    overflow:hidden;
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    box-shadow:0 8px 26px rgba(0,0,0,0.45);
+    transition:transform .3s cubic-bezier(.2,.7,.3,1), box-shadow .3s ease, border-color .3s ease;
+  }
+
+  .card:hover{
+    transform:translateY(-10px) scale(1.015);
+    border-color:rgba(212,175,55,0.55);
+    box-shadow:0 24px 50px rgba(0,0,0,0.6), 0 0 32px rgba(212,175,55,0.16);
+  }
+
+  .poster-wrap{
+    position:relative;
+    width:100%;
+    aspect-ratio:2/3;
+    overflow:hidden;
+    background:#111;
+  }
+
+  .poster-wrap img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+    transition:transform .5s ease;
+  }
+
+  .card:hover .poster-wrap img{
+    transform:scale(1.07);
+  }
+
+  .poster-wrap::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(to top, rgba(10,8,5,0.95) 0%, rgba(10,8,5,0.05) 45%, transparent 70%);
+    pointer-events:none;
+  }
+
+  .play-overlay{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(8,6,3,0.35);
+    opacity:0;
+    transition:opacity .3s ease;
+    pointer-events:none;
+  }
+
+  .card:hover .play-overlay{
+    opacity:1;
+  }
+
+  .play-overlay .play-circle{
+    width:54px;
+    height:54px;
+    border-radius:50%;
+    background:rgba(212,175,55,0.95);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 8px 24px rgba(0,0,0,0.5);
+    transform:scale(0.85);
+    transition:transform .3s ease;
+  }
+
+  .card:hover .play-overlay .play-circle{
+    transform:scale(1);
+  }
+
+  .play-overlay svg{
+    width:20px;
+    height:20px;
+    fill:#1a1408;
+  }
+
+  .badge{
+    position:absolute;
+    top:12px;
+    left:12px;
+    background:linear-gradient(135deg, var(--gold-light), var(--gold-dark));
+    color:#1a1408;
+    font-size:0.62rem;
+    font-weight:800;
+    letter-spacing:1px;
+    padding:4px 10px;
+    border-radius:20px;
+    text-transform:uppercase;
+    box-shadow:0 2px 10px rgba(212,175,55,0.4);
+    z-index:2;
+  }
+
+  .card-rating{
+    position:absolute;
+    top:12px;
+    right:12px;
+    display:flex;
+    align-items:center;
+    gap:3px;
+    background:rgba(8,6,3,0.7);
+    border:1px solid var(--border-glass);
+    padding:3px 8px;
+    border-radius:14px;
+    font-size:0.68rem;
+    font-weight:700;
+    color:var(--gold-light);
+    z-index:2;
+  }
+
+  .card-rating svg{
+    width:10px;
+    height:10px;
+    fill:var(--gold-light);
+  }
+
+  .info{
+    padding:14px 16px 17px;
+  }
+
+  .title{
+    font-size:1.02rem;
+    font-weight:700;
+    color:#fff;
+    margin-bottom:3px;
+    letter-spacing:0.2px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  .meta{
+    font-size:0.74rem;
+    color:rgba(245,233,201,0.5);
+    margin-bottom:14px;
+    letter-spacing:0.4px;
+  }
+
+  .watch-btn{
+    --h:40px;
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+    width:100%;
+    height:var(--h);
+    border:none;
+    border-radius:9px;
+    cursor:pointer;
+    text-decoration:none;
+    font-weight:800;
+    font-size:0.8rem;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    color:#3a2a06;
+    background:linear-gradient(180deg, #fbe9a8 0%, #f0c84b 18%, #d4af37 50%, #b3881f 82%, #8a6710 100%);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.6) inset,
+      0 -2px 0 rgba(0,0,0,0.25) inset,
+      0 4px 0 #6b4f0e,
+      0 8px 14px rgba(0,0,0,0.5);
+    transform:translateY(0);
+    transition:transform .12s ease, box-shadow .12s ease, filter .2s ease;
+  }
+
+  .watch-btn::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    border-radius:9px;
+    background:linear-gradient(120deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 30%);
+    pointer-events:none;
+  }
+
+  .watch-btn svg{
+    width:14px;
+    height:14px;
+    fill:#3a2a06;
+    flex-shrink:0;
+  }
+
+  .watch-btn:hover{
+    filter:brightness(1.08);
+  }
+
+  .watch-btn:active{
+    transform:translateY(3px);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.6) inset,
+      0 -1px 0 rgba(0,0,0,0.25) inset,
+      0 1px 0 #6b4f0e,
+      0 3px 8px rgba(0,0,0,0.5);
+  }
+
+  /* ---- Desktop footer ---- */
+  .desktop-footer{
+    margin-top:60px;
+    padding:32px 56px 48px;
+    max-width:1480px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    border-top:1px solid var(--border-glass);
+  }
+
+  .desktop-footer .wordmark{
+    font-size:1rem;
+    font-weight:800;
+    letter-spacing:1px;
+    background:linear-gradient(135deg, var(--gold-light), var(--gold) 50%, var(--gold-dark));
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+
+  .desktop-footer .wordmark span{
+    color:#fff;
+    -webkit-text-fill-color:#fff;
+  }
+
+  .desktop-footer .foot-text{
+    font-size:0.78rem;
+    color:rgba(245,233,201,0.35);
+    letter-spacing:0.4px;
+  }
+
+  .desktop-footer .foot-links{
+    display:flex;
+    gap:24px;
+  }
+
+  .desktop-footer .foot-links a{
+    font-size:0.78rem;
+    color:rgba(245,233,201,0.45);
+    text-decoration:none;
+    transition:color .2s ease;
+  }
+
+  .desktop-footer .foot-links a:hover{
+    color:var(--gold-light);
+  }
+
+  /* ---- Old mobile footer hidden on desktop ---- */
+  footer.mobile-footer{
+    margin-top:40px;
+    padding-bottom:30px;
+    font-size:0.75rem;
+    color:rgba(245,233,201,0.35);
+    letter-spacing:1px;
+    text-align:center;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+  }
+
+  .dmca-link-mobile{
+    color:var(--gold-light);
+    text-decoration:none;
+    font-weight:700;
+    letter-spacing:0.5px;
+    font-size:0.78rem;
+    border-bottom:1px solid rgba(212,175,55,0.3);
+    padding-bottom:2px;
+  }
+
+  /* ---- No results state (search/filter empty) ---- */
+  .no-results{
+    text-align:center;
+    padding:40px 20px;
+    color:rgba(245,233,201,0.4);
+    font-size:0.9rem;
+    letter-spacing:0.4px;
+    line-height:1.6;
+  }
+
+  /* ---- View containers (Home / Search / Genres / Saved) ---- */
+  .m-view, .d-view{
+    animation:viewFade .25s ease;
+  }
+
+  @keyframes viewFade{
+    from{opacity:0;transform:translateY(6px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+
+  .view-header{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    padding:18px 16px 4px;
+  }
+
+  .view-header h2{
+    font-size:1.2rem;
+    font-weight:800;
+    color:#fff;
+    letter-spacing:0.2px;
+  }
+
+  .back-link{
+    background:none;
+    border:none;
+    color:var(--gold-light);
+    font-size:0.78rem;
+    font-weight:700;
+    letter-spacing:0.4px;
+    cursor:pointer;
+    padding:0;
+  }
+
+  /* ---- Genre tile grid (mobile) ---- */
+  .genre-tile-grid{
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:14px;
+    padding:18px 16px;
+  }
+
+  .genre-tile{
+    position:relative;
+    aspect-ratio:16/10;
+    border-radius:14px;
+    overflow:hidden;
+    display:flex;
+    align-items:flex-end;
+    padding:14px;
+    cursor:pointer;
+    border:1px solid var(--border-glass);
+    background:linear-gradient(135deg, rgba(212,175,55,0.22), rgba(20,16,8,0.65));
+    transition:transform .2s ease, border-color .2s ease;
+  }
+
+  .genre-tile:active{
+    transform:scale(0.97);
+  }
+
+  .genre-tile:hover{
+    border-color:rgba(212,175,55,0.55);
+  }
+
+  .genre-tile span{
+    font-size:0.95rem;
+    font-weight:800;
+    color:#fff;
+    letter-spacing:0.3px;
+    text-shadow:0 2px 8px rgba(0,0,0,0.5);
+  }
+
+  /* ---- Genre tile grid (desktop) ---- */
+  #desktopGenreTiles{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));
+    gap:20px;
+    padding-bottom:8px;
+  }
+
+  #desktopGenreTiles .genre-tile{
+    aspect-ratio:16/9;
+    border-radius:16px;
+    padding:20px;
+  }
+
+  #desktopGenreTiles .genre-tile span{
+    font-size:1.1rem;
+  }
+
+  /* ---- Save / bookmark toggle button ---- */
+  .save-toggle{
+    border:1px solid var(--border-glass);
+    background:rgba(8,6,3,0.65);
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:background .2s ease, border-color .2s ease, transform .15s ease;
+  }
+
+  .save-toggle svg{
+    width:14px;
+    height:14px;
+    fill:none;
+    stroke:rgba(245,233,201,0.7);
+    stroke-width:2;
+  }
+
+  .save-toggle.saved svg{
+    fill:var(--gold-light);
+    stroke:var(--gold-light);
+  }
+
+  .save-toggle:active{
+    transform:scale(0.9);
+  }
+
+  /* Mobile row-card save button: top-right ribbon */
+  .row-card .save-toggle{
+    position:absolute;
+    top:10px;
+    right:10px;
+    width:30px;
+    height:30px;
+    border-radius:50%;
+    z-index:3;
+  }
+
+  /* Desktop card save button: sits just below the rating badge, top-right on poster */
+  .card .card-save{
+    position:absolute;
+    top:48px;
+    right:12px;
+    width:30px;
+    height:30px;
+    border-radius:50%;
+    z-index:3;
+  }
+
+  .card .card-save.saved{
+    background:rgba(212,175,55,0.18);
+    border-color:rgba(212,175,55,0.5);
+  }
+
+  /* Hero secondary "My List" save toggle keeps pill styling */
+  .hero-secondary.save-toggle{
+    background:rgba(255,255,255,0.04);
+  }
+
+  .hero-secondary.save-toggle.saved{
+    background:rgba(212,175,55,0.16);
+    border-color:rgba(212,175,55,0.5);
+  }
+
+  .hero-secondary.save-toggle.saved svg{
+    fill:var(--gold-light);
+    stroke:var(--gold-light);
+  }
+
+  /* ---- DMCA Modal ---- */
+  .modal-overlay{
+    position:fixed;
+    inset:0;
+    z-index:200;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    background:rgba(5,4,2,0.78);
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+  }
+
+  .modal-overlay.open{
+    display:flex;
+  }
+
+  .modal-box{
+    position:relative;
+    width:100%;
+    max-width:560px;
+    max-height:85vh;
+    overflow-y:auto;
+    background:linear-gradient(165deg, rgba(26,20,8,0.98), rgba(10,8,5,0.99));
+    border:1px solid var(--border-glass);
+    border-radius:20px;
+    padding:36px 32px 30px;
+    box-shadow:0 30px 70px rgba(0,0,0,0.6), 0 0 40px rgba(212,175,55,0.1);
+    animation:modalIn .25s ease;
+  }
+
+  @keyframes modalIn{
+    from{opacity:0;transform:translateY(12px) scale(0.98);}
+    to{opacity:1;transform:translateY(0) scale(1);}
+  }
+
+  .modal-close{
+    position:absolute;
+    top:18px;
+    right:18px;
+    width:34px;
+    height:34px;
+    border-radius:50%;
+    border:1px solid var(--border-glass);
+    background:rgba(255,255,255,0.04);
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:background .2s ease, border-color .2s ease;
+  }
+
+  .modal-close:hover{
+    background:rgba(212,175,55,0.12);
+    border-color:rgba(212,175,55,0.4);
+  }
+
+  .modal-close svg{
+    width:15px;
+    height:15px;
+    stroke:rgba(245,233,201,0.7);
+    fill:none;
+    stroke-width:2;
+  }
+
+  .modal-icon{
+    width:50px;
+    height:50px;
+    margin-bottom:18px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:14px;
+    background:linear-gradient(145deg, rgba(212,175,55,0.18), rgba(212,175,55,0.05));
+    border:1px solid rgba(212,175,55,0.3);
+  }
+
+  .modal-icon svg{
+    width:24px;
+    height:24px;
+    fill:none;
+    stroke:var(--gold-light);
+    stroke-width:1.8;
+  }
+
+  .modal-title{
+    font-size:1.4rem;
+    font-weight:800;
+    color:#fff;
+    letter-spacing:0.2px;
+    margin-bottom:18px;
+  }
+
+  .modal-body p{
+    font-size:0.88rem;
+    line-height:1.7;
+    color:rgba(245,233,201,0.7);
+    margin-bottom:14px;
+  }
+
+  .modal-body p:last-child{
+    margin-bottom:0;
+  }
+
+  .modal-foot{
+    margin-top:24px;
+    padding-top:18px;
+    border-top:1px solid var(--border-glass);
+    font-size:0.72rem;
+    letter-spacing:0.8px;
+    color:rgba(245,233,201,0.4);
+    text-align:center;
+  }
+
+  @media (max-width:480px){
+    .modal-box{padding:30px 22px 24px;}
+    .modal-title{font-size:1.2rem;}
+  }
+
+  /* ============ BREAKPOINTS ============ */
+  @media (min-width:1024px){
+    body{display:block;padding:0;}
+    .topnav,.search-wrap,.chip-row,.scroll-row,.section-head,.movie-list,.tabbar,
+    header.desktop-header,footer.mobile-footer{
+      display:none;
+    }
+    .desktop-shell{display:block;}
+  }
+
+  @media (max-width:1023px){
+    .desktop-shell{display:none;}
+    body{padding-bottom:78px;} /* room for mobile tab bar */
+    .tabbar{display:flex;}
+  }
+
+  @media (min-width:1024px) and (max-width:1279px){
+    .hero{min-height:420px;}
+    .hero-title{font-size:2.8rem;}
+    .hero-content{max-width:560px;padding:0 40px 44px;}
+    .desktop-topbar,.desktop-pills,.d-section,.desktop-footer{padding-left:40px;padding-right:40px;}
+    .hero{margin-left:40px;margin-right:40px;}
+  }
+</style>
+</head>
+<body>
+
+  <!-- ============ MOBILE HEADER ============ -->
+  <div class="topnav">
+    <div class="brand-sm">SX <span>MOVIES</span></div>
+    <div class="nav-actions">
+      <div class="icon-btn" aria-label="Notifications">
+        <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </div>
+      <div class="icon-btn" aria-label="Profile">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MOBILE: HOME VIEW ============ -->
+  <div class="m-view" id="mobileHomeView">
+
+    <div class="search-wrap">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="mobileSearch" placeholder="Search movies, genres...">
+      </div>
+    </div>
+
+    <div class="chip-row" id="mobileChips">
+      <div class="chip active" data-genre="all">All</div>
+      <div class="chip" data-genre="new">New Releases</div>
+      <div class="chip" data-genre="action">Action</div>
+      <div class="chip" data-genre="thriller">Thriller</div>
+      <div class="chip" data-genre="drama">Drama</div>
+      <div class="chip" data-genre="bollywood">Bollywood</div>
+    </div>
+
+    <!-- ============ TRENDING ROW ============ -->
+    <div class="section-head">
+      <h2>🔥 Trending Now</h2>
+      <a class="see-all" href="#" data-goto="genres">See All</a>
+    </div>
+    <div class="scroll-row">
+      <a class="poster-card" href="https://saptarshixtrasports.pages.dev/movies/dhurandhar-2" target="_blank" rel="noopener">
+        <img src="https://m.media-amazon.com/images/M/MV5BNDhjNThiMjQtNTc0ZS00MjAxLTgyODItNDFkZjI5YjU0MDJhXkEyXkFqcGc@._V1_.jpg" alt="Dhurandhar- The Revenge 2026" loading="lazy">
+        <div class="p-title">Dhurandhar- The Revenge 2026</div>
+      </a>
+    </div>
+
+    <!-- ============ NEW RELEASES LIST (core mobile layout) ============ -->
+    <div class="section-head">
+      <h2>New Releases</h2>
+      <a class="see-all" href="#" data-goto="genres">See All</a>
+    </div>
+    <div class="movie-list" id="mobileMovieList">
+
+      <div class="row-card" data-title="dhurandhar" data-genre="new action thriller">
+        <button class="save-toggle" data-title="dhurandhar" aria-label="Save">
+          <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        </button>
+        <div class="row-poster">
+          <span class="row-badge">2026</span>
+          <img src="https://m.media-amazon.com/images/M/MV5BNDhjNThiMjQtNTc0ZS00MjAxLTgyODItNDFkZjI5YjU0MDJhXkEyXkFqcGc@._V1_.jpg" alt="Dhurandhar- The Revenge 2026 Poster" loading="lazy">
+        </div>
+        <div class="row-info">
+          <div class="row-title">Dhurandhar- The Revenge 2026</div>
+          <div class="row-meta">2026 &nbsp;•&nbsp; Action / Thriller</div>
+          <div class="row-rating">
+            <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.7 7-6.3-3.9-6.3 3.9 1.7-7L2 9.2l7.1-.6z"/></svg>
+            8.4
+          </div>
+          <a class="row-watch" href="https://saptarshixtrasports.pages.dev/movies/dhurandhar-2" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            Watch
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="no-results" id="mobileNoResults" style="display:none;">No movies found.</div>
+
+  </div>
+
+  <!-- ============ MOBILE: SEARCH VIEW ============ -->
+  <div class="m-view" id="mobileSearchView" style="display:none;">
+    <div class="view-header">
+      <h2>Search</h2>
+    </div>
+    <div class="search-wrap">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="mobileSearchViewInput" placeholder="Search movies, genres...">
+      </div>
+    </div>
+    <div class="movie-list" id="mobileSearchResults"></div>
+    <div class="no-results" id="mobileSearchEmpty">Start typing to search the SX Movies library.</div>
+  </div>
+
+  <!-- ============ MOBILE: GENRES VIEW ============ -->
+  <div class="m-view" id="mobileGenresView" style="display:none;">
+    <div class="view-header">
+      <h2>Browse Genres</h2>
+    </div>
+    <div class="genre-tile-grid" id="mobileGenreTiles">
+      <div class="genre-tile" data-genre="new"><span>New Releases</span></div>
+      <div class="genre-tile" data-genre="action"><span>Action</span></div>
+      <div class="genre-tile" data-genre="thriller"><span>Thriller</span></div>
+      <div class="genre-tile" data-genre="drama"><span>Drama</span></div>
+      <div class="genre-tile" data-genre="bollywood"><span>Bollywood</span></div>
+    </div>
+    <div class="view-header" id="mobileGenreResultsHead" style="display:none;">
+      <h2 id="mobileGenreResultsTitle">Results</h2>
+      <button class="back-link" id="mobileGenreBack">← All Genres</button>
+    </div>
+    <div class="movie-list" id="mobileGenreResults"></div>
+  </div>
+
+  <!-- ============ MOBILE: SAVED VIEW ============ -->
+  <div class="m-view" id="mobileSavedView" style="display:none;">
+    <div class="view-header">
+      <h2>Saved</h2>
+    </div>
+    <div class="movie-list" id="mobileSavedList"></div>
+    <div class="no-results" id="mobileSavedEmpty" style="display:none;">
+      Nothing saved yet. Tap the ribbon icon on any movie to save it here.
+    </div>
+  </div>
+
+  <!-- ============ MOBILE BOTTOM TAB BAR ============ -->
+  <div class="tabbar">
+    <button class="tab-item active" data-view="home">
+      <svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg>
+      Home
+    </button>
+    <button class="tab-item" data-view="search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      Search
+    </button>
+    <button class="tab-item" data-view="genres">
+      <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+      Genres
+    </button>
+    <button class="tab-item" data-view="saved">
+      <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+      Saved
+    </button>
+  </div>
+
+  <!-- ============ DESKTOP SHELL (≥1024px) ============ -->
+  <div class="desktop-shell">
+
+    <!-- Left rail navigation -->
+    <nav class="rail">
+      <div class="rail-logo">SX</div>
+      <div class="rail-nav">
+        <button class="rail-link active" data-view="home">
+          <svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg>
+          Home
+        </button>
+        <button class="rail-link" data-view="search">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Search
+        </button>
+        <button class="rail-link" data-view="genres">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+          Genres
+        </button>
+        <button class="rail-link" data-view="saved">
+          <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          Saved
+        </button>
+      </div>
+      <div class="rail-avatar">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+      </div>
+    </nav>
+
+    <div class="main-col">
+
+      <!-- Top bar: wordmark + search -->
+      <div class="desktop-topbar">
+        <div class="wordmark">SX <span>MOVIES</span></div>
+        <div class="desktop-search">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="desktopSearch" placeholder="Search movies, genres...">
+        </div>
+      </div>
+
+      <!-- ============ DESKTOP: HOME VIEW ============ -->
+      <div class="d-view" id="desktopHomeView">
+
+        <!-- Hero banner -->
+        <section class="hero">
+          <div class="hero-bg">
+            <img src="https://m.media-amazon.com/images/M/MV5BNDhjNThiMjQtNTc0ZS00MjAxLTgyODItNDFkZjI5YjU0MDJhXkEyXkFqcGc@._V1_.jpg" alt="Dhurandhar- The Revenge 2026 backdrop">
+          </div>
+          <div class="hero-content">
+            <div class="hero-eyebrow">Featured This Week</div>
+            <h1 class="hero-title">Dhurandhar- The Revenge 2026</h1>
+            <div class="hero-meta">
+              <span>2026</span>
+              <span class="dot"></span>
+              <span>Action / Thriller</span>
+              <span class="dot"></span>
+              <span class="hero-rating">
+                <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.7 7-6.3-3.9-6.3 3.9 1.7-7L2 9.2l7.1-.6z"/></svg>
+                8.4
+              </span>
+            </div>
+            <p class="hero-desc">A high-octane action thriller following an undercover operative navigating betrayal, loyalty, and a covert mission that spirals out of control. Stream the premiere now on SX Movies.</p>
+            <div class="hero-actions">
+              <a class="hero-watch" href="https://saptarshixtrasports.pages.dev/movies/dhurandhar-2" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                Watch Now
+              </a>
+              <button class="hero-secondary save-toggle" data-title="dhurandhar">
+                <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                <span class="save-label">My List</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Genre filter pills -->
+        <div class="desktop-pills" id="desktopPills">
+          <button class="d-pill active" data-genre="all">All</button>
+          <button class="d-pill" data-genre="new">New Releases</button>
+          <button class="d-pill" data-genre="action">Action</button>
+          <button class="d-pill" data-genre="thriller">Thriller</button>
+          <button class="d-pill" data-genre="drama">Drama</button>
+          <button class="d-pill" data-genre="bollywood">Bollywood</button>
+        </div>
+
+        <!-- New Releases section -->
+        <section class="d-section">
+          <div class="d-section-head">
+            <div class="label">
+              <h2>New Releases</h2>
+              <span class="count" id="desktopCount">1 title</span>
+            </div>
+            <button class="see-all-d" data-goto="genres">
+              See All
+              <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+          </div>
+          <div class="grid-wrap" id="desktopGrid">
+
+            <div class="card" data-title="dhurandhar" data-genre="new action thriller">
+              <button class="save-toggle card-save" data-title="dhurandhar" aria-label="Save">
+                <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+              </button>
+              <div class="poster-wrap">
+                <span class="badge">2026</span>
+                <span class="card-rating">
+                  <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.7 7-6.3-3.9-6.3 3.9 1.7-7L2 9.2l7.1-.6z"/></svg>
+                  8.4
+                </span>
+                <img src="https://m.media-amazon.com/images/M/MV5BNDhjNThiMjQtNTc0ZS00MjAxLTgyODItNDFkZjI5YjU0MDJhXkEyXkFqcGc@._V1_.jpg" alt="Dhurandhar- The Revenge 2026 Poster" loading="lazy">
+                <div class="play-overlay">
+                  <div class="play-circle">
+                    <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                  </div>
+                </div>
+              </div>
+              <div class="info">
+                <div class="title">Dhurandhar- The Revenge 2026</div>
+                <div class="meta">2026 &nbsp;•&nbsp; Action / Thriller</div>
+                <a class="watch-btn" href="https://saptarshixtrasports.pages.dev/movies/dhurandhar-2" target="_blank" rel="noopener">
+                  <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                  Watch Now
+                </a>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="no-results" id="desktopNoResults" style="display:none;">No movies found.</div>
+        </section>
+
+      </div>
+
+      <!-- ============ DESKTOP: SEARCH VIEW ============ -->
+      <div class="d-view" id="desktopSearchView" style="display:none;">
+        <section class="d-section">
+          <div class="d-section-head">
+            <div class="label"><h2>Search</h2></div>
+          </div>
+          <div class="grid-wrap" id="desktopSearchResults"></div>
+          <div class="no-results" id="desktopSearchEmpty">Start typing above to search the SX Movies library.</div>
+        </section>
+      </div>
+
+      <!-- ============ DESKTOP: GENRES VIEW ============ -->
+      <div class="d-view" id="desktopGenresView" style="display:none;">
+        <section class="d-section">
+          <div class="d-section-head">
+            <div class="label"><h2>Browse Genres</h2></div>
+          </div>
+          <div class="genre-tile-grid" id="desktopGenreTiles">
+            <div class="genre-tile" data-genre="new"><span>New Releases</span></div>
+            <div class="genre-tile" data-genre="action"><span>Action</span></div>
+            <div class="genre-tile" data-genre="thriller"><span>Thriller</span></div>
+            <div class="genre-tile" data-genre="drama"><span>Drama</span></div>
+            <div class="genre-tile" data-genre="bollywood"><span>Bollywood</span></div>
+          </div>
+        </section>
+        <section class="d-section" id="desktopGenreResultsSection" style="display:none;">
+          <div class="d-section-head">
+            <div class="label"><h2 id="desktopGenreResultsTitle">Results</h2></div>
+            <button class="see-all-d" id="desktopGenreBack">← All Genres</button>
+          </div>
+          <div class="grid-wrap" id="desktopGenreResults"></div>
+        </section>
+      </div>
+
+      <!-- ============ DESKTOP: SAVED VIEW ============ -->
+      <div class="d-view" id="desktopSavedView" style="display:none;">
+        <section class="d-section">
+          <div class="d-section-head">
+            <div class="label"><h2>Saved</h2></div>
+          </div>
+          <div class="grid-wrap" id="desktopSavedGrid"></div>
+          <div class="no-results" id="desktopSavedEmpty" style="display:none;">
+            Nothing saved yet. Click the ribbon icon on any movie to save it here.
+          </div>
+        </section>
+      </div>
+
+      <!-- Desktop footer -->
+      <footer class="desktop-footer">
+        <div class="wordmark">SX <span>MOVIES</span></div>
+        <div class="foot-links">
+          <a href="#" id="dmcaLinkDesktop">DMCA</a>
+        </div>
+        <div class="foot-text">&copy; 2026 SX SPORTS • All Rights Reserved</div>
+      </footer>
+
+    </div>
+  </div>
+
+  <!-- ============ MOBILE FOOTER ============ -->
+  <footer class="mobile-footer">
+    <a href="#" id="dmcaLinkMobile" class="dmca-link-mobile">DMCA &amp; Copyright Disclaimer</a>
+    <div>&copy; 2026 SX SPORTS • All Rights Reserved</div>
+  </footer>
+
+  <!-- ============ DMCA MODAL ============ -->
+  <div class="modal-overlay" id="dmcaOverlay">
+    <div class="modal-box">
+      <button class="modal-close" id="dmcaClose" aria-label="Close">
+        <svg viewBox="0 0 24 24"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+      </button>
+      <div class="modal-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
+      </div>
+      <h2 class="modal-title">DMCA Notice</h2>
+      <div class="modal-body">
+        <p>SX SPORTS does not host, upload, store, transmit, or broadcast any live streams, videos, or media files on its own servers.</p>
+        <p>We only provide links to publicly available streams and media content that are hosted by independent third-party websites.</p>
+        <p>All trademarks, copyrights, logos, streaming rights, and broadcasting rights belong to their respective owners. SX SPORTS has no control over, and assumes no responsibility for, the content hosted on external websites.</p>
+        <p>If you are a copyright owner or authorized representative and believe that any content infringes your rights, please contact the original third-party hosting provider directly, as they are solely responsible for the hosted content.</p>
+      </div>
+      <div class="modal-foot">&copy; 2026 SX SPORTS • All Rights Reserved</div>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    // ======================================================================
+    // MOVIE DATA — built from the "New Releases" cards already in the DOM
+    // (single source of truth: add a .row-card / .card pair and it appears
+    // everywhere — search, genres, saved — automatically)
+    // ======================================================================
+    var MOVIES = [];
+    document.querySelectorAll('#mobileMovieList .row-card').forEach(function(card){
+      MOVIES.push({
+        title: card.getAttribute('data-title'),
+        genre: card.getAttribute('data-genre'),
+        name: card.querySelector('.row-title').textContent.trim(),
+        meta: card.querySelector('.row-meta').innerHTML,
+        rating: card.querySelector('.row-rating').textContent.trim(),
+        poster: card.querySelector('img').getAttribute('src'),
+        badge: card.querySelector('.row-badge') ? card.querySelector('.row-badge').textContent.trim() : '',
+        link: card.querySelector('.row-watch').getAttribute('href')
+      });
+    });
+
+    var GENRE_LABELS = {
+      new: 'New Releases',
+      action: 'Action',
+      thriller: 'Thriller',
+      drama: 'Drama',
+      bollywood: 'Bollywood'
+    };
+
+    // ---------- helpers ----------
+    function matchesGenre(genreStr, genre){
+      if(genre === 'all') return true;
+      return (genreStr || '').toLowerCase().indexOf(genre) !== -1;
+    }
+    function matchesSearch(titleStr, term){
+      if(!term) return true;
+      return (titleStr || '').toLowerCase().indexOf(term) !== -1;
+    }
+
+    // ---------- saved/bookmark store (persists via localStorage) ----------
+    var SAVED_KEY = 'sx_movies_saved';
+    function getSaved(){
+      try{
+        return JSON.parse(localStorage.getItem(SAVED_KEY) || '[]');
+      }catch(e){ return []; }
+    }
+    function setSaved(arr){
+      try{ localStorage.setItem(SAVED_KEY, JSON.stringify(arr)); }catch(e){}
+    }
+    function isSaved(title){
+      return getSaved().indexOf(title) !== -1;
+    }
+    function toggleSaved(title){
+      var arr = getSaved();
+      var idx = arr.indexOf(title);
+      if(idx === -1){ arr.push(title); } else { arr.splice(idx, 1); }
+      setSaved(arr);
+      refreshSaveButtons();
+      renderSavedViews();
+    }
+    function refreshSaveButtons(){
+      document.querySelectorAll('.save-toggle').forEach(function(btn){
+        var t = btn.getAttribute('data-title');
+        if(!t) return;
+        btn.classList.toggle('saved', isSaved(t));
+      });
+    }
+
+    // delegate clicks for every existing AND future .save-toggle button
+    document.addEventListener('click', function(e){
+      var btn = e.target.closest ? e.target.closest('.save-toggle') : null;
+      if(btn){
+        e.preventDefault();
+        var t = btn.getAttribute('data-title');
+        if(t) toggleSaved(t);
+      }
+    });
+
+    // ======================================================================
+    // CARD RENDERERS — build markup for a movie in row (mobile) or grid
+    // (desktop) form, including a working save-toggle button
+    // ======================================================================
+    function renderRowCard(m){
+      var savedClass = isSaved(m.title) ? ' saved' : '';
+      return ''+
+        '<div class="row-card" data-title="'+m.title+'" data-genre="'+m.genre+'">'+
+          '<button class="save-toggle'+savedClass+'" data-title="'+m.title+'" aria-label="Save">'+
+            '<svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>'+
+          '</button>'+
+          '<div class="row-poster">'+
+            (m.badge ? '<span class="row-badge">'+m.badge+'</span>' : '')+
+            '<img src="'+m.poster+'" alt="'+m.name+' Poster" loading="lazy">'+
+          '</div>'+
+          '<div class="row-info">'+
+            '<div class="row-title">'+m.name+'</div>'+
+            '<div class="row-meta">'+m.meta+'</div>'+
+            '<div class="row-rating">'+
+              '<svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.7 7-6.3-3.9-6.3 3.9 1.7-7L2 9.2l7.1-.6z"/></svg>'+
+              m.rating+
+            '</div>'+
+            '<a class="row-watch" href="'+m.link+'" target="_blank" rel="noopener">'+
+              '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> Watch'+
+            '</a>'+
+          '</div>'+
+        '</div>';
+    }
+
+    function renderGridCard(m){
+      var savedClass = isSaved(m.title) ? ' saved' : '';
+      return ''+
+        '<div class="card" data-title="'+m.title+'" data-genre="'+m.genre+'">'+
+          '<button class="save-toggle card-save'+savedClass+'" data-title="'+m.title+'" aria-label="Save">'+
+            '<svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>'+
+          '</button>'+
+          '<div class="poster-wrap">'+
+            (m.badge ? '<span class="badge">'+m.badge+'</span>' : '')+
+            '<span class="card-rating">'+
+              '<svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.7 7-6.3-3.9-6.3 3.9 1.7-7L2 9.2l7.1-.6z"/></svg>'+
+              m.rating+
+            '</span>'+
+            '<img src="'+m.poster+'" alt="'+m.name+' Poster" loading="lazy">'+
+            '<div class="play-overlay"><div class="play-circle">'+
+              '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>'+
+            '</div></div>'+
+          '</div>'+
+          '<div class="info">'+
+            '<div class="title">'+m.name+'</div>'+
+            '<div class="meta">'+m.meta+'</div>'+
+            '<a class="watch-btn" href="'+m.link+'" target="_blank" rel="noopener">'+
+              '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> Watch Now'+
+            '</a>'+
+          '</div>'+
+        '</div>';
+    }
+
+    // ======================================================================
+    // HOME FILTER (chips/pills + search box on the Home view itself)
+    // ======================================================================
+    function wireFilterGroup(opts){
+      var chips = document.querySelectorAll(opts.chipSelector);
+      var searchInput = document.querySelector(opts.searchSelector);
+      var cards = document.querySelectorAll(opts.cardSelector);
+      var noResults = document.querySelector(opts.noResultsSelector);
+      var activeGenre = 'all';
+
+      function applyFilter(){
+        var term = searchInput ? searchInput.value.trim().toLowerCase() : '';
+        var visibleCount = 0;
+        cards.forEach(function(card){
+          var show = matchesGenre(card.getAttribute('data-genre'), activeGenre) &&
+                     matchesSearch(card.getAttribute('data-title'), term);
+          card.style.display = show ? '' : 'none';
+          if(show) visibleCount++;
+        });
+        if(noResults){
+          noResults.style.display = visibleCount === 0 ? 'block' : 'none';
+        }
+        if(opts.countEl){
+          var countEl = document.querySelector(opts.countEl);
+          if(countEl){
+            countEl.textContent = visibleCount + (visibleCount === 1 ? ' title' : ' titles');
+          }
+        }
+      }
+
+      chips.forEach(function(chip){
+        chip.addEventListener('click', function(){
+          chips.forEach(function(c){ c.classList.remove('active'); });
+          chip.classList.add('active');
+          activeGenre = chip.getAttribute('data-genre') || 'all';
+          applyFilter();
+        });
+      });
+
+      if(searchInput){
+        searchInput.addEventListener('input', applyFilter);
+      }
+
+      applyFilter();
+    }
+
+    wireFilterGroup({
+      chipSelector: '#mobileChips .chip',
+      searchSelector: '#mobileSearch',
+      cardSelector: '#mobileMovieList .row-card',
+      noResultsSelector: '#mobileNoResults'
+    });
+
+    wireFilterGroup({
+      chipSelector: '#desktopPills .d-pill',
+      searchSelector: '#desktopSearch',
+      cardSelector: '#desktopGrid .card',
+      noResultsSelector: '#desktopNoResults',
+      countEl: '#desktopCount'
+    });
+
+    // ======================================================================
+    // DEDICATED SEARCH VIEW (mobile + desktop) — searches the full library
+    // ======================================================================
+    function wireSearchView(opts){
+      var input = document.querySelector(opts.inputSelector);
+      var results = document.querySelector(opts.resultsSelector);
+      var empty = document.querySelector(opts.emptySelector);
+
+      function render(){
+        var term = input.value.trim().toLowerCase();
+        if(!term){
+          results.innerHTML = '';
+          empty.style.display = 'block';
+          empty.textContent = opts.placeholderText;
+          return;
+        }
+        var matches = MOVIES.filter(function(m){
+          return matchesSearch(m.title, term) || matchesSearch(m.genre, term) || matchesSearch(m.name, term);
+        });
+        if(matches.length === 0){
+          results.innerHTML = '';
+          empty.style.display = 'block';
+          empty.textContent = 'No movies found for "'+input.value.trim()+'".';
+        }else{
+          empty.style.display = 'none';
+          results.innerHTML = matches.map(opts.renderFn).join('');
+        }
+      }
+
+      input.addEventListener('input', render);
+      render();
+
+      return render; // expose so we can re-render after a save toggle, if needed
+    }
+
+    wireSearchView({
+      inputSelector: '#mobileSearchViewInput',
+      resultsSelector: '#mobileSearchResults',
+      emptySelector: '#mobileSearchEmpty',
+      placeholderText: 'Start typing to search the SX Movies library.',
+      renderFn: renderRowCard
+    });
+
+    // NOTE: desktop search is driven by the single topbar input (#desktopSearch),
+    // handled below via renderDesktopGlobalSearch() — no separate input needed
+    // in the Search view itself.
+
+    // Desktop has one global search box in the topbar; route its input into
+    // the dedicated Search view results too, so it works no matter which
+    // view is currently open.
+    var desktopTopbarSearch = document.getElementById('desktopSearch');
+    var desktopSearchResultsEl = document.getElementById('desktopSearchResults');
+    var desktopSearchEmptyEl = document.getElementById('desktopSearchEmpty');
+
+    function renderDesktopGlobalSearch(){
+      var term = desktopTopbarSearch.value.trim().toLowerCase();
+      if(!term){
+        desktopSearchResultsEl.innerHTML = '';
+        desktopSearchEmptyEl.style.display = 'block';
+        desktopSearchEmptyEl.textContent = 'Start typing above to search the SX Movies library.';
+        return;
+      }
+      var matches = MOVIES.filter(function(m){
+        return matchesSearch(m.title, term) || matchesSearch(m.genre, term) || matchesSearch(m.name, term);
+      });
+      if(matches.length === 0){
+        desktopSearchResultsEl.innerHTML = '';
+        desktopSearchEmptyEl.style.display = 'block';
+        desktopSearchEmptyEl.textContent = 'No movies found for "'+desktopTopbarSearch.value.trim()+'".';
+      }else{
+        desktopSearchEmptyEl.style.display = 'none';
+        desktopSearchResultsEl.innerHTML = matches.map(renderGridCard).join('');
+      }
+    }
+
+    desktopTopbarSearch.addEventListener('input', function(){
+      renderDesktopGlobalSearch();
+      // jump to Search view automatically when user starts typing
+      if(desktopTopbarSearch.value.trim().length > 0){
+        switchDesktopView('search');
+      }
+    });
+    renderDesktopGlobalSearch();
+
+    // Mobile: typing in the Home search bar also jumps to the Search tab/view
+    var mobileHomeSearch = document.getElementById('mobileSearch');
+    var mobileSearchViewInput = document.getElementById('mobileSearchViewInput');
+    mobileHomeSearch.addEventListener('input', function(){
+      if(mobileHomeSearch.value.trim().length > 0){
+        mobileSearchViewInput.value = mobileHomeSearch.value;
+        mobileSearchViewInput.dispatchEvent(new Event('input'));
+        switchMobileView('search');
+      }
+    });
+
+    // ======================================================================
+    // GENRES VIEW — tile grid that filters into a results section
+    // ======================================================================
+    function wireGenreView(opts){
+      var tiles = document.querySelectorAll(opts.tileSelector);
+      var resultsHead = opts.resultsHeadSelector ? document.querySelector(opts.resultsHeadSelector) : null;
+      var resultsSection = opts.resultsSectionSelector ? document.querySelector(opts.resultsSectionSelector) : null;
+      var resultsTitle = document.querySelector(opts.resultsTitleSelector);
+      var results = document.querySelector(opts.resultsSelector);
+      var backBtn = document.querySelector(opts.backSelector);
+      var tilesWrap = document.querySelector(opts.tilesWrapSelector);
+
+      function showGenre(genre){
+        var matches = MOVIES.filter(function(m){ return matchesGenre(m.genre, genre); });
+        resultsTitle.textContent = (GENRE_LABELS[genre] || 'Results') + ' (' + matches.length + ')';
+        results.innerHTML = matches.map(opts.renderFn).join('');
+        if(resultsHead) resultsHead.style.display = 'flex';
+        if(resultsSection) resultsSection.style.display = 'block';
+        if(tilesWrap) tilesWrap.style.display = 'none';
+      }
+
+      function showTiles(){
+        if(resultsHead) resultsHead.style.display = 'none';
+        if(resultsSection) resultsSection.style.display = 'none';
+        if(tilesWrap) tilesWrap.style.display = 'grid';
+      }
+
+      tiles.forEach(function(tile){
+        tile.addEventListener('click', function(){
+          showGenre(tile.getAttribute('data-genre'));
+        });
+      });
+
+      if(backBtn){
+        backBtn.addEventListener('click', showTiles);
+      }
+
+      showTiles();
+      return { showGenre: showGenre, showTiles: showTiles };
+    }
+
+    var mobileGenreCtl = wireGenreView({
+      tileSelector: '#mobileGenreTiles .genre-tile',
+      tilesWrapSelector: '#mobileGenreTiles',
+      resultsHeadSelector: '#mobileGenreResultsHead',
+      resultsTitleSelector: '#mobileGenreResultsTitle',
+      resultsSelector: '#mobileGenreResults',
+      backSelector: '#mobileGenreBack',
+      renderFn: renderRowCard
+    });
+
+    var desktopGenreCtl = wireGenreView({
+      tileSelector: '#desktopGenreTiles .genre-tile',
+      tilesWrapSelector: '#desktopGenreTiles',
+      resultsSectionSelector: '#desktopGenreResultsSection',
+      resultsTitleSelector: '#desktopGenreResultsTitle',
+      resultsSelector: '#desktopGenreResults',
+      backSelector: '#desktopGenreBack',
+      renderFn: renderGridCard
+    });
+
+    // "See All" links on Home jump straight to the Genres view
+    document.querySelectorAll('[data-goto="genres"]').forEach(function(el){
+      el.addEventListener('click', function(e){
+        e.preventDefault();
+        if(el.closest('.m-view, .tabbar, .topnav')){
+          switchMobileView('genres');
+        }else{
+          switchDesktopView('genres');
+        }
+      });
+    });
+
+    // ======================================================================
+    // SAVED VIEW — renders every movie currently bookmarked
+    // ======================================================================
+    function renderSavedViews(){
+      var savedTitles = getSaved();
+      var savedMovies = MOVIES.filter(function(m){ return savedTitles.indexOf(m.title) !== -1; });
+
+      var mList = document.getElementById('mobileSavedList');
+      var mEmpty = document.getElementById('mobileSavedEmpty');
+      if(savedMovies.length === 0){
+        mList.innerHTML = '';
+        mEmpty.style.display = 'block';
+      }else{
+        mEmpty.style.display = 'none';
+        mList.innerHTML = savedMovies.map(renderRowCard).join('');
+      }
+
+      var dGrid = document.getElementById('desktopSavedGrid');
+      var dEmpty = document.getElementById('desktopSavedEmpty');
+      if(savedMovies.length === 0){
+        dGrid.innerHTML = '';
+        dEmpty.style.display = 'block';
+      }else{
+        dEmpty.style.display = 'none';
+        dGrid.innerHTML = savedMovies.map(renderGridCard).join('');
+      }
+    }
+    renderSavedViews();
+
+    // ======================================================================
+    // VIEW SWITCHING — mobile tab bar + desktop rail
+    // ======================================================================
+    function switchMobileView(view){
+      ['home','search','genres','saved'].forEach(function(v){
+        var el = document.getElementById('mobile' + v.charAt(0).toUpperCase() + v.slice(1) + 'View');
+        if(el) el.style.display = (v === view) ? '' : 'none';
+      });
+      document.querySelectorAll('.tabbar .tab-item').forEach(function(btn){
+        btn.classList.toggle('active', btn.getAttribute('data-view') === view);
+      });
+      window.scrollTo(0,0);
+      if(view === 'search'){
+        setTimeout(function(){ mobileSearchViewInput.focus(); }, 50);
+      }
+    }
+
+    function switchDesktopView(view){
+      ['home','search','genres','saved'].forEach(function(v){
+        var el = document.getElementById('desktop' + v.charAt(0).toUpperCase() + v.slice(1) + 'View');
+        if(el) el.style.display = (v === view) ? '' : 'none';
+      });
+      document.querySelectorAll('.rail .rail-link').forEach(function(btn){
+        btn.classList.toggle('active', btn.getAttribute('data-view') === view);
+      });
+      if(view === 'search'){
+        setTimeout(function(){ desktopTopbarSearch.focus(); }, 50);
+      }
+    }
+
+    document.querySelectorAll('.tabbar .tab-item').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        switchMobileView(btn.getAttribute('data-view'));
+      });
+    });
+
+    document.querySelectorAll('.rail .rail-link').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        switchDesktopView(btn.getAttribute('data-view'));
+      });
+    });
+
+    // ---------- DMCA modal ----------
+    var overlay = document.getElementById('dmcaOverlay');
+    var closeBtn = document.getElementById('dmcaClose');
+    var openLinks = [document.getElementById('dmcaLinkDesktop'), document.getElementById('dmcaLinkMobile')];
+
+    function openModal(e){
+      if(e) e.preventDefault();
+      overlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeModal(){
+      overlay.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    openLinks.forEach(function(link){
+      if(link) link.addEventListener('click', openModal);
+    });
+    closeBtn.addEventListener('click', closeModal);
+    overlay.addEventListener('click', function(e){
+      if(e.target === overlay) closeModal();
+    });
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape') closeModal();
+    });
+
+    // initial paint of save states (Home view cards rendered server-side)
+    refreshSaveButtons();
+  })();
+  </script>
+
+
+
+</body>
+</html>
