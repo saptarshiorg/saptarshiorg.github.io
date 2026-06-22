@@ -2440,8 +2440,8 @@ function renderNav(rows) {
     dHtml += `<a href="${r.href||'#'}" class="${cls}"${active}>${r.label}</a>`;
     mHtml += `<a href="${r.href||'#'}" class="${mCls}" onclick="closeDrawer()">${r.label}</a>`;
   });
-  dHtml += `<a href="https://saptarshiorg.github.io/movies/" target="_blank" rel="noopener" class="nav-movies-link"><img class="movies-logo-icon" src="https://static.vecteezy.com/system/resources/thumbnails/050/699/896/small/movie-night-illustration-cinema-poster-concept-banner-design-for-movie-theater-png.png" alt="Movies">WATCH MOVIES</a>`;
-  mHtml += `<a href="https://saptarshiorg.github.io/movies/" target="_blank" rel="noopener" class="drawer-movies" onclick="closeDrawer()"><img class="movies-logo-icon" src="https://static.vecteezy.com/system/resources/thumbnails/050/699/896/small/movie-night-illustration-cinema-poster-concept-banner-design-for-movie-theater-png.png" alt="Movies">WATCH MOVIES</a>`;
+  dHtml += `<a href="https://saptarshiorg.github.io/movies/" target="_blank" rel="noopener" class="nav-movies-link"><img class="movies-logo-icon" src="https://static.vecteezy.com/system/resources/thumbnails/050/699/896/small/movie-night-illustration-cinema-poster-concept-banner-design-for-movie-theater-png.png" alt="Movies">MOVIES</a>`;
+  mHtml += `<a href="https://saptarshiorg.github.io/movies/" target="_blank" rel="noopener" class="drawer-movies" onclick="closeDrawer()"><img class="movies-logo-icon" src="https://static.vecteezy.com/system/resources/thumbnails/050/699/896/small/movie-night-illustration-cinema-poster-concept-banner-design-for-movie-theater-png.png" alt="Movies">MOVIES</a>`;
   desktop.innerHTML = dHtml;
   drawerNav.innerHTML = mHtml;
 }
@@ -3303,7 +3303,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <nav class="mobile-tabbar" id="mobile-tabbar">
   <a class="mtab mtab-movies active" href="https://saptarshiorg.github.io/movies/" target="_blank" rel="noopener">
     <img class="movies-logo-icon" src="https://static.vecteezy.com/system/resources/thumbnails/050/699/896/small/movie-night-illustration-cinema-poster-concept-banner-design-for-movie-theater-png.png" alt="Movies">
-    <span class="mtab-movies-label">Watch Movies</span>
+    <span class="mtab-movies-label">MOVIES</span>
   </a>
   <a class="mtab" data-target="channels-section" href="#channels-section" style="position:relative;" onclick="event.preventDefault();document.getElementById('channels-section').scrollIntoView({behavior:'smooth'});setTimeout(()=>{const t=document.querySelector('#chTabs .ch-tab[data-grp=\'All\']');if(t)t.click();},400);">
     <span class="mtab-live-dot"></span>
