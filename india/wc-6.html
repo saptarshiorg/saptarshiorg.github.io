@@ -1506,6 +1506,11 @@ video { will-change: filter; }
   .spacer { display: flex !important; }
   #bottom-row { justify-content: flex-start !important; gap: 4px !important; }
 }
+
+/* Mobile fullscreen rotates with the device naturally — no FS button needed */
+@media (max-width: 900px) {
+  #fs-btn { display: none !important; }
+}
 </style>
 </head>
 <body>
@@ -3018,27 +3023,13 @@ player.addEventListener('touchend', e => {
   }
 });
 
-// ── FULLSCREEN + ORIENTATION LOCK ──
-const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-
+// ── FULLSCREEN ──
 async function enterFullscreen() {
   try {
     if (player.requestFullscreen) await player.requestFullscreen();
     else if (player.webkitRequestFullscreen) await player.webkitRequestFullscreen();
     else if (player.mozRequestFullScreen) await player.mozRequestFullScreen();
   } catch(e) {}
-
-  // Lock to landscape on mobile
-  if (isMobile) {
-    try {
-      if (screen.orientation && screen.orientation.lock) {
-        await screen.orientation.lock('landscape');
-      }
-    } catch(e) {
-      // Not supported (iOS Safari) — apply CSS rotation trick
-      applyRotationFallback(true);
-    }
-  }
 }
 
 async function exitFullscreen() {
@@ -3047,36 +3038,7 @@ async function exitFullscreen() {
     else if (document.webkitExitFullscreen) await document.webkitExitFullscreen();
     else if (document.mozCancelFullScreen) await document.mozCancelFullScreen();
   } catch(e) {}
-  applyRotationFallback(false);
-  try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch(e) {}
 }
-
-// CSS rotation fallback for iOS (can't lock orientation without fullscreen API)
-function applyRotationFallback(on) {
-  if (on && window.innerHeight > window.innerWidth) {
-    // portrait → rotate player 90deg to fake landscape
-    player.style.cssText = `
-      position:fixed; top:0; left:0;
-      width:100vh; height:100vw;
-      transform:rotate(90deg) translateY(-100%);
-      transform-origin:top left;
-      z-index:9999;
-    `;
-    document.body.style.overflow = 'hidden';
-  } else {
-    player.style.cssText = '';
-    document.body.style.overflow = '';
-  }
-}
-
-// Listen for actual orientation changes to undo fake rotation if user rotates
-window.addEventListener('orientationchange', () => {
-  setTimeout(() => {
-    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-      applyRotationFallback(false);
-    }
-  }, 200);
-});
 
 fsBtn.addEventListener('click', async () => {
   const inFS = document.fullscreenElement || document.webkitFullscreenElement;
@@ -3092,7 +3054,6 @@ document.addEventListener('fullscreenchange', () => {
   // correctly anchor to the viewport rather than the transformed ancestor
   player.style.transform = inFS ? '' : 'translateZ(0)';
   player.style.webkitTransform = inFS ? '' : 'translateZ(0)';
-  if (!inFS) applyRotationFallback(false);
 });
 document.addEventListener('webkitfullscreenchange', () => {
   const inFS = document.fullscreenElement || document.webkitFullscreenElement;
@@ -3100,7 +3061,6 @@ document.addEventListener('webkitfullscreenchange', () => {
   player.dataset.fs = inFS ? '1' : '0';
   player.style.transform = inFS ? '' : 'translateZ(0)';
   player.style.webkitTransform = inFS ? '' : 'translateZ(0)';
-  if (!inFS) applyRotationFallback(false);
 });
 
 // ── SETTINGS ──
