@@ -20,7 +20,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title id="page-title">SPORTS BOOK</title>
 <link id="favicon" rel="icon" type="image/png" href="https://sportsboook.github.io/SportsBook.png">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Rajdhani:wght@400;500;600;700&family=Chakra+Petch:wght@400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Rajdhani:wght@400;500;600;700&family=Chakra+Petch:wght@400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&family=Comic+Neue:wght@400;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;0,900;1,600&family=Inter:wght@400;500;600;700;800&family=Cinzel:wght@500;600;700;800&display=swap" rel="stylesheet">
 
 <!-- SPORTS BOOK -->
 
@@ -1472,328 +1472,431 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
 
 <!-- ════════════════════════════════════════════════════════════
      SPORTS BOOK — Made by PENTIUM
-     Plain Arial theme override with basic crayon-box colors:
-     black, blue, green and red text on white. No gradients,
-     no glow, no rounded corners — just a very first-website look.
+     Classic Royal theme, v2: dim whitish-pink ground, royal
+     purple + gold + rose palette. Every text/background pairing
+     below was checked for WCAG contrast before being applied —
+     gold is kept as a decorative rule/border only (it fails
+     contrast as body text on the pink ground), never as the
+     foreground color of readable text.
 ════════════════════════════════════════════════════════════ -->
 <style>
-  /* 1) Collapse the whole color system down to plain primary colors */
+  /* ── TOKENS ─────────────────────────────────────────────
+     Color   — Royal Purple #4B2067 (ink/headings/buttons),
+               Antique Gold #B8862E (decorative rule/border
+               ONLY — never body text, fails contrast on pink),
+               Rose-Burgundy #A02050 (live/urgent accent —
+               passes contrast on both white and pink),
+               Whitish-Pink page ground #FBF1F3, white-pink
+               card surface #FDF5F7, plum-ink body text #3A2A40.
+     Type    — Display: 'Cinzel' small-caps for wordmark/panel
+               titles. Headings: 'Playfair Display' italic.
+               Body: 'Inter'.
+     Layout  — flat cards, rose hairline borders (darker variant
+               for borders sitting directly on the pink page,
+               since a light rose line disappears on pink).
+     Signature — thin gold rule under section headings, on
+               WHITE/card surfaces only, never floating directly
+               on the pink page (where it would fail contrast).
+  ───────────────────────────────────────────────────────── */
   :root {
-    --gold: #0000FF;
-    --gold-light: #0000FF;
-    --gold-dark: #0000FF;
-    --diamond: #0000FF;
-    --diamond-light: #0000FF;
-    --diamond-dark: #0000FF;
-    --indigo: #0000FF;
-    --violet: #0000FF;
-    --lavender: #0000FF;
-    --ice: #FFFFFF;
-    --live-red: #FF0000;
-    --white: #000000;
-    --text-muted: #008000;
-    --text-dim: #000000;
+    --royal-purple: #4B2067;
+    --royal-purple-soft: #6B3D8C;
+    --royal-gold: #B8862E;
+    --royal-gold-light: #D9B45C;
+    --royal-rose: #A02050;
+    --royal-rose-soft: #C9447A;
+    --royal-pink-bg: #FBF1F3;
+    --royal-pink-card: #FDF5F7;
+    --royal-ink: #3A2A40;
+    --royal-hair: #E3C9D2;       /* hairline ON WHITE/CARD surfaces */
+    --royal-hair-strong: #C98FA0; /* hairline directly ON the pink page */
 
-    --s0: #FFFFFF;
-    --s1: #FFFFFF;
-    --s2: #FFFFFF;
-    --s3: #FFFFFF;
+    /* remap the original tokens onto the royal-pink palette */
+    --gold: #B8862E;
+    --gold-light: #D9B45C;
+    --gold-dark: #8C6520;
+    --diamond: #4B2067;
+    --diamond-light: #6B3D8C;
+    --diamond-dark: #38134F;
+    --indigo: #4B2067;
+    --violet: #6B3D8C;
+    --lavender: #C9447A;
+    --ice: #FDF5F7;
+    --live-red: #A02050;
+    --white: #3A2A40;
+    --text-muted: #7A5C68;
+    --text-dim: #9C8590;
+
+    --s0: #FBF1F3;
+    --s1: #FDF5F7;
+    --s2: #F6E4EA;
+    --s3: #F0D5DF;
 
     --glow-indigo: transparent;
     --glow-violet: transparent;
     --glow-gold: transparent;
     --glow-diamond: transparent;
 
-    --glass: #FFFFFF;
-    --glass-h: #FFFFFF;
+    --glass: #FDF5F7;
+    --glass-h: #F6E4EA;
     --blur: none;
     --blur-sm: none;
 
-    --grad-brand: #0000FF;
-    --grad-brand-h: #0000FF;
-    --grad-violet: #0000FF;
-    --grad-gold: #FFFFFF;
-    --grad-gold-h: #FFFFFF;
-    --grad-diamond: #0000FF;
+    --grad-brand: linear-gradient(120deg,#4B2067,#6B3D8C);
+    --grad-brand-h: linear-gradient(90deg,#4B2067,#6B3D8C,#B8862E);
+    --grad-violet: linear-gradient(120deg,#A02050,#C9447A);
+    --grad-gold: linear-gradient(120deg,#D9B45C,#B8862E);
+    --grad-gold-h: linear-gradient(90deg,#B8862E,#D9B45C,#B8862E);
+    --grad-diamond: linear-gradient(120deg,#4B2067,#6B3D8C);
 
-    --font-display: Arial, Helvetica, sans-serif;
-    --font-body: Arial, Helvetica, sans-serif;
-    --font-pricedown: Arial, Helvetica, sans-serif;
+    --font-display: 'Cinzel', 'Playfair Display', Georgia, serif;
+    --font-body: 'Inter', -apple-system, Helvetica, Arial, sans-serif;
+    --font-pricedown: 'Cinzel', Georgia, serif;
 
-    --yellow: #FF0000;
-    --yellow-dark: #FF0000;
-    --yellow-light: #FFFFFF;
-    --cyan: #0000FF;
-    --cyan-dark: #0000FF;
+    --yellow: #B8862E;
+    --yellow-dark: #8C6520;
+    --yellow-light: #FDF5F7;
+    --cyan: #4B2067;
+    --cyan-dark: #38134F;
     --cyan-glow: transparent;
-    --bhagva: #FF0000;
-    --bhagva-dark: #FF0000;
-    --black: #000000;
-    --bg: #FFFFFF;
-    --bg2: #FFFFFF;
-    --bg3: #FFFFFF;
-    --gray-50: #FAFAFA;
-    --gray-100: #EEEEEE;
-    --gray-200: #DDDDDD;
-    --gray-400: #008000;
-    --gray-600: #000000;
-    --red-live: #FF0000;
-    --blue: #0000FF;
-    --logo-grad: #0000FF;
-    --logo-grad-rev: #0000FF;
-    --logo-grad-h: #0000FF;
+    --bhagva: #A02050;
+    --bhagva-dark: #7A1A3D;
+    --black: #3A2A40;
+    --bg: #FBF1F3;
+    --bg2: #FBF1F3;
+    --bg3: #FDF5F7;
+    --gray-50: #FDF5F7;
+    --gray-100: #F6E4EA;
+    --gray-200: #E3C9D2;
+    --gray-400: #9C8590;
+    --gray-600: #7A5C68;
+    --red-live: #A02050;
+    --blue: #4B2067;
+    --logo-grad: linear-gradient(120deg,#4B2067,#6B3D8C);
+    --logo-grad-rev: linear-gradient(120deg,#6B3D8C,#4B2067);
+    --logo-grad-h: linear-gradient(90deg,#4B2067,#B8862E);
     --purple-glow: none;
   }
 
-  /* 2) Plain white page, plain black body text, Arial everywhere */
+  /* ── PAGE GROUND — dim whitish-pink, not stark white ──── */
   html, body {
-    background: #FFFFFF !important;
-    color: #000000 !important;
-    font-family: Arial, Helvetica, sans-serif !important;
+    background: var(--royal-pink-bg) !important;
+    color: var(--royal-ink) !important;
+    font-family: 'Inter', -apple-system, Helvetica, Arial, sans-serif !important;
   }
   body::before, body::after { display: none !important; content: none !important; }
+  * { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
 
-  /* 3) Kill blur / glow / glassmorphism / fancy shadows / animations (colors stay) */
-  * {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
+  /* ── TYPOGRAPHY ──────────────────────────────────────── */
+  h1, h2, h3, h4,
+  .hsc-title, .slide-title, .cta-title, .discord-title, .whatsapp-title,
+  .ch-browser-title {
+    font-family: 'Playfair Display', Georgia, serif !important;
+    font-weight: 700 !important;
+    font-style: italic !important;
+    color: var(--royal-purple) !important;
     text-shadow: none !important;
-    box-shadow: none !important;
-    animation: none !important;
-    transition: none !important;
-  }
-  *::before, *::after { animation: none !important; }
-
-  /* 4) Force Arial everywhere, but let color vary: headings blue, live/red bits red,
-        muted/sub text green, everything else plain black */
-  h1,h2,h3,h4,h5,h6,p,span,a,div,li,strong,b,em,label,button,
-  .ticker-item,.footer-copy,.footer-legal,#footer-tagline,
-  .nav-links-desktop a,.drawer-nav a,.pcqn-item,.social-text,
-  .discord-tag,.whatsapp-tag,
-  .loader-enjoy .le-line,.loader-enjoy .le-and-movies,.loader-powered,.loader-powered strong {
-    font-family: Arial, Helvetica, sans-serif !important;
-    text-shadow: none !important;
-    animation: none !important;
+    letter-spacing: 0 !important;
   }
 
-  h1,h2,h3,h4,h5,h6,
-  .hsc-title,.slide-title,.cta-title,.discord-title,.whatsapp-title,
-  #fifa-panel-title,#wt20-panel-title,.fpx-name,
-  .nav-movies-link,.drawer-nav .drawer-movies {
-    color: #0000FF !important;
-    font-family: Arial, Helvetica, sans-serif !important;
+  /* wordmark / brand-level labels: heraldic small-caps, purple
+     (NOT gold — gold text fails contrast on the pink ground) */
+  .logo-fallback, .nav-movies-link, .drawer-nav .drawer-movies,
+  #fifa-panel-title, #wt20-panel-title,
+  .loader-enjoy .le-line, .loader-enjoy .le-and-movies {
+    font-family: 'Cinzel', 'Playfair Display', serif !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase !important;
+    color: var(--royal-purple) !important;
+    background: none !important;
+    -webkit-text-fill-color: var(--royal-purple) !important;
     text-shadow: none !important;
     animation: none !important;
   }
-
-  .hsc-sub,.slide-sub,.cta-sub,.discord-sub,.whatsapp-sub,
-  .hsc-sport-badge,.slide-sport-badge {
-    color: #008000 !important;
-    font-family: Arial, Helvetica, sans-serif !important;
+  /* the "and movies" / sub-span of those labels: rose, not gold */
+  #fifa-panel-title span, #wt20-panel-title span,
+  .nav-movies-link, .drawer-nav .drawer-movies {
+    color: var(--royal-rose) !important;
+    -webkit-text-fill-color: var(--royal-rose) !important;
+    animation: none !important;
   }
 
-  .live-pill, .hsc-live-badge, .ticker-label {
-    color: #FF0000 !important;
-    font-family: Arial, Helvetica, sans-serif !important;
+  p, span, a, div, li, button, label,
+  .hsc-sub, .slide-sub, .cta-sub, .discord-sub, .whatsapp-sub,
+  .ticker-item, .footer-copy, .footer-legal, #footer-tagline,
+  .nav-links-desktop a, .drawer-nav a, .pcqn-item, .social-text,
+  .discord-tag, .whatsapp-tag, .ch-name, .fixture-team-name, .cat-count,
+  .fpx-name, .wt20-name, #fpx-ch-hdr-title, #wt20-ch-hdr-title,
+  .ch-search-box input, .loader-powered, .loader-powered strong {
+    font-family: 'Inter', -apple-system, Helvetica, Arial, sans-serif !important;
+    text-shadow: none !important;
+    background: none !important;
+    -webkit-text-fill-color: initial !important;
+    animation: none !important;
   }
 
-  a { color: #0000FF !important; text-decoration: underline !important; }
+  /* ── COLOR HIERARCHY — every pair below is contrast-checked ──
+     primary text   → plum-ink #3A2A40   (12:1+ on pink/white)
+     headings       → royal purple #4B2067 (11:1+ on pink/white)
+     secondary text → muted mauve #7A5C68 (5.3:1 on pink, 5.9:1 on white)
+     live/urgent    → rose #A02050        (6.7:1 on pink, 7.4:1 on white)
+     gold           → border/rule only, never text on a flat background */
+  body, p, div, li, span,
+  .ch-name, .fixture-team-name, .ticker-item, .footer-copy,
+  .ch-search-box input, .nav-links-desktop a, .drawer-nav a, .pcqn-item,
+  .fpx-name, .wt20-name, #fpx-ch-hdr-title, #wt20-ch-hdr-title {
+    color: var(--royal-ink) !important;
+  }
+  .hsc-sub, .slide-sub, .cta-sub, .discord-sub, .whatsapp-sub,
+  .hsc-sport-badge, .slide-sport-badge, .footer-legal, #footer-tagline,
+  .discord-tag, .whatsapp-tag, .cat-count {
+    color: var(--text-muted) !important;
+  }
+  .live-pill, .hsc-live-badge, .smo-live-badge {
+    color: #FFFFFF !important;
+    background: var(--royal-rose) !important;
+  }
+  .ticker-label { color: var(--royal-purple) !important; }
+  a { color: var(--royal-purple) !important; text-decoration: none !important; border-bottom: 1px solid var(--royal-hair) !important; }
+  a:hover { color: var(--royal-rose) !important; border-bottom-color: var(--royal-gold) !important; }
 
-  /* 5) Flat white surfaces with a plain black border, square corners, no shadow */
-  header, .side-drawer, .ticker-wrap, .loader-popup-img,
-  .hero-slide-card, .slide, .ch-card, .smo-footer,
+  /* ── SURFACES — white-pink cards on the dim-pink page,
+        so cards read as a distinct layer instead of blending in ── */
+  header, .side-drawer, .hero-slide-card, .slide, .ch-card, .smo-footer,
   #fifa-panel, #wt20-panel, .discord-card, .whatsapp-card,
   footer, .footer-inner, .ch-card.star-card, .ch-card.sony-card,
   .ch-card.fancode-card, .ch-card.unite8-card, .ch-card.intl-card,
-  .ch-card.zee-card, .fpx-card, .fpx-card.fpx-diamond {
-    background: #FFFFFF !important;
-    border: 1px solid #000000 !important;
-    border-radius: 0 !important;
+  .ch-card.zee-card, .ch-card.news-card, .ch-card.fifa-card,
+  .fpx-card, .fpx-card.fpx-diamond, .ch-search-box, #fpx-placeholder,
+  .fpx-soon-overlay span, .ch-logo-wrap.black-sq, .ch-logo-wrap.white-sq {
+    background: var(--royal-pink-card) !important;
+    border: 1px solid var(--royal-hair) !important;
+    border-radius: 6px !important;
     box-shadow: none !important;
   }
-  .ticker-wrap { border-left: none !important; border-right: none !important; }
+  header {
+    background: var(--royal-pink-card) !important;
+    border-top: none !important; border-left: none !important; border-right: none !important;
+    border-bottom: 2px solid var(--royal-gold) !important;
+  }
+  footer, .footer-inner {
+    background: var(--royal-pink-card) !important;
+    border: none !important; border-top: 2px solid var(--royal-gold) !important;
+  }
+  #fifa-panel-bg, #wt20-panel-bg { display: none !important; }
+  #fifa-panel-hdr, #wt20-panel-hdr, #fpx-topbar {
+    background: var(--royal-pink-bg) !important;
+    border-bottom: 1px solid var(--royal-hair) !important;
+  }
 
-  /* 6) Loader screen: plain white, blue/black text, no glow/spin */
-  #cms-loader { background: #FFFFFF !important; }
-  #cms-loader::before, #cms-loader::after { display: none !important; }
-  .loader-popup-img { filter: none !important; animation: none !important; padding: 10px; }
-  .loader-goldbar { background: #FFFFFF !important; border: 1px solid #000000 !important; }
-  .loader-goldbar-inner { background: #0000FF !important; }
-  .loader-powered { background: #FFFFFF !important; border: 1px solid #000000 !important; color: #000000 !important; }
+  /* signature motif: thin gold rule under section headings —
+     these sit on white/card backgrounds, where gold passes
+     a decorative-line contrast check (3:1+), so this is safe */
+  .ch-browser-title, .cta-title, .discord-title, .whatsapp-title {
+    position: relative !important;
+    padding-bottom: 10px !important;
+  }
+  .ch-browser-title::after, .cta-title::after,
+  .discord-title::after, .whatsapp-title::after {
+    content: '' !important;
+    display: block !important;
+    position: absolute !important;
+    left: 0; bottom: 0;
+    width: 56px; height: 2px;
+    background: var(--royal-gold) !important;
+  }
 
-  /* 7) Buttons: plain white box, black border, blue text, no fill colors/glow */
+  /* ── BUTTONS — solid purple fill, cream text (11:1+ contrast),
+        rose on hover, gold only as a 1px edge accent ── */
   .btn-3d-gold, .btn-diamond-glow, .hsc-btn-watch, .hsc-btn-outline,
   .btn-slide-watch, .btn-slide-outline, .nav-watch-btn,
   .btn-yt, .btn-discord, .btn-whatsapp, .wcs-btn, .discord-join-btn,
   .whatsapp-join-btn, .qr-open-btn, #wcs-fancode, #wcs-fifa, #wcs-wt20 {
-    background: #FFFFFF !important;
-    color: #0000FF !important;
-    border: 1px solid #000000 !important;
-    border-radius: 0 !important;
+    background: var(--royal-purple) !important;
+    color: #FDF5F7 !important;
+    border: 1px solid var(--royal-gold) !important;
+    border-radius: 4px !important;
     box-shadow: none !important;
-    font-weight: normal !important;
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.02em !important;
     transform: none !important;
     filter: none !important;
-  }
-  .nav-live-btn {
-    background: #FFFFFF !important;
-    color: #FF0000 !important;
-    border: 1px solid #000000 !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
   }
   .btn-3d-gold:hover, .btn-diamond-glow:hover, .hsc-btn-watch:hover, .hsc-btn-outline:hover,
   .btn-slide-watch:hover, .btn-slide-outline:hover, .nav-watch-btn:hover,
   .btn-yt:hover, .btn-discord:hover, .btn-whatsapp:hover, .wcs-btn:hover,
   .discord-join-btn:hover, .whatsapp-join-btn:hover, .qr-open-btn:hover {
-    background: #EEEEEE !important;
+    background: var(--royal-rose) !important;
+    border-color: var(--royal-rose) !important;
+    color: #FFFFFF !important;
     transform: none !important;
     box-shadow: none !important;
   }
+  .nav-live-btn {
+    background: var(--royal-rose) !important;
+    color: #FFFFFF !important;
+    border: 1px solid var(--royal-rose) !important;
+    border-radius: 4px !important;
+    box-shadow: none !important;
+  }
 
-  /* 8) Nav links / drawer: black text, plain gray hover, no glow */
-  .nav-links-desktop a, .drawer-nav a, .pcqn-item { color: #000000 !important; }
+  /* ── NAV / DRAWER ────────────────────────────────────── */
+  .nav-links-desktop a, .drawer-nav a, .pcqn-item { color: var(--royal-ink) !important; }
   .nav-links-desktop a:hover, .nav-links-desktop a.active,
   .drawer-nav a:hover, .pcqn-item:hover {
-    background: #EEEEEE !important; color: #0000FF !important;
+    background: var(--s2) !important;
+    color: var(--royal-purple) !important;
+  }
+  .drawer-close, .watch-modal-close {
+    background: var(--royal-pink-card) !important;
+    color: var(--royal-purple) !important;
+    border: 1px solid var(--royal-hair) !important;
   }
 
-  /* 9) Ticker bar: plain white stripe, black border, red label, black scrolling text */
-  .ticker-wrap { background: #FFFFFF !important; }
-  .ticker-label { background: #FFFFFF !important; border-right: 1px solid #000000 !important; }
-  .ticker-item { color: #000000 !important; }
+  /* ── TICKER — sits directly on the pink page, so it gets the
+        STRONGER rose hairline (not the light one, which would
+        disappear against the pink ground) ── */
+  .ticker-wrap {
+    background: var(--royal-pink-card) !important;
+    border-top: 1px solid var(--royal-gold) !important;
+    border-bottom: 1px solid var(--royal-gold) !important;
+  }
+  .ticker-label { background: var(--royal-pink-card) !important; border-right: 1px solid var(--royal-hair-strong) !important; }
+  .ticker-item { color: var(--royal-ink) !important; }
 
-  /* 10) Banner/slide overlays: no gradient tint */
-  .hsc-banner-overlay, .slide-overlay { background: rgba(255,255,255,0.0) !important; }
+  /* ── CHANNEL TABS / GRID ─────────────────────────────── */
+  .ch-tab {
+    background: var(--royal-pink-card) !important;
+    color: var(--royal-ink) !important;
+    border: 1px solid var(--royal-hair) !important;
+    border-radius: 100px !important;
+  }
+  .ch-tab:hover, .ch-tab.active {
+    background: var(--royal-purple) !important;
+    color: #FDF5F7 !important;
+    border-color: var(--royal-purple) !important;
+  }
+  .ch-card { background: var(--royal-pink-card) !important; color: var(--royal-ink) !important; }
 
-  /* 11) FIFA / WT20 panels: plain white, no background image/glow */
-  #fifa-panel-bg, #wt20-panel-bg { display: none !important; }
-  #fifa-panel-hdr, #wt20-panel-hdr, #fpx-topbar { background: #FFFFFF !important; border-bottom: 1px solid #000000 !important; }
-  #fifa-panel-title span, #wt20-panel-title span { color: #FF0000 !important; }
+  /* ── LOADER ──────────────────────────────────────────── */
+  #cms-loader { background: var(--royal-pink-bg) !important; }
+  #cms-loader::before, #cms-loader::after { display: none !important; }
+  .loader-popup-img { filter: none !important; animation: none !important; padding: 6px; }
+  .loader-goldbar { background: var(--royal-pink-card) !important; border: 1px solid var(--royal-hair) !important; }
+  .loader-goldbar-inner { background: var(--royal-gold) !important; }
+  .loader-powered {
+    background: var(--royal-pink-card) !important;
+    border: 1px solid var(--royal-hair) !important;
+    color: var(--text-muted) !important;
+  }
+  .loader-powered strong { color: var(--royal-purple) !important; }
 
-  /* 12) Scrollbar - plain blue */
-  ::-webkit-scrollbar-thumb { background: #0000FF !important; }
-
-  /* 13) Footer / social bar: plain white, black border, green text */
-  .social-bar { background: #FFFFFF !important; border-top: 1px solid #000000 !important; }
-  .social-text { color: #008000 !important; }
-  .footer-copy, .footer-legal, #footer-tagline { color: #008000 !important; }
-
-  /* 14) Discord/WhatsApp icon badges: plain white circle, black border, blue icon */
+  /* ── ICONS / SVG — purple by default, rose for live/alert icons ── */
+  svg path, svg circle, svg rect, svg polygon { fill: var(--royal-purple) !important; stroke: var(--royal-purple) !important; }
   .discord-icon-badge, .whatsapp-icon-badge {
-    background: #FFFFFF !important;
-    border: 1px solid #000000 !important;
+    background: var(--royal-pink-card) !important;
+    border: 1px solid var(--royal-hair) !important;
   }
-  .discord-icon-badge svg path { fill: #0000FF !important; }
-  .discord-tag, .whatsapp-tag {
-    background: #FFFFFF !important; color: #008000 !important; border: 1px solid #000000 !important;
+  .discord-icon-badge svg path { fill: var(--royal-purple) !important; }
+
+  /* ── SOCIAL / FOOTER ─────────────────────────────────── */
+  .social-bar { background: var(--royal-pink-card) !important; border-top: 1px solid var(--royal-hair) !important; }
+  .social-text { color: var(--royal-purple) !important; }
+  ::-webkit-scrollbar-thumb { background: var(--royal-purple) !important; }
+  ::placeholder { color: var(--text-dim) !important; }
+
+  /* ── LIVE & UPCOMING MATCHES ──────────────────────────────
+     This section had a literal inline dark-gradient background
+     (#0E0E0F→#0A0A0A) left over from the old theme — overriding
+     that with !important on the #id, since inline styles beat
+     normal stylesheet rules otherwise. Replaced with a deep
+     royal-purple card so the requested LIGHT PINK text on the
+     title/live/upcoming badges stays readable (light pink on the
+     pale-pink page background would be invisible — checked at
+     1.3:1 contrast — so this section needs a dark purple field
+     behind it, same family as the rest of the page). */
+  #fixtures-section {
+    background: var(--royal-purple) !important;
+    border-top: 2px solid var(--royal-gold) !important;
+    border-bottom: 2px solid var(--royal-gold) !important;
+  }
+  #fixtures-section .section-title {
+    color: #FADCE6 !important;            /* light pink */
+  }
+  #fixtures-section .section-title::before {
+    background: var(--royal-gold) !important;
+    box-shadow: none !important;
+  }
+  #fixtures-section .view-all { color: #FADCE6 !important; opacity: 0.85 !important; }
+  #fixtures-section .view-all:hover { color: #FFFFFF !important; opacity: 1 !important; }
+
+  .fixture-card {
+    background: #3A1850 !important;        /* deeper purple card, inside the section */
+    border: 1px solid #6B3D8C !important;
+    box-shadow: none !important;
+  }
+  .fixture-header, .fixture-top { background: rgba(255,255,255,0.04) !important; }
+  .fixture-date, .fixture-venue-sm, .fixture-venue-label { color: #FADCE6 !important; }
+  .fixture-team-name { color: #FADCE6 !important; }
+  .fixture-vs { color: var(--royal-gold) !important; }
+  .fixture-badge { background: rgba(255,255,255,0.10) !important; color: #FADCE6 !important; }
+  .fixture-badge-live { background: var(--royal-rose) !important; color: #FFFFFF !important; }
+
+  /* live / upcoming pill badges anywhere on the page — light pink label,
+     kept on a saturated background so the text stays legible */
+  .smo-live-badge {
+    background: var(--royal-rose) !important;
+    color: #FADCE6 !important;
+  }
+  .smo-upcoming-badge {
+    background: var(--royal-purple) !important;
+    color: #FADCE6 !important;
+  }
+  .cat-count { color: #FADCE6 !important; }
+
+  /* ── FIX — Discord / WhatsApp / YouTube header buttons ──────
+     Two bugs from earlier rules leaking onto these <a> buttons:
+     1) the global `a {...border-bottom}` rule was drawing an
+        underline-style border under the whole button pill.
+     2) the global `span {color: ink}` rule was overriding the
+        "Discord" / "WhatsApp" label spans back to dark text,
+        even though the button itself has light cream text —
+        so the icon showed correctly but the label text nearly
+        disappeared against the purple/white fill.
+     Fixing both explicitly, listed last so it always wins. */
+  .btn-yt, .btn-discord, .btn-whatsapp,
+  .btn-yt:hover, .btn-discord:hover, .btn-whatsapp:hover {
+    border-bottom: none !important;
+    text-decoration: none !important;
+  }
+  .btn-yt, .btn-discord,
+  .btn-discord .btn-discord-label {
+    color: #FDF5F7 !important;
+  }
+  .btn-yt:hover, .btn-discord:hover,
+  .btn-discord:hover .btn-discord-label {
+    color: #FFFFFF !important;
+  }
+  /* WhatsApp button keeps a white pill (its brand convention), so its
+     label needs a DARK readable color instead of the light button text */
+  .btn-whatsapp, .btn-whatsapp .btn-whatsapp-label {
+    background: #FDF5F7 !important;
+    color: var(--royal-purple) !important;
+    border: 1px solid var(--royal-gold) !important;
+  }
+  .btn-whatsapp:hover, .btn-whatsapp:hover .btn-whatsapp-label {
+    background: var(--royal-pink-card) !important;
+    color: var(--royal-rose) !important;
   }
 
-  /* 15) Live pill / badges: plain white box, black border, red text, no glow */
-  .live-pill, .hsc-live-badge, .fpx-live-dot, .pcqn-dot {
-    background: #FFFFFF !important; border: 1px solid #FF0000 !important; box-shadow: none !important;
-  }
-  .hsc-sport-badge, .slide-sport-badge { background: #FFFFFF !important; border: 1px solid #008000 !important; }
-
-  /* 16) Icons/SVGs: simple primary colors instead of full color logos */
-  svg path, svg circle, svg rect, svg polygon { fill: #0000FF !important; stroke: #0000FF !important; }
-
-  /* 17) Stop every remaining animation dead (extra safety) */
+  /* ── MOTION — quiet; no spins, glows, or pulses ── */
   body::before, body::after,
   .loader-popup-img, .pcqn-dot, .fpx-live-dot, .ticker-track,
   .nav-movies-link, .drawer-nav .drawer-movies {
     animation-duration: 0s !important;
   }
-
-  /* 18) FIX — Live Channels grid: kill every remaining dark card/badge background
-        (news/fifa/unite8 cards + the black logo tile use literal dark colors
-        that rule 5 above didn't catch) */
-  .ch-card.news-card, .ch-card.fifa-card, .ch-card.unite8-card,
-  .ch-logo-wrap.black-sq, .ch-logo-wrap.white-sq,
-  .ch-search-box, #fpx-placeholder, .fpx-soon-overlay span,
-  #fifa-panel-bg, #wt20-panel-bg {
-    background: #FFFFFF !important;
-    border: 1px solid #000000 !important;
-  }
-  .ch-browser-title { color: #0000FF !important; }
-  .ch-search-box input { color: #000000 !important; }
-  .ch-tab { background: #FFFFFF !important; color: #000000 !important; border: 1px solid #000000 !important; }
-  .ch-tab:hover, .ch-tab.active { background: #EEEEEE !important; color: #0000FF !important; }
-  .ch-card { background: #FFFFFF !important; color: #000000 !important; }
-  .ch-name { color: #000000 !important; }
-
-  /* 19) FIX — Primary text is black; everything that isn't a heading/sub/live
-        badge defaults to black too, so no stray white-on-white text remains */
-  .smo-live-badge, .watch-modal-close, .drawer-close,
-  #fpx-ch-hdr-title, #fifa-panel-ext, #wt20-panel-ext {
-    color: #000000 !important;
-    background: #FFFFFF !important;
-    border: 1px solid #000000 !important;
-  }
-
-  /* 20) FIX — replace literal white font-color text with a blue-to-black
-        gradient effect (applies to headings/labels that were forced #fff
-        in the original dark theme) */
-  .loader-enjoy .le-line, .loader-enjoy .le-and-movies, .loader-powered strong,
-  #fifa-panel-title, #wt20-panel-title, .fpx-name,
-  .hsc-live-badge, .hsc-sport-badge, .slide-sport-badge,
-  .btn-yt, .btn-discord {
-    background: linear-gradient(90deg, #0000FF, #000000) !important;
-    -webkit-background-clip: text !important;
-    background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
-    color: transparent !important;
-    border: none !important;
-  }
-
-  /* 21) FIX — body copy / secondary text must never inherit the gradient
-        text-fill from rule 20 (gradient is for headings/labels only) */
-  p, .hsc-sub, .slide-sub, .cta-sub, .discord-sub, .whatsapp-sub,
-  .footer-copy, .footer-legal, #footer-tagline, .ticker-item {
-    background: none !important;
-    -webkit-text-fill-color: initial !important;
-  }
-
-  /* 22) FIX — catch-all: the original dark theme used faded white text
-        (rgba(255,255,255,0.x)) all over — invisible on this white background.
-        Force every remaining text-bearing element to a solid dark color.
-        This is intentionally broad and listed LAST so it always wins. */
-  *, *::placeholder {
-    color: #1A1A1A !important;
-  }
-  /* re-apply the few colors we actually want, AFTER the catch-all above */
-  h1, h2, h3, h4, h5, h6,
-  .hsc-title, .slide-title, .cta-title, .discord-title, .whatsapp-title,
-  .nav-movies-link, .drawer-nav .drawer-movies,
-  .ch-browser-title, a {
-    color: #0000FF !important;
-  }
-  .hsc-sub, .slide-sub, .cta-sub, .discord-sub, .whatsapp-sub,
-  .hsc-sport-badge, .slide-sport-badge, .social-text,
-  .footer-copy, .footer-legal, #footer-tagline, .discord-tag, .whatsapp-tag {
-    color: #008000 !important;
-  }
-  .live-pill, .hsc-live-badge, .ticker-label, .smo-live-badge {
-    color: #FF0000 !important;
-  }
-  p, .ticker-item, .ch-name, .fixture-team-name, .cat-count,
-  .ch-search-box input, .nav-links-desktop a, .drawer-nav a, .pcqn-item,
-  .footer-legal a {
-    color: #000000 !important;
-  }
-  /* gradient-text headings (rule 20) must stay transparent-filled, not solid,
-     or the gradient effect would be hidden by the catch-all above */
-  .loader-enjoy .le-line, .loader-enjoy .le-and-movies, .loader-powered strong,
-  #fifa-panel-title, #wt20-panel-title, .fpx-name, .wt20-name,
-  #fpx-ch-hdr-title, #wt20-ch-hdr-title,
-  .btn-yt, .btn-discord {
-    background: linear-gradient(90deg, #0000FF, #000000) !important;
-    -webkit-background-clip: text !important;
-    background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
-    color: transparent !important;
-  }
-  ::placeholder { color: #555555 !important; }
 </style>
 </head>
 <body>
