@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>SX SPORTS - 4K UHD Live Player</title>
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<style>
+html,body{
+    margin:0;
+    width:100%;
+    height:100%;
+    background:#000;
+    overflow:hidden;
+    font-family:Arial,sans-serif;
+}
+
+#player-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#video{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    background:#000;
+
+    filter:
+        contrast(1.12)
+        saturate(1.08)
+        brightness(1.02);
+}
+
+/* SX SPORTS Branding */
+#branding {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    z-index: 9999;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 10px;
+    font-weight: 900;
+    font-style: italic;
+    letter-spacing: 1px;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+
+/* --- NEW: Loading Popup --- */
+#loading-popup {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10000;
+    
+    background: rgba(0, 0, 0, 0.65);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-align: center;
+    
+    padding: 10px 20px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+}
+
+#loading-popup.active {
+    opacity: 1;
+}
+
+/* Glassy Custom Controls */
+#controls-container {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 800px;
+    z-index: 9999;
+    
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+
+    background:rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border:1px solid rgba(255, 255, 255, 0.2);
+    box-shadow:0 4px 30px rgba(0, 0, 0, 0.1);
+    
+    transition: opacity 0.3s;
+}
+
+.left-controls, .right-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.control-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px;
+    transition: transform 0.1s;
+}
+
+.control-btn:hover {
+    transform: scale(1.1);
+}
+
+/* Live Indicator */
+#live-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+    letter-spacing: 1px;
+    margin-right: 15px;
+}
+
+.red-dot {
+    width: 10px;
+    height: 10px;
+    background-color: #ff3b30;
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7); }
+    70% { box-shadow: 0 0 0 8px rgba(255, 59, 48, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); }
+}
+
+/* Volume Slider */
+input[type=range] {
+    -webkit-appearance: none;
+    background: transparent;
+    cursor: pointer;
+    width: 80px;
+}
+
+input[type=range]:focus {
+    outline: none;
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+}
+
+input[type=range]::-webkit-slider-thumb {
+    height: 12px;
+    width: 12px;
+    border-radius: 50%;
+    background: #fff;
+    -webkit-appearance: none;
+    margin-top: -4px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.3);
+}
+
+/* DMCA Button */
+#dmca-btn {
+    position: absolute;
+    right: -34px; 
+    top: 150px;
+    z-index: 9999;
+    
+    height: 34px;
+    line-height: 16px;
+    box-sizing: border-box;
+    
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-align: center;
+    
+    padding: 8px 16px;
+    border-radius: 8px 8px 0 0;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom: none;
+    cursor: pointer;
+    
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    
+    transform-origin: bottom right;
+    transform: rotate(-90deg);
+    
+    opacity: 0.2;
+    transition: right 0.3s ease, opacity 0.3s ease, background 0.2s;
+}
+
+#dmca-btn:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* DMCA Modal */
+#dmca-modal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.95);
+    z-index: 10000;
+    
+    width: 85%;
+    max-width: 550px;
+    padding: 30px;
+    
+    background: rgba(0, 0, 0, 0.65);
+    color: white;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+#dmca-modal.active {
+    opacity: 1;
+    pointer-events: all;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+#dmca-modal h2 { margin: 0 0 5px; font-size: 18px; font-style: italic; }
+#dmca-modal h3 { margin: 0 0 15px; font-size: 14px; color: #ff3b30; }
+#dmca-modal p { font-size: 13px; line-height: 1.6; margin-bottom: 12px; color: rgba(255,255,255,0.85); }
+#dmca-modal .footer { margin-top: 20px; font-size: 11px; color: rgba(255,255,255,0.5); text-align: center; }
+
+#close-dmca {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    line-height: 1;
+    transition: transform 0.2s;
+}
+#close-dmca:hover { transform: scale(1.2); color: #ff3b30; }
+
+@media (max-width: 480px) {
+    #branding {
+        font-size: 9px;
+        top: 8px;
+        left: 10px;
+    }
+    #loading-popup {
+        font-size: 10px;
+        top: 10px;
+        padding: 8px 15px;
+    }
+    input[type=range] {
+        width: 60px;
+    }
+    #dmca-modal { padding: 20px; }
+    #dmca-modal h2 { font-size: 16px; }
+    #dmca-modal p { font-size: 12px; }
+}
+</style>
+</head>
+<body>
+
+<div id="player-wrapper">
+    <div id="branding">SX SPORTS</div>
+
+    <div id="loading-popup">WAIT 5-15 SEC TO LOAD STREAM FULLY</div>
+
+    <video
+    id="video"
+    autoplay
+    muted
+    playsinline
+    webkit-playsinline>
+    </video>
+
+    <div id="dmca-btn">DMCA</div>
+
+    <div id="dmca-modal">
+        <button id="close-dmca">&times;</button>
+        <h2>SX SPORTS</h2>
+        <h3>OFFICIAL DMCA & COPYRIGHT DISCLAIMER</h3>
+        <p><strong>DMCA Notice</strong></p>
+        <p>SX SPORTS does not host, upload, store, transmit, or broadcast any live streams, videos, or media files on its own servers.</p>
+        <p>We only provide links to publicly available streams and media content that are hosted by independent third-party websites.</p>
+        <p>All trademarks, copyrights, logos, streaming rights, and broadcasting rights belong to their respective owners. SX SPORTS has no control over, and assumes no responsibility for, the content hosted on external websites.</p>
+        <p>If you are a copyright owner or authorized representative and believe that any content infringes your rights, please contact the original third-party hosting provider directly, as they are solely responsible for the hosted content.</p>
+        <p class="footer">© 2026 SX SPORTS • All Rights Reserved</p>
+    </div>
+
+    <div id="controls-container">
+        <div class="left-controls">
+            <button id="play-pause" class="control-btn" title="Play/Pause">⏸</button>
+            <button id="mute-btn" class="control-btn" title="Mute/Unmute">🔇</button>
+            <input type="range" id="volume-bar" min="0" max="1" step="0.1" value="0">
+        </div>
+        
+        <div class="right-controls">
+            <div id="live-indicator">
+                <span class="red-dot"></span> LIVE
+            </div>
+            <button id="fullscreen-btn" class="control-btn" title="Fullscreen">⛶</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const streamUrl = 'https://cdn011.viaplus.site/sony-ten-3.m3u8';
+
+const video = document.getElementById('video');
+const playerWrapper = document.getElementById('player-wrapper');
+const controlsContainer = document.getElementById('controls-container');
+const branding = document.getElementById('branding');
+const loadingPopup = document.getElementById('loading-popup');
+const dmcaBtn = document.getElementById('dmca-btn');
+const dmcaModal = document.getElementById('dmca-modal');
+const closeDmcaBtn = document.getElementById('close-dmca');
+
+const playPauseBtn = document.getElementById('play-pause');
+const muteBtn = document.getElementById('mute-btn');
+const volumeBar = document.getElementById('volume-bar');
+const fullscreenBtn = document.getElementById('fullscreen-btn');
+
+// --- Show Loading Popup on Load ---
+window.addEventListener('DOMContentLoaded', () => {
+    loadingPopup.classList.add('active');
+    setTimeout(() => {
+        loadingPopup.classList.remove('active');
+    }, 5000); // Hides after 5 seconds
+});
+
+// Hide controls, branding, and DMCA button when inactive
+let timeout;
+let isModalOpen = false;
+
+function resetControlsTimeout() {
+    controlsContainer.style.opacity = '1';
+    branding.style.opacity = '1';
+    dmcaBtn.style.right = '0'; // Slide in
+    
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+        if (!video.paused && !isModalOpen) {
+            controlsContainer.style.opacity = '0';
+            branding.style.opacity = '0';
+            dmcaBtn.style.right = '-34px'; // Slide out
+        }
+    }, 3000);
+}
+
+playerWrapper.addEventListener('mousemove', resetControlsTimeout);
+playerWrapper.addEventListener('mouseleave', () => {
+    if (!video.paused && !isModalOpen) {
+        controlsContainer.style.opacity = '0';
+        branding.style.opacity = '0';
+        dmcaBtn.style.right = '-34px';
+    }
+});
+playerWrapper.addEventListener('touchstart', resetControlsTimeout);
+
+// DMCA Modal Logic
+dmcaBtn.addEventListener('click', () => {
+    isModalOpen = true;
+    dmcaModal.classList.add('active');
+    clearTimeout(timeout); // Keep controls alive while modal is open
+});
+
+closeDmcaBtn.addEventListener('click', () => {
+    isModalOpen = false;
+    dmcaModal.classList.remove('active');
+    resetControlsTimeout(); // Restart idle timer
+});
+
+// Custom Controls Logic
+playPauseBtn.addEventListener('click', () => {
+    if (video.paused) {
+        video.play();
+        playPauseBtn.textContent = '⏸';
+    } else {
+        video.pause();
+        playPauseBtn.textContent = '▶';
+    }
+});
+
+video.addEventListener('play', () => playPauseBtn.textContent = '⏸');
+video.addEventListener('pause', () => playPauseBtn.textContent = '▶');
+
+muteBtn.addEventListener('click', () => {
+    video.muted = !video.muted;
+    muteBtn.textContent = video.muted ? '🔇' : '🔊';
+    volumeBar.value = video.muted ? 0 : video.volume;
+});
+
+volumeBar.addEventListener('input', () => {
+    video.volume = volumeBar.value;
+    video.muted = volumeBar.value == 0;
+    muteBtn.textContent = video.muted ? '🔇' : '🔊';
+});
+
+// Fullscreen & Orientation Lock Logic
+fullscreenBtn.addEventListener('click', () => {
+    if (!document.fullscreenElement) {
+        playerWrapper.requestFullscreen().then(() => {
+            // Attempt to force landscape orientation on supported mobile devices
+            if (screen.orientation && screen.orientation.lock) {
+                screen.orientation.lock('landscape').catch((err) => {
+                    console.log('Orientation lock failed or not supported:', err);
+                });
+            }
+        }).catch(err => console.log(err));
+    } else {
+        document.exitFullscreen();
+    }
+});
+
+// Unlock orientation when exiting fullscreen by any means (e.g., Back button, Esc key)
+document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement) {
+        if (screen.orientation && screen.orientation.unlock) {
+            screen.orientation.unlock();
+        }
+    }
+});
+
+// HLS Implementation
+if (Hls.isSupported()) {
+    window.hls = new Hls({
+        enableWorker:true,
+        lowLatencyMode:false,
+        maxBufferLength:120,
+        maxMaxBufferLength:300,
+        backBufferLength:90,
+        liveSyncDurationCount:3,
+        liveMaxLatencyDurationCount:10
+    });
+
+    hls.loadSource(streamUrl);
+    hls.attachMedia(video);
+
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        if(hls.levels.length){
+            let best = 0;
+            for(let i=1;i<hls.levels.length;i++){
+                if(
+                    hls.levels[i].height > hls.levels[best].height ||
+                    (hls.levels[i].height === hls.levels[best].height &&
+                     hls.levels[i].bitrate > hls.levels[best].bitrate)
+                ){
+                    best = i;
+                }
+            }
+            hls.currentLevel = best;
+            hls.nextLevel = best;
+            hls.loadLevel = best;
+        }
+        video.play().catch(()=>{});
+    });
+
+    hls.on(Hls.Events.ERROR, (event,data)=>{
+        if(data.fatal){
+            switch(data.type){
+                case Hls.ErrorTypes.NETWORK_ERROR:
+                    console.log("Recovering network error");
+                    hls.startLoad();
+                    break;
+                case Hls.ErrorTypes.MEDIA_ERROR:
+                    console.log("Recovering media error");
+                    hls.recoverMediaError();
+                    break;
+                default:
+                    hls.destroy();
+                    break;
+            }
+        }
+    });
+
+} else if(video.canPlayType('application/vnd.apple.mpegurl')) {
+    video.src = streamUrl;
+    video.addEventListener('loadedmetadata', () => {
+        video.play().catch(()=>{});
+    });
+}
+
+</script>
+
+</body>
+</html>
