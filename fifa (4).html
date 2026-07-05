@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>FIFA 2026 Live | SX Sports</title>
+<meta name="description" content="FIFA World Cup 2026 live channels — SX Sports">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Rajdhani:wght@400;500;600;700&family=Chakra+Petch:wght@400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --font-display: 'Satoshi','Chakra Petch','Rajdhani',sans-serif;
+    --font-body: 'Satoshi','Syne','Space Grotesk',sans-serif;
+    --cu-bg:#0A0A0B;
+    --cu-panel:#111214;
+    --cu-panel-2:#17181B;
+    --cu-line:rgba(255,255,255,0.08);
+    --cu-text:#FFFFFF;
+    --cu-text-dim:rgba(255,255,255,0.55);
+    --cu-text-faint:rgba(255,255,255,0.35);
+    --cu-accent:#7C3AED;
+    --cu-accent-light:#A78BFA;
+    --cu-font:'Satoshi','Inter','Chakra Petch',sans-serif;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; background:var(--cu-bg); color:var(--cu-text); font-family:var(--cu-font); }
+  a{ color:inherit; }
+
+  /* ── top bar: link back to the main site ── */
+  #fifa-topnav{
+    position:sticky; top:0; z-index:50;
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:12px 16px;
+    background:rgba(10,10,11,0.90); backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--cu-line);
+  }
+  #fifa-topnav-left{ display:flex; align-items:center; gap:10px; }
+  #fifa-topnav-left img{ height:26px; width:auto; }
+  #fifa-topnav-left span{ font-family:var(--font-display); font-weight:800; font-size:13px; letter-spacing:.04em; }
+  #fifa-topnav a.back-link{
+    display:flex; align-items:center; gap:6px;
+    font-family:var(--cu-font); font-size:12px; font-weight:700;
+    color:rgba(255,255,255,0.75);
+    background:var(--cu-panel-2); border:1px solid var(--cu-line);
+    padding:7px 12px; border-radius:6px; text-decoration:none;
+  }
+  #fifa-topnav a.back-link:hover{ background:#202126; }
+
+  @keyframes livePulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(1.5); } }
+
+  /* ══════════════════════════════════════════════
+     FIFA PANEL (copied 1:1 from the main SX Sports site,
+     so this page always matches the embedded panel there)
+  ══════════════════════════════════════════════ */
+  #fifa-panel-wrap{padding:16px;max-width:1200px;margin:0 auto;}
+
+  #fifa-panel{
+    background:linear-gradient(135deg,rgba(50,35,0,0.50) 0%,rgba(65,48,0,0.40) 60%,rgba(32,22,0,0.52) 100%);
+    backdrop-filter:blur(22px) saturate(1.6);-webkit-backdrop-filter:blur(22px) saturate(1.6);
+    border-radius:8px;
+    overflow:hidden;
+    box-shadow:0 8px 50px rgba(160,115,0,0.22),0 2px 0 rgba(255,255,255,0.04);
+    position:relative;
+  }
+  #fifa-panel-bg{ position:absolute;inset:0; opacity:0; pointer-events:none; }
+
+  #fifa-panel-hdr{
+    position:relative;z-index:2;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:12px 16px 10px;
+    background:var(--cu-panel);
+    border-bottom:1px solid var(--cu-line);
+  }
+  #fifa-panel-hdr-left{display:flex;align-items:center;gap:10px;}
+  #fifa-panel-logo{height:30px;width:auto;}
+  #fifa-panel-title{font-family:var(--font-display);font-weight:900;font-size:14px;letter-spacing:.06em;color:#fff;}
+  #fifa-panel-title span{color:var(--cu-accent-light);}
+  #fifa-panel-live{
+    display:flex;align-items:center;gap:5px;
+    font-family:var(--cu-font);font-size:10px;font-weight:800;letter-spacing:1.8px;
+    background:#fff;color:#0A0A0B;border-radius:100px;padding:4px 9px 4px 7px;
+  }
+  .fpx-dot{width:6px;height:6px;border-radius:50%;background:#FF3B30;flex-shrink:0;animation:livePulse 1.5s ease-in-out infinite;}
+
+  /* player (kept for parity with the main site; unused — channels open in a new tab) */
+  #fpx-player-wrap{position:relative;z-index:2;}
+  #fpx-topbar{ display:flex;align-items:center;justify-content:space-between; padding:8px 14px; background:var(--cu-panel-2); }
+  #fpx-ch-name{ display:flex;align-items:center;gap:7px; font-family:var(--font-display);font-weight:800;font-size:12px;letter-spacing:.06em;color:#fff; }
+  #fpx-ch-name .fpx-dot{width:6px;height:6px;}
+  #fpx-badge{ font-family:var(--cu-font);font-size:9px;font-weight:700;letter-spacing:1.2px;color:rgba(255,255,255,0.7);background:var(--cu-panel);padding:2px 8px;border-radius:100px; }
+  #fpx-iframe-box{position:relative;width:100%;padding-top:42%;}
+  #fpx-placeholder{ position:absolute;inset:0; display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px; background:var(--cu-panel); color:var(--cu-text-faint); font-family:var(--cu-font);font-size:12px;letter-spacing:.06em; }
+  #fpx-placeholder svg{opacity:.25;}
+  #fpx-iframe{position:absolute;inset:0;width:100%;height:100%;border:none;background:#000;display:none;}
+
+  /* channel grid */
+  #fpx-ch-section{position:relative;z-index:2;padding:12px 14px 14px;background:var(--cu-panel);}
+  #fpx-ch-hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+  #fpx-ch-hdr-title{font-family:var(--cu-font);font-weight:800;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#fff;}
+  #fpx-ch-count{font-family:var(--cu-font);font-size:9px;font-weight:700;letter-spacing:1px;color:rgba(255,255,255,0.7);background:var(--cu-panel-2);padding:2px 8px;border-radius:100px;}
+  #fpx-discord-note{display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:8px 12px;background:var(--cu-panel-2);border-radius:10px;}
+  #fpx-discord-note svg{flex-shrink:0;width:16px;height:16px;}
+  #fpx-discord-note span{font-family:var(--cu-font);font-size:11px;line-height:1.4;color:rgba(225,228,255,0.88);}
+
+  #fpx-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:8px; }
+  .fpx-card.fpx-empty-slot{display:none;}
+  .fpx-card{
+    position:relative;
+    background:var(--cu-panel-2);
+    border:1px solid var(--cu-line);
+    border-radius:12px;overflow:hidden;
+    cursor:pointer;transition:transform .22s cubic-bezier(.34,1.3,.64,1),box-shadow .22s ease;
+    display:flex;flex-direction:column;
+    box-shadow:none;
+  }
+  .fpx-card:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(0,0,0,0.45);border-color:rgba(255,255,255,0.18);}
+  .fpx-card.fpx-active::after{content:'▶ NOW PLAYING';position:absolute;bottom:4px;right:6px;font-family:var(--cu-font);font-size:7px;font-weight:800;letter-spacing:.8px;color:#fff;background:rgba(0,0,0,0.88);padding:2px 5px;border-radius:4px;}
+  .fpx-thumb-wrap{position:relative;width:100%;aspect-ratio:16/10;overflow:hidden;background:#EDEDED;}
+  .fpx-thumb{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#EDEDED;transition:transform .32s ease;}
+  .fpx-card:hover .fpx-thumb{transform:scale(1.05);}
+  .fpx-thumb-ov{position:absolute;inset:0;background:linear-gradient(180deg,transparent 60%,rgba(0,0,0,0.35) 100%);}
+  .fpx-live-dot{
+    position:absolute;top:10px;left:10px;width:auto;height:auto;border-radius:4px;
+    background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.35);
+    padding:4px 9px 4px 7px;display:flex;align-items:center;gap:5px;
+  }
+  .fpx-live-dot::before{content:'';width:5px;height:5px;border-radius:50%;background:#FF3B30;flex-shrink:0;animation:livePulse 1.5s ease-in-out infinite;}
+  .fpx-live-dot::after{content:'LIVE';font-family:var(--cu-font);font-weight:800;font-size:9px;letter-spacing:0.06em;color:#0A0A0B;text-transform:uppercase;}
+  .fpx-body{display:flex;flex-direction:column;gap:3px;padding:12px 14px 14px;background:var(--cu-panel-2);}
+  .fpx-name{font-family:var(--cu-font);font-weight:700;font-size:14px;letter-spacing:0;color:#fff;white-space:normal;}
+  .fpx-sub-label{order:-1;font-family:var(--cu-font);font-weight:700;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--cu-text-faint);margin-bottom:0;}
+  .fpx-meta{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:1px;}
+  .fpx-pill{font-family:var(--cu-font);font-size:8px;font-weight:700;letter-spacing:.8px;background:var(--cu-panel);color:rgba(255,255,255,0.7);padding:1px 6px;border-radius:100px;}
+  .fpx-live-lbl{font-size:9px;color:var(--cu-text-faint);}
+  .fpx-premium{display:inline-flex;align-items:center;gap:3px;font-family:var(--cu-font);font-size:8px;font-weight:800;letter-spacing:1px;color:#1a1200;background:linear-gradient(135deg,#fff3c4,var(--cu-accent) 45%,#b8860b);padding:1px 7px;border-radius:100px;}
+
+  .fpx-card.fpx-diamond{ background:var(--cu-panel-2); box-shadow:none; }
+  .fpx-card.fpx-diamond:hover{ transform:translateY(-3px); box-shadow:0 14px 30px rgba(0,0,0,0.45); border-color:rgba(255,255,255,0.18); }
+  .fpx-card.fpx-diamond .fpx-name{color:#fff;}
+  .fpx-4k-badge-big{position:absolute;bottom:6px;right:6px;width:52px;height:52px;object-fit:contain;z-index:2;}
+  .fpx-free4k-lbl{font-size:9px;color:rgba(255,255,255,0.75);font-weight:700;}
+  .fpx-pill-4k{font-family:var(--cu-font);font-size:8px;font-weight:800;letter-spacing:.8px;background:var(--cu-panel);color:rgba(255,255,255,0.7);padding:1px 6px;border-radius:100px;}
+
+  .fpx-card.fpx-coming-soon{opacity:.60;cursor:not-allowed;pointer-events:none;}
+  .fpx-card.fpx-coming-soon:hover{transform:none;box-shadow:none;}
+  .fpx-soon-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.50);backdrop-filter:blur(2px);}
+  .fpx-soon-overlay span{font-family:var(--cu-font);font-size:9px;font-weight:800;letter-spacing:1.5px;color:#fff;background:rgba(0,0,0,0.80);padding:3px 9px;border-radius:100px;}
+  .fpx-pill-soon{font-family:var(--cu-font);font-size:8px;font-weight:700;letter-spacing:.8px;background:rgba(255,255,255,0.10);color:rgba(255,255,255,0.5);padding:1px 6px;border-radius:100px;}
+
+  /* ── Mobile: same square-tile, zoom-fill, name-overlay shell as Live TV
+        channel cards on the main site ── */
+  @media(max-width:640px){
+    #fifa-panel-wrap{padding:8px 0 4px;}
+    #fifa-panel{border-radius:0;}
+    #fifa-panel-title{font-size:12px;}
+    #fifa-panel-logo{height:24px;}
+
+    #fpx-grid{ grid-template-columns:repeat(4,1fr) !important; gap:8px !important; }
+    .fpx-card{
+      position:relative !important; aspect-ratio:1/1 !important;
+      display:block !important; padding:0 !important; min-height:0 !important; overflow:hidden !important;
+      background:var(--cu-panel) !important; border:1px solid var(--cu-line) !important; border-radius:10px !important;
+      box-shadow:none !important;
+    }
+    .fpx-card.fpx-diamond,.fpx-card.fpx-diamond:hover{
+      background:var(--cu-panel) !important; border:1px solid var(--cu-line) !important; box-shadow:none !important;
+    }
+    .fpx-card.fpx-empty-slot{ display:none !important; }
+    .fpx-thumb-wrap{ position:absolute !important; inset:0 !important; width:100% !important; height:100% !important; padding-top:0 !important; background:transparent !important; }
+    .fpx-thumb{ position:absolute !important; inset:0 !important; width:100% !important; height:100% !important; object-fit:cover !important; }
+    .fpx-thumb-ov{ background:linear-gradient(180deg,transparent,rgba(0,0,0,0.82) 65%) !important; }
+    .fpx-body{
+      position:absolute !important; left:0 !important; right:0 !important; bottom:0 !important; z-index:3 !important;
+      padding:12px 5px 4px !important; background:none !important; display:block !important;
+    }
+    .fpx-sub-label,.fpx-meta{ display:none !important; }
+    .fpx-name{ font-size:9px !important; text-align:center !important; color:#fff !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; }
+    .fpx-live-dot{
+      position:absolute !important; top:4px !important; left:4px !important; right:auto !important;
+      width:auto !important; height:auto !important; border-radius:100px !important;
+      background:#fff !important; padding:2px 6px 2px 5px !important; z-index:4 !important;
+      display:flex !important; align-items:center !important; gap:3px !important;
+    }
+    .fpx-live-dot::before{ content:''; width:4px; height:4px; border-radius:50%; background:#FF3B30; }
+    .fpx-live-dot::after{ content:'LIVE'; font-family:var(--cu-font); font-weight:800; font-size:6.5px; color:#0A0A0B; }
+    .fpx-4k-badge-big{ position:absolute !important; width:30px !important; height:30px !important; bottom:4px !important; right:4px !important; z-index:4 !important; }
+    .fpx-premium,.fpx-pill,.fpx-pill-4k,.fpx-pill-soon,.fpx-live-lbl,.fpx-free4k-lbl{ display:none !important; }
+  }
+
+  /* ── Desktop: same small square tile, logo zoomed to fill edge-to-edge
+        (no white/grey backing, no letterboxing) as the embedded FIFA
+        panel on the main site ── */
+  @media(min-width:901px){
+    #fpx-grid{ grid-template-columns:repeat(auto-fill,minmax(108px,1fr)) !important; gap:10px !important; }
+    .fpx-card{
+      position:relative !important; aspect-ratio:1/1 !important;
+      display:block !important; padding:0 !important; min-height:0 !important; overflow:hidden !important;
+    }
+    .fpx-thumb-wrap{
+      position:absolute !important; inset:0 !important; width:100% !important; height:100% !important;
+      aspect-ratio:auto !important; padding:0 !important; margin:0 !important;
+      background:transparent !important; overflow:hidden !important;
+    }
+    .fpx-thumb{
+      position:absolute !important; inset:0 !important; width:100% !important; height:100% !important;
+      max-width:none !important; max-height:none !important;
+      object-fit:cover !important; background:transparent !important;
+    }
+    .fpx-body{
+      position:absolute !important; left:0 !important; right:0 !important; bottom:0 !important;
+      z-index:3 !important; display:block !important;
+      padding:14px 7px 6px !important;
+      background:linear-gradient(180deg,transparent,rgba(0,0,0,0.82) 65%) !important;
+      gap:0 !important;
+    }
+    .fpx-sub-label,.fpx-meta{ display:none !important; }
+    .fpx-name{
+      font-size:10.5px !important; text-align:center !important; color:#fff !important;
+      white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important;
+    }
+    .fpx-live-dot{
+      position:absolute !important; top:6px !important; left:6px !important; right:auto !important;
+      z-index:4 !important; max-width:calc(100% - 12px) !important;
+      padding:2px 6px 2px 5px !important; font-size:0 !important;
+      box-sizing:border-box !important; white-space:nowrap !important; overflow:hidden !important;
+    }
+    .fpx-live-dot::after{ font-size:7px !important; }
+    .fpx-4k-badge-big{ position:absolute !important; width:30px !important; height:30px !important; bottom:4px !important; right:4px !important; z-index:4 !important; }
+    .fpx-thumb-ov{ display:none !important; }
+  }
+
+  /* ── No curve: flat square-cornered cards, mobile and desktop alike ── */
+  .fpx-card,.fpx-thumb-wrap,.fpx-thumb,.fpx-body,.fpx-card.fpx-empty-slot,
+  .fpx-live-dot,.fpx-4k-badge-big,.fpx-pill,.fpx-pill-4k,.fpx-pill-soon,
+  .fpx-premium,.fpx-soon-overlay span{
+    border-radius: 0 !important;
+  }
+
+  /* ══════════════════════════════════════════════
+     FOOTBALL-ONLY MATCH CARDS
+     Reads the same "MATCH CARDS" sheet tab as the main site, but this
+     panel only ever shows rows whose game/sport looks like football
+     (football / fifa / soccer / world cup). Hidden entirely if none.
+  ══════════════════════════════════════════════ */
+  #fifa-matches-section{position:relative;z-index:2;padding:12px 14px 0;background:var(--cu-panel);}
+  #fifa-matches-section.fifa-matches-hidden{display:none;}
+  #fifa-matches-hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+  #fifa-matches-hdr-title{font-family:var(--cu-font);font-weight:800;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#fff;}
+
+  .fmc-section{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+  .fmc-section+.fmc-section{border-top:1px solid var(--cu-line);padding-top:10px;}
+  .fmc-section-label{font-family:var(--cu-font);font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--cu-accent-light);}
+  .fmc-card{background:var(--cu-panel-2);border:1px solid var(--cu-line);border-radius:12px;padding:14px 14px 12px;position:relative;overflow:hidden;transition:transform .22s cubic-bezier(.34,1.3,.64,1),box-shadow .22s ease;}
+  .fmc-card:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(0,0,0,0.45);border-color:rgba(255,255,255,0.18);}
+  .fmc-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .fmc-live-badge{display:flex;align-items:center;gap:4px;font-family:var(--cu-font);font-size:9px;font-weight:900;letter-spacing:1.5px;background:#FF3B30;color:#fff;padding:3px 8px;border-radius:100px;}
+  .fmc-live-badge .fmc-dot{width:5px;height:5px;border-radius:50%;background:#fff;animation:livePulse 1.5s ease-in-out infinite;}
+  .fmc-upcoming-badge{font-family:var(--cu-font);font-size:9px;font-weight:700;letter-spacing:1px;background:var(--cu-panel);color:rgba(255,255,255,0.7);padding:3px 8px;border-radius:100px;}
+  .fmc-date{font-family:var(--cu-font);font-size:10px;color:var(--cu-text-faint);}
+  .fmc-teams{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;}
+  .fmc-team{display:flex;flex-direction:column;align-items:center;gap:5px;flex:1;min-width:0;}
+  .fmc-logo{width:36px;height:36px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.4));}
+  .fmc-name{font-family:var(--cu-font);font-weight:800;font-size:12px;text-align:center;color:#fff;}
+  .fmc-full{font-family:var(--cu-font);font-size:9px;text-align:center;color:var(--cu-text-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+  .fmc-vs{font-family:var(--cu-font);font-weight:900;font-size:15px;color:var(--cu-accent-light);flex-shrink:0;}
+  .fmc-timer{display:flex;align-items:center;justify-content:space-between;background:var(--cu-panel);border-radius:8px;padding:6px 10px;margin-bottom:10px;}
+  .fmc-timer-label{font-family:var(--cu-font);font-size:8px;font-weight:700;letter-spacing:1px;color:var(--cu-text-faint);text-transform:uppercase;}
+  .fmc-timer-display{font-family:var(--cu-font);font-weight:900;font-size:14px;color:var(--cu-accent-light);letter-spacing:.5px;}
+  .fmc-btn{display:flex;align-items:center;justify-content:center;gap:5px;width:100%;background:var(--cu-accent);color:#fff;font-family:var(--cu-font);font-weight:800;font-size:11px;letter-spacing:.4px;padding:8px 14px;border-radius:6px;text-decoration:none;transition:background .18s;box-sizing:border-box;}
+  .fmc-btn:hover{background:#9333EA;}
+
+  @media(min-width:901px){
+    .fmc-section{display:grid !important;grid-template-columns:repeat(3,1fr);gap:10px;}
+    .fmc-section-label{grid-column:1/-1;}
+  }
+  @media(max-width:640px){
+    #fifa-matches-section{padding:8px 10px 0;}
+    .fmc-name{font-size:11px;}
+    .fmc-logo{width:30px;height:30px;}
+  }
+</style>
+</head>
+<body>
+
+<div id="fifa-topnav">
+  <div id="fifa-topnav-left">
+    <img src="https://upload.wikimedia.org/wikipedia/en/1/17/2026_FIFA_World_Cup_emblem.svg" alt="FIFA 2026">
+    <span>SX SPORTS · FIFA 2026</span>
+  </div>
+  <a class="back-link" href="https://saptarshixtrasports.pages.dev/">← Back to SX Sports</a>
+</div>
+
+<div id="fifa-panel-wrap">
+  <div id="fifa-panel">
+    <div id="fifa-panel-bg"></div>
+
+    <div id="fifa-panel-hdr">
+      <div id="fifa-panel-hdr-left">
+        <img id="fifa-panel-logo" src="https://upload.wikimedia.org/wikipedia/en/1/17/2026_FIFA_World_Cup_emblem.svg" alt="FIFA 2026">
+        <div id="fifa-panel-title">FIFA <span>2026</span> LIVE</div>
+      </div>
+      <div id="fifa-panel-live"><span class="fpx-dot"></span> LIVE NOW</div>
+    </div>
+
+    <!-- player: kept for structural parity with the main site's panel; channels
+         open in a new tab via fpxLoad() below, same as the embedded version -->
+    <div id="fpx-player-wrap" style="display:none">
+      <div id="fpx-topbar">
+        <div id="fpx-ch-name"><span class="fpx-dot"></span><span id="fpx-active-name">Select a Channel</span></div>
+        <span id="fpx-badge">LIVE STREAM</span>
+      </div>
+      <div id="fpx-iframe-box">
+        <div id="fpx-placeholder">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <span>Pick a channel below</span>
+        </div>
+        <iframe id="fpx-iframe" src="" allowfullscreen allow="autoplay; fullscreen" scrolling="no"></iframe>
+      </div>
+    </div>
+
+    <div id="fifa-matches-section" class="fifa-matches-hidden">
+      <div id="fifa-matches-hdr">
+        <span id="fifa-matches-hdr-title">🔴 Live &amp; Upcoming Matches</span>
+      </div>
+      <div id="fifa-matches-wrap"></div>
+    </div>
+
+    <div id="fpx-ch-section">
+      <div id="fpx-ch-hdr">
+        <span id="fpx-ch-hdr-title">All Channels</span>
+        <span id="fpx-ch-count">— CHANNELS</span>
+      </div>
+      <div id="fpx-discord-note">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.5 1.5 21h21L12 2.5Z" stroke="#7C3AED" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 9.5v5" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="17.2" r="0.9" fill="#7C3AED"/></svg>
+        <span>⚠️ Channel available during live match.</span>
+      </div>
+      <div id="fpx-grid"></div><!-- populated by renderFifaPanel() below, same CMS as the main site -->
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════
+// Same Google Sheets CMS as the main SX Sports site — this page reads the
+// same "PANELS" + "FIFA CHANNELS" tabs, so editing the sheet updates both.
+// ══════════════════════════════════════════════════════════════════════
+const SHEET_ID = '1UcPVLGxSTJmAdtfPHsA_f5VCtbABwVdwef-va512HQU';
+const CMS_CACHE_TTL_MS = 60000;
+
+function parseCSV(text) {
+  const rows = [];
+  let cur = '', inQ = false, row = [];
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i], nx = text[i+1];
+    if (inQ) {
+      if (ch === '"' && nx === '"') { cur += '"'; i++; }
+      else if (ch === '"') inQ = false;
+      else cur += ch;
+    } else {
+      if (ch === '"') inQ = true;
+      else if (ch === ',') { row.push(cur.trim()); cur = ''; }
+      else if (ch === '\r' && nx === '\n') { row.push(cur.trim()); rows.push(row); row = []; cur = ''; i++; }
+      else if (ch === '\n' || ch === '\r') { row.push(cur.trim()); rows.push(row); row = []; cur = ''; }
+      else cur += ch;
+    }
+  }
+  if (cur || row.length) { row.push(cur.trim()); rows.push(row); }
+  return rows.filter(r => r.some(c => c));
+}
+function toObj(rows) {
+  if (rows.length < 2) return [];
+  const headers = rows[0].map(h => h.toLowerCase().replace(/[^a-z0-9_]/g,'_').replace(/__+/g,'_').replace(/^_|_$/g,''));
+  return rows.slice(1).map(r => {
+    const o = {};
+    headers.forEach((h, i) => o[h] = (r[i] || '').trim());
+    return o;
+  });
+}
+function active(rows) {
+  if (!rows) return [];
+  return rows.filter(r => {
+    const a = (r.active || r.active_true_false || '').toUpperCase();
+    return a !== 'FALSE';
+  });
+}
+async function fetchSheet(name) {
+  const cacheKey = `cms_cache_${SHEET_ID}_${name}`;
+  try {
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) {
+      const { t, data } = JSON.parse(cached);
+      if (Date.now() - t < CMS_CACHE_TTL_MS) return data;
+    }
+  } catch (e) {}
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(name)}`;
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(r.status);
+    const text = await r.text();
+    const data = toObj(parseCSV(text));
+    try { sessionStorage.setItem(cacheKey, JSON.stringify({ t: Date.now(), data })); } catch(e) {}
+    return data;
+  } catch(e) {
+    console.warn(`Sheet "${name}" failed:`, e);
+    return null;
+  }
+}
+
+// Channels open in a new tab, same behaviour as the embedded panel.
+function fpxLoad(card, url, name) {
+  window.open(url, '_blank', 'noopener');
+}
+
+// ── Same renderer used by the embedded FIFA panel on the main site ──
+window.renderFifaPanel = function(rows) {
+  const grid = document.getElementById('fpx-grid');
+  const countEl = document.getElementById('fpx-ch-count');
+  if (!grid) return;
+  const sorted = (rows||[]).slice().sort((a,b) => (parseFloat(a.sort_order)||0) - (parseFloat(b.sort_order)||0));
+  const liveCount = sorted.filter(r => (r.coming_soon||'').toUpperCase() !== 'TRUE').length;
+  if (countEl) countEl.textContent = liveCount + (liveCount === 1 ? ' CHANNEL' : ' CHANNELS');
+
+  let rowNum = 1;
+  const cards = [];
+  let i = 0;
+  let inTail = false;
+  while (i < sorted.length) {
+    const r = sorted[i];
+    const style = (r.style||'').toLowerCase();
+    const isDiamondSolo = style === 'diamond-solo';
+    const isDiamond = style === 'diamond' || isDiamondSolo;
+    const isCaze = style === 'caze';
+
+    if (isCaze) inTail = true;
+
+    if (isDiamondSolo) { cards.push({row:r, rowNum:null, col:null}); i++; continue; }
+
+    if (!inTail && isDiamond) {
+      rowNum++;
+      const next = sorted[i+1];
+      const nextIsHD = next && !((next.style||'').toLowerCase().startsWith('diamond')) && (next.coming_soon||'').toUpperCase() !== 'TRUE' && (next.style||'').toLowerCase() !== 'caze';
+      cards.push({row:r, rowNum, col:'4k'});
+      if (nextIsHD) { cards.push({row:next, rowNum, col:'hd'}); i += 2; continue; }
+      i++; continue;
+    }
+    const looksLikeHDSlot = (r.quality_badge||'').toUpperCase() === 'HD' || (r.coming_soon||'').toUpperCase() === 'TRUE';
+    if (!inTail && looksLikeHDSlot && !isDiamond) {
+      rowNum++;
+      cards.push({row:null, rowNum, col:'4k', empty:true});
+      cards.push({row:r, rowNum, col:'hd'});
+      i++; continue;
+    }
+    cards.push({row:r, rowNum:'tail', col:null});
+    i++;
+  }
+
+  grid.innerHTML = cards.map(({row:r, rowNum, col, empty}) => {
+    if (empty) return `<div class="fpx-card fpx-empty-slot fpx-row-${rowNum}" aria-hidden="true"><span class="fpx-empty-lbl">Empty</span></div>`;
+
+    const isComingSoon = (r.coming_soon||'').toUpperCase() === 'TRUE';
+    const style = (r.style||'').toLowerCase();
+    const isDiamondSolo = style === 'diamond-solo';
+    const isDiamond = style === 'diamond' || isDiamondSolo;
+    const isCaze = style === 'caze';
+    const badge = (r.quality_badge||'').toUpperCase();
+    const is4K = badge === '4K';
+
+    let cardCls = 'fpx-card';
+    if (isDiamondSolo) cardCls += ' fpx-diamond fpx-sx-solo';
+    else if (isDiamond) cardCls += ' fpx-diamond';
+    if (col === '4k') cardCls += ' fpx-col-4k';
+    if (col === 'hd') cardCls += ' fpx-col-hd';
+    if (rowNum && rowNum !== 'tail') cardCls += ` fpx-row-${rowNum}`;
+    if (rowNum === 'tail') cardCls += ' fpx-row-8';
+    if (isComingSoon) cardCls += ' fpx-coming-soon';
+
+    const cazeStyle = isCaze ? ' style="background:linear-gradient(135deg,rgba(80,60,10,0.55),rgba(40,30,0,0.85));border-color:rgba(124,58,237,0.5);"' : '';
+    const safeName = (r.channel_name||'').replace(/'/g,"\\'");
+    const watchUrl = r.watch_url || ('https://saptarshixtrasports.pages.dev/india/' + (r.channel_name||'').toLowerCase().replace(/[^a-z0-9]+/g,''));
+    const onclick = isComingSoon ? '' : ` onclick="fpxLoad(this,'${watchUrl}','${safeName}')"`;
+    const badgeImg = is4K ? `<img class="fpx-4k-badge-big" src="https://png.pngtree.com/png-vector/20221016/ourmid/pngtree-4k-ultra-hd-icon-badges-png-image_6345247.png" alt="4K Ultra HD">` : '';
+    const liveDot = isComingSoon ? '' : '<div class="fpx-live-dot"></div>';
+    const subLabel = r.sub_label ? `<div class="fpx-sub-label">${r.sub_label}</div>` : '';
+    const flag = r.flag_emoji ? `<span class="fpx-premium"><svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>${r.flag_emoji}</span>` : '';
+
+    let meta;
+    if (isComingSoon) {
+      meta = '<span class="fpx-pill-soon">SOON</span>';
+    } else if (flag) {
+      meta = `<div class="fpx-meta">${flag}</div>`;
+    } else if (is4K) {
+      meta = `<div class="fpx-meta"><span class="fpx-pill fpx-pill-4k">4K</span><span class="fpx-free4k-lbl">${r.sub_label||'Live'}</span></div>`;
+    } else if (badge === 'HD') {
+      meta = `<div class="fpx-meta"><span class="fpx-pill">HD</span><span class="fpx-live-lbl">Live</span></div>`;
+    } else {
+      meta = '';
+    }
+    const nameStyle = isComingSoon ? ' style="opacity:.5;"' : '';
+    const overlay = isComingSoon ? '<div class="fpx-soon-overlay"><span>COMING SOON</span></div>' : '<div class="fpx-thumb-ov"></div>';
+
+    return `<div class="${cardCls}"${cazeStyle}${onclick} title="${isComingSoon?'Coming Soon':''}">
+      <div class="fpx-thumb-wrap">
+        <img class="fpx-thumb" src="${r.logo_url||''}" alt="${r.channel_name||''}" onerror="this.src='https://via.placeholder.com/320x180/0a1830/eaf6ff?text=${encodeURIComponent(r.channel_name||'')}'">
+        ${badgeImg}
+        ${overlay}
+        ${liveDot}
+      </div>
+      <div class="fpx-body">
+        <div class="fpx-name"${nameStyle}>${r.channel_name||''}</div>
+        ${subLabel}
+        ${meta}
+      </div>
+    </div>`;
+  }).join('');
+};
+
+// ── Football-only match cards, from the same "MATCH CARDS" sheet tab the
+//    main site uses. This panel filters down to football/FIFA rows only —
+//    cricket, tennis, etc. from that sheet never show up here. ──
+function fmcIsFootball(r) {
+  const g = ((r.game || r.sport || '') + '').toLowerCase();
+  return /football|fifa|soccer|world cup/.test(g);
+}
+function fmcWatchHref(url) {
+  return (url || '').trim();
+}
+function fmcGoTo(e, url) {
+  const href = fmcWatchHref(url);
+  if (!href || href === '#') { if (e) e.preventDefault(); return; }
+  window.open(href, '_blank', 'noopener');
+}
+function fmcImg(src, alt, cls) {
+  if (!src) return '';
+  return `<img src="${src}" alt="${alt}" class="${cls}" onerror="this.style.display='none'">`;
+}
+function fmcStartCountdown(el, target) {
+  function update() {
+    const diff = new Date(target) - Date.now();
+    if (diff <= 0) { el.textContent = 'STARTING SOON'; return; }
+    const h = Math.floor(diff/3600000), m = Math.floor((diff%3600000)/60000), s = Math.floor((diff%60000)/1000);
+    el.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  }
+  update();
+  setInterval(update, 1000);
+}
+
+window.renderFifaMatches = function(rows) {
+  const wrap = document.getElementById('fifa-matches-wrap');
+  const section = document.getElementById('fifa-matches-section');
+  if (!wrap || !section) return;
+
+  const cards = active(rows || []).filter(fmcIsFootball);
+  if (!cards.length) { section.classList.add('fifa-matches-hidden'); wrap.innerHTML = ''; return; }
+  section.classList.remove('fifa-matches-hidden');
+
+  const groups = new Map();
+  cards.forEach(c => {
+    const key = (c.game || 'Football').trim() || 'Football';
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(c);
+  });
+
+  let html = '';
+  const timers = [];
+  groups.forEach((groupCards, gameName) => {
+    html += `<div class="fmc-section"><div class="fmc-section-label">${gameName}</div>`;
+    groupCards.forEach(c => {
+      const isLive = (c.status_live_upcoming || c.status || '').toLowerCase() === 'live';
+      const badge = isLive
+        ? `<div class="fmc-live-badge"><div class="fmc-dot"></div>LIVE</div>`
+        : `<div class="fmc-upcoming-badge">⏰ UPCOMING</div>`;
+      const dateLabel = c.date_label || '';
+      const countdown = c.countdown_to_iso_datetime || c.countdown_to || '';
+      const timerId = 'fmc-timer-' + Math.random().toString(36).slice(2);
+      const timerBlock = (!isLive && countdown)
+        ? `<div class="fmc-timer"><span class="fmc-timer-label">Starts in</span><span class="fmc-timer-display" id="${timerId}">--:--:--</span></div>`
+        : '';
+      const safeUrl = (c.btn_url || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      const href = fmcWatchHref(c.btn_url) || '#';
+
+      html += `
+      <div class="fmc-card">
+        <div class="fmc-header">${badge}<span class="fmc-date">${dateLabel}</span></div>
+        <div class="fmc-teams">
+          <div class="fmc-team">
+            ${fmcImg(c.team1_logo_url,'','fmc-logo')}
+            <div class="fmc-name">${c.team1_code||''}</div>
+            <div class="fmc-full">${c.team1_full_name||''}</div>
+          </div>
+          <div class="fmc-vs">VS</div>
+          <div class="fmc-team">
+            ${fmcImg(c.team2_logo_url,'','fmc-logo')}
+            <div class="fmc-name">${c.team2_code||''}</div>
+            <div class="fmc-full">${c.team2_full_name||''}</div>
+          </div>
+        </div>
+        ${timerBlock}
+        <a class="fmc-btn" href="${href}" target="_blank" rel="noopener" onclick="fmcGoTo(event,'${safeUrl}')">${c.btn_text||'Watch Live'}</a>
+      </div>`;
+
+      if (!isLive && countdown) timers.push({ id: timerId, target: countdown });
+    });
+    html += `</div>`;
+  });
+
+  wrap.innerHTML = html;
+  timers.forEach(({ id, target }) => {
+    setTimeout(() => { const el = document.getElementById(id); if (el) fmcStartCountdown(el, target); }, 100);
+  });
+};
+
+// ── Init: find the FIFA row's tab_name from the PANELS sheet (fallback
+//    "FIFA CHANNELS" if that tab doesn't exist yet), then fetch + render ──
+(async function init() {
+  let tabName = 'FIFA CHANNELS';
+  try {
+    const panelRows = await fetchSheet('PANELS');
+    const fifaRow = (panelRows || []).find(r => (r.panel_id||'').toLowerCase() === 'fifa');
+    if (fifaRow && fifaRow.tab_name) tabName = fifaRow.tab_name;
+  } catch (e) {}
+
+  const data = await fetchSheet(tabName);
+  window.renderFifaPanel(active(data || []));
+
+  // Football-only match cards — same "MATCH CARDS" sheet tab as the main site.
+  const matchData = await fetchSheet('MATCH CARDS');
+  window.renderFifaMatches(matchData || []);
+})();
+</script>
+</body>
+</html>
