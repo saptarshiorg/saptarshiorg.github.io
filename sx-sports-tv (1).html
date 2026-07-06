@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>SX SPORTS TV</title>
+<link rel="icon" href="https://i.postimg.cc/X7kyz6c8/Chat-GPT-Image-May-18-2026-09-32-18-AM.png" type="image/png">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Rajdhani:wght@500;600;700&family=Chakra+Petch:wght@500;600;700&display=swap" rel="stylesheet">
+
+<!-- ═══════════════════════════════════════════════════════
+  SX SPORTS — TV APP
+  ▸ Same CMS as the main site: replace SHEET_ID below if needed.
+  ▸ Uses sheets: LIVE CHANNELS, CATEGORIES, SCHEDULE, MATCH CARDS
+  ▸ Fully remote/D-pad controllable: Arrow keys move focus,
+    Enter/OK selects, Backspace/Escape goes back, "I" opens
+    the on-screen Remote Guide.
+════════════════════════════════════════════════════════════ -->
+<script>
+  const SHEET_ID = '1UcPVLGxSTJmAdtfPHsA_f5VCtbABwVdwef-va512HQU';
+</script>
+
+<style>
+  :root{
+    --bg:#05070d;
+    --panel:#0d1220;
+    --panel-2:#121a2c;
+    --line:rgba(255,255,255,.08);
+    --text:#eef2fb;
+    --muted:#7c8aa6;
+    --blue:#3d7bff;
+    --blue-soft:#7fb0ff;
+    --violet:#9b6bff;
+    --live:#ff3860;
+    --focus-grad:linear-gradient(135deg,var(--blue),var(--violet));
+  }
+  *{box-sizing:border-box;}
+  html{font-size:clamp(14px,1.05vw,20px);}
+  body{
+    margin:0;background:var(--bg);color:var(--text);
+    font-family:'Rajdhani',sans-serif;font-weight:600;
+    overflow-x:hidden;-ms-overflow-style:none;scrollbar-width:none;
+  }
+  body::-webkit-scrollbar{display:none;}
+  .disp{font-family:'Space Grotesk',sans-serif;}
+  .mono{font-family:'Chakra Petch',sans-serif;}
+  a{color:inherit;text-decoration:none;}
+  img{-webkit-user-drag:none;user-select:none;}
+
+  /* ── background atmosphere ───────────────────────────── */
+  .bg-glow{
+    position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:
+      radial-gradient(60rem 40rem at 85% -10%, rgba(61,123,255,.16), transparent 60%),
+      radial-gradient(50rem 34rem at -10% 30%, rgba(155,107,255,.14), transparent 60%);
+  }
+
+  /* ── top bar ──────────────────────────────────────────── */
+  .topbar{
+    position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:2rem;
+    padding:1.1rem 2.6rem;background:linear-gradient(180deg,rgba(5,7,13,.96),rgba(5,7,13,.7) 80%,transparent);
+    backdrop-filter:blur(6px);
+  }
+  .logo{display:flex;align-items:center;gap:.6rem;font-family:'Space Grotesk';font-weight:700;font-size:1.25rem;letter-spacing:.03em;white-space:nowrap;}
+  .logo .dot{width:.6rem;height:.6rem;border-radius:50%;background:var(--focus-grad);box-shadow:0 0 .8rem var(--blue);}
+  .logo b{background:var(--focus-grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .tabs{display:flex;gap:.4rem;flex:1;}
+  .tv-tab{
+    font-family:'Rajdhani';font-weight:700;font-size:1rem;letter-spacing:.05em;text-transform:uppercase;
+    color:var(--muted);background:transparent;border:2px solid transparent;border-radius:.6rem;
+    padding:.55rem 1.1rem;cursor:pointer;transition:.15s;
+  }
+  .tv-tab.on{color:var(--text);background:var(--panel-2);}
+  .topbar-right{display:flex;align-items:center;gap:1rem;}
+  .clock{font-family:'Chakra Petch';font-size:1.05rem;color:var(--blue-soft);letter-spacing:.05em;min-width:5.4rem;text-align:right;}
+  .guide-btn{
+    width:2.6rem;height:2.6rem;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:var(--panel-2);border:2px solid transparent;font-family:'Space Grotesk';font-weight:700;color:var(--text);cursor:pointer;
+  }
+
+  /* ── focus ring, shared by every focusable tile ─────────── */
+  .tv-tab:focus,.guide-btn:focus,.tv-card:focus,.hero-cta:focus,.modal-close:focus{
+    outline:none;
+    border-color:var(--blue-soft);
+    box-shadow:0 0 0 3px rgba(255,255,255,.06),0 0 0 5px var(--blue), 0 0 1.6rem rgba(61,123,255,.55);
+    transform:scale(1.06);
+    z-index:5;position:relative;
+  }
+  .tv-card:focus{transform:scale(1.08);}
+
+  /* ── hero ─────────────────────────────────────────────── */
+  .hero{
+    position:relative;margin:.5rem 2.6rem 2.2rem;border-radius:1.4rem;overflow:hidden;
+    min-height:34vh;display:flex;align-items:flex-end;
+    background:
+      radial-gradient(60% 120% at 100% 0%, rgba(155,107,255,.35), transparent 60%),
+      radial-gradient(70% 120% at 0% 100%, rgba(61,123,255,.30), transparent 60%),
+      linear-gradient(135deg,#0c1226,#141d34 60%,#0c1226);
+    border:1px solid var(--line);
+  }
+  .hero-grid{
+    position:absolute;inset:0;opacity:.35;
+    background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);
+    background-size:3rem 3rem;
+    mask-image:radial-gradient(60% 80% at 70% 20%, black, transparent);
+  }
+  .hero-content{position:relative;padding:2.4rem;display:flex;align-items:center;gap:2.2rem;width:100%;flex-wrap:wrap;}
+  .hero-tag{font-family:'Chakra Petch';font-size:.85rem;letter-spacing:.16em;color:var(--live);display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem;}
+  .hero-tag .live-dot{width:.6rem;height:.6rem;border-radius:50%;background:var(--live);box-shadow:0 0 .6rem var(--live);animation:pulse 1.4s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .hero-title{font-family:'Space Grotesk';font-weight:700;font-size:2.1rem;line-height:1.1;max-width:34rem;}
+  .hero-sub{color:var(--muted);font-size:1.05rem;margin-top:.5rem;}
+  .hero-teams{display:flex;align-items:center;gap:1.2rem;margin:1.1rem 0;}
+  .hero-teams img{width:3.4rem;height:3.4rem;object-fit:contain;background:#fff1;border-radius:.6rem;padding:.3rem;}
+  .hero-vs{font-family:'Chakra Petch';color:var(--muted);font-size:.9rem;}
+  .hero-cta{
+    margin-top:.4rem;font-family:'Rajdhani';font-weight:700;letter-spacing:.04em;font-size:1.05rem;
+    background:var(--focus-grad);color:#040611;border:2px solid transparent;border-radius:.7rem;
+    padding:.8rem 1.7rem;cursor:pointer;display:inline-flex;align-items:center;gap:.5rem;
+  }
+
+  /* ── lanes ────────────────────────────────────────────── */
+  .lane{margin:0 0 2.2rem;}
+  .lane-head{display:flex;align-items:baseline;gap:.7rem;padding:0 2.6rem;margin-bottom:.9rem;}
+  .lane-title{font-family:'Space Grotesk';font-weight:700;font-size:1.15rem;letter-spacing:.01em;}
+  .lane-count{font-family:'Chakra Petch';color:var(--muted);font-size:.82rem;}
+  .lane-track{
+    display:flex;gap:1.1rem;padding:.4rem 2.6rem 1rem;overflow-x:auto;overflow-y:visible;scroll-behavior:smooth;
+    -ms-overflow-style:none;scrollbar-width:none;
+  }
+  .lane-track::-webkit-scrollbar{display:none;}
+
+  .tv-card{
+    flex:0 0 auto;background:var(--panel);border:1px solid var(--line);border-radius:1rem;cursor:pointer;
+    display:flex;flex-direction:column;overflow:hidden;transition:.15s;position:relative;
+  }
+  .tv-card .badge{
+    position:absolute;top:.5rem;left:.5rem;font-family:'Chakra Petch';font-size:.68rem;letter-spacing:.08em;
+    padding:.15rem .5rem;border-radius:.35rem;background:rgba(0,0,0,.55);color:var(--blue-soft);z-index:2;
+  }
+  .tv-card .badge.live{color:#fff;background:var(--live);}
+
+  .card-ch{width:11.5rem;height:9.6rem;padding:1rem;align-items:center;justify-content:center;gap:.7rem;text-align:center;}
+  .card-ch .logo-box{width:5.4rem;height:5.4rem;border-radius:.8rem;background:var(--panel-2);display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .card-ch img{width:100%;height:100%;object-fit:contain;padding:.5rem;}
+  .card-ch .ph{font-family:'Space Grotesk';font-weight:700;font-size:1.1rem;color:var(--blue-soft);}
+  .card-ch .name{font-size:.92rem;color:var(--text);line-height:1.15;max-height:2.3rem;overflow:hidden;}
+
+  .card-cat{width:9.5rem;height:9.6rem;align-items:center;justify-content:center;gap:.5rem;text-align:center;padding:1rem;}
+  .card-cat .emoji{font-size:2.1rem;}
+  .card-cat .name{font-size:.95rem;}
+  .card-cat .count{font-family:'Chakra Petch';font-size:.72rem;color:var(--muted);}
+
+  .card-match{width:18.5rem;height:9.6rem;padding:.9rem 1rem;justify-content:space-between;}
+  .card-match .mm-top{display:flex;justify-content:space-between;align-items:center;}
+  .card-match .mm-date{font-family:'Chakra Petch';font-size:.72rem;color:var(--muted);}
+  .card-match .mm-teams{display:flex;align-items:center;justify-content:center;gap:.9rem;}
+  .card-match .mm-team{display:flex;flex-direction:column;align-items:center;gap:.3rem;width:5.6rem;}
+  .card-match img{width:2.3rem;height:2.3rem;object-fit:contain;}
+  .card-match .mm-code{font-family:'Chakra Petch';font-size:.82rem;}
+  .card-match .mm-vs{font-family:'Chakra Petch';color:var(--muted);font-size:.72rem;}
+  .card-match .mm-foot{font-family:'Rajdhani';font-weight:700;font-size:.85rem;color:var(--blue-soft);text-align:center;letter-spacing:.03em;}
+
+  .card-sched{width:20.5rem;height:9.6rem;padding:.9rem 1rem;justify-content:space-between;}
+  .card-sched .sc-time{font-family:'Chakra Petch';font-size:.85rem;color:var(--blue-soft);}
+  .card-sched .sc-teams{display:flex;align-items:center;justify-content:space-between;gap:.5rem;}
+  .card-sched img{width:2.1rem;height:2.1rem;object-fit:contain;}
+  .card-sched .sc-name{font-size:.78rem;text-align:center;max-width:6rem;line-height:1.1;}
+  .card-sched .sc-ch{font-family:'Chakra Petch';font-size:.72rem;color:var(--muted);}
+
+  .empty-note{color:var(--muted);font-size:.95rem;padding:.5rem 2.6rem;}
+
+  /* ── remote strip (footer legend) ────────────────────────── */
+  .remote-strip{
+    position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;justify-content:center;gap:1.8rem;
+    padding:.7rem 1rem;background:linear-gradient(0deg,rgba(5,7,13,.97),rgba(5,7,13,.75));
+    backdrop-filter:blur(6px);border-top:1px solid var(--line);font-family:'Chakra Petch';font-size:.82rem;color:var(--muted);
+  }
+  .remote-strip .grp{display:flex;align-items:center;gap:.45rem;white-space:nowrap;}
+  .key{
+    display:inline-flex;align-items:center;justify-content:center;min-width:1.7rem;height:1.7rem;padding:0 .4rem;
+    border-radius:.4rem;background:var(--panel-2);border:1px solid var(--line);color:var(--text);font-size:.78rem;
+  }
+  .key.wide{min-width:3.2rem;}
+
+  /* ── remote guide modal ──────────────────────────────────── */
+  .modal-overlay{
+    position:fixed;inset:0;z-index:80;background:rgba(2,3,7,.78);backdrop-filter:blur(3px);
+    display:none;align-items:center;justify-content:center;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal{
+    width:min(46rem,88vw);background:var(--panel);border:1px solid var(--line);border-radius:1.2rem;
+    padding:2rem 2.2rem;position:relative;
+  }
+  .modal h2{font-family:'Space Grotesk';margin:0 0 .3rem;font-size:1.4rem;}
+  .modal p.sub{color:var(--muted);margin:0 0 1.4rem;font-size:.95rem;}
+  .modal-close{
+    position:absolute;top:1.1rem;right:1.1rem;width:2.2rem;height:2.2rem;border-radius:50%;
+    background:var(--panel-2);border:2px solid transparent;color:var(--text);cursor:pointer;font-weight:700;
+  }
+  .remote-diagram{display:flex;gap:2rem;align-items:center;flex-wrap:wrap;}
+  .remote-body{
+    width:8.6rem;background:linear-gradient(160deg,#161d30,#0d1220);border:1px solid var(--line);
+    border-radius:2.4rem;padding:1.2rem .9rem;display:flex;flex-direction:column;align-items:center;gap:.8rem;flex:0 0 auto;
+  }
+  .dpad{width:6.4rem;height:6.4rem;border-radius:50%;background:#0a0f1c;border:1px solid var(--line);position:relative;}
+  .dpad span{position:absolute;color:var(--blue-soft);font-size:1rem;font-family:'Chakra Petch';}
+  .dpad .up{top:.35rem;left:50%;transform:translateX(-50%);}
+  .dpad .down{bottom:.35rem;left:50%;transform:translateX(-50%);}
+  .dpad .left{left:.45rem;top:50%;transform:translateY(-50%);}
+  .dpad .right{right:.45rem;top:50%;transform:translateY(-50%);}
+  .dpad .ok{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:2.3rem;height:2.3rem;border-radius:50%;background:var(--focus-grad);color:#040611;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;font-family:'Chakra Petch';}
+  .remote-btn-row{display:flex;gap:.5rem;}
+  .rbtn{width:2rem;height:1.4rem;border-radius:.4rem;background:var(--panel-2);border:1px solid var(--line);}
+  .guide-list{flex:1;min-width:14rem;display:flex;flex-direction:column;gap:.8rem;}
+  .guide-row{display:flex;align-items:center;gap:.8rem;font-family:'Rajdhani';font-weight:600;font-size:1rem;}
+  .guide-row .keys{display:flex;gap:.3rem;flex:0 0 auto;}
+
+  .toast{
+    position:fixed;left:50%;bottom:5.4rem;transform:translateX(-50%) translateY(1rem);opacity:0;pointer-events:none;
+    background:var(--panel-2);border:1px solid var(--line);border-radius:.7rem;padding:.7rem 1.2rem;
+    font-family:'Chakra Petch';font-size:.9rem;color:var(--text);z-index:60;transition:.2s;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  @media (max-width:700px){
+    .topbar{padding:.9rem 1.2rem;gap:1rem;}
+    .tabs{overflow-x:auto;}
+    .hero{margin:.5rem 1.2rem 1.6rem;}
+    .lane-head,.lane-track{padding-left:1.2rem;padding-right:1.2rem;}
+    .empty-note{padding-left:1.2rem;}
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-glow"></div>
+
+<header class="topbar">
+  <div class="logo"><span class="dot"></span>SX <b>SPORTS</b> TV</div>
+  <nav class="tabs" id="tabs">
+    <button class="tv-tab on" data-target="home">Home</button>
+    <button class="tv-tab" data-target="livetv">Live TV</button>
+    <button class="tv-tab" data-target="categories">Categories</button>
+    <button class="tv-tab" data-target="schedule">Schedule</button>
+  </nav>
+  <div class="topbar-right">
+    <div class="clock mono" id="clock">--:--</div>
+    <button class="guide-btn" id="guideBtn" title="Remote guide (I)">i</button>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero" id="hero">
+    <div class="hero-grid"></div>
+    <div class="hero-content" id="heroContent">
+      <div>
+        <div class="hero-tag mono"><span class="live-dot"></span>SX SPORTS</div>
+        <div class="hero-title">Live sport, tuned to your remote.</div>
+        <div class="hero-sub">Point, click OK — every channel and match, one D-pad away.</div>
+        <button class="hero-cta" id="heroCta">▶ Browse Live TV</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="lane" id="lane-live">
+    <div class="lane-head"><span class="lane-title">Live &amp; Upcoming</span><span class="lane-count mono" id="cnt-live"></span></div>
+    <div class="lane-track" id="track-live"></div>
+  </section>
+
+  <section class="lane" id="lane-cats">
+    <div class="lane-head"><span class="lane-title">Sports Categories</span><span class="lane-count mono" id="cnt-cats"></span></div>
+    <div class="lane-track" id="track-cats"></div>
+  </section>
+
+  <div id="channel-lanes"></div>
+
+  <section class="lane" id="lane-sched">
+    <div class="lane-head"><span class="lane-title">Schedule</span><span class="lane-count mono" id="cnt-sched"></span></div>
+    <div class="lane-track" id="track-sched"></div>
+  </section>
+</main>
+
+<div class="remote-strip mono">
+  <div class="grp"><span class="key">↑</span><span class="key">↓</span><span class="key">←</span><span class="key">→</span> Navigate</div>
+  <div class="grp"><span class="key wide">OK</span> Select</div>
+  <div class="grp"><span class="key wide">BACK</span> Return</div>
+  <div class="grp"><span class="key">i</span> Guide</div>
+</div>
+
+<div class="modal-overlay" id="guideModal">
+  <div class="modal">
+    <button class="modal-close" id="guideClose">✕</button>
+    <h2>Remote Guide</h2>
+    <p class="sub">SX Sports TV is fully controllable with your TV remote or keyboard arrow keys.</p>
+    <div class="remote-diagram">
+      <div class="remote-body">
+        <div class="dpad">
+          <span class="up">▲</span><span class="down">▼</span><span class="left">◀</span><span class="right">▶</span>
+          <div class="ok">OK</div>
+        </div>
+        <div class="remote-btn-row"><div class="rbtn"></div><div class="rbtn"></div></div>
+      </div>
+      <div class="guide-list">
+        <div class="guide-row"><span class="keys"><span class="key">↑</span><span class="key">↓</span><span class="key">←</span><span class="key">→</span></span> Move between rows &amp; tiles</div>
+        <div class="guide-row"><span class="keys"><span class="key wide">OK</span></span> Select the focused tile</div>
+        <div class="guide-row"><span class="keys"><span class="key wide">BACK</span></span> Jump back to the top menu</div>
+        <div class="guide-row"><span class="keys"><span class="key">i</span></span> Open or close this guide</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+/* ── CMS: CSV fetch (same pattern as the main SX Sports site) ── */
+function parseCSV(text){
+  const rows=[];let cur='',inQ=false,row=[];
+  for(let i=0;i<text.length;i++){
+    const ch=text[i],nx=text[i+1];
+    if(inQ){
+      if(ch==='"'&&nx==='"'){cur+='"';i++;}
+      else if(ch==='"')inQ=false;
+      else cur+=ch;
+    }else{
+      if(ch==='"')inQ=true;
+      else if(ch===','){row.push(cur.trim());cur='';}
+      else if(ch==='\r'&&nx==='\n'){row.push(cur.trim());rows.push(row);row=[];cur='';i++;}
+      else if(ch==='\n'||ch==='\r'){row.push(cur.trim());rows.push(row);row=[];cur='';}
+      else cur+=ch;
+    }
+  }
+  if(cur||row.length){row.push(cur.trim());rows.push(row);}
+  return rows.filter(r=>r.some(c=>c));
+}
+function toObj(rows){
+  if(rows.length<2)return[];
+  const headers=rows[0].map(h=>h.toLowerCase().replace(/[^a-z0-9_]/g,'_').replace(/__+/g,'_').replace(/^_|_$/g,''));
+  return rows.slice(1).map(r=>{const o={};headers.forEach((h,i)=>o[h]=(r[i]||'').trim());return o;});
+}
+const CACHE_TTL=60000;
+async function fetchSheet(name){
+  if(!SHEET_ID||SHEET_ID==='YOUR_SPREADSHEET_ID_HERE')return null;
+  const key=`tv_cms_${SHEET_ID}_${name}`;
+  try{
+    const c=sessionStorage.getItem(key);
+    if(c){const{t,data}=JSON.parse(c);if(Date.now()-t<CACHE_TTL)return data;}
+  }catch(e){}
+  const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(name)}`;
+  try{
+    const r=await fetch(url);if(!r.ok)throw new Error(r.status);
+    const data=toObj(parseCSV(await r.text()));
+    try{sessionStorage.setItem(key,JSON.stringify({t:Date.now(),data}));}catch(e){}
+    return data;
+  }catch(e){console.warn(`Sheet "${name}" failed:`,e);return null;}
+}
+function active(rows){
+  if(!rows)return[];
+  return rows.filter(r=>((r.active||r.active_true_false||'').toUpperCase())!=='FALSE');
+}
+function esc(s){return (s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function logoImg(url,alt){
+  const safe=esc(alt||'');
+  return url
+    ? `<img src="${url}" alt="${safe}" loading="lazy" onerror="this.outerHTML='<div class=&quot;ph&quot;>${safe.slice(0,3).toUpperCase()}</div>'">`
+    : `<div class="ph">${safe.slice(0,3).toUpperCase()}</div>`;
+}
+
+/* ── Toast ─────────────────────────────────────────────── */
+let toastTimer;
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),1600);
+}
+function tuneTo(name,url){
+  if(!url){toast(`No stream linked for ${name} yet`);return;}
+  toast(`Tuning to ${name}…`);
+  setTimeout(()=>window.open(url,'_blank','noopener'),450);
+}
+
+/* ── Renderers ─────────────────────────────────────────── */
+function renderLive(matchCards){
+  const items=active(matchCards);
+  const track=document.getElementById('track-live');
+  document.getElementById('cnt-live').textContent=items.length?`${items.length} fixtures`:'';
+  if(!items.length){
+    document.getElementById('lane-live').style.display='none';
+    return null;
+  }
+  track.innerHTML=items.map(c=>{
+    const isLive=(c.status||'').toLowerCase()==='live';
+    const badge=isLive?`<span class="badge live">● LIVE</span>`:(c.date_label?`<span class="badge">${esc(c.date_label)}</span>`:'');
+    return `
+    <div class="tv-card card-match" tabindex="-1"
+         data-name="${esc(c.team1_code||'')} vs ${esc(c.team2_code||'')}"
+         data-url="${esc(c.btn_url||'')}">
+      ${badge}
+      <div class="mm-top"><span class="mm-date mono">${esc(c.game||'')}</span></div>
+      <div class="mm-teams">
+        <div class="mm-team">${logoImg(c.team1_logo_url,c.team1_code)}<span class="mm-code mono">${esc(c.team1_code||'')}</span></div>
+        <span class="mm-vs">VS</span>
+        <div class="mm-team">${logoImg(c.team2_logo_url,c.team2_code)}<span class="mm-code mono">${esc(c.team2_code||'')}</span></div>
+      </div>
+      <div class="mm-foot">${esc(c.btn_text||'Watch')}</div>
+    </div>`;
+  }).join('');
+  return items;
+}
+
+function renderCategories(cats){
+  const items=active(cats);
+  const track=document.getElementById('track-cats');
+  document.getElementById('cnt-cats').textContent=items.length?`${items.length} sports`:'';
+  if(!items.length){document.getElementById('lane-cats').style.display='none';return;}
+  track.innerHTML=items.map(c=>`
+    <div class="tv-card card-cat" tabindex="-1" data-name="${esc(c.name)}" data-url="${esc(c.link||'')}">
+      <div class="emoji">${c.emoji||'🏆'}</div>
+      <div class="name">${esc(c.name)}</div>
+      <div class="count mono">${esc(c.match_count_text||'')}</div>
+    </div>`).join('');
+}
+
+function renderChannelLanes(channels){
+  const items=active(channels);
+  const host=document.getElementById('channel-lanes');
+  if(!items.length){host.innerHTML='<p class="empty-note">No live channels published yet.</p>';return;}
+  const order=[],byGroup={};
+  items.forEach(c=>{
+    const g=c.group||'Other';
+    if(!byGroup[g]){byGroup[g]=[];order.push(g);}
+    byGroup[g].push(c);
+  });
+  host.innerHTML=order.map(g=>{
+    const chs=byGroup[g];
+    const cards=chs.map(c=>{
+      const badge=c.badge?`<span class="badge${/live/i.test(c.badge)?' live':''}">${esc(c.badge)}</span>`:'';
+      return `
+      <div class="tv-card card-ch" tabindex="-1" data-name="${esc(c.channel_name)}" data-url="${esc(c.watch_url||'')}">
+        ${badge}
+        <div class="logo-box">${logoImg(c.logo_url,c.channel_name)}</div>
+        <div class="name">${esc(c.channel_name)}</div>
+      </div>`;
+    }).join('');
+    return `
+    <section class="lane">
+      <div class="lane-head"><span class="lane-title">${esc(g)}</span><span class="lane-count mono">${chs.length} channels</span></div>
+      <div class="lane-track">${cards}</div>
+    </section>`;
+  }).join('');
+}
+
+function renderSchedule(rows){
+  const items=active(rows);
+  const track=document.getElementById('track-sched');
+  document.getElementById('cnt-sched').textContent=items.length?`${items.length} fixtures`:'';
+  if(!items.length){document.getElementById('lane-sched').style.display='none';return;}
+  track.innerHTML=items.map(r=>{
+    const isLive=(r.status_live_upcoming_finished||r.status||'').toLowerCase()==='live';
+    return `
+    <div class="tv-card card-sched" tabindex="-1" data-name="${esc(r.team_home)} vs ${esc(r.team_away)}" data-url="">
+      ${isLive?'<span class="badge live">● LIVE</span>':''}
+      <div class="sc-time mono">${esc(r.match_time||'')}</div>
+      <div class="sc-teams">
+        <div>${logoImg(r.home_logo_url,r.team_home)}<div class="sc-name">${esc(r.team_home||'')}</div></div>
+        <span class="mm-vs">VS</span>
+        <div>${logoImg(r.away_logo_url,r.team_away)}<div class="sc-name">${esc(r.team_away||'')}</div></div>
+      </div>
+      <div class="sc-ch">${esc(r.channel||'')}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderHero(matchCards){
+  const live=(matchCards||[]).find(c=>(c.status||'').toLowerCase()==='live');
+  if(!live)return;
+  const content=document.getElementById('heroContent');
+  content.innerHTML=`
+    <div>
+      <div class="hero-tag mono"><span class="live-dot"></span>LIVE NOW · ${esc(live.game||'')}</div>
+      <div class="hero-title">${esc(live.team1_full_name||live.team1_code||'')} vs ${esc(live.team2_full_name||live.team2_code||'')}</div>
+      <div class="hero-teams">
+        ${logoImg(live.team1_logo_url,live.team1_code)}<span class="hero-vs mono">VS</span>${logoImg(live.team2_logo_url,live.team2_code)}
+      </div>
+      <button class="hero-cta" id="heroCta" data-name="${esc(live.team1_code)} vs ${esc(live.team2_code)}" data-url="${esc(live.btn_url||'')}">▶ ${esc(live.btn_text||'Watch Live')}</button>
+    </div>`;
+  wireHeroCta();
+}
+function wireHeroCta(){
+  const cta=document.getElementById('heroCta');
+  if(cta)cta.onclick=()=>{
+    const url=cta.dataset.url;
+    if(url)tuneTo(cta.dataset.name||'match',url);
+    else goTab('livetv',true);
+  };
+}
+
+/* ── Tabs / section scroll ────────────────────────────── */
+function goTab(target,focusFirstCard){
+  document.querySelectorAll('.tv-tab').forEach(t=>t.classList.toggle('on',t.dataset.target===target));
+  const map={home:'hero',livetv:'lane-live',categories:'lane-cats',schedule:'lane-sched'};
+  const el=document.getElementById(map[target]||'hero');
+  if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+  if(focusFirstCard){
+    setTimeout(()=>{
+      const lane=(target==='livetv')?document.getElementById('channel-lanes').previousElementSibling? document.getElementById('lane-live') : el : el;
+      const card=(el||document).querySelector('.tv-card');
+      if(card)card.focus(); else document.querySelector('.tv-tab.on').focus();
+    },350);
+  }
+}
+document.getElementById('tabs').addEventListener('click',e=>{
+  const btn=e.target.closest('.tv-tab');if(!btn)return;
+  goTab(btn.dataset.target,btn.dataset.target!=='home');
+});
+
+/* ── Focus grid: arrow-key / D-pad navigation ───────────── */
+let grid=[];
+function buildGrid(){
+  grid=[];
+  grid.push(Array.from(document.querySelectorAll('#tabs .tv-tab, .guide-btn')));
+  document.querySelectorAll('.lane:not([style*="display: none"]) .lane-track, #channel-lanes .lane .lane-track').forEach(track=>{
+    const cards=Array.from(track.querySelectorAll('.tv-card'));
+    if(cards.length)grid.push(cards);
+  });
+  const heroCta=document.getElementById('heroCta');
+  if(heroCta)grid.splice(1,0,[heroCta]);
+  grid.forEach((row,r)=>row.forEach((el,c)=>{el.dataset.r=r;el.dataset.c=c;}));
+}
+function currentPos(){
+  const el=document.activeElement;
+  if(el&&el.dataset&&el.dataset.r!==undefined)return{r:+el.dataset.r,c:+el.dataset.c,el};
+  return{r:0,c:0,el:grid[0]?grid[0][0]:null};
+}
+function focusCell(r,c){
+  if(!grid.length)return;
+  r=Math.max(0,Math.min(grid.length-1,r));
+  const row=grid[r];if(!row||!row.length)return;
+  c=Math.max(0,Math.min(row.length-1,c));
+  const el=row[c];
+  if(el){el.focus();el.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});}
+}
+function nearestColByX(targetRow,el){
+  if(!el)return 0;
+  const x=el.getBoundingClientRect().left;
+  let best=0,bestDist=Infinity;
+  targetRow.forEach((cand,i)=>{
+    const d=Math.abs(cand.getBoundingClientRect().left-x);
+    if(d<bestDist){bestDist=d;best=i;}
+  });
+  return best;
+}
+function activate(el){
+  if(!el)return;
+  if(el.classList.contains('tv-tab')){el.click();return;}
+  if(el.id==='guideBtn'){openGuide();return;}
+  if(el.id==='heroCta'){el.click();return;}
+  if(el.classList.contains('tv-card')){
+    const url=el.dataset.url;
+    tuneTo(el.dataset.name||'this channel',url);
+  }
+}
+
+document.addEventListener('keydown',e=>{
+  const guideOpen=document.getElementById('guideModal').classList.contains('open');
+  if(guideOpen){
+    if(e.key==='Escape'||e.key==='Backspace'||e.key==='i'||e.key==='I'){e.preventDefault();closeGuide();}
+    return;
+  }
+  const pos=currentPos();
+  switch(e.key){
+    case 'ArrowRight':
+      e.preventDefault();focusCell(pos.r,pos.c+1);break;
+    case 'ArrowLeft':
+      e.preventDefault();focusCell(pos.r,pos.c-1);break;
+    case 'ArrowDown':{
+      e.preventDefault();
+      const targetRow=grid[pos.r+1];
+      const c=targetRow?nearestColByX(targetRow,pos.el):pos.c;
+      focusCell(pos.r+1,c);break;
+    }
+    case 'ArrowUp':{
+      e.preventDefault();
+      const targetRow=grid[pos.r-1];
+      const c=targetRow?nearestColByX(targetRow,pos.el):pos.c;
+      focusCell(pos.r-1,c);break;
+    }
+    case 'Enter':case ' ':case 'OK':
+      e.preventDefault();activate(pos.el);break;
+    case 'Backspace':case 'Escape':
+      e.preventDefault();
+      if(pos.r===0){/* already home row */}
+      else focusCell(0,0);
+      break;
+    case 'i':case 'I':case '?':
+      e.preventDefault();openGuide();break;
+  }
+});
+document.addEventListener('click',e=>{
+  const card=e.target.closest('.tv-card');
+  if(card){activate(card);}
+});
+
+/* ── Guide modal ─────────────────────────────────────────── */
+let lastFocused=null;
+function openGuide(){
+  lastFocused=document.activeElement;
+  document.getElementById('guideModal').classList.add('open');
+  document.getElementById('guideClose').focus();
+}
+function closeGuide(){
+  document.getElementById('guideModal').classList.remove('open');
+  if(lastFocused)lastFocused.focus();
+}
+document.getElementById('guideBtn').addEventListener('click',openGuide);
+document.getElementById('guideClose').addEventListener('click',closeGuide);
+document.getElementById('guideModal').addEventListener('click',e=>{if(e.target.id==='guideModal')closeGuide();});
+
+/* ── Clock ─────────────────────────────────────────────── */
+function tickClock(){
+  const d=new Date();
+  document.getElementById('clock').textContent=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+}
+tickClock();setInterval(tickClock,15000);
+
+/* ── Init ──────────────────────────────────────────────── */
+async function init(){
+  const [channels,cats,sched,matches]=await Promise.all(
+    ['LIVE CHANNELS','CATEGORIES','SCHEDULE','MATCH CARDS'].map(s=>fetchSheet(s))
+  );
+  const liveItems=renderLive(matches);
+  renderHero(liveItems);
+  renderCategories(cats);
+  renderChannelLanes(channels);
+  renderSchedule(sched);
+  buildGrid();
+  wireHeroCta();
+  const firstTab=document.querySelector('.tv-tab');
+  if(firstTab)firstTab.focus();
+  window.addEventListener('resize',buildGrid);
+}
+init();
+</script>
+</body>
+</html>
