@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pritam and Pedro | SX Sports</title>
+<style>
+@font-face {
+  font-family: 'Satoshi';
+  src: url('https://cdn.jsdelivr.net/npm/@fontsource/satoshi@1.0.0/files/satoshi-latin-400-normal.woff2') format('woff2');
+  font-weight: 400;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Satoshi', -apple-system, 'Segoe UI', sans-serif;
+  background: #0a0a0f;
+  color: #fff;
+  min-height: 100vh;
+}
+.hero {
+  position: relative;
+  width: 100%;
+  min-height: 60vh;
+  background: linear-gradient(180deg, rgba(10,10,15,0.2) 0%, rgba(10,10,15,0.6) 55%, #0a0a0f 100%),
+              url('https://img10.hotstar.com/image/upload/f_auto,q_auto/sources/r1/cms/prod/8261/1783018388261-i') center/cover no-repeat;
+  display: flex;
+  align-items: flex-end;
+  padding: 40px 6vw 50px;
+}
+.hero-content { max-width: 640px; }
+.badge {
+  display: inline-block;
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.2);
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: clamp(32px, 6vw, 56px);
+  font-weight: 700;
+  letter-spacing: -1px;
+  margin-bottom: 12px;
+}
+.hero p {
+  font-size: 15px;
+  color: rgba(255,255,255,0.75);
+  line-height: 1.6;
+  margin-bottom: 22px;
+}
+.meta-row {
+  display: flex;
+  gap: 14px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+.meta-row span { display:flex; align-items:center; gap:6px; }
+.dot { width:4px; height:4px; border-radius:50%; background:rgba(255,255,255,0.4); }
+.play-btn {
+  background: #fff;
+  color: #0a0a0f;
+  border: none;
+  padding: 13px 28px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: transform .15s ease, background .15s ease;
+}
+.play-btn:hover { background:#e8b93c; transform: translateY(-1px); }
+
+.section {
+  padding: 36px 6vw 60px;
+}
+.section h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 18px;
+  letter-spacing: -0.3px;
+}
+.player-wrap {
+  width: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: #000;
+}
+.player-wrap iframe { display: block; max-height: 70vh; }
+@media (max-width: 600px) {
+  .player-wrap iframe { height: 220px !important; }
+}
+.ep-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 18px;
+}
+.ep-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform .2s ease, border-color .2s ease, background .2s ease;
+  display: flex;
+  flex-direction: column;
+}
+.ep-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(232,185,60,0.5);
+  background: rgba(255,255,255,0.07);
+}
+.ep-thumb {
+  position: relative;
+  aspect-ratio: 16/9;
+  background: linear-gradient(135deg, #1c1c26, #2a2a38);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.ep-thumb img {
+  width: 100%; height: 100%; object-fit: cover;
+  opacity: 0.55;
+  position: absolute; inset: 0;
+}
+.ep-num {
+  position: relative;
+  font-size: 42px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.85);
+  z-index: 1;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.6);
+}
+.ep-play-icon {
+  position: absolute;
+  z-index: 2;
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  background: rgba(232,185,60,0.95);
+  display: flex; align-items:center; justify-content:center;
+  opacity: 0;
+  transition: opacity .2s ease;
+}
+.ep-card:hover .ep-play-icon { opacity: 1; }
+.ep-info { padding: 14px 16px 16px; }
+.ep-info .ep-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+.ep-info .ep-desc { font-size: 12.5px; color: rgba(255,255,255,0.55); line-height: 1.5; }
+
+.status-msg {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(20,20,28,0.95);
+  border: 1px solid rgba(232,185,60,0.4);
+  padding: 12px 22px;
+  border-radius: 10px;
+  font-size: 14px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s ease, transform .25s ease;
+  z-index: 50;
+}
+.status-msg.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Android-style card variant (Ep 4) */
+.ep-card.android {
+  background: #101418;
+  border: 1px solid #2a3136;
+  border-radius: 20px;
+  position: relative;
+}
+.ep-card.android:hover {
+  border-color: #4CAF50;
+  transform: translateY(-4px) scale(1.01);
+}
+.ep-card.android .ep-thumb { border-radius: 20px 20px 0 0; }
+.ep-card.android .android-tag {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 3;
+  background: rgba(76,175,80,0.9);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 4px 9px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  text-transform: uppercase;
+}
+.ep-card.android .ep-info {
+  padding: 14px 16px 18px;
+  border-top: 1px solid #1c2226;
+}
+.ep-card.android .ep-title { color: #8BC34A; }
+.ep-card.android .ep-play-icon {
+  background: #4CAF50;
+  border-radius: 8px;
+  width: 50px; height: 50px;
+}
+
+.footer-brand {
+  text-align: center;
+  padding: 26px 6vw 40px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.5px;
+}
+.footer-brand b { color: rgba(232,185,60,0.85); font-weight: 700; }
+
+@media (max-width: 600px) {
+  .hero { padding: 24px 5vw 34px; min-height: 46vh; }
+  .section { padding: 24px 5vw 44px; }
+  .ep-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .ep-num { font-size: 30px; }
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-content">
+    <span class="badge">Hotstar Special</span>
+    <h1>Pritam and Pedro</h1>
+    <p>Two mismatched cops — one old-school, one tech-savvy — team up to solve a high-profile case in Goa. Crime, comedy and chaos collide.</p>
+    <div class="meta-row">
+      <span>2026</span>
+      <div class="dot"></div>
+      <span>6 Episodes</span>
+      <div class="dot"></div>
+      <span>Crime · Comedy · Mystery</span>
+    </div>
+    <button class="play-btn" onclick="playEpisode(1)">▶ Play Episode 1</button>
+  </div>
+</div>
+
+<div class="section" id="playerSection" style="display:none; padding-top:0;">
+  <h2 id="playerTitle">Now Playing</h2>
+  <div class="player-wrap">
+    <iframe
+      id="playerFrame"
+      src=""
+      width="100%"
+      height="600"
+      frameborder="0"
+      allowfullscreen
+      allow="autoplay; encrypted-media; picture-in-picture"
+    ></iframe>
+  </div>
+</div>
+
+<div class="section">
+  <h2>Episodes</h2>
+  <div class="ep-grid" id="epGrid"></div>
+</div>
+
+<div class="footer-brand">Powered by <b>RISHI.EV</b></div>
+
+<div class="status-msg" id="statusMsg"></div>
+
+<script>
+const BANNER = 'https://img10.hotstar.com/image/upload/f_auto,q_auto/sources/r1/cms/prod/8261/1783018388261-i';
+
+// Replace exampleN.com with your real per-episode source when ready.
+const episodes = [
+  { n: 1, title: "Punishment Posting", desc: "A missing tape recorder brings Pritam and Pedro together, forming an unusual partnership.", src: "https://vaplayer.ru/embed/tv/tt28077038/1/1?skin=netflix" },
+  { n: 2, title: "The Missing Boy", desc: "Pedro takes on a kidnapping case that quickly becomes far more complicated than expected.", src: "https://vaplayer.ru/embed/tv/tt28077038/1/2?skin=netflix" },
+  { n: 3, title: "The Blackmail", desc: "New clues suggest someone else is controlling the situation from behind the scenes.", src: "https://vaplayer.ru/embed/tv/tt28077038/1/3?skin=netflix" },
+  { n: 4, title: "The Blue Whale", desc: "A dark online challenge surfaces in the case, pushing Pritam and Pedro into unfamiliar territory.", src: "https://vaplayer.ru/embed/tv/tt28077038/1/4?skin=netflix" },
+  { n: 5, title: "The Trap", desc: "Pritam and Pedro set a plan in motion, but nothing goes quite as scripted.", src: "https://vaplayer.ru/embed/tv/tt28077038/1/5?skin=netflix" },
+  { n: 6, title: "Case Closed?", desc: "The investigation reaches its climax — but not every question gets answered.", src: "https://vaplayer.ru/embed/tv/tt28077038/1/6?skin=netflix" }
+];
+
+const grid = document.getElementById('epGrid');
+episodes.forEach(ep => {
+  const card = document.createElement('div');
+  const isAndroid = ep.n === 0;
+  card.className = 'ep-card' + (isAndroid ? ' android' : '');
+  card.onclick = () => playEpisode(ep.n);
+  card.innerHTML = `
+    <div class="ep-thumb">
+      <img src="${BANNER}" alt="Pritam and Pedro">
+      ${isAndroid ? '<span class="android-tag">🤖 Android</span>' : ''}
+      <span class="ep-num">${String(ep.n).padStart(2,'0')}</span>
+      <div class="ep-play-icon">▶</div>
+    </div>
+    <div class="ep-info">
+      <div class="ep-title">E${ep.n}: ${ep.title}</div>
+      <div class="ep-desc">${ep.desc}</div>
+    </div>
+  `;
+  grid.appendChild(card);
+});
+
+function playEpisode(num) {
+  const ep = episodes.find(e => e.n === num);
+  const section = document.getElementById('playerSection');
+  const frame = document.getElementById('playerFrame');
+  const title = document.getElementById('playerTitle');
+
+  frame.src = ep.src;
+  title.textContent = `Now Playing — E${ep.n}: ${ep.title}`;
+  section.style.display = 'block';
+  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  const msg = document.getElementById('statusMsg');
+  msg.textContent = `Loading Episode ${num} from ${ep.src}`;
+  msg.classList.add('show');
+  setTimeout(() => msg.classList.remove('show'), 2400);
+}
+</script>
+
+</body>
+</html>
