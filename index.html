@@ -5528,52 +5528,5 @@ function closeVip(){
   document.body.style.overflow = '';
 }
 </script>
-
-  #DEV TOOLS
-<!-- Paste the script here -->
-<script>
-// Disable right-click
-document.addEventListener("contextmenu", function (e) {
-    e.preventDefault();
-});
-
-// Disable keyboard shortcuts
-document.addEventListener("keydown", function (e) {
-    const key = e.key.toUpperCase();
-
-    if (
-        key === "F12" ||
-        (e.ctrlKey && e.shiftKey && ["I", "J", "C", "K"].includes(key)) ||
-        (e.ctrlKey && ["U", "S", "P"].includes(key)) ||
-        (e.metaKey && e.altKey && ["I", "J", "C"].includes(key)) // macOS
-    ) {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        return false;
-    }
-}, true);
-
-// Disable text selection
-document.addEventListener("selectstart", function (e) {
-    e.preventDefault();
-});
-
-// Disable drag
-document.addEventListener("dragstart", function (e) {
-    e.preventDefault();
-});
-
-// Disable copy
-document.addEventListener("copy", function (e) {
-    e.preventDefault();
-});
-
-// Disable cut
-document.addEventListener("cut", function (e) {
-    e.preventDefault();
-});
-</script>
-
-
 </body>
 </html>
