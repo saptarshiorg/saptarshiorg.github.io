@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sky Sports Cricket HD – SX Sports Live</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#000;overflow:hidden;font-family:-apple-system,'Google Sans','Helvetica Neue',sans-serif;}
+.player-wrap{position:fixed;inset:0;background:#000;}
+.player-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:none;}
+</style>
+</head>
+<body>
+<div class="player-wrap">
+  <iframe id="frm"
+    src="https://videocdn-4726.website/shopping2/?channel_id=sky_sport_main_event_uk"
+    allowfullscreen
+    allow="autoplay; fullscreen; encrypted-media; picture-in-picture; clipboard-write; web-share; accelerometer; gyroscope; payment"
+    referrerpolicy="no-referrer-when-downgrade"
+    scrolling="no">
+  </iframe>
+</div>
+<!-- ===== SX POPUPS: Brave browser tip + DNS tip — sequential, auto-dismiss ===== -->
+<style>
+.sx-popup {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    z-index: 9999;
+    max-width: 280px;
+    background: rgba(20, 20, 20, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    padding: 12px 14px;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    backdrop-filter: blur(8px);
+    opacity: 0;
+    transform: translateY(-12px);
+    pointer-events: none;
+    transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.sx-popup.show {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+.sx-popup .sx-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+.sx-popup .sx-icon {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    border-radius: 6px;
+}
+.sx-popup .sx-text {
+    flex: 1;
+    font-size: 12.5px;
+    line-height: 1.4;
+}
+.sx-popup .sx-text strong {
+    display: block;
+    font-size: 13.5px;
+    margin-bottom: 2px;
+}
+.sx-popup a.sx-link {
+    display: inline-block;
+    margin-top: 8px;
+    color: #fff;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 7px;
+}
+#sx-popup-brave a.sx-link { background: #fb542b; }
+#sx-popup-dns a.sx-link { background: #3b82f6; }
+.sx-popup .sx-close {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.6);
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 2px 4px;
+}
+.sx-popup .sx-close:hover { color: #fff; }
+.sx-popup .sx-dns-codes {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+}
+.sx-popup .sx-dns-codes span {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 5px;
+    padding: 2px 6px;
+}
+</style>
+
+<div id="sx-popup-brave" class="sx-popup">
+    <button class="sx-close" onclick="document.getElementById('sx-popup-brave').classList.remove('show')">&times;</button>
+    <div class="sx-row">
+        <img class="sx-icon" src="https://brave.com/static-assets/images/brave-logo-sans-text.svg" alt="Brave">
+        <div class="sx-text">
+            <strong>Use Brave Browser</strong>
+            For a smoother, ad-free stream — no popups or smartlink redirects.
+            <a class="sx-link" href="https://brave.com/download/" target="_blank" rel="noopener noreferrer">Get Brave</a>
+        </div>
+    </div>
+</div>
+
+<div id="sx-popup-dns" class="sx-popup">
+    <button class="sx-close" onclick="document.getElementById('sx-popup-dns').classList.remove('show')">&times;</button>
+    <div class="sx-row">
+        <img class="sx-icon" src="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/main/logo.png" alt="DNS" onerror="this.style.display='none'">
+        <div class="sx-text">
+            <strong>Buffering a lot?</strong>
+            Switch your DNS to Cloudflare or Google for faster, more reliable streaming.
+            <div class="sx-dns-codes">
+                <span>1.1.1.1</span>
+                <span>8.8.8.8</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(async function () {
+    var brave = document.getElementById('sx-popup-brave');
+    var dns = document.getElementById('sx-popup-dns');
+    if (!brave || !dns) return;
+
+    var isBrave = false;
+    try {
+        if (navigator.brave && typeof navigator.brave.isBrave === 'function') {
+            isBrave = await navigator.brave.isBrave();
+        }
+    } catch (e) {
+        isBrave = false;
+    }
+
+    function showThenHide(el, delayShow, showFor) {
+        setTimeout(function () {
+            el.classList.add('show');
+            setTimeout(function () {
+                el.classList.remove('show');
+            }, showFor);
+        }, delayShow);
+    }
+
+    if (isBrave) {
+        // Skip the Brave nag, go straight to the DNS tip.
+        showThenHide(dns, 1500, 8000);
+    } else {
+        // Show Brave tip first, then the DNS tip after it disappears.
+        showThenHide(brave, 1500, 8000);
+        showThenHide(dns, 1500 + 8000 + 600, 8000);
+    }
+})();
+</script>
+<!-- ===== END SX POPUPS ===== -->
+
+</body>
+</html>
