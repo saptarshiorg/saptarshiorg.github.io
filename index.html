@@ -5109,7 +5109,7 @@ function closeAdminChatDiscordPopup(){
 .epg-list-wrap{ flex:1; min-width:0; }
 .epg-geo-banner{
   display: flex; align-items: center; gap: 6px;
-  margin: 0 0 8px 0; padding: 5px 10px;
+  margin: 0 0 12px 0; padding: 5px 10px;
   border-radius: 6px;
   background: rgba(232,185,35,0.06);
   border: 1px solid rgba(232,185,35,0.18);
@@ -5286,6 +5286,11 @@ function closeAdminChatDiscordPopup(){
         </div>
       </div>
 
+      <div id="epg-geo-banner" class="epg-geo-banner" style="display:none;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 0 20 15.3 15.3 0 0 1 0-20z"/></svg>
+        <span>India/Sri Lanka only — <strong>use an Indian VPN</strong> to watch.</span>
+      </div>
+
       <div class="epg-body">
         <nav class="ch-tabs epg-sidebar" id="chTabs">
           <div class="ch-tab epg-tab active" data-grp="All" onclick="chSetTab(this)">
@@ -5345,11 +5350,6 @@ function closeAdminChatDiscordPopup(){
             <span>SX SPORTS (Owned by Rishi Entertainment Verse)</span>
           </button>
         </nav>
-
-        <div id="epg-geo-banner" class="epg-geo-banner" style="display:none;">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 0 20 15.3 15.3 0 0 1 0-20z"/></svg>
-          <span>India/Sri Lanka only — <strong>use an Indian VPN</strong> to watch.</span>
-        </div>
 
         <div class="epg-list-wrap">
           <div class="epg-list" id="chGrid"></div>
