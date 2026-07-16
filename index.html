@@ -4156,6 +4156,7 @@ function toggleQr() {
         ? '<span class="epg-badge epg-badge-live"><span class="epg-live-blip"></span>LIVE</span>'
         : '<span class="epg-badge epg-badge-off">OFF AIR</span>';
       const premiumBadge = isFanCode ? '<span class="epg-premium-icon" title="FanCode Premium"></span>' : '';
+      const indiaAlert = (isStarSports || isSony || isZee) ? '<div class="epg-india-alert">India Alert</div>' : '';
       a.innerHTML = `
         <div class="epg-thumb">
           ${chLogoHTML(c)}
@@ -4163,6 +4164,7 @@ function toggleQr() {
         <div class="epg-meta">
           <div class="epg-group-tag">${grp}</div>
           <div class="epg-name">${c.channel_name||''}${premiumBadge}</div>
+          ${indiaAlert}
           <div class="epg-now">24/7 Channel</div>
         </div>
         <div class="epg-badges">${liveBadge}${hdBadge}</div>
@@ -5144,6 +5146,11 @@ function closeAdminChatDiscordPopup(){
 
 .epg-meta{ flex:1; min-width:0; display:flex; flex-direction:column; gap:4px; }
 .epg-name{ font-family:var(--font-display) !important; font-weight:800 !important; font-size:15px !important; color:#fff !important; display:flex; align-items:center; gap:6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.epg-india-alert{
+  font-size: 9.5px !important; font-weight: 700; letter-spacing: .03em;
+  text-transform: uppercase; color: #ff4d4d !important;
+  margin-top: 1px;
+}
 .epg-sub-row{ display:flex; align-items:center; gap:6px; font-size:12px; color:rgba(255,255,255,0.48); }
 .epg-group-tag{ text-transform:uppercase; letter-spacing:.04em; font-weight:700; font-size:11px !important; color:rgba(255,255,255,0.45) !important; }
 .epg-dot{ opacity:.5; }
@@ -5288,7 +5295,7 @@ function closeAdminChatDiscordPopup(){
 
       <div id="epg-geo-banner" class="epg-geo-banner" style="display:none;">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 0 20 15.3 15.3 0 0 1 0-20z"/></svg>
-        <span>India/Sri Lanka only — <strong>use an Indian VPN</strong> to watch.</span>
+        <span>Outside India and Sri Lanka? <strong>Use an Indian VPN</strong> to watch.</span>
       </div>
 
       <div class="epg-body">
