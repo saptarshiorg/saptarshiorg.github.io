@@ -4156,7 +4156,7 @@ function toggleQr() {
         ? '<span class="epg-badge epg-badge-live"><span class="epg-live-blip"></span>LIVE</span>'
         : '<span class="epg-badge epg-badge-off">OFF AIR</span>';
       const premiumBadge = isFanCode ? '<span class="epg-premium-icon" title="FanCode Premium"></span>' : '';
-      const indiaAlert = (isStarSports || isSony || isZee) ? '<div class="epg-india-alert">India Alert</div>' : '';
+      const indiaAlert = (isStarSports || isSony || isZee) ? '<div class="epg-india-alert">Outside India/Sri Lanka? Use VPN</div>' : '';
       a.innerHTML = `
         <div class="epg-thumb">
           ${chLogoHTML(c)}
@@ -5139,6 +5139,14 @@ function closeAdminChatDiscordPopup(){
 }
 .epg-row:hover{ transform:translateY(-2px); background:rgba(255,255,255,0.055) !important; }
 
+.epg-row.star-row, .epg-row.sony-row, .epg-row.zee-row{
+  background: rgba(224,32,32,0.14) !important;
+  border: 1px solid rgba(224,32,32,0.45) !important;
+}
+.epg-row.star-row:hover, .epg-row.sony-row:hover, .epg-row.zee-row:hover{
+  background: rgba(224,32,32,0.20) !important;
+}
+
 .epg-thumb{ position:relative; flex:0 0 128px; aspect-ratio:16/9; border-radius:0 !important; overflow:hidden; background:#000; }
 .epg-logo-box{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
 .epg-logo-box img{ width:100%; height:100%; object-fit:cover; }
@@ -5147,9 +5155,13 @@ function closeAdminChatDiscordPopup(){
 .epg-meta{ flex:1; min-width:0; display:flex; flex-direction:column; gap:4px; }
 .epg-name{ font-family:var(--font-display) !important; font-weight:800 !important; font-size:15px !important; color:#fff !important; display:flex; align-items:center; gap:6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .epg-india-alert{
-  font-size: 9.5px !important; font-weight: 700; letter-spacing: .03em;
-  text-transform: uppercase; color: #ff4d4d !important;
-  margin-top: 1px;
+  display: inline-block;
+  font-size: 9.5px !important; font-weight: 800; letter-spacing: .03em;
+  text-transform: uppercase; color: #fff !important;
+  background: #e02020;
+  padding: 2px 7px;
+  border-radius: 4px;
+  margin-top: 3px;
 }
 .epg-sub-row{ display:flex; align-items:center; gap:6px; font-size:12px; color:rgba(255,255,255,0.48); }
 .epg-group-tag{ text-transform:uppercase; letter-spacing:.04em; font-weight:700; font-size:11px !important; color:rgba(255,255,255,0.45) !important; }
