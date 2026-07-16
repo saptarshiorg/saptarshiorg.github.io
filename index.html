@@ -579,6 +579,66 @@ header {
 .drawer-divider { height: 1px; background: rgba(255,255,255,0.05); margin: 8px 16px; }
 
 /* ────────────────────────────────────────────
+   SX RAIL — persistent OTT-style dark vertical
+   sidebar (desktop only). Collapsed = icon rail,
+   hover/focus = smoothly expands to show labels,
+   like Hotstar / JioCinema / Disney+ desktop nav.
+──────────────────────────────────────────── */
+@media(min-width:1024px){ body{ padding-left:64px; } }
+.sx-rail{
+  position: fixed; top:0; left:0; bottom:0;
+  width: 64px;
+  background: rgba(10,10,14,0.38);
+  background-image: linear-gradient(180deg,rgba(0,0,0,0.42) 0%,rgba(5,5,5,0.32) 60%,rgba(0,0,0,0.42) 100%);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  z-index: 250;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 4px 0 24px rgba(0,0,0,0.35);
+  transition: width 0.32s var(--ease);
+}
+@media(min-width:1024px){ .sx-rail{ display:flex; } }
+.sx-rail:hover,
+.sx-rail.sx-rail-pinned{ width: 208px; box-shadow: 8px 0 40px rgba(0,0,0,0.45); }
+.sx-rail-logo{
+  display:flex; align-items:center; height:68px; min-height:68px;
+  padding: 0 20px; flex-shrink:0;
+}
+.sx-rail-logo img{ height:30px; width:auto; object-fit:contain; opacity:0.95; }
+.sx-rail-nav{ display:flex; flex-direction:column; padding:10px 0; gap:2px; overflow-y:auto; overflow-x:hidden; flex:1; }
+.sx-rail-item{
+  display:flex; align-items:center; gap:18px;
+  height:48px; min-height:48px; padding: 0 20px;
+  color: rgba(255,255,255,0.62);
+  text-decoration:none; cursor:pointer;
+  font-family: var(--cu-font, var(--font-display));
+  font-weight:600; font-size:14px; letter-spacing:0.02em;
+  white-space:nowrap;
+  transition: color 0.2s var(--ease), background 0.2s var(--ease), padding-left 0.2s var(--ease);
+  position:relative;
+}
+.sx-rail-item svg{ width:22px; height:22px; flex-shrink:0; display:block; }
+.sx-rail-item span{
+  opacity:0; transform: translateX(-6px);
+  transition: opacity 0.28s var(--ease) 0.05s, transform 0.28s var(--ease) 0.05s;
+}
+.sx-rail:hover .sx-rail-item span,
+.sx-rail.sx-rail-pinned .sx-rail-item span{ opacity:1; transform:translateX(0); }
+.sx-rail-item:hover{ color:#fff; background: rgba(255,255,255,0.06); padding-left:26px; }
+.sx-rail-item.active{ color:#fff; }
+.sx-rail-item.active::before{
+  content:''; position:absolute; left:0; top:8px; bottom:8px; width:3px;
+  background: var(--grad-gold);
+}
+.sx-rail-item.active svg{ filter: drop-shadow(0 0 6px rgba(255,106,26,0.5)); color:#FFB347; }
+.sx-rail-divider{ height:1px; background:rgba(255,255,255,0.06); margin:8px 16px; flex-shrink:0; }
+.sx-rail-item.sx-rail-vip{ color:#F7C55A; }
+.sx-rail-item.sx-rail-vip svg{ color:#F7C55A; }
+.sx-rail-item.sx-rail-vip:hover{ background: rgba(247,197,90,0.10); }
+
+/* ────────────────────────────────────────────
    HERO — Desktop card grid
 ──────────────────────────────────────────── */
 .hero { position: relative; background: transparent; overflow: hidden; height: auto; }
@@ -1966,57 +2026,93 @@ body::before{ display:none !important; }
   <nav class="drawer-nav" id="drawer-nav"></nav>
 </div>
 
-<!-- TICKER -->
-<div class="ticker-wrap">
-  <div class="ticker-label" id="ticker-label">⚡ LIVE</div>
-  <div style="overflow:hidden;flex:1;">
-    <div class="ticker-track" id="ticker-track"></div>
+<!-- SX RAIL — desktop persistent icon sidebar, expands smoothly on hover -->
+<nav class="sx-rail" id="sxRail">
+  <div class="sx-rail-logo"><img id="sxrail-logo-img" src="" alt="" style="display:none"></div>
+  <div class="sx-rail-nav">
+    <a class="sx-rail-item active" id="sxrail-home" onclick="sxRailGo('home');return false;" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10"/></svg>
+      <span>Home</span>
+    </a>
+    <a class="sx-rail-item" id="sxrail-search" onclick="sxRailGo('search');return false;" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <span>Search Channels</span>
+    </a>
+    <a class="sx-rail-item" id="sxrail-otts" onclick="sxRailGo('otts');return false;" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l9 4.5L12 11 3 6.5 12 2z"/><path d="M3 11.5l9 4.5 9-4.5"/><path d="M3 16.5l9 4.5 9-4.5"/></svg>
+      <span>Live TV</span>
+    </a>
+    <a class="sx-rail-item" id="sxrail-free" onclick="sxRailGo('free');return false;" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5-6-3.5z" fill="currentColor" stroke="none"/></svg>
+      <span>Live Sports</span>
+    </a>
+    <a class="sx-rail-item sx-rail-vip" id="sxrail-myplans" onclick="sxRailGo('myplans');return false;" href="#">
+      <svg viewBox="0 0 24 20" fill="currentColor"><path d="M2 6.5a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm20 0a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm-10-2a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zM2 7.8l4.6 3.4L12 5l5.4 6.2L22 7.8 20 17H4L2 7.8z"/></svg>
+      <span>VIP Access</span>
+    </a>
+    <div class="sx-rail-divider"></div>
+    <a class="sx-rail-item" id="sxrail-profile" onclick="sxRailGo('profile');return false;" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      <span>Profile</span>
+    </a>
+    <a class="sx-rail-item" id="sxrail-getapp" onclick="sxRailGo('getapp');return false;" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 2H8a2 2 0 00-2 2v3H4a2 2 0 00-2 2v9a2 2 0 002 2h12a2 2 0 002-2v-3h2a2 2 0 002-2V4a2 2 0 00-2-2zM14 20H4v-9h10v9zm6-5h-2v-4a2 2 0 00-2-2H8V4h12v11z"/></svg>
+      <span>Feedback</span>
+    </a>
   </div>
-</div>
+</nav>
+<script>
+function sxRailSetActive(id){
+  document.querySelectorAll('.sx-rail-item').forEach(el => el.classList.toggle('active', el.id === 'sxrail-' + id));
+}
+function sxRailGo(which){
+  sxRailSetActive(which);
+  switch(which){
+    case 'home':
+      window.scrollTo({top:0, behavior:'smooth'});
+      break;
+    case 'search':
+      if (typeof openLiveTV === 'function') openLiveTV();
+      setTimeout(() => {
+        const inp = document.getElementById('chSearchInput');
+        if (inp) { inp.focus(); inp.scrollIntoView({behavior:'smooth', block:'center'}); }
+      }, 150);
+      break;
+    case 'otts':
+      if (typeof openLiveTV === 'function') openLiveTV();
+      break;
+    case 'free':
+      if (typeof sxSwitchTab === 'function') sxSwitchTab('matches');
+      setTimeout(() => {
+        const el = document.getElementById('sxTabPanels') || document.getElementById('matches-panel');
+        if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
+      }, 150);
+      break;
+    case 'myplans':
+      if (typeof openVip === 'function') openVip();
+      break;
+    case 'profile':
+      if (typeof sxToast === 'function') sxToast('Profile — coming soon!');
+      break;
+    case 'getapp':
+      if (typeof openAdminChat === 'function') openAdminChat();
+      break;
+  }
+}
+</script>
 
 <!-- HEADER -->
-<div id="cu-topbar">🔴 ALL CHANNELS LIVE 24/7 — ZERO SIGNUP, ZERO COST, WATCH INSTANTLY</div>
 <header>
   <div class="header-inner">
     <a class="logo-wrap" href="#">
       <img class="logo-img" id="nav-logo-img" src="" alt="Logo" style="display:none">
     </a>
-    <nav class="nav-links-desktop" id="nav-desktop"></nav>
-    <!-- Quick nav pills mirroring mobile tab bar -->
-    <nav id="pc-quicknav">
-      <a class="pcqn-item" data-sxtab="matches" href="#sxTabPanels" onclick="event.preventDefault();sxSwitchTab('matches');">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/><circle cx="9" cy="14" r="1"/><circle cx="15" cy="14" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></svg>
-        Matches
-      </a>
-      <a class="pcqn-item" data-sxtab="livetv" href="#sxTabPanels" onclick="event.preventDefault();openLiveTV();">
-        <span class="pcqn-dot"></span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-        Live Sports
-      </a>
-      <a class="pcqn-item" data-sxtab="fancode" href="#sxTabPanels" onclick="event.preventDefault();openFanCode();">
-        <img src="https://static.vecteezy.com/system/resources/previews/069/146/538/non_2x/fancode-app-icon-on-transparent-background-free-png.png" alt="FanCode" class="pcqn-icon" style="border-radius: 0;">
-        FanCode
-      </a>
-      <a class="pcqn-item" data-sxtab="fifa" href="#sxTabPanels" onclick="event.preventDefault();openFifa();">
-        <img src="https://upload.wikimedia.org/wikipedia/en/1/17/2026_FIFA_World_Cup_emblem.svg" alt="FIFA" class="pcqn-icon" style="filter:drop-shadow(0 0 4px rgba(0,160,255,0.5));">
-        FIFA
-      </a>
-
-    </nav>
     <div style="flex:1"></div>
     <div class="header-actions">
       <button type="button" class="btn-get-vip-nav" onclick="openVip()" aria-label="Get VIP" title="Get VIP">
         <span class="btn-vip-icon"><svg viewBox="0 0 24 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2 6.5a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm20 0a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm-10-2a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zM2 7.8l4.6 3.4L12 5l5.4 6.2L22 7.8 20 17H4L2 7.8z"/></svg></span>
         <span class="btn-vip-label">Get VIP</span>
       </button>
-      <a class="btn-discord" href="https://discord.gg/E8YyPRNF6" target="_blank" rel="noopener" aria-label="Join Discord" title="Join our Discord">
-        <svg viewBox="0 0 127.14 96.36" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"/></svg>
-        <span class="btn-discord-label">Discord</span>
-      </a>
-      <a class="btn-whatsapp" href="https://whatsapp.com/channel/0029VbD7I5a2975FbLIcgX2W" target="_blank" rel="noopener" aria-label="Join WhatsApp Channel" title="Join our WhatsApp Channel">
-        <svg class="btn-whatsapp-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12.004 2.003c-5.514 0-9.997 4.483-9.997 9.997 0 1.762.464 3.484 1.346 4.997L2 22l5.176-1.323a9.965 9.965 0 0 0 4.822 1.226h.005c5.514 0 9.997-4.483 9.997-9.997 0-2.669-1.04-5.176-2.929-7.065A9.935 9.935 0 0 0 12.004 2.003zm0 18.174h-.004a8.34 8.34 0 0 1-4.253-1.164l-.305-.181-3.15.805.842-3.075-.199-.316a8.318 8.318 0 0 1-1.284-4.462c0-4.61 3.75-8.36 8.363-8.36 2.233 0 4.332.87 5.911 2.449a8.302 8.302 0 0 1 2.447 5.913c0 4.61-3.75 8.36-8.363 8.36z"/><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/></svg>
-        <span class="btn-whatsapp-label">WhatsApp</span>
-      </a>
     </div>
     <div class="nav-device-info" id="nav-device-info" title="This device's name and ID">
       <span class="nav-device-name" id="nav-device-name"></span>
@@ -3321,6 +3417,8 @@ function renderSettings(rows) {
     if (navLogo) { navLogo.src = s.logo_url; navLogo.alt = s.logo_alt||'Logo'; navLogo.style.display = ''; }
     const drawerLogo = document.getElementById('drawer-logo');
     if (drawerLogo) { drawerLogo.src = s.logo_url; drawerLogo.style.display = ''; }
+    const railLogo = document.getElementById('sxrail-logo-img');
+    if (railLogo) { railLogo.src = s.logo_url; railLogo.style.display = ''; }
   }
 }
 
@@ -3357,7 +3455,7 @@ function renderNav(rows) {
   });
   // VIP — hamburger drawer only (desktop already has the gold header button)
   mHtml += `<a href="#" class="drawer-vip" onclick="closeDrawer();openVip();return false;"><span class="drawer-vip-icon"><svg viewBox="0 0 24 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2 6.5a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm20 0a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm-10-2a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zM2 7.8l4.6 3.4L12 5l5.4 6.2L22 7.8 20 17H4L2 7.8z"/></svg></span>Get VIP</a>`;
-  desktop.innerHTML = dHtml;
+  if (desktop) desktop.innerHTML = dHtml;
   drawerNav.innerHTML = mHtml;
 }
 function renderNav_CMS_UNUSED(rows) {
