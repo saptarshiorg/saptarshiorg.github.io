@@ -4019,10 +4019,15 @@ function toggleQr() {
 
   function updateGeoBanner(activeGrp) {
     const banner = document.getElementById('epg-geo-banner');
-    if (!banner) return;
-    const needsIndia = INDIA_LOCKED_GROUPS.includes(activeGrp);
+    const browser = document.getElementById('ch-browser');
     const country = window._sxCountry;
     const isForeign = country && country !== 'UNKNOWN' && !ALLOWED_COUNTRIES.includes(country);
+    // The red card/badge styling for Star Sports, Sony Sports & ZEE cards
+    // should only ever show for visitors outside India & Sri Lanka — never
+    // for Indian/Sri Lankan users, and never before geo detection resolves.
+    if (browser) browser.classList.toggle('geo-foreign', !!isForeign);
+    if (!banner) return;
+    const needsIndia = INDIA_LOCKED_GROUPS.includes(activeGrp);
     banner.style.display = (needsIndia && isForeign) ? 'flex' : 'none';
   }
   window._sxUpdateGeoBanner = updateGeoBanner;
@@ -5139,11 +5144,15 @@ function closeAdminChatDiscordPopup(){
 }
 .epg-row:hover{ transform:translateY(-2px); background:rgba(255,255,255,0.055) !important; }
 
-.epg-row.star-row, .epg-row.sony-row, .epg-row.zee-row{
+#ch-browser.geo-foreign .epg-row.star-row,
+#ch-browser.geo-foreign .epg-row.sony-row,
+#ch-browser.geo-foreign .epg-row.zee-row{
   background: #c81e1e !important;
   border: none !important;
 }
-.epg-row.star-row:hover, .epg-row.sony-row:hover, .epg-row.zee-row:hover{
+#ch-browser.geo-foreign .epg-row.star-row:hover,
+#ch-browser.geo-foreign .epg-row.sony-row:hover,
+#ch-browser.geo-foreign .epg-row.zee-row:hover{
   background: #d62828 !important;
 }
 
@@ -5155,11 +5164,12 @@ function closeAdminChatDiscordPopup(){
 .epg-meta{ flex:1; min-width:0; display:flex; flex-direction:column; gap:4px; }
 .epg-name{ font-family:var(--font-display) !important; font-weight:800 !important; font-size:15px !important; color:#fff !important; display:flex; align-items:center; gap:6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .epg-india-alert{
-  display: inline-block;
+  display: none;
   font-size: 9.5px !important; font-weight: 800; letter-spacing: .03em;
   text-transform: uppercase; color: #fff !important;
   margin-top: 3px;
 }
+#ch-browser.geo-foreign .epg-india-alert{ display: inline-block; }
 .epg-sub-row{ display:flex; align-items:center; gap:6px; font-size:12px; color:rgba(255,255,255,0.48); }
 .epg-group-tag{ text-transform:uppercase; letter-spacing:.04em; font-weight:700; font-size:11px !important; color:rgba(255,255,255,0.45) !important; }
 .epg-dot{ opacity:.5; }
@@ -5235,9 +5245,9 @@ function closeAdminChatDiscordPopup(){
   }
   #chGrid.epg-list .epg-badge-hd{ display:inline-flex !important; }
   #chGrid.epg-list .epg-watch{ display:none !important; }
-  #chGrid.epg-list .epg-row.star-row,
-  #chGrid.epg-list .epg-row.sony-row,
-  #chGrid.epg-list .epg-row.zee-row{
+  #ch-browser.geo-foreign #chGrid.epg-list .epg-row.star-row,
+  #ch-browser.geo-foreign #chGrid.epg-list .epg-row.sony-row,
+  #ch-browser.geo-foreign #chGrid.epg-list .epg-row.zee-row{
     background:#c81e1e !important;
     border:none !important;
   }
@@ -5289,9 +5299,9 @@ function closeAdminChatDiscordPopup(){
   }
   #chGrid.epg-list .epg-badge-hd{ display:none !important; }
   #chGrid.epg-list .epg-watch{ display:none !important; }
-  #chGrid.epg-list .epg-row.star-row,
-  #chGrid.epg-list .epg-row.sony-row,
-  #chGrid.epg-list .epg-row.zee-row{
+  #ch-browser.geo-foreign #chGrid.epg-list .epg-row.star-row,
+  #ch-browser.geo-foreign #chGrid.epg-list .epg-row.sony-row,
+  #ch-browser.geo-foreign #chGrid.epg-list .epg-row.zee-row{
     background:#c81e1e !important;
     border:none !important;
   }
