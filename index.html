@@ -494,14 +494,14 @@ header.scrolled {
 
 .btn-get-vip-nav {
   display: flex; align-items: center; justify-content: center; gap: 0;
-  background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.75);
-  border: 1px solid rgba(255,255,255,0.10); cursor: pointer;
+  background: linear-gradient(135deg,#F7C55A,#E0A82E); color: #1A0A05;
+  border: none; cursor: pointer;
   font-family: var(--font-display); font-weight: 800; font-size: 12px; letter-spacing: 0.5px;
   padding: 8px; border-radius: 50%; text-decoration: none; white-space: nowrap;
-  box-shadow: none;
-  transition: all 0.18s var(--ease); backdrop-filter: blur(6px);
+  box-shadow: 0 4px 12px rgba(247,197,90,0.35);
+  transition: all 0.18s var(--ease);
 }
-.btn-get-vip-nav:hover { background: rgba(255,255,255,0.15); color: #fff; }
+.btn-get-vip-nav:hover { background: linear-gradient(135deg,#FFD97A,#F0BB40); box-shadow: 0 6px 18px rgba(247,197,90,0.50); transform: translateY(-1px); }
 .btn-vip-icon { display: flex; align-items: center; flex-shrink: 0; }
 .btn-vip-icon svg { width: 18px; height: 15px; display: block; }
 @media(max-width:560px) {
@@ -1377,13 +1377,14 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
 
 /* QR Panel */
 .nav-qr-wrap { position: relative; display: flex; align-items: center; }
-.nav-qr-btn { width: 38px; height: 38px; background: var(--s2); border-radius: 0; display: flex; align-items: center; justify-content: center; font-size: 17px; cursor: pointer; transition: all 0.18s; flex-shrink: 0; }
-.nav-qr-btn:hover,.nav-qr-btn.active { background: rgba(224,33,156,0.12); }
+.nav-qr-btn { width: 38px; height: 38px; background: transparent; border: none; outline: none; border-radius: 0; display: flex; align-items: center; justify-content: center; font-size: 17px; cursor: pointer; transition: all 0.18s; flex-shrink: 0; padding: 2px; box-shadow: none; }
+.nav-qr-btn:hover,.nav-qr-btn.active { background: transparent; opacity: 0.85; }
+.nav-qr-btn-img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .qr-float-panel { position: absolute; top: calc(100% + 14px); right: 0; z-index: 500; background: rgba(8,8,9,0.97); backdrop-filter: var(--blur); border-radius: 0; padding: 18px; box-shadow: 0 0 44px rgba(224,33,156,0.15), 0 14px 44px rgba(0,0,0,0.75); text-align: center; transform: scale(0.88) translateY(-8px); opacity: 0; pointer-events: none; transform-origin: top right; transition: all 0.25s var(--spring); width: 196px; }
 .qr-float-panel.open { transform: scale(1) translateY(0); opacity: 1; pointer-events: all; }
 .qr-float-title { font-family: var(--font-display); font-size: 14px; font-weight: 800; letter-spacing: 0.1em; color: var(--lavender); margin-bottom: 4px; }
 .qr-float-sub { font-size: 10px; color: var(--text-muted); letter-spacing: 0.05em; margin-bottom: 12px; }
-.qr-float-panel img { width: 158px; height: 158px; background: #fff; padding: 8px; border-radius: 0; display: block; }
+.qr-float-panel img { width: 158px; height: 158px; background: #ffffff; padding: 8px; border: none; border-radius: 0; display: block; outline: none; box-shadow: none; }
 .qr-open-btn { display: block; margin-top: 12px; background: var(--grad-gold); color: #1A0A05; border: none; padding: 9px 0; border-radius: 0; width: 100%; font-family: var(--font-display); font-weight: 800; font-size: 12px; text-decoration: none; box-shadow: 0 1px 0 rgba(255,255,255,0.5) inset, 0 6px 18px rgba(224,33,156,0.30); transition: all 0.18s; }
 .qr-open-btn:hover { transform: translateY(-1px); box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 10px 26px rgba(224,33,156,0.45); }
 .qr-open-btn:hover { opacity: 0.9; }
@@ -1404,10 +1405,10 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
 
   /* Hamburger + QR/scanner: flat, magenta */
   .nav-qr-btn {
-    background: transparent; border: 1.5px solid rgba(224,33,156,0.55);
+    background: transparent; border: none;
     color: #E0219C; box-shadow: none;
   }
-  .nav-qr-btn:hover, .nav-qr-btn.active { background: rgba(224,33,156,0.12); }
+  .nav-qr-btn:hover, .nav-qr-btn.active { background: transparent; }
   .hamburger { background: transparent; box-shadow: none; }
   .hamburger span { background: #E0219C; }
 
@@ -2031,8 +2032,8 @@ body::before{ display:none !important; }
         <svg viewBox="0 0 127.14 96.36" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"/></svg>
         <span class="btn-discord-label">Discord</span>
       </a>
-      <a class="btn-telegram" href="https://t.me/sxsports" target="_blank" rel="noopener" aria-label="Join Telegram" title="Join our Telegram">
-        <svg class="btn-telegram-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.82-1.084.508l-3-2.21-1.446 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.336-.373-.123l-6.871 4.33-2.962-.924c-.643-.204-.657-.643.136-.953l11.593-4.47c.538-.197 1.006.128.832 1.151z"/></svg>
+      <a class="btn-telegram" href="https://t.me/rishievofficial" target="_blank" rel="noopener" aria-label="Join Telegram" title="Join our Telegram">
+        <img class="btn-telegram-icon" src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Telegram_2019_Logo.svg/960px-Telegram_2019_Logo.svg.png" alt="Telegram">
         <span class="btn-telegram-label">Telegram</span>
       </a>
     </div>
@@ -2041,7 +2042,7 @@ body::before{ display:none !important; }
       <span class="nav-device-id" id="nav-device-id"></span>
     </div>
     <div class="nav-qr-wrap" id="nav-qr-wrap">
-      <button class="nav-qr-btn" id="nav-qr-btn" onclick="toggleQr()" aria-label="Scan QR">📱</button>
+      <button class="nav-qr-btn" id="nav-qr-btn" onclick="toggleQr()" aria-label="Scan QR"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/QR_Code_Example.svg/500px-QR_Code_Example.svg.png" alt="QR" class="nav-qr-btn-img"></button>
       <div class="qr-float-panel" id="qr-panel">
         <div class="qr-float-title" id="qr-title">Scan to Watch</div>
         <div class="qr-float-sub" id="qr-sub">Open on any device</div>
@@ -2059,7 +2060,7 @@ body::before{ display:none !important; }
 (function(){
   const header = document.querySelector('header');
   function updateHeaderScroll(){
-    if (window.scrollY > 5) {
+    if (window.scrollY > 80) {
       header.classList.add('scrolled');
     } else {
       header.classList.remove('scrolled');
@@ -5767,93 +5768,8 @@ function closeDmca(){
      Telegram-blue themed, links out to the channel.
 ═══════════════════════════════════════════════════════════════════════ -->
 <style>
-#tg-popup-overlay{
-  display: none; position: fixed; inset: 0; z-index: 1600;
-  background: rgba(0,0,0,0.65); backdrop-filter: blur(6px);
-  align-items: center; justify-content: center; padding: 20px;
-}
-#tg-popup-overlay.open{ display: flex; }
-#tg-popup-modal{
-  width: 100%; max-width: 360px; position: relative;
-  background: linear-gradient(165deg,#242f3d,#17212b);
-  border: 1px solid rgba(84,172,224,0.35);
-  border-radius: 14px; padding: 26px 22px 22px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-  text-align: center;
-}
-#tg-popup-close{
-  position: absolute; top: 10px; right: 10px;
-  width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
-  background: rgba(255,255,255,0.08); border: none; color: #fff;
-  cursor: pointer; font-size: 14px; border-radius: 50%;
-}
-#tg-popup-close:hover{ background: rgba(255,255,255,0.16); }
-#tg-popup-icon{
-  width: 62px; height: 62px; margin: 0 auto 14px;
-  border-radius: 50%; background: linear-gradient(135deg,#2AABEE,#229ED9);
-  display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 6px 20px rgba(42,171,238,0.45);
-}
-#tg-popup-icon svg{ width: 30px; height: 30px; fill: #fff; margin-left: -2px; }
-#tg-popup-title{
-  font-family: var(--cu-font,inherit); font-weight: 800; font-size: 17px;
-  color: #fff; margin-bottom: 6px; line-height: 1.3;
-}
-#tg-popup-sub{
-  font-family: var(--cu-font,inherit); font-size: 12.5px; line-height: 1.5;
-  color: rgba(255,255,255,0.65); margin-bottom: 18px;
-}
-#tg-popup-join{
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  width: 100%; background: linear-gradient(135deg,#2AABEE,#229ED9); color: #fff;
-  border: none; font-family: var(--cu-font,inherit); font-weight: 800; font-size: 13.5px;
-  padding: 13px 0; cursor: pointer; letter-spacing: 0.02em; border-radius: 10px;
-  text-decoration: none;
-}
-#tg-popup-join:hover{ filter: brightness(1.08); }
-#tg-popup-join svg{ width: 16px; height: 16px; fill: #fff; }
-#tg-popup-handle{
-  margin-top: 12px; font-family: var(--cu-font,inherit); font-size: 11px;
-  color: rgba(84,172,224,0.85); letter-spacing: 0.02em;
-}
+
 </style>
-
-<div id="tg-popup-overlay">
-  <div id="tg-popup-modal">
-    <button id="tg-popup-close" onclick="closeTgPopup()">✕</button>
-    <div id="tg-popup-icon">
-      <svg viewBox="0 0 24 24"><path d="M21.05 3.16 2.53 10.4c-1.27.51-1.26 1.22-.23 1.54l4.77 1.49 1.83 5.6c.22.63.34.87.7.87.28 0 .4-.13.56-.29l2.4-2.34 4.65 3.44c.86.48 1.47.23 1.69-.79l3.06-14.44c.33-1.25-.47-1.81-1.91-1.12Zm-12.5 10.5-1.4-.44 11.02-6.93c.24-.15.46.03.26.2L8.55 13.66Zm.62 1.03-.24 3.1-1.15-3.53Z"/></svg>
-    </div>
-    <div id="tg-popup-title">Join SX Sports on Telegram</div>
-    <div id="tg-popup-sub">Join Channel for updates and Live guide</div>
-    <a id="tg-popup-join" href="https://t.me/rishi.evofficial" target="_blank" rel="noopener" onclick="closeTgPopup()">
-      <svg viewBox="0 0 24 24"><path d="M21.05 3.16 2.53 10.4c-1.27.51-1.26 1.22-.23 1.54l4.77 1.49 1.83 5.6c.22.63.34.87.7.87.28 0 .4-.13.56-.29l2.4-2.34 4.65 3.44c.86.48 1.47.23 1.69-.79l3.06-14.44c.33-1.25-.47-1.81-1.91-1.12Zm-12.5 10.5-1.4-.44 11.02-6.93c.24-.15.46.03.26.2L8.55 13.66Zm.62 1.03-.24 3.1-1.15-3.53Z"/></svg>
-      Join Channel
-    </a>
-    <div id="tg-popup-handle">t.me/rishi.evofficial</div>
-  </div>
-</div>
-
-<script>
-function openTgPopup(){
-  document.getElementById('tg-popup-overlay').classList.add('open');
-}
-function closeTgPopup(){
-  document.getElementById('tg-popup-overlay').classList.remove('open');
-  try { sessionStorage.setItem('sxTgPopupSeen', '1'); } catch(e){}
-}
-(function(){
-  var seen = false;
-  try { seen = sessionStorage.getItem('sxTgPopupSeen') === '1'; } catch(e){}
-  if (seen) return;
-  function schedule(){ setTimeout(openTgPopup, 1800); }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', schedule);
-  } else {
-    schedule();
-  }
-})();
-</script>
 
 <script>
 // Plays a brief logo splash over whichever panel overlay (Live TV / FIFA /
