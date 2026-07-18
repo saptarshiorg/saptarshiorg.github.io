@@ -438,9 +438,19 @@ body::after {
    HEADER / NAV
 ──────────────────────────────────────────── */
 header {
-  background: transparent;
+  background: rgba(8,8,9,0);
   box-shadow: none;
   position: sticky; top: 0; z-index: 200;
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  transition: all 0.3s var(--ease);
+  border-bottom: 1px solid rgba(255,255,255,0);
+}
+header.scrolled {
+  background: rgba(8,8,9,0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 .header-inner {
   max-width: 1400px; margin: 0 auto;
@@ -483,61 +493,63 @@ header {
 .header-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
 .btn-get-vip-nav {
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-  background: linear-gradient(135deg,#F7C55A,#E0A82E); color: #171205;
-  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 0;
+  background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.75);
+  border: 1px solid rgba(255,255,255,0.10); cursor: pointer;
   font-family: var(--font-display); font-weight: 800; font-size: 12px; letter-spacing: 0.5px;
-  padding: 7px 13px; border-radius: 0; text-decoration: none; white-space: nowrap;
-  box-shadow: 0 0 0 rgba(247,197,90,0.5);
-  transition: all 0.18s var(--ease);
+  padding: 8px; border-radius: 50%; text-decoration: none; white-space: nowrap;
+  box-shadow: none;
+  transition: all 0.18s var(--ease); backdrop-filter: blur(6px);
 }
-.btn-get-vip-nav:hover { background: linear-gradient(135deg,#FFD97A,#F0BB40); box-shadow: 0 4px 16px rgba(247,197,90,0.45); }
+.btn-get-vip-nav:hover { background: rgba(255,255,255,0.15); color: #fff; }
 .btn-vip-icon { display: flex; align-items: center; flex-shrink: 0; }
-.btn-vip-icon svg { width: 15px; height: 13px; display: block; }
+.btn-vip-icon svg { width: 18px; height: 15px; display: block; }
 @media(max-width:560px) {
   .btn-vip-icon svg { width: 18px; height: 15px; }
 }
-.btn-vip-label { display: inline; }
+.btn-vip-label { display: none; }
 
 .btn-yt {
-  display: flex; align-items: center; gap: 6px;
-  background: #F04FB0; color: #fff;
+  display: flex; align-items: center; justify-content: center; gap: 0;
+  background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.75);
   font-family: var(--font-display); font-weight: 800; font-size: 12px; letter-spacing: 0.5px;
-  padding: 7px 13px; border-radius: 0; text-decoration: none; white-space: nowrap;
-  transition: background 0.18s var(--ease);
+  padding: 8px; border-radius: 50%; text-decoration: none; white-space: nowrap;
+  transition: all 0.18s var(--ease); backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.10);
 }
-.btn-yt:hover { background: #cc0000; }
+.btn-yt:hover { background: rgba(255,255,255,0.15); color: #fff; }
+.btn-yt svg { width: 18px; height: 18px; flex-shrink: 0; }
 
 .btn-discord {
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-  background: #00C8E0; color: #fff;
+  display: flex; align-items: center; justify-content: center; gap: 0;
+  background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.75);
   font-family: var(--font-display); font-weight: 800; font-size: 12px; letter-spacing: 0.5px;
-  padding: 7px 13px; border-radius: 0; text-decoration: none; white-space: nowrap;
-  transition: all 0.18s var(--ease);
+  padding: 8px; border-radius: 50%; text-decoration: none; white-space: nowrap;
+  transition: all 0.18s var(--ease); backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.10);
 }
-.btn-discord:hover { background: #00A3B8; }
-.btn-discord svg { width: 16px; height: 13px; flex-shrink: 0; display: block; overflow: visible; }
-.btn-discord .btn-discord-label { display: inline; }
+.btn-discord:hover { background: rgba(255,255,255,0.15); color: #fff; }
+.btn-discord svg { width: 18px; height: 15px; flex-shrink: 0; display: block; overflow: visible; }
+.btn-discord .btn-discord-label { display: none; }
 @media(max-width:560px) {
-  .btn-discord { width: 36px; height: 36px; padding: 0; border-radius: 50%; flex-shrink: 0; box-sizing: border-box; }
-  .btn-discord svg { width: 18px; height: 14px; margin: 0; }
-  .btn-discord .btn-discord-label { display: none; }
+  .btn-discord { width: 40px; height: 40px; padding: 0; flex-shrink: 0; box-sizing: border-box; }
+  .btn-discord svg { width: 18px; height: 14px; }
 }
 
 .btn-telegram {
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-  background: linear-gradient(135deg,#2AABEE,#229ED9); color: #fff;
+  display: flex; align-items: center; justify-content: center; gap: 0;
+  background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.75);
   font-family: var(--font-display); font-weight: 800; font-size: 12px; letter-spacing: 0.5px;
-  padding: 7px 13px; border-radius: 0; text-decoration: none; white-space: nowrap;
-  transition: all 0.18s var(--ease);
+  padding: 8px; border-radius: 50%; text-decoration: none; white-space: nowrap;
+  transition: all 0.18s var(--ease); backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.10);
 }
-.btn-telegram:hover { filter: brightness(1.08); }
-.btn-telegram-icon { width: 16px; height: 16px; flex-shrink: 0; display: block; fill: #fff; }
-.btn-telegram .btn-telegram-label { display: inline; }
+.btn-telegram:hover { background: rgba(255,255,255,0.15); color: #fff; }
+.btn-telegram-icon { width: 18px; height: 18px; flex-shrink: 0; display: block; object-fit: contain; }
+.btn-telegram .btn-telegram-label { display: none; }
 @media(max-width:560px) {
-  .btn-telegram { width: 36px; height: 36px; padding: 0; border-radius: 50%; flex-shrink: 0; box-sizing: border-box; }
-  .btn-telegram-icon { width: 18px; height: 18px; margin: 0; }
-  .btn-telegram .btn-telegram-label { display: none; }
+  .btn-telegram { width: 40px; height: 40px; padding: 0; flex-shrink: 0; box-sizing: border-box; }
+  .btn-telegram-icon { width: 18px; height: 18px; }
 }
 
 .hamburger {
@@ -607,7 +619,7 @@ header {
 /* ────────────────────────────────────────────
    HERO — Desktop card grid
 ──────────────────────────────────────────── */
-.hero { position: relative; background: transparent; overflow: hidden; height: auto; }
+.hero { position: relative; background: transparent; overflow: hidden; height: auto; z-index: 100; }
 .hero-cards-section { display: none !important; padding: 24px 0 16px; }
 .hero-card-dots { display: none !important; }
 .hero-cards-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
@@ -2019,8 +2031,8 @@ body::before{ display:none !important; }
         <svg viewBox="0 0 127.14 96.36" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"/></svg>
         <span class="btn-discord-label">Discord</span>
       </a>
-      <a class="btn-telegram" href="https://t.me/rishi.evofficial" target="_blank" rel="noopener" aria-label="Join Telegram" title="Join our Telegram">
-        <svg class="btn-telegram-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21.05 3.16 2.53 10.4c-1.27.51-1.26 1.22-.23 1.54l4.77 1.49 1.83 5.6c.22.63.34.87.7.87.28 0 .4-.13.56-.29l2.4-2.34 4.65 3.44c.86.48 1.47.23 1.69-.79l3.06-14.44c.33-1.25-.47-1.81-1.91-1.12Zm-12.5 10.5-1.4-.44 11.02-6.93c.24-.15.46.03.26.2L8.55 13.66Zm.62 1.03-.24 3.1-1.15-3.53Z"/></svg>
+      <a class="btn-telegram" href="https://t.me/sxsports" target="_blank" rel="noopener" aria-label="Join Telegram" title="Join our Telegram">
+        <svg class="btn-telegram-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.82-1.084.508l-3-2.21-1.446 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.336-.373-.123l-6.871 4.33-2.962-.924c-.643-.204-.657-.643.136-.953l11.593-4.47c.538-.197 1.006.128.832 1.151z"/></svg>
         <span class="btn-telegram-label">Telegram</span>
       </a>
     </div>
@@ -2042,6 +2054,21 @@ body::before{ display:none !important; }
     </button>
   </div>
 </header>
+<script>
+// Header scroll transparency effect
+(function(){
+  const header = document.querySelector('header');
+  function updateHeaderScroll(){
+    if (window.scrollY > 5) {
+      header.classList.add('scrolled');
+    } else {
+      header.classList.remove('scrolled');
+    }
+  }
+  window.addEventListener('scroll', updateHeaderScroll, {passive: true});
+  updateHeaderScroll();
+})();
+</script>
 <script>
 (function(){
   // Device name: broad UA-based browser + OS/platform guess, including
@@ -5735,7 +5762,98 @@ function closeDmca(){
 }
 </script>
 
+<!-- ══════════════════════════════════════════════════════════════════════
+     TELEGRAM JOIN POPUP — shown once per visit on the main screen,
+     Telegram-blue themed, links out to the channel.
+═══════════════════════════════════════════════════════════════════════ -->
+<style>
+#tg-popup-overlay{
+  display: none; position: fixed; inset: 0; z-index: 1600;
+  background: rgba(0,0,0,0.65); backdrop-filter: blur(6px);
+  align-items: center; justify-content: center; padding: 20px;
+}
+#tg-popup-overlay.open{ display: flex; }
+#tg-popup-modal{
+  width: 100%; max-width: 360px; position: relative;
+  background: linear-gradient(165deg,#242f3d,#17212b);
+  border: 1px solid rgba(84,172,224,0.35);
+  border-radius: 14px; padding: 26px 22px 22px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  text-align: center;
+}
+#tg-popup-close{
+  position: absolute; top: 10px; right: 10px;
+  width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.08); border: none; color: #fff;
+  cursor: pointer; font-size: 14px; border-radius: 50%;
+}
+#tg-popup-close:hover{ background: rgba(255,255,255,0.16); }
+#tg-popup-icon{
+  width: 62px; height: 62px; margin: 0 auto 14px;
+  border-radius: 50%; background: linear-gradient(135deg,#2AABEE,#229ED9);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 6px 20px rgba(42,171,238,0.45);
+}
+#tg-popup-icon svg{ width: 30px; height: 30px; fill: #fff; margin-left: -2px; }
+#tg-popup-title{
+  font-family: var(--cu-font,inherit); font-weight: 800; font-size: 17px;
+  color: #fff; margin-bottom: 6px; line-height: 1.3;
+}
+#tg-popup-sub{
+  font-family: var(--cu-font,inherit); font-size: 12.5px; line-height: 1.5;
+  color: rgba(255,255,255,0.65); margin-bottom: 18px;
+}
+#tg-popup-join{
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; background: linear-gradient(135deg,#2AABEE,#229ED9); color: #fff;
+  border: none; font-family: var(--cu-font,inherit); font-weight: 800; font-size: 13.5px;
+  padding: 13px 0; cursor: pointer; letter-spacing: 0.02em; border-radius: 10px;
+  text-decoration: none;
+}
+#tg-popup-join:hover{ filter: brightness(1.08); }
+#tg-popup-join svg{ width: 16px; height: 16px; fill: #fff; }
+#tg-popup-handle{
+  margin-top: 12px; font-family: var(--cu-font,inherit); font-size: 11px;
+  color: rgba(84,172,224,0.85); letter-spacing: 0.02em;
+}
+</style>
 
+<div id="tg-popup-overlay">
+  <div id="tg-popup-modal">
+    <button id="tg-popup-close" onclick="closeTgPopup()">✕</button>
+    <div id="tg-popup-icon">
+      <svg viewBox="0 0 24 24"><path d="M21.05 3.16 2.53 10.4c-1.27.51-1.26 1.22-.23 1.54l4.77 1.49 1.83 5.6c.22.63.34.87.7.87.28 0 .4-.13.56-.29l2.4-2.34 4.65 3.44c.86.48 1.47.23 1.69-.79l3.06-14.44c.33-1.25-.47-1.81-1.91-1.12Zm-12.5 10.5-1.4-.44 11.02-6.93c.24-.15.46.03.26.2L8.55 13.66Zm.62 1.03-.24 3.1-1.15-3.53Z"/></svg>
+    </div>
+    <div id="tg-popup-title">Join SX Sports on Telegram</div>
+    <div id="tg-popup-sub">Join Channel for updates and Live guide</div>
+    <a id="tg-popup-join" href="https://t.me/rishi.evofficial" target="_blank" rel="noopener" onclick="closeTgPopup()">
+      <svg viewBox="0 0 24 24"><path d="M21.05 3.16 2.53 10.4c-1.27.51-1.26 1.22-.23 1.54l4.77 1.49 1.83 5.6c.22.63.34.87.7.87.28 0 .4-.13.56-.29l2.4-2.34 4.65 3.44c.86.48 1.47.23 1.69-.79l3.06-14.44c.33-1.25-.47-1.81-1.91-1.12Zm-12.5 10.5-1.4-.44 11.02-6.93c.24-.15.46.03.26.2L8.55 13.66Zm.62 1.03-.24 3.1-1.15-3.53Z"/></svg>
+      Join Channel
+    </a>
+    <div id="tg-popup-handle">t.me/rishi.evofficial</div>
+  </div>
+</div>
+
+<script>
+function openTgPopup(){
+  document.getElementById('tg-popup-overlay').classList.add('open');
+}
+function closeTgPopup(){
+  document.getElementById('tg-popup-overlay').classList.remove('open');
+  try { sessionStorage.setItem('sxTgPopupSeen', '1'); } catch(e){}
+}
+(function(){
+  var seen = false;
+  try { seen = sessionStorage.getItem('sxTgPopupSeen') === '1'; } catch(e){}
+  if (seen) return;
+  function schedule(){ setTimeout(openTgPopup, 1800); }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', schedule);
+  } else {
+    schedule();
+  }
+})();
+</script>
 
 <script>
 // Plays a brief logo splash over whichever panel overlay (Live TV / FIFA /
@@ -6686,210 +6804,6 @@ function sxChallengeCopyFallback(text, cb){
       setTimeout(function(){ window.focus(); }, 50);
     }
   });
-})();
-</script>
-<!-- ══════════════════════════════════════════════════════════════════════
-     GLASSMORPHISM PASS — appended last so it wins the cascade over every
-     earlier "flat/clean UI" override above (headers, cards, buttons, panels,
-     modals were all forced to opaque rgba(#111214) with border-radius:0 and
-     backdrop-filter:none in those passes — this restores frosted glass:
-     translucent surfaces, blur, soft rounded corners, a thin light border
-     for the glass "edge", and the ambient magenta glow mesh behind it all
-     so the blur actually has color to refract, matching the reference look
-     (rounded frosted panels + soft top highlight, like a Settings panel).
-═══════════════════════════════════════════════════════════════════════ -->
-<style>
-/* Bring the ambient glow mesh back — glass needs light behind it to blur */
-body::before{ display:block !important; opacity:0.85 !important; }
-body::after{ opacity:0.03 !important; }
-
-:root{
-  /* Colored glass — tinted with the site's own magenta/gold brand gradient
-     instead of plain white, so the blur actually has brand color to
-     refract (per reference: frosted panel + soft colored sheen, not a
-     grey/white pane). */
-  --glassm-bg: linear-gradient(135deg, rgba(224,33,156,0.16), rgba(122,15,92,0.10) 55%, rgba(255,179,71,0.10));
-  --glassm-bg-strong: linear-gradient(135deg, rgba(224,33,156,0.26), rgba(122,15,92,0.16) 55%, rgba(255,179,71,0.18));
-  --glassm-border: rgba(255,179,71,0.30);
-  --glassm-blur: blur(24px) saturate(2.1);
-  --glassm-shadow: 0 1px 0 rgba(255,255,255,0.22) inset, 0 -1px 0 rgba(122,15,92,0.35) inset, 0 18px 50px rgba(224,33,156,0.20), 0 4px 30px rgba(0,0,0,0.45);
-}
-
-/* Header — transparent by default (pure, no background/blur/border/shadow
-   at all); the glass look below is opt-in via body.sx-scrolled, added by
-   the scroll listener once the user scrolls past the top of the page. */
-header{
-  background: transparent !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border-bottom: 1px solid transparent !important;
-  box-shadow: none !important;
-  transition: background 0.25s var(--ease), backdrop-filter 0.25s var(--ease),
-              border-color 0.25s var(--ease), box-shadow 0.25s var(--ease) !important;
-}
-body.sx-scrolled header{
-  background: var(--glassm-bg) !important;
-  backdrop-filter: var(--glassm-blur) !important;
-  -webkit-backdrop-filter: var(--glassm-blur) !important;
-  border-bottom: 1px solid var(--glassm-border) !important;
-  box-shadow: var(--glassm-shadow) !important;
-}
-
-/* Side drawer */
-.side-drawer, .drawer-header{
-  background: linear-gradient(160deg, rgba(122,15,92,0.42), rgba(10,10,12,0.60)) !important;
-  backdrop-filter: var(--glassm-blur) !important;
-  -webkit-backdrop-filter: var(--glassm-blur) !important;
-  border-left: 1px solid var(--glassm-border) !important;
-}
-
-/* Cards */
-.ch-card, .cat-card, .broadcast-card, .fixture-card, .hero-card,
-.hero-slide-card, .fpx-card, .smo-card, .sx-compact-card,
-.active-card, .unavail-card, .channel-card{
-  background: var(--glassm-bg) !important;
-  backdrop-filter: var(--glassm-blur) !important;
-  -webkit-backdrop-filter: var(--glassm-blur) !important;
-  border: 1px solid var(--glassm-border) !important;
-  border-radius: 18px !important;
-  box-shadow: var(--glassm-shadow) !important;
-}
-
-/* Boxes / search fields */
-.cta-box, .ch-search-box, .epg-search-box, .epg-logo-box{
-  background: var(--glassm-bg) !important;
-  backdrop-filter: var(--glassm-blur) !important;
-  -webkit-backdrop-filter: var(--glassm-blur) !important;
-  border: 1px solid var(--glassm-border) !important;
-  border-radius: 16px !important;
-}
-
-/* Modals / floating panels */
-.watch-modal, .qr-float-panel{
-  background: linear-gradient(160deg, rgba(122,15,92,0.40), rgba(18,16,20,0.62)) !important;
-  backdrop-filter: var(--glassm-blur) !important;
-  -webkit-backdrop-filter: var(--glassm-blur) !important;
-  border: 1px solid var(--glassm-border) !important;
-  border-radius: 22px !important;
-  box-shadow: var(--glassm-shadow) !important;
-}
-.watch-modal-header{
-  background: linear-gradient(90deg, rgba(224,33,156,0.14), rgba(255,179,71,0.08)) !important;
-  backdrop-filter: var(--glassm-blur) !important;
-  -webkit-backdrop-filter: var(--glassm-blur) !important;
-  border-radius: 22px 22px 0 0 !important;
-}
-
-/* Panel topbars (Live TV / FIFA / FanCode / EPG) */
-#livetv-topbar, #fifa-topbar, #fancode-topbar, .epg-topbar{
-  background: linear-gradient(90deg, rgba(122,15,92,0.38), rgba(10,10,12,0.55)) !important;
-  backdrop-filter: var(--glassm-blur) !important;
-  -webkit-backdrop-filter: var(--glassm-blur) !important;
-  border-bottom: 1px solid var(--glassm-border) !important;
-}
-
-/* Pill buttons — fully rounded glass, matches the capsule reference shape */
-.nav-watch-btn, .btn-get-vip-nav, .nav-live-btn, .hsc-btn, .hsc-btn-watch,
-.hsc-btn-outline, .smo-btn, .wcs-btn, .watch-channel-btn, .cta-btn-primary,
-.cta-btn-outline, .btn-watch-sm, .bc-watch-btn, .pcqn-item{
-  background: var(--glassm-bg-strong) !important;
-  backdrop-filter: var(--glassm-blur) !important;
-  -webkit-backdrop-filter: var(--glassm-blur) !important;
-  border: 1px solid var(--glassm-border) !important;
-  border-radius: 999px !important;
-  box-shadow: var(--glassm-shadow) !important;
-}
-
-/* Mobile bottom tab bar */
-.mobile-tabbar{
-  background: linear-gradient(90deg, rgba(122,15,92,0.34), rgba(10,10,12,0.55)) !important;
-  backdrop-filter: var(--glassm-blur) !important;
-  -webkit-backdrop-filter: var(--glassm-blur) !important;
-  border-top: 1px solid var(--glassm-border) !important;
-}
-
-/* ── Loading screen stays FLAT — no glass here on purpose ──
-   The loader is the one surface kept opaque/flat: solid black, no blur,
-   no tinted glass background, no border. Everything else on the site
-   gets the colored glass treatment above; the loader alone does not. */
-#cms-loader{
-  background: #000000 !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-.loader-popup{
-  background: none !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border: none !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-  padding: 0 !important;
-}
-</style>
-
-<!-- ══════════════════════════════════════════════════════════════════════
-     NAV ACTION BUTTONS — Discord / Telegram / QR: icon-only, flat.
-     Get VIP: icon-only too, but golden glass instead of flat (see below).
-     Labels hidden at every width (not just the old <=560px breakpoint).
-═══════════════════════════════════════════════════════════════════════ -->
-<style>
-.btn-vip-label, .btn-discord-label, .btn-telegram-label{ display:none !important; }
-
-.btn-discord, .btn-telegram, .nav-qr-btn{
-  width: 38px !important; height: 38px !important; padding: 0 !important;
-  border-radius: 50% !important; flex-shrink: 0; box-sizing: border-box;
-  display: flex !important; align-items: center; justify-content: center; gap: 0 !important;
-  background: var(--s2) !important;
-  border: 1px solid rgba(255,255,255,0.08) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  box-shadow: none !important;
-}
-.btn-discord:hover, .btn-telegram:hover, .nav-qr-btn:hover{
-  background: rgba(224,33,156,0.14) !important;
-}
-.btn-discord svg{ width: 17px !important; height: 13px !important; margin: 0 !important; }
-.btn-telegram-icon{ width: 18px !important; height: 18px !important; margin: 0 !important; fill: #fff !important; }
-
-/* Get VIP — golden glass: translucent gold-tinted blur instead of a flat
-   fill, matching the colored-glass look used elsewhere on the site. */
-.btn-get-vip-nav{
-  width: 38px !important; height: 38px !important; padding: 0 !important;
-  border-radius: 50% !important; flex-shrink: 0; box-sizing: border-box;
-  display: flex !important; align-items: center; justify-content: center; gap: 0 !important;
-  background: linear-gradient(135deg, rgba(255,217,122,0.32), rgba(224,168,46,0.18)) !important;
-  border: 1px solid rgba(255,201,90,0.55) !important;
-  backdrop-filter: blur(18px) saturate(2) !important;
-  -webkit-backdrop-filter: blur(18px) saturate(2) !important;
-  box-shadow: 0 1px 0 rgba(255,255,255,0.35) inset, 0 -1px 0 rgba(122,73,0,0.35) inset, 0 6px 20px rgba(247,197,90,0.30) !important;
-}
-.btn-get-vip-nav:hover{
-  background: linear-gradient(135deg, rgba(255,217,122,0.45), rgba(224,168,46,0.28)) !important;
-  box-shadow: 0 1px 0 rgba(255,255,255,0.4) inset, 0 -1px 0 rgba(122,73,0,0.35) inset, 0 8px 26px rgba(247,197,90,0.45) !important;
-}
-.btn-vip-icon svg{ width: 17px !important; height: 15px !important; margin: 0 !important; color: #FFD97A; }
-
-/* Get VIP button was always hidden below 560px before — now that it's an
-   icon like the others there's no need to drop it on small screens */
-@media(max-width:560px){
-  .header-actions .btn-get-vip-nav{ display: flex !important; }
-}
-</style>
-
-<!-- ══════════════════════════════════════════════════════════════════════
-     HEADER SCROLL STATE — toggles body.sx-scrolled once the user scrolls
-     past the top of the page; the header's transparent-vs-glass rules
-     above key off that class.
-═══════════════════════════════════════════════════════════════════════ -->
-<script>
-(function(){
-  var THRESHOLD = 8; // px scrolled before the glass header fades in
-  function update(){
-    document.body.classList.toggle('sx-scrolled', window.scrollY > THRESHOLD);
-  }
-  update();
-  window.addEventListener('scroll', update, { passive: true });
 })();
 </script>
 </body>
