@@ -342,6 +342,12 @@ body::after {
   width: auto;
   object-fit: contain;
   display: block;
+  animation: loaderLogoPulse 1.8s ease-in-out infinite;
+  filter: drop-shadow(0 0 0 rgba(224,33,156,0));
+}
+@keyframes loaderLogoPulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(224,33,156,0.35)); }
+  50%      { transform: scale(1.05); filter: drop-shadow(0 0 34px rgba(224,33,156,0.75)); }
 }
 
 .loader-goldbar {
@@ -372,14 +378,35 @@ body::after {
 .loader-powered strong { color: #fff; font-weight: 700; }
 
 /* ────────────────────────────────────────────
+   PANEL-OPEN LOGO INTRO
+   Brief logo splash played over Live TV / FIFA / FanCode (and News, which
+   routes through Live TV) the moment their overlay opens. Sits above all
+   three overlays (each z-index:1200) and removes itself once the animation
+   finishes — see sxPlayPanelIntro() in the panel-open functions.
+──────────────────────────────────────────── */
+#sx-panel-intro {
+  position: fixed; inset: 0; z-index: 1400;
+  background: #000000;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 1; transition: opacity 0.4s var(--ease);
+  pointer-events: none;
+}
+#sx-panel-intro.fading { opacity: 0; }
+#sx-panel-intro img {
+  height: 120px; max-width: 70vw; width: auto; object-fit: contain;
+  animation: sxPanelIntroPop 0.7s var(--spring) both;
+}
+@keyframes sxPanelIntroPop {
+  0%   { opacity: 0; transform: scale(0.7); filter: drop-shadow(0 0 0 rgba(224,33,156,0)); }
+  55%  { opacity: 1; transform: scale(1.08); filter: drop-shadow(0 0 30px rgba(224,33,156,0.65)); }
+  100% { opacity: 1; transform: scale(1); filter: drop-shadow(0 0 14px rgba(224,33,156,0.4)); }
+}
+
+/* ────────────────────────────────────────────
    TICKER
 ──────────────────────────────────────────── */
 .ticker-wrap {
-  height: 34px; overflow: hidden;
-  display: flex; align-items: center;
-  background: linear-gradient(90deg, rgba(10,10,11,0.96), rgba(224,33,156,0.55), rgba(10,10,11,0.96));
-  backdrop-filter: var(--blur-sm);
-  position: relative; z-index: 100;
+  display: none; /* bar removed from markup */
 }
 .ticker-label {
   background: rgba(8,8,9,0.88);
@@ -1565,19 +1592,8 @@ body::before{ opacity:0.5; }
 body::after{ opacity:0.02; }
 body{ background:var(--cu-bg) !important; }
 
-/* ── Top utility bar ── */
-#cu-topbar{
-  background:var(--cu-accent);
-  color:#fff;
-  text-align:center;
-  font-family:var(--cu-font);
-  font-weight:700;
-  font-size:12px;
-  letter-spacing:0.04em;
-  padding:8px 16px;
-  position:relative;
-  z-index:250;
-}
+/* ── Top utility bar — removed (bar element deleted from markup) ── */
+#cu-topbar{ display:none; }
 
 /* ── Header: flat, minimal, transparent ── */
 header{
@@ -1951,7 +1967,7 @@ body::before{ display:none !important; }
 <!-- LOADING FULL SCREEN -->
 <div id="cms-loader">
   <div class="loader-popup">
-    <div class="loader-brand"><img src="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/main/loading.png" alt="RISHI.EV" class="loader-brand-img"></div>
+    <div class="loader-brand"><img src="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/magenta.png" alt="RISHI.EV" class="loader-brand-img"></div>
     <div class="loader-goldbar"><div class="loader-goldbar-inner"></div></div>
   </div>
 </div>
@@ -1966,16 +1982,7 @@ body::before{ display:none !important; }
   <nav class="drawer-nav" id="drawer-nav"></nav>
 </div>
 
-<!-- TICKER -->
-<div class="ticker-wrap">
-  <div class="ticker-label" id="ticker-label">⚡ LIVE</div>
-  <div style="overflow:hidden;flex:1;">
-    <div class="ticker-track" id="ticker-track"></div>
-  </div>
-</div>
-
 <!-- HEADER -->
-<div id="cu-topbar">🔴 ALL CHANNELS LIVE 24/7 — ZERO SIGNUP, ZERO COST, WATCH INSTANTLY</div>
 <header>
   <div class="header-inner">
     <a class="logo-wrap" href="#">
@@ -3297,23 +3304,33 @@ function renderSettings(rows) {
   rows.forEach(r => { if (r.setting_key) s[r.setting_key] = r.value; });
   window._settings = s;
 
-  if (s.site_title)      { document.title = s.site_title; document.getElementById('page-title').textContent = s.site_title; }
-  if (s.site_favicon_url){ document.getElementById('favicon').href = s.site_favicon_url; }
-  if (s.ticker_label)    { document.getElementById('ticker-label').textContent = s.ticker_label; }
+  // NOTE: every DOM write below is null-guarded on purpose. Previously several
+  // lines called .textContent/.src straight on document.getElementById(...)
+  // with no null check — the moment ANY one of those ids was missing from the
+  // page (e.g. the ticker bar, which has now been removed entirely) it threw
+  // and silently killed every setting queued after it in this function
+  // (logo_url, footer, QR, etc. never got applied). Guarding each one means a
+  // single missing/renamed element can no longer take the rest down with it.
+  const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  const setAttr = (id, attr, val) => { const el = document.getElementById(id); if (el) el[attr] = val; };
+
+  if (s.site_title)      { document.title = s.site_title; setText('page-title', s.site_title); }
+  if (s.site_favicon_url){ setAttr('favicon', 'href', s.site_favicon_url); }
+  if (s.ticker_label)    { setText('ticker-label', s.ticker_label); } // ticker bar removed — no-op if absent
   if (s.youtube_url)     { const b = document.getElementById('yt-btn'); if (b) { b.href = s.youtube_url; b.textContent = `▶ ${s.youtube_label||'YouTube'}`; } }
-  if (s.cta_title)       { const el = document.getElementById('cta-title'); if (el) el.textContent = s.cta_title; }
-  if (s.cta_subtitle)    { const el = document.getElementById('cta-sub'); if (el) el.textContent = s.cta_subtitle; }
+  if (s.cta_title)       { setText('cta-title', s.cta_title); }
+  if (s.cta_subtitle)    { setText('cta-sub', s.cta_subtitle); }
   if (s.cta_btn1_text)   { const b = document.getElementById('cta-btn1'); if (b) { b.textContent = s.cta_btn1_text; b.href = s.cta_btn1_url||'#'; } }
   if (s.cta_btn2_text)   { const b = document.getElementById('cta-btn2'); if (b) { b.textContent = s.cta_btn2_text; b.href = s.cta_btn2_url||'#'; } }
-  if (s.social_bar_text) { document.getElementById('social-text').textContent = s.social_bar_text; }
-  if (s.footer_tagline)  { document.getElementById('footer-tagline').textContent = s.footer_tagline; }
-  if (s.footer_copy)     { document.getElementById('footer-copy').textContent = s.footer_copy; }
-  if (s.footer_logo_url) { document.getElementById('footer-logo').src = s.footer_logo_url; }
-  if (s.qr_title)        { document.getElementById('qr-title').textContent = s.qr_title; }
-  if (s.qr_sub)          { document.getElementById('qr-sub').textContent = s.qr_sub; }
-  if (s.qr_image_url)    { document.getElementById('qr-img').src = s.qr_image_url; }
-  if (s.qr_btn_text)     { const b = document.getElementById('qr-btn'); b.textContent = s.qr_btn_text; b.href = s.qr_btn_url||'#'; }
-  if (s.watch_popup_footer){ document.getElementById('watch-modal-footer').textContent = s.watch_popup_footer; }
+  if (s.social_bar_text) { setText('social-text', s.social_bar_text); }
+  if (s.footer_tagline)  { setText('footer-tagline', s.footer_tagline); }
+  if (s.footer_copy)     { setText('footer-copy', s.footer_copy); }
+  if (s.footer_logo_url) { setAttr('footer-logo', 'src', s.footer_logo_url); }
+  if (s.qr_title)        { setText('qr-title', s.qr_title); }
+  if (s.qr_sub)          { setText('qr-sub', s.qr_sub); }
+  if (s.qr_image_url)    { setAttr('qr-img', 'src', s.qr_image_url); }
+  if (s.qr_btn_text)     { const b = document.getElementById('qr-btn'); if (b) { b.textContent = s.qr_btn_text; b.href = s.qr_btn_url||'#'; } }
+  if (s.watch_popup_footer){ setText('watch-modal-footer', s.watch_popup_footer); }
 
   // logo
   if (s.logo_url) {
@@ -3326,8 +3343,9 @@ function renderSettings(rows) {
 
 function renderTicker(rows) {
   if (!rows) return;
-  const items = active(rows);
   const track = document.getElementById('ticker-track');
+  if (!track) return; // ticker bar removed from markup — nothing to render into
+  const items = active(rows);
   const html = [...items, ...items].map(r =>
     `<div class="ticker-item"><span>●</span> ${r.emoji||''} ${r.text}</div>`
   ).join('');
@@ -5812,7 +5830,36 @@ function closeTgPopup(){
 </script>
 
 <script>
+// Plays a brief logo splash over whichever panel overlay (Live TV / FIFA /
+// FanCode) is about to open. Reuses the current nav logo (whatever the
+// SETTINGS sheet's logo_url is set to) so it always matches the live logo
+// instead of a second hardcoded image. One shared element, created lazily.
+function sxPlayPanelIntro(){
+  var el = document.getElementById('sx-panel-intro');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'sx-panel-intro';
+    el.innerHTML = '<img id="sx-panel-intro-img" alt="">';
+    document.body.appendChild(el);
+  }
+  var img = document.getElementById('sx-panel-intro-img');
+  var navLogo = document.getElementById('nav-logo-img');
+  img.src = (navLogo && navLogo.src) ? navLogo.src : 'https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/magenta.png';
+  el.classList.remove('fading');
+  el.style.display = 'flex';
+  // restart the pop-in animation even if the intro is triggered again quickly
+  img.style.animation = 'none';
+  void img.offsetWidth;
+  img.style.animation = '';
+  clearTimeout(el._sxTimer);
+  el._sxTimer = setTimeout(function(){
+    el.classList.add('fading');
+    setTimeout(function(){ el.style.display = 'none'; }, 400);
+  }, 750);
+}
+
 function openLiveTV(){
+  sxPlayPanelIntro();
   document.getElementById('livetv-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   window.scrollTo(0,0);
@@ -6084,6 +6131,7 @@ function closeLiveTV(){
   document.body.style.overflow = '';
 }
 function openFanCode(){
+  sxPlayPanelIntro();
   document.getElementById('fancode-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   window.scrollTo(0,0);
@@ -6094,6 +6142,7 @@ function closeFanCode(){
   document.body.style.overflow = '';
 }
 function openFifa(){
+  sxPlayPanelIntro();
   document.getElementById('fifa-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   window.scrollTo(0,0);
