@@ -5658,6 +5658,13 @@ function openStreamPlayer(url, name){
       altLogo.src = (navLogo && navLogo.src) ? navLogo.src : 'https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/magenta.png';
       altLogo.style.display = '';
     }
+    // Show whichever mirror the visitor ISN'T already on — no point
+    // sending someone on pages.dev to pages.dev if the stream fails.
+    var altLink = document.getElementById('stream-player-alt-link');
+    if (altLink) {
+      var onPagesDev = /pages\.dev$/i.test(location.hostname);
+      altLink.href = onPagesDev ? 'https://saptarshiorg.github.io/' : 'https://saptarshixtrasports.pages.dev/';
+    }
   })();
   window._spLoadingTimer = setTimeout(() => {
     if (loadingEl) loadingEl.classList.add('sp-loading-hide');
