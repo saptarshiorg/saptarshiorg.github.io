@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Embedded Page</title>
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+  iframe { width: 100%; height: 100vh; border: none; }
+</style>
+</head>
+<body>
+
+<iframe src="https://sayanchannelcdn02.pages.dev" allowfullscreen></iframe>
+
+<script>
+  // Disable right-click context menu
+  document.addEventListener('contextmenu', function (e) {
+    e.preventDefault();
+  });
+
+  // Block common dev-tools / view-source shortcuts
+  document.addEventListener('keydown', function (e) {
+    const key = e.key.toUpperCase();
+
+    // F12
+    if (e.key === 'F12') { e.preventDefault(); return false; }
+
+    // Ctrl+Shift+I / J / C  (DevTools, Console, Inspect Element)
+    if (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(key)) {
+      e.preventDefault(); return false;
+    }
+
+    // Ctrl+U (view source)
+    if (e.ctrlKey && key === 'U') { e.preventDefault(); return false; }
+
+    // Cmd+Option+I / J / C on Mac
+    if (e.metaKey && e.altKey && ['I', 'J', 'C'].includes(key)) {
+      e.preventDefault(); return false;
+    }
+  });
+
+  // Basic devtools-open detection (window size heuristic)
+  (function () {
+    const threshold = 160;
+    setInterval(function () {
+      const widthDiff = window.outerWidth - window.innerWidth;
+      const heightDiff = window.outerHeight - window.innerHeight;
+      if (widthDiff > threshold || heightDiff > threshold) {
+        document.body.innerHTML = '<h1 style="text-align:center;margin-top:20%;font-family:sans-serif;">Developer tools are disabled on this page.</h1>';
+      }
+    }, 1000);
+  })();
+</script>
+
+</body>
+</html>
