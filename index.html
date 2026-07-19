@@ -5564,22 +5564,23 @@ function closeAdminChatDiscordPopup(){
 }
 #stream-player-ad-bar{
   flex-shrink: 0; z-index: 6; position: relative;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
-  padding: 16px 14px; background: rgba(0,0,0,0.92);
+  display: flex; align-items: center; justify-content: center;
+  padding: 3px 10px; background: rgba(0,0,0,0.92);
   border-top: 1px solid rgba(255,255,255,0.08);
+  max-height: 22px; overflow: hidden;
 }
 #stream-player-alt-row{
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 6px;
   font-family: var(--cu-font,inherit); text-align: center;
 }
-#stream-player-alt-logo{ height: 46px; width: auto; object-fit: contain; filter: drop-shadow(0 0 10px rgba(224,33,156,0.35)); }
+#stream-player-alt-logo{ height: 14px; width: auto; object-fit: contain; filter: drop-shadow(0 0 10px rgba(224,33,156,0.35)); }
 #stream-player-alt-text{
-  font-size: 15px; font-weight: 700; color: rgba(255,255,255,0.75);
+  font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.6);
   letter-spacing: 0.02em;
 }
 #stream-player-alt-link{
   color: #4FC3F7; font-weight: 900; text-decoration: none;
-  letter-spacing: 0.02em; font-size: 19px;
+  letter-spacing: 0.02em; font-size: 11px;
 }
 #stream-player-alt-link:hover{ text-decoration: underline; }
 
@@ -6560,6 +6561,52 @@ function sxChallengeCopyFallback(text, cb){
     if (e.ctrlKey && (k === 's' || k === 'S')) { e.preventDefault(); return false; }
     if (e.metaKey && e.altKey && (k === 'I' || k === 'i' || k === 'J' || k === 'j' || k === 'C' || k === 'c')) { e.preventDefault(); return false; } // Mac Cmd+Opt+I/J/C
   }, false);
+
+  // Best-effort DevTools-open detection: only active while the stream
+  // player is open, and skipped entirely on Smart TV browsers (no real
+  // devtools risk there, and TV browser viewport reporting triggers
+  // false positives). If an open devtools panel is detected, silently
+  // closes the player and returns to the main page (no visible warning).
+  // Uses a widened-viewport heuristic (works for docked panels) plus a
+  // debugger-timing check (catches most undocked/console usage).
+  // Still just a speed bump, not real protection.
+  function isTvBrowser(){
+    var ua = navigator.userAgent || '';
+    return /Tizen|Web[O0]S|LG Browser|NetCast|GoogleTV|Google TV|AFT|AmazonWebAppPlatform|Silk-Accelerated|Roku|Android.*(TV|BRAVIA)|CrKey/i.test(ua);
+  }
+  if (isTvBrowser()) return;
+
+  var dtTripped = false;
+  function isPlayerOpen(){
+    var el = document.getElementById('stream-player-overlay');
+    return !!(el && el.classList.contains('open'));
+  }
+  function dtTrip(){
+    if (dtTripped) return;
+    if (!isPlayerOpen()) return;
+    dtTripped = true;
+    if (typeof closeStreamPlayer === 'function') closeStreamPlayer();
+    window.scrollTo(0, 0);
+  }
+  function dtReset(){ dtTripped = false; }
+  var dtThreshold = 160;
+  function checkSizeHeuristic(){
+    if (!isPlayerOpen()) { dtReset(); return; }
+    var widthDiff = window.outerWidth - window.innerWidth;
+    var heightDiff = window.outerHeight - window.innerHeight;
+    if (widthDiff > dtThreshold || heightDiff > dtThreshold) dtTrip();
+    else dtReset();
+  }
+  setInterval(checkSizeHeuristic, 800);
+  window.addEventListener('resize', checkSizeHeuristic, false);
+
+  (function debuggerLoop(){
+    var start = performance.now();
+    debugger;
+    var delta = performance.now() - start;
+    if (delta > 100) dtTrip(); else if (isPlayerOpen()) dtReset();
+    setTimeout(debuggerLoop, 1000);
+  })();
 })();
 </script>
 
