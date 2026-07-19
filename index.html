@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<link rel="icon" href="https://i.postimg.cc/X7kyz6c8/Chat-GPT-Image-May-18-2026-09-32-18-AM.png" type="image/png">
-<meta property="og:image" content="">
+<link rel="icon" href="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/magenta.png" type="image/png">
+<meta property="og:image" content="https://i.postimg.cc/GtKyCWmv/Chat-GPT-Image-Jul-19-2026-06-25-19-PM.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="675">
 
@@ -13,7 +13,9 @@
 <meta name="robots" content="index, follow" />
 
 <!-- Optimizes how your page title looks in search results (Keep under 60 characters) -->
-<title>SX SPORTS — RISHI.EV</title>
+<title>EV SPORTS (Powered by Saptarshi SX Sports)</title>
+
+<meta property="og:site_name" content="EV SPORTS (Powered by Saptarshi SX Sports)" />
 
 <!-- Optimizes the summary snippet under your link (Keep under 155 characters) -->
 <meta name="description" content="SPORTS Live",  ALL SPORTS Teams, Cricket, Football, Soccer, FIFA World Cup & More — Watch Sports Anytime on SX SPORTS — Saptarshi XTRA Grand Television Telecom." />
@@ -21,9 +23,42 @@
 <meta name="referrer" content="no-referrer-when-downgrade">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title id="page-title">SX Sports</title>
-<link id="favicon" rel="icon" type="image/png" href="">
+<title id="page-title">EV SPORTS (Powered by Saptarshi SX Sports)</title>
+<link id="favicon" rel="icon" type="image/png" href="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/magenta.png">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Rajdhani:wght@400;500;600;700&family=Chakra+Petch:wght@400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- ── Player-safe guard for the sitewide popunder/social-bar script ──
+     This has to be registered BEFORE the ad script below loads. Capture-
+     phase listeners on document always run before any bubble-phase
+     listener the ad script attaches (regardless of load order), so this
+     swallows the click at the door — the ad script's own listener never
+     sees it — whenever the click originated inside the open stream
+     player. Everywhere else on the site, clicks pass through untouched. -->
+<script>
+(function(){
+  function sxBlockOverPlayer(e){
+    var overlay = document.getElementById('stream-player-overlay');
+    if (!overlay || !overlay.classList.contains('open')) return;
+    if (!overlay.contains(e.target)) return;
+    // Let our own player controls (back button, alt-mirror links, the
+    // stream iframe itself) work normally — only swallow clicks that
+    // would otherwise bubble past them to the ad script's page-wide
+    // listener (e.g. clicks on blank overlay space).
+    var allow = e.target.closest && e.target.closest(
+      '#stream-player-back, .sp-alt-link, #stream-player-frame, #stream-player-alt-links, #stream-player-banner-row, #stream-player-banner-row *'
+    );
+    if (allow) return;
+    e.stopPropagation();
+    if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+  }
+  ['pointerdown','mousedown','click','touchstart'].forEach(function(type){
+    document.addEventListener(type, sxBlockOverPlayer, true);
+  });
+})();
+</script>
+
+<!-- ── Sitewide ad network script (effectivecpmnetwork) ── -->
+<script src="https://pl30435711.effectivecpmnetwork.com/3d/84/a7/3d84a7b3eab34e4351ded24c712c2110.js"></script>
 
 <!-- SX SPORTS -->
 
@@ -2209,11 +2244,11 @@ body::before{ display:none !important; }
   </a>
 </div>
 
-<!-- ── Home screen native banner (468x60) ── -->
-<div class="vip-ad-slot" id="home-native-ad" style="margin:14px auto 18px;max-width:468px;">
-  <div class="vip-ad-frame" id="home-native-ad-frame"></div>
+<!-- ── Home screen native ad slot ── -->
+<div id="home-native-ad" style="margin:14px auto 18px;max-width:468px;display:flex;justify-content:center;overflow:hidden;">
+  <div id="container-ee38cd9864dc8d804efec44e2905b496"></div>
 </div>
-
+<script async="async" data-cfasync="false" src="https://pl30435712.effectivecpmnetwork.com/ee38cd9864dc8d804efec44e2905b496/invoke.js"></script>
 
 
 <script>
@@ -2654,13 +2689,6 @@ window.sxSwitchTab = sxSwitchTab;
   #fpx-discord-note svg{flex-shrink:0;width:16px;height:16px;}
   #fpx-discord-note span{font-family:var(--font-body);font-size:11px;line-height:1.4;color:rgba(225,228,255,0.88);}
   #fpx-discord-note strong{color:#d7dce1;font-weight:800;}
-  .fpx-support-ad{
-    display:flex;flex-direction:column;align-items:center;gap:10px;
-    margin:0 0 14px;padding:16px 14px;min-height:110px;justify-content:center;
-    background:rgba(224,33,156,0.08);border:1px solid rgba(224,33,156,0.18);border-radius:0;
-  }
-  .fpx-support-ad-msg{font-family:var(--font-body);font-weight:700;font-size:11px;line-height:1.4;color:rgba(245,210,140,0.75);text-align:center;}
-  .fpx-support-ad #container-34c17026e9d873f0596544567af46033{width:468px;max-width:100%;min-height:90px;display:flex;justify-content:center;align-items:center;overflow:hidden;}
   #fpx-grid{
     display:grid;
     grid-template-columns:repeat(auto-fill,minmax(130px,1fr));
@@ -2889,10 +2917,36 @@ window.sxSwitchTab = sxSwitchTab;
 
       <div id="fpx-grid"></div><!-- /fpx-grid : populated by renderFifaPanel() via PANELS registry -->
 
-      <div class="fpx-support-ad">
-        <div class="fpx-support-ad-msg">💛 A tap on the banner below costs nothing and helps keep SX Sports free — thank you!</div>
-        <div id="container-34c17026e9d873f0596544567af46033"></div>
+      <div style="display:flex;justify-content:center;overflow:hidden;margin:0 0 14px;">
+        <div id="container-f33a71c8dbb5b2d11aff42ff668079e4"></div>
       </div>
+      <script>
+        (function(){
+          var atOptions = {
+            'key' : 'f33a71c8dbb5b2d11aff42ff668079e4',
+            'format' : 'iframe',
+            'height' : 60,
+            'width' : 468,
+            'params' : {}
+          };
+          var c = document.getElementById('container-f33a71c8dbb5b2d11aff42ff668079e4');
+          var iframe = document.createElement('iframe');
+          iframe.style.cssText = 'width:468px;max-width:100%;height:60px;border:0;overflow:hidden;display:block;';
+          iframe.setAttribute('scrolling', 'no');
+          iframe.setAttribute('frameborder', '0');
+          c.appendChild(iframe);
+          var doc = iframe.contentWindow.document;
+          doc.open();
+          doc.write(
+            '<body style="margin:0;padding:0;background:transparent;">' +
+            '<script>atOptions=' + JSON.stringify(atOptions) + ';<\/script>' +
+            '<script src="https://www.highperformanceformat.com/f33a71c8dbb5b2d11aff42ff668079e4/invoke.js"><\/script>' +
+            '</body>'
+          );
+          doc.close();
+        })();
+      </script>
+
     </div><!-- /fpx-ch-section -->
   </div><!-- /fifa-panel -->
 </div><!-- /fifa-panel-wrap -->
@@ -5562,6 +5616,12 @@ function closeAdminChatDiscordPopup(){
 #stream-player-frame{
   width: 100%; height: 100%; border: none; display: block; background: #000;
 }
+#stream-player-banner-row{
+  flex-shrink: 0; z-index: 6; position: relative;
+  display: flex; align-items: center; justify-content: center;
+  padding: 4px 0; background: rgba(0,0,0,0.92);
+  max-height: 68px; overflow: hidden;
+}
 #stream-player-ad-bar{
   flex-shrink: 0; z-index: 6; position: relative;
   display: flex; align-items: center; justify-content: center;
@@ -5578,11 +5638,12 @@ function closeAdminChatDiscordPopup(){
   font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.6);
   letter-spacing: 0.02em;
 }
-#stream-player-alt-link{
+.sp-alt-link{
   color: #4FC3F7; font-weight: 900; text-decoration: none;
   letter-spacing: 0.02em; font-size: 11px;
 }
-#stream-player-alt-link:hover{ text-decoration: underline; }
+.sp-alt-link:hover{ text-decoration: underline; }
+.sp-alt-sep{ color: rgba(255,255,255,0.25); font-size: 10px; }
 
 #stream-player-loading{
   position: absolute; inset: 0; z-index: 5;
@@ -5623,21 +5684,58 @@ function closeAdminChatDiscordPopup(){
       </div>
     </div>
   </div>
+  <div id="stream-player-banner-row">
+    <div id="container-f33a71c8dbb5b2d11aff42ff668079e4-player"></div>
+  </div>
   <div id="stream-player-ad-bar">
     <div id="stream-player-alt-row">
       <img id="stream-player-alt-logo" src="" alt="RISHI.EV" style="display:none">
       <div id="stream-player-alt-text">Stream not loading?</div>
-      <a id="stream-player-alt-link" href="https://saptarshixtrasports.pages.dev/" target="_blank" rel="noopener noreferrer">Try Alternate Site ↗</a>
+      <span id="stream-player-alt-links"></span>
     </div>
   </div>
 </div>
 
 <script>
+// Small banner ad in the stream player, loaded once the first time any
+// stream is opened. Wrapped in its own blank iframe (same as the FIFA
+// panel banner) so the atOptions/highperformanceformat.com script's
+// document.write() only ever touches that isolated iframe's document,
+// never the main page.
+var __sxPlayerBannerLoaded = false;
+function sxLoadPlayerBanner(){
+  if (__sxPlayerBannerLoaded) return;
+  __sxPlayerBannerLoaded = true;
+  var c = document.getElementById('container-f33a71c8dbb5b2d11aff42ff668079e4-player');
+  if (!c) return;
+  var atOptions = {
+    'key' : 'f33a71c8dbb5b2d11aff42ff668079e4',
+    'format' : 'iframe',
+    'height' : 60,
+    'width' : 468,
+    'params' : {}
+  };
+  var iframe = document.createElement('iframe');
+  iframe.style.cssText = 'width:468px;max-width:100%;height:60px;border:0;overflow:hidden;display:block;';
+  iframe.setAttribute('scrolling', 'no');
+  iframe.setAttribute('frameborder', '0');
+  c.appendChild(iframe);
+  var doc = iframe.contentWindow.document;
+  doc.open();
+  doc.write(
+    '<body style="margin:0;padding:0;background:transparent;">' +
+    '<script>atOptions=' + JSON.stringify(atOptions) + ';<\/script>' +
+    '<script src="https://www.highperformanceformat.com/f33a71c8dbb5b2d11aff42ff668079e4/invoke.js"><\/script>' +
+    '</body>'
+  );
+  doc.close();
+}
 function openStreamPlayer(url, name){
   if (!url || url === '#') return;
   const label = name || 'Live Stream';
   document.getElementById('stream-player-title').textContent = label;
   const src = url.includes('#') ? url : url + '#' + encodeURIComponent(label);
+  sxLoadPlayerBanner();
   // Loading overlay shows for a flat 3s to mask any cross-origin iframe
   // flicker/redirect on first paint — but the stream itself starts loading
   // immediately underneath, not after the 3s. Setting the iframe src here,
@@ -5659,12 +5757,19 @@ function openStreamPlayer(url, name){
       altLogo.src = (navLogo && navLogo.src) ? navLogo.src : 'https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/magenta.png';
       altLogo.style.display = '';
     }
-    // Show whichever mirror the visitor ISN'T already on — no point
+    // Show whichever mirrors the visitor ISN'T already on — no point
     // sending someone on pages.dev to pages.dev if the stream fails.
-    var altLink = document.getElementById('stream-player-alt-link');
-    if (altLink) {
-      var onPagesDev = /pages\.dev$/i.test(location.hostname);
-      altLink.href = onPagesDev ? 'https://saptarshiorg.github.io/' : 'https://saptarshixtrasports.pages.dev/';
+    var altLinksWrap = document.getElementById('stream-player-alt-links');
+    if (altLinksWrap) {
+      var mirrors = [
+        { host: 'evsports.gt.tc', url: 'https://evsports.gt.tc/', label: 'EV SPORTS OFFICIAL' },
+        { host: 'saptarshiorg.github.io', url: 'https://saptarshiorg.github.io/', label: 'GITHUB SX SPORTS' },
+        { host: 'saptarshixtrasports.pages.dev', url: 'https://saptarshixtrasports.pages.dev/', label: 'SAPTARSHI PAGES DEV' }
+      ];
+      var others = mirrors.filter(function(m){ return m.host.toLowerCase() !== location.hostname.toLowerCase(); });
+      altLinksWrap.innerHTML = others.map(function(m){
+        return '<a class="sp-alt-link" href="' + m.url + '" target="_blank" rel="noopener noreferrer">' + m.label + ' ↗</a>';
+      }).join('<span class="sp-alt-sep"> · </span>');
     }
   })();
   window._spLoadingTimer = setTimeout(() => {
@@ -5837,267 +5942,6 @@ function openLiveTV(){
   window.scrollTo(0,0);
   document.querySelectorAll('[data-sxtab]').forEach(el => el.classList.toggle('active', el.dataset.sxtab === 'livetv'));
 }
-// Safe helper for the legacy atOptions/highperformanceformat.com banner
-// format: that ad network's script writes its iframe via document.write(),
-// which is dangerous to call directly on the *main* page once the page
-// has already finished loading (it can wipe the whole document). Wrapping
-// it in our own blank iframe means the document.write() only ever touches
-// that iframe's own fresh document — safe to trigger at any time, and
-// safe to reuse for multiple ad slots on the same page since each gets
-// its own isolated iframe (no shared container IDs to collide).
-function sxInjectBannerAd(container, key, w, h){
-  if (!container) return;
-  var iframe = document.createElement('iframe');
-  iframe.style.cssText = 'width:' + w + 'px;max-width:100%;height:' + h + 'px;border:0;overflow:hidden;display:block;';
-  iframe.setAttribute('scrolling', 'no');
-  iframe.setAttribute('frameborder', '0');
-  container.appendChild(iframe);
-  var doc = iframe.contentWindow.document;
-  doc.open();
-  doc.write(
-    '<body style="margin:0;padding:0;background:transparent;">' +
-    '<script>atOptions={"key":"' + key + '","format":"iframe","height":' + h + ',"width":' + w + ',"params":{}};<\/script>' +
-    '<script src="https://www.highperformanceformat.com/' + key + '/invoke.js"><\/script>' +
-    '</body>'
-  );
-  doc.close();
-}
-
-// Same idea for the FIFA panel's banner ad — the panel is display:none
-// until its tab is active, so the atOptions banner is only injected the
-// first time the FIFA tab is actually switched to.
-var __sxFifaAdLoaded = false;
-function sxLoadFifaSupportAd(){
-  if (__sxFifaAdLoaded) return;
-  __sxFifaAdLoaded = true;
-  var container = document.getElementById('container-34c17026e9d873f0596544567af46033');
-  sxInjectBannerAd(container, '34c17026e9d873f0596544567af46033', 468, 60);
-}
-window.sxLoadFifaSupportAd = sxLoadFifaSupportAd;
-
-// Home screen native banner — visible immediately on load, so inject as
-// soon as the DOM is ready rather than waiting for a tab switch.
-var __sxHomeAdLoaded = false;
-function sxLoadHomeAd(){
-  if (__sxHomeAdLoaded) return;
-  __sxHomeAdLoaded = true;
-  var frame = document.getElementById('home-native-ad-frame');
-  sxInjectBannerAd(frame, '34c17026e9d873f0596544567af46033', 468, 60);
-}
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', sxLoadHomeAd);
-} else {
-  sxLoadHomeAd();
-}
-
-// Stream player popup — this single overlay is what Live TV channels,
-// match cards (hero slides), AND FIFA channels all open into (they all
-// call openStreamPlayer/fpxLoad under the hood), so one banner here
-// covers all three "player popup" surfaces at once. Loaded once, the
-// first time any stream is opened.
-var __sxStreamAdLoaded = false;
-function sxLoadStreamAd(){
-  if (__sxStreamAdLoaded) return;
-  __sxStreamAdLoaded = true;
-  var frame = document.getElementById('stream-player-ad-frame');
-  sxInjectBannerAd(frame, '34c17026e9d873f0596544567af46033', 468, 60);
-}
-window.sxLoadStreamAd = sxLoadStreamAd;
-
-// VIP page: several ad slots down the page, all loaded (once) the first
-// time the VIP page is opened.
-var __sxVipAdsLoaded = false;
-function sxLoadVipAds(){
-  if (__sxVipAdsLoaded) return;
-  __sxVipAdsLoaded = true;
-  ['vip-ad-1','vip-ad-2','vip-ad-3','vip-ad-4'].forEach(function(id){
-    var slot = document.getElementById(id);
-    if (!slot) return;
-    var frame = slot.querySelector('.vip-ad-frame');
-    sxInjectBannerAd(frame, '34c17026e9d873f0596544567af46033', 468, 60);
-  });
-}
-window.sxLoadVipAds = sxLoadVipAds;
-
-// ── Daily Ad Challenge: click every ad slot once a day, 15 days running,
-//    to unlock a free-VIP claim code. There's no way for our page's JS to
-//    see an actual click *inside* a cross-origin ad iframe — the click is
-//    swallowed by the ad's own page — so this uses the standard
-//    best-effort proxy: if the mouse/finger was resting over an ad slot
-//    the instant the browser tab loses focus, that's almost always
-//    because a click just opened a new tab from inside that iframe. It's
-//    a heuristic, not a guarantee — good enough for an honor-system perk,
-//    not for anything that needs to be click-fraud-proof.
-var SX_CHALLENGE_SLOTS = [
-  { id:'fifa', sel:'#container-34c17026e9d873f0596544567af46033', label:'FIFA panel ad' },
-  { id:'vip1', sel:'#vip-ad-1 .vip-ad-frame', label:'VIP ad #1' },
-  { id:'vip2', sel:'#vip-ad-2 .vip-ad-frame', label:'VIP ad #2' },
-  { id:'vip3', sel:'#vip-ad-3 .vip-ad-frame', label:'VIP ad #3' },
-  { id:'vip4', sel:'#vip-ad-4 .vip-ad-frame', label:'VIP ad #4' }
-];
-var SX_CHALLENGE_GOAL = 15;
-var SX_CHALLENGE_KEY = 'sxAdChallenge_v1';
-var __sxChallengeHoverId = null;
-var __sxChallengeHoverTimer = null;
-
-// ── Small toast used to confirm "this click was saved to your browser"
-//    so the ad-challenge doesn't feel like it's silently doing nothing.
-var __sxToastTimer = null;
-function sxToast(msg){
-  var el = document.getElementById('sx-toast');
-  if (!el){
-    el = document.createElement('div');
-    el.id = 'sx-toast';
-    el.innerHTML = '<span class="sx-toast-tick">✓</span><span id="sx-toast-msg"></span>';
-    document.body.appendChild(el);
-  }
-  el.querySelector('#sx-toast-msg').textContent = msg;
-  el.classList.add('show');
-  clearTimeout(__sxToastTimer);
-  __sxToastTimer = setTimeout(function(){ el.classList.remove('show'); }, 2800);
-}
-window.sxToast = sxToast;
-
-function sxChallengeToday(){ return new Date().toISOString().slice(0,10); }
-function sxChallengeYesterday(){
-  var d = new Date(); d.setDate(d.getDate() - 1);
-  return d.toISOString().slice(0,10);
-}
-function sxChallengeLoad(){
-  var raw = null;
-  try { raw = localStorage.getItem(SX_CHALLENGE_KEY); } catch(e){}
-  var state = raw ? JSON.parse(raw) : null;
-  if (!state) state = { date: sxChallengeToday(), streak: 0, doneToday: [], completed: false, code: null };
-
-  if (state.date !== sxChallengeToday()) {
-    var wasFullYesterday = state.date === sxChallengeYesterday() && state.doneToday.length >= SX_CHALLENGE_SLOTS.length;
-    state.streak = wasFullYesterday ? (state.streak + 1) : 0;
-    state.date = sxChallengeToday();
-    state.doneToday = [];
-  }
-  return state;
-}
-function sxChallengeSave(state){
-  try { localStorage.setItem(SX_CHALLENGE_KEY, JSON.stringify(state)); } catch(e){}
-}
-function sxChallengeCode(){
-  var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  var out = 'SX-VIP-';
-  for (var i = 0; i < 8; i++) out += chars[Math.floor(Math.random() * chars.length)];
-  return out;
-}
-function sxChallengeMark(slotId){
-  var state = sxChallengeLoad();
-  if (state.completed) { sxChallengeSave(state); sxChallengeRender(); return; }
-  var isNew = state.doneToday.indexOf(slotId) === -1;
-  if (isNew) state.doneToday.push(slotId);
-  var daysDone = Math.min(SX_CHALLENGE_GOAL, state.streak + (state.doneToday.length >= SX_CHALLENGE_SLOTS.length ? 1 : 0));
-  var justCompleted = false;
-  if (daysDone >= SX_CHALLENGE_GOAL && !state.completed) {
-    state.completed = true;
-    state.code = sxChallengeCode();
-    justCompleted = true;
-  }
-  sxChallengeSave(state);
-  sxChallengeRender();
-  if (justCompleted) {
-    sxToast('Challenge complete — your VIP code is saved to this browser!');
-  } else if (isNew) {
-    sxToast('Click saved to this browser (' + state.doneToday.length + '/' + SX_CHALLENGE_SLOTS.length + ' today)');
-  }
-}
-function sxChallengeRender(){
-  var daysEl = document.getElementById('vip-challenge-days');
-  var countEl = document.getElementById('vip-challenge-count');
-  var listEl = document.getElementById('vip-challenge-list');
-  var claimEl = document.getElementById('vip-challenge-claim');
-  var codeEl = document.getElementById('vip-challenge-code');
-  if (!daysEl) return; // VIP page not in DOM yet
-
-  var state = sxChallengeLoad();
-  sxChallengeSave(state); // persist any rollover computed by load()
-  var daysDone = Math.min(SX_CHALLENGE_GOAL, state.streak + (state.doneToday.length >= SX_CHALLENGE_SLOTS.length ? 1 : 0));
-
-  var dots = '';
-  for (var i = 1; i <= SX_CHALLENGE_GOAL; i++) {
-    var cls = 'vip-challenge-dot';
-    if (i <= daysDone) cls += ' done';
-    else if (i === daysDone + 1) cls += ' today';
-    dots += '<div class="' + cls + '">' + i + '</div>';
-  }
-  daysEl.innerHTML = dots;
-  countEl.textContent = 'Day ' + daysDone + ' / ' + SX_CHALLENGE_GOAL;
-
-  listEl.innerHTML = SX_CHALLENGE_SLOTS.map(function(slot){
-    var isDone = state.doneToday.indexOf(slot.id) !== -1;
-    return '<div class="vip-challenge-item' + (isDone ? ' done' : '') + '">' +
-      '<span class="vip-challenge-tick">' + (isDone ? '✓' : '') + '</span>' +
-      '<span>' + slot.label + '</span></div>';
-  }).join('');
-
-  if (state.completed) {
-    claimEl.style.display = 'block';
-    codeEl.textContent = state.code;
-  } else {
-    claimEl.style.display = 'none';
-  }
-}
-function sxChallengeWireSlots(){
-  // Attach click tracking to each ad slot's outer container. This has to
-  // run AFTER the full document has parsed: the VIP page's own ad slots
-  // (#vip-ad-1..4) are declared further down in the HTML than this
-  // script, so calling document.querySelector for them any earlier
-  // always returns null and those 4 slots never actually get wired up —
-  // that was why "VIP" ticks weren't registering while the FIFA panel ad
-  // (declared earlier in the page) was fine.
-  //
-  // IMPORTANT: the actual ad is a cross-origin <iframe>. A real click that
-  // lands on that iframe never reaches this document at all — no
-  // pointerdown, no mousedown, nothing; the click is swallowed by the
-  // iframe's own page. The only thing our page CAN observe is that the
-  // mouse/finger was resting over the ad slot right before the tab lost
-  // focus (which is what happens the instant that click opens a new tab).
-  // So hover/touch presence is the primary signal; pointerdown is kept as
-  // a bonus for the rare click that lands on our own markup around the ad
-  // (e.g. the padding, or before the ad iframe has finished loading).
-  SX_CHALLENGE_SLOTS.forEach(function(slot){
-    var el = document.querySelector(slot.sel);
-    if (!el) return;
-    var markPresent = function(){
-      __sxChallengeHoverId = slot.id;
-      clearTimeout(__sxChallengeHoverTimer);
-      __sxChallengeHoverTimer = setTimeout(function(){
-        if (__sxChallengeHoverId === slot.id) __sxChallengeHoverId = null;
-      }, 3000);
-    };
-    var clearPresent = function(){
-      if (__sxChallengeHoverId === slot.id) __sxChallengeHoverId = null;
-      clearTimeout(__sxChallengeHoverTimer);
-    };
-    el.addEventListener('mouseenter', markPresent);
-    el.addEventListener('mouseleave', clearPresent);
-    el.addEventListener('pointerdown', markPresent);
-    el.addEventListener('mousedown', markPresent);
-    // Touch devices don't fire mouseenter/leave the same way — treat a
-    // touchstart on the ad area as "present" for the blur check below.
-    el.addEventListener('touchstart', markPresent, { passive: true });
-  });
-  window.addEventListener('blur', function(){
-    if (__sxChallengeHoverId) {
-      sxChallengeMark(__sxChallengeHoverId);
-      __sxChallengeHoverId = null;
-      clearTimeout(__sxChallengeHoverTimer);
-    }
-  });
-}
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', sxChallengeWireSlots);
-} else {
-  // Document already finished parsing (script injected/re-run late) —
-  // just wire it up now.
-  sxChallengeWireSlots();
-}
-
 function closeLiveTV(){
   document.getElementById('livetv-overlay').classList.remove('open');
   document.body.style.overflow = '';
@@ -6120,7 +5964,6 @@ function openFifa(){
   window.scrollTo(0,0);
   window.__sxCurrentTab = 'fifa';
   document.querySelectorAll('[data-sxtab]').forEach(el => el.classList.toggle('active', el.dataset.sxtab === 'fifa'));
-  if (window.sxLoadFifaSupportAd) window.sxLoadFifaSupportAd();
 }
 function closeFifa(){
   document.getElementById('fifa-overlay').classList.remove('open');
@@ -6182,17 +6025,6 @@ function closeFifa(){
   letter-spacing: 0.1em; text-transform: uppercase; color: var(--cu-accent,#E0219C);
   margin-bottom: 14px;
 }
-
-.vip-ad-slot{
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
-  margin: 0 0 40px; padding: 12px;
-  background: rgba(224,33,156,0.06); border: 1px solid rgba(224,33,156,0.16);
-}
-.vip-ad-msg{
-  font-family: var(--cu-font,inherit); font-weight: 700; font-size: 11.5px;
-  line-height: 1.4; color: rgba(247,197,90,0.85); text-align: center;
-}
-.vip-ad-frame{ width: 100%; display: flex; justify-content: center; overflow: hidden; }
 
 /* ── Free vs VIP comparison table ── */
 #vip-compare{ margin-bottom: 40px; }
@@ -6263,98 +6095,6 @@ function closeFifa(){
   font-family: var(--cu-font,inherit); font-weight: 900; font-size: 11px;
 }
 
-#vip-challenge{ margin-bottom: 40px; }
-#vip-challenge-sub{
-  font-family: var(--cu-font,inherit); font-size: 13px; line-height: 1.55;
-  color: rgba(255,255,255,0.60); margin: 0 0 16px;
-}
-#vip-challenge-days{
-  display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px;
-}
-.vip-challenge-dot{
-  width: 22px; height: 22px;
-  display: flex; align-items: center; justify-content: center;
-  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14);
-  font-family: var(--cu-font,inherit); font-weight: 800; font-size: 9px;
-  color: rgba(255,255,255,0.35);
-}
-.vip-challenge-dot.done{
-  background: linear-gradient(135deg,#F7C55A,#E0219C); border-color: transparent; color: #1a0a05;
-}
-.vip-challenge-dot.today{
-  border-color: #F7C55A; color: #F7C55A; box-shadow: 0 0 0 2px rgba(247,197,90,0.18);
-}
-#vip-challenge-count{
-  font-family: var(--cu-font,inherit); font-weight: 900; font-size: 15px;
-  color: #F7C55A; margin-bottom: 16px;
-}
-#vip-challenge-list{
-  display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px;
-}
-.vip-challenge-item{
-  display: flex; align-items: center; gap: 10px;
-  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
-  padding: 9px 12px;
-  font-family: var(--cu-font,inherit); font-size: 12.5px; color: rgba(255,255,255,0.70);
-}
-.vip-challenge-item .vip-challenge-tick{
-  flex-shrink: 0; width: 18px; height: 18px;
-  display: flex; align-items: center; justify-content: center;
-  background: rgba(255,255,255,0.08); color: transparent;
-  font-size: 11px; font-weight: 900;
-}
-.vip-challenge-item.done .vip-challenge-tick{ background: var(--cu-accent,#E0219C); color: #fff; }
-.vip-challenge-item.done{ color: #fff; }
-#vip-challenge-note{
-  font-family: var(--cu-font,inherit); font-size: 10.5px; line-height: 1.5;
-  color: rgba(255,255,255,0.35); margin: 0;
-}
-#vip-challenge-claim{
-  background: rgba(247,197,90,0.10); border: 1px solid rgba(247,197,90,0.35);
-  padding: 18px 16px; text-align: center; margin-bottom: 14px;
-}
-#vip-challenge-claim-title{
-  font-family: var(--cu-font,inherit); font-weight: 900; font-size: 16px; color: #F7C55A; margin-bottom: 8px;
-}
-#vip-challenge-claim-body{
-  font-family: var(--cu-font,inherit); font-size: 12px; line-height: 1.5;
-  color: rgba(255,255,255,0.65); margin: 0 0 12px;
-}
-#vip-challenge-code{
-  font-family: monospace; font-weight: 800; font-size: 15px; letter-spacing: 0.05em;
-  color: #fff; background: rgba(0,0,0,0.35); padding: 10px; margin-bottom: 14px;
-  word-break: break-all;
-}
-#vip-challenge-discord-btn{
-  display: inline-flex; align-items: center; justify-content: center;
-  background: #5865F2; color: #fff; text-decoration: none; border-radius: 0;
-  font-family: var(--cu-font,inherit); font-weight: 800; font-size: 13px;
-  padding: 12px 20px; letter-spacing: 0.03em;
-}
-#vip-challenge-discord-btn:hover{ background: #4752C4; }
-#vip-challenge-copy-btn{
-  display: inline-flex; align-items: center; justify-content: center;
-  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18);
-  color: #fff; cursor: pointer; border-radius: 0;
-  font-family: var(--cu-font,inherit); font-weight: 800; font-size: 12.5px;
-  padding: 11px 18px; letter-spacing: 0.03em; margin: 0 8px 14px 0;
-}
-#vip-challenge-copy-btn:hover{ background: rgba(255,255,255,0.15); }
-
-/* ── "Saved to your browser" toast (ad-challenge clicks / claim code) ── */
-#sx-toast{
-  position: fixed; left: 50%; bottom: 26px; z-index: 3000;
-  transform: translateX(-50%) translateY(16px);
-  display: flex; align-items: center; gap: 8px;
-  background: #0E0E10; border: 1px solid rgba(247,197,90,0.4);
-  color: #fff; font-family: var(--cu-font,inherit); font-weight: 700; font-size: 12.5px;
-  padding: 12px 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.45);
-  opacity: 0; pointer-events: none;
-  transition: opacity 0.25s ease, transform 0.25s ease;
-  max-width: calc(100% - 32px);
-}
-#sx-toast.show{ opacity: 1; transform: translateX(-50%) translateY(0); }
-#sx-toast .sx-toast-tick{ color: #F7C55A; font-weight: 900; flex-shrink: 0; }
 
 #vip-discord-btn{
   display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -6388,11 +6128,6 @@ function closeFifa(){
       <div id="vip-crown"><svg viewBox="0 0 24 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2 6.5a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm20 0a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm-10-2a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zM2 7.8l4.6 3.4L12 5l5.4 6.2L22 7.8 20 17H4L2 7.8z"/></svg></div>
       <div id="vip-title">Get VIP Access</div>
       <div id="vip-sub">VIP unlocks the full SX Sports experience — see exactly how it compares below, what you get, and how to claim it.</div>
-    </div>
-
-    <div class="vip-ad-slot" id="vip-ad-1">
-      <div class="vip-ad-msg">💛 A quick tap below helps keep SX Sports free for everyone — thank you!</div>
-      <div class="vip-ad-frame"></div>
     </div>
 
     <div id="vip-compare">
@@ -6434,11 +6169,6 @@ function closeFifa(){
       <p style="font-family:var(--cu-font,inherit);font-size:11.5px;line-height:1.5;color:rgba(255,255,255,0.45);margin-top:10px;">The <strong style="color:#F7C55A;">RISHi.EV IPTV Box</strong> ships exclusively with VIP 2.0 — making it the top-tier plan.</p>
     </div>
 
-    <div class="vip-ad-slot" id="vip-ad-2">
-      <div class="vip-ad-msg">💛 Support SX Sports — tap the banner below, it costs you nothing.</div>
-      <div class="vip-ad-frame"></div>
-    </div>
-
     <div id="vip-features">
       <div class="vip-section-label">What you unlock</div>
       <ul id="vip-perks">
@@ -6460,11 +6190,6 @@ function closeFifa(){
       </ul>
     </div>
 
-    <div class="vip-ad-slot" id="vip-ad-3">
-      <div class="vip-ad-msg">💛 Enjoying SX Sports? A small tap below helps the developer — thanks!</div>
-      <div class="vip-ad-frame"></div>
-    </div>
-
     <div id="vip-steps">
       <div class="vip-section-label">How to get it</div>
       <ol>
@@ -6472,31 +6197,6 @@ function closeFifa(){
         <li><span class="vip-step-num">2</span> Open a ticket / post in the request channel</li>
         <li><span class="vip-step-num">3</span> Ask a staff member to grant your VIP role</li>
       </ol>
-    </div>
-
-    <div id="vip-challenge">
-      <div class="vip-section-label">Or: Get VIP Free — Daily Ad Challenge</div>
-      <p id="vip-challenge-sub">Tap every ad on this page (and the FIFA panel ad) once a day, 15 days in a row, and we'll give you VIP for free. Progress is saved on this device/browser.</p>
-
-      <div id="vip-challenge-days"></div>
-      <div id="vip-challenge-count">Day 0 / 15</div>
-
-      <div id="vip-challenge-list"></div>
-
-      <div id="vip-challenge-claim" style="display:none;">
-        <div id="vip-challenge-claim-title">🎉 Challenge complete!</div>
-        <p id="vip-challenge-claim-body">Take a screenshot of this code and show it to a staff member in Discord to claim your free VIP.</p>
-        <div id="vip-challenge-code"></div>
-        <button type="button" id="vip-challenge-copy-btn" onclick="sxChallengeCopyCode()">Copy Code</button>
-        <a id="vip-challenge-discord-btn" href="https://discord.gg/w46C6mQgrY" target="_blank" rel="noopener" onclick="closeVip()">Claim in Discord</a>
-      </div>
-
-      <p id="vip-challenge-note">Missing a day resets the streak back to Day 0. Each ad only counts once per calendar day.</p>
-    </div>
-
-    <div class="vip-ad-slot" id="vip-ad-4">
-      <div class="vip-ad-msg">💛 One tap here keeps the streams free for everyone — thank you for the support!</div>
-      <div class="vip-ad-frame"></div>
     </div>
 
     <a id="vip-discord-btn" href="https://discord.gg/w46C6mQgrY" target="_blank" rel="noopener" onclick="closeVip()">
@@ -6511,33 +6211,10 @@ function openVip(){
   document.getElementById('vip-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   window.scrollTo(0,0);
-  sxLoadVipAds();
-  sxChallengeRender();
 }
 function closeVip(){
   document.getElementById('vip-overlay').classList.remove('open');
   document.body.style.overflow = '';
-}
-function sxChallengeCopyCode(){
-  var state = sxChallengeLoad();
-  if (!state.code) return;
-  var done = function(){ sxToast('Code copied — paste it when you claim in Discord'); };
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(state.code).then(done, function(){ sxChallengeCopyFallback(state.code, done); });
-  } else {
-    sxChallengeCopyFallback(state.code, done);
-  }
-}
-function sxChallengeCopyFallback(text, cb){
-  var ta = document.createElement('textarea');
-  ta.value = text;
-  ta.style.position = 'fixed';
-  ta.style.left = '-9999px';
-  document.body.appendChild(ta);
-  ta.select();
-  try { document.execCommand('copy'); } catch(e){}
-  document.body.removeChild(ta);
-  if (cb) cb();
 }
 </script>
 
