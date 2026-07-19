@@ -5570,6 +5570,16 @@ function closeAdminChatDiscordPopup(){
 }
 #stream-player-ad-bar .vip-ad-msg{ margin: 0; font-size: 10px; }
 #stream-player-ad-frame{ width: 100%; display: flex; justify-content: center; overflow: hidden; }
+#stream-player-alt-row{
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  font-family: var(--cu-font,inherit); font-size: 10px; color: rgba(255,255,255,0.55);
+  margin: 0;
+}
+#stream-player-alt-link{
+  color: #4FC3F7; font-weight: 800; text-decoration: none;
+  letter-spacing: 0.02em;
+}
+#stream-player-alt-link:hover{ text-decoration: underline; }
 
 #stream-player-loading{
   position: absolute; inset: 0; z-index: 5;
@@ -5612,6 +5622,9 @@ function closeAdminChatDiscordPopup(){
   </div>
   <div id="stream-player-ad-bar">
     <div class="vip-ad-msg">💛 A tap below helps keep SX Sports free — thank you!</div>
+    <div id="stream-player-alt-row">
+      Stream not loading? <a id="stream-player-alt-link" href="https://saptarshixtrasports.pages.dev/" target="_blank" rel="noopener noreferrer">Try Alternate Site ↗</a>
+    </div>
     <div id="stream-player-ad-frame"></div>
   </div>
 </div>
