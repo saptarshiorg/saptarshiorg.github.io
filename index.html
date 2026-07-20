@@ -13,7 +13,7 @@
 <meta name="robots" content="index, follow" />
 
 <!-- Optimizes how your page title looks in search results (Keep under 60 characters) -->
-<title> SX SPORTS BY SAPTARSHI is now EV SPORTS (Powered by Saptarshi SX Sports)</title>
+<title>ENTERTAUNMENT VERSE  EV SPORTS (Powered by Saptarshi SX Sports)</title>
 
 <meta property="og:site_name" content="EV SPORTS (Powered by Saptarshi SX Sports)" />
 
@@ -27,38 +27,9 @@
 <link id="favicon" rel="icon" type="image/png" href="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/magenta.png">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Rajdhani:wght@400;500;600;700&family=Chakra+Petch:wght@400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-<!-- ── Player-safe guard for the sitewide popunder/social-bar script ──
-     This has to be registered BEFORE the ad script below loads. Capture-
-     phase listeners on document always run before any bubble-phase
-     listener the ad script attaches (regardless of load order), so this
-     swallows the click at the door — the ad script's own listener never
-     sees it — whenever the click originated inside the open stream
-     player. Everywhere else on the site, clicks pass through untouched. -->
-<script>
-(function(){
-  function sxBlockOverPlayer(e){
-    var overlay = document.getElementById('stream-player-overlay');
-    if (!overlay || !overlay.classList.contains('open')) return;
-    if (!overlay.contains(e.target)) return;
-    // Let our own player controls (back button, alt-mirror links, the
-    // stream iframe itself) work normally — only swallow clicks that
-    // would otherwise bubble past them to the ad script's page-wide
-    // listener (e.g. clicks on blank overlay space).
-    var allow = e.target.closest && e.target.closest(
-      '#stream-player-back, .sp-alt-link, #stream-player-frame, #stream-player-alt-links, #stream-player-banner-row, #stream-player-banner-row *'
-    );
-    if (allow) return;
-    e.stopPropagation();
-    if (e.stopImmediatePropagation) e.stopImmediatePropagation();
-  }
-  ['pointerdown','mousedown','click','touchstart'].forEach(function(type){
-    document.addEventListener(type, sxBlockOverPlayer, true);
-  });
-})();
-</script>
-
-<!-- ── Sitewide ad network script (effectivecpmnetwork) ── -->
-<script src="https://pl30435711.effectivecpmnetwork.com/3d/84/a7/3d84a7b3eab34e4351ded24c712c2110.js"></script>
+<!-- ── All ads removed. Sitewide popunder/social-bar ad script and its
+     player-safe click guard have both been taken out — there's nothing
+     left for the guard to shield against. ── -->
 
 <!-- SX SPORTS -->
 
@@ -831,7 +802,10 @@ header.scrolled {
   #watch-ch-strip { display: grid; grid-template-columns: repeat(2,1fr); gap: 7px; padding: 10px 14px 4px; }
   .wcs-btn { justify-content: center; font-size: 11px; padding: 7px 10px; gap: 5px; }
   .wcs-btn svg { width: 12px; height: 12px; }
-  .wcs-btn:last-child:nth-child(odd) { grid-column: 1/-1; }
+  /* Set by sxLayoutWatchStrip() on the last currently-VISIBLE button only —
+     unlike a plain :nth-child(odd) selector this stays correct no matter
+     how many quick-strip buttons are shown/hidden (e.g. FIFA toggling). */
+  .wcs-btn.wcs-span-full { grid-column: 1/-1; }
 }
 
 /* ────────────────────────────────────────────
@@ -893,6 +867,16 @@ header.scrolled {
   transition: transform 0.2s var(--spring), box-shadow 0.2s var(--ease);
 }
 .smo-btn:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 -2px 0 rgba(140,98,0,0.4) inset, 0 6px 0 -1px rgba(120,84,0,0.5), 0 10px 26px rgba(224,33,156,0.45); }
+
+.smo-empty-box {
+  width: 100%; text-align: center;
+  background: var(--glass); backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 1px dashed rgba(255,255,255,0.14);
+  border-radius: 0; padding: 22px 16px;
+  font-family: var(--font-display); font-weight: 800; font-size: 11px;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted);
+}
 
 /* ── Match cards: 3-col grid on desktop ── */
 @media(min-width:901px) {
@@ -2220,7 +2204,7 @@ body::before{ display:none !important; }
   <!-- MOBILE FULL-WIDTH SLIDES (hidden on desktop via CSS) -->
   <div class="slides-container" id="slides-container"></div>
 </section>
-<!-- QUICK TAB SWITCHER STRIP (Live TV / Matches / FIFA / FanCode / Movies) -->
+<!-- QUICK TAB SWITCHER STRIP (Live TV / Matches / FIFA / News / FanCode) -->
 <div id="watch-ch-strip">
   <a class="wcs-btn active" id="wcs-matches" data-sxtab="matches" href="#sxTabPanels" onclick="event.preventDefault();sxSwitchTab('matches');">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>
@@ -2234,22 +2218,108 @@ body::before{ display:none !important; }
     <img src="https://upload.wikimedia.org/wikipedia/en/1/17/2026_FIFA_World_Cup_emblem.svg" alt="FIFA" style="height:15px;width:15px;object-fit:contain;display:block;flex-shrink:0;">
     FIFA
   </a>
-  <a class="wcs-btn" id="wcs-fancode" data-sxtab="fancode" href="#sxTabPanels" onclick="event.preventDefault();openFanCode();">
-    <img src="https://static.vecteezy.com/system/resources/previews/069/146/538/non_2x/fancode-app-icon-on-transparent-background-free-png.png" alt="FanCode" style="height:15px;width:15px;object-fit:contain;display:block;flex-shrink:0;border-radius: 0;">
-    FanCode
-  </a>
   <a class="wcs-btn" id="wcs-news" data-sxtab="livetv" href="#sxTabPanels" onclick="event.preventDefault();openLiveTV();setTimeout(()=>{const t=document.querySelector('#chTabs .ch-tab[data-grp=\'News\']');if(t)t.click();},80);">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h8M6 12h12M6 16h8"/></svg>
     News
   </a>
+  <a class="wcs-btn" id="wcs-fancode" data-sxtab="fancode" href="#sxTabPanels" onclick="event.preventDefault();openFanCode();">
+    <img src="https://static.vecteezy.com/system/resources/previews/069/146/538/non_2x/fancode-app-icon-on-transparent-background-free-png.png" alt="FanCode" style="height:15px;width:15px;object-fit:contain;display:block;flex-shrink:0;border-radius: 0;">
+    FanCode
+  </a>
 </div>
 
-<!-- ── Home screen native ad slot ── -->
-<div id="home-native-ad" style="margin:14px auto 18px;max-width:468px;display:flex;justify-content:center;overflow:hidden;">
-  <div id="container-ee38cd9864dc8d804efec44e2905b496"></div>
-</div>
-<script async="async" data-cfasync="false" src="https://pl30435712.effectivecpmnetwork.com/ee38cd9864dc8d804efec44e2905b496/invoke.js"></script>
+<!-- ── Quick-strip buttons: skeuomorphic (raised/glossy) finish ──
+     Matches = saffron / white text. Live TV = white / dark-blue text.
+     News & FanCode keep a neutral dark-glass version of the same finish.
+     ID selectors + !important so this wins over the earlier flat-theme
+     passes regardless of where those rules sit in the stylesheet. -->
+<style>
+#watch-ch-strip .wcs-btn{
+  border-radius: 999px !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  transition: transform 0.15s var(--ease,ease), box-shadow 0.15s var(--ease,ease) !important;
+}
+#watch-ch-strip .wcs-btn:active{ transform: translateY(1px) scale(0.98) !important; }
 
+#wcs-matches{
+  background: linear-gradient(180deg,#FFB347 0%,#FF9933 45%,#F07F00 100%) !important;
+  color: #000 !important;
+  border-color: rgba(255,255,255,0.35) !important;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.25) !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.55) inset,
+    0 -3px 6px rgba(140,60,0,0.35) inset,
+    0 4px 10px rgba(240,127,0,0.40) !important;
+}
+#wcs-matches svg{ color:#000 !important; }
+#wcs-matches:hover,#wcs-matches:active{
+  background: linear-gradient(180deg,#FFC168 0%,#FFA13D 45%,#F58600 100%) !important;
+  color:#000 !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.6) inset,
+    0 -3px 6px rgba(140,60,0,0.35) inset,
+    0 6px 16px rgba(240,127,0,0.55) !important;
+}
+
+#wcs-all{
+  background: linear-gradient(180deg,#ffffff 0%,#F1F3F8 45%,#E2E6EF 100%) !important;
+  color: #0A2A6B !important;
+  border-color: rgba(10,42,107,0.18) !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.9) inset,
+    0 -3px 6px rgba(180,190,210,0.6) inset,
+    0 4px 10px rgba(10,42,107,0.22) !important;
+}
+#wcs-all svg{ color:#0A2A6B !important; }
+#wcs-all:hover,#wcs-all:active{
+  background: linear-gradient(180deg,#ffffff 0%,#E9ECF4 45%,#D7DCEA 100%) !important;
+  color:#0A2A6B !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.9) inset,
+    0 -3px 6px rgba(180,190,210,0.6) inset,
+    0 6px 16px rgba(10,42,107,0.32) !important;
+}
+
+#wcs-news{
+  background: linear-gradient(180deg,#4CAF50 0%,#2E9E39 45%,#1F7A28 100%) !important;
+  color: #fff !important;
+  border-color: rgba(255,255,255,0.30) !important;
+  text-shadow: 0 1px 1px rgba(10,50,10,0.45) !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.5) inset,
+    0 -3px 6px rgba(15,70,20,0.40) inset,
+    0 4px 10px rgba(31,122,40,0.40) !important;
+}
+#wcs-news svg{ color:#fff !important; }
+#wcs-news:hover,#wcs-news:active{
+  background: linear-gradient(180deg,#5CC160 0%,#38B046 45%,#248A2F 100%) !important;
+  color:#fff !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.55) inset,
+    0 -3px 6px rgba(15,70,20,0.40) inset,
+    0 6px 16px rgba(31,122,40,0.55) !important;
+}
+
+#wcs-fancode{
+  background: linear-gradient(180deg,#3A3A42 0%,#232328 45%,#151517 100%) !important;
+  color: #fff !important;
+  border-color: rgba(255,255,255,0.16) !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.18) inset,
+    0 -3px 6px rgba(0,0,0,0.45) inset,
+    0 4px 10px rgba(0,0,0,0.35) !important;
+}
+#wcs-fancode:hover,#wcs-fancode:active{
+  background: linear-gradient(180deg,#46464F 0%,#2B2B31 45%,#1A1A1D 100%) !important;
+  color:#fff !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.22) inset,
+    0 -3px 6px rgba(0,0,0,0.45) inset,
+    0 6px 16px rgba(224,33,156,0.30) !important;
+}
+</style>
+
+<!-- ── Home screen banner ad removed ── -->
 
 <script>
 function fpxLoad(card, url, name) {
@@ -2264,6 +2334,40 @@ function fpxSelectChange(sel) {
   if (card) card.click();
   sel.selectedIndex = 0;
 }
+
+// ── FIFA WORLD CUP TOGGLE ──────────────────────────────────────────────
+// The 2026 tournament is over. Flip this to true whenever FIFA (or the
+// next World Cup) needs to come back — every nav entry point, the panel
+// renderer, and the registry fail-safe below all read this one flag, so
+// nothing else needs to change.
+window.SX_FIFA_ENABLED = false;
+
+// Hide every FIFA nav entry point (quick-nav item, tab-switcher strip
+// button, mobile tab bar item) while the toggle above is off. Nothing
+// here is deleted — re-showing it is just SX_FIFA_ENABLED = true.
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.SX_FIFA_ENABLED) return;
+  document.querySelectorAll('[data-sxtab="fifa"]').forEach(el => {
+    el.style.display = 'none';
+  });
+});
+
+// Mobile quick-strip layout fix: on the 2-column grid, if the number of
+// currently VISIBLE buttons is odd, the last visible one spans the full
+// width so it doesn't sit alone with an empty gap beside it. Recomputed
+// on load/resize so it stays correct whether FIFA is shown or hidden.
+function sxLayoutWatchStrip(){
+  const strip = document.getElementById('watch-ch-strip');
+  if (!strip) return;
+  const btns = Array.from(strip.querySelectorAll('.wcs-btn'));
+  btns.forEach(b => b.classList.remove('wcs-span-full'));
+  const visible = btns.filter(b => getComputedStyle(b).display !== 'none');
+  if (visible.length % 2 === 1) {
+    visible[visible.length - 1].classList.add('wcs-span-full');
+  }
+}
+document.addEventListener('DOMContentLoaded', sxLayoutWatchStrip);
+window.addEventListener('resize', sxLayoutWatchStrip);
 
 // ── FIFA panel: CMS-driven from its own "FIFA CHANNELS" sheet tab ──
 window.renderFifaPanel = function(rows) {
@@ -2398,11 +2502,12 @@ async function renderPanelsFromRegistry(panelRows) {
   // null/empty), assume FIFA is active so the site doesn't break before
   // this tab is set up.
   const usingDefault = !panelRows || !panelRows.length;
-  const rows = usingDefault
+  const rows = (usingDefault
     ? [
-        {panel_id:'fifa', tab_name:'FIFA CHANNELS', active_true_false:'TRUE'}
+        {panel_id:'fifa', tab_name:'FIFA CHANNELS', active_true_false: window.SX_FIFA_ENABLED ? 'TRUE' : 'FALSE'}
       ]
-    : panelRows.filter(r => (r.active_true_false||'').toUpperCase() !== 'FALSE');
+    : panelRows.filter(r => (r.active_true_false||'').toUpperCase() !== 'FALSE')
+  ).filter(r => (r.panel_id||'').toLowerCase() !== 'fifa' || window.SX_FIFA_ENABLED);
 
   for (const p of rows) {
     const renderer = window._panelRenderers[(p.panel_id||'').toLowerCase()];
@@ -2917,35 +3022,7 @@ window.sxSwitchTab = sxSwitchTab;
 
       <div id="fpx-grid"></div><!-- /fpx-grid : populated by renderFifaPanel() via PANELS registry -->
 
-      <div style="display:flex;justify-content:center;overflow:hidden;margin:0 0 14px;">
-        <div id="container-f33a71c8dbb5b2d11aff42ff668079e4"></div>
-      </div>
-      <script>
-        (function(){
-          var atOptions = {
-            'key' : 'f33a71c8dbb5b2d11aff42ff668079e4',
-            'format' : 'iframe',
-            'height' : 60,
-            'width' : 468,
-            'params' : {}
-          };
-          var c = document.getElementById('container-f33a71c8dbb5b2d11aff42ff668079e4');
-          var iframe = document.createElement('iframe');
-          iframe.style.cssText = 'width:468px;max-width:100%;height:60px;border:0;overflow:hidden;display:block;';
-          iframe.setAttribute('scrolling', 'no');
-          iframe.setAttribute('frameborder', '0');
-          c.appendChild(iframe);
-          var doc = iframe.contentWindow.document;
-          doc.open();
-          doc.write(
-            '<body style="margin:0;padding:0;background:transparent;">' +
-            '<script>atOptions=' + JSON.stringify(atOptions) + ';<\/script>' +
-            '<script src="https://www.highperformanceformat.com/f33a71c8dbb5b2d11aff42ff668079e4/invoke.js"><\/script>' +
-            '</body>'
-          );
-          doc.close();
-        })();
-      </script>
+      <!-- ── FIFA panel banner ad removed ── -->
 
     </div><!-- /fpx-ch-section -->
   </div><!-- /fifa-panel -->
@@ -3211,6 +3288,17 @@ window.sxSwitchTab = sxSwitchTab;
     </div>
   </div>
 </footer>
+
+<!-- SITE MOVED POPUP -->
+<div class="watch-overlay" id="site-moved-overlay" onclick="if(event.target===this)sxCloseSiteMovedPopup()" style="z-index:99999;">
+  <div class="watch-modal" style="max-width:380px;text-align:center;padding:28px 24px;">
+    <button class="watch-modal-close" onclick="sxCloseSiteMovedPopup()" style="position:absolute;top:10px;right:14px;">✕</button>
+    <div style="font-size:38px;margin-bottom:10px;">📡</div>
+    <div style="font-size:18px;font-weight:800;margin-bottom:10px;">Site moved to new location</div>
+    <div style="font-size:14px;opacity:0.85;margin-bottom:20px;word-break:break-all;">https://evsports.gt.tc/</div>
+    <button type="button" onclick="sxGoToNewSite()" style="width:100%;padding:13px 18px;border:0;border-radius:10px;background:#E0219C;color:#fff;font-weight:800;font-size:15px;cursor:pointer;">Go there</button>
+  </div>
+</div>
 
 <!-- WATCH POPUP -->
 <div class="watch-overlay" id="watchOverlay" onclick="if(event.target===this)closeWatch()">
@@ -3479,6 +3567,24 @@ function renderNav_CMS_UNUSED(rows) {
   drawerNav.innerHTML = mHtml;
 }
 
+// ── Hero banner "#" routing ─────────────────────────────────────────────
+// HERO SLIDES sheet: if a row's btn1_url is exactly "#", its "location"
+// column (livetv / matches / fancode / fifa) sends the click to that
+// in-site panel instead of trying to open a stream player with "#".
+// Any other btn1_url value plays as a normal stream, same as before.
+function sxHeroWatch(url, location, title) {
+  const u = (url || '').trim();
+  if (u === '#') {
+    const loc = (location || '').trim().toLowerCase();
+    if (loc === 'fancode') { openFanCode(); return; }
+    if (loc === 'fifa')    { openFifa(); return; }
+    if (loc === 'livetv')  { openLiveTV(); return; }
+    if (loc === 'matches') { sxSwitchTab('matches'); return; }
+    return; // blank/unrecognised location — do nothing rather than break
+  }
+  openStreamPlayer(u, title);
+}
+
 function renderSlides(rows) {
   if (!rows) return;
   const slides = active(rows);
@@ -3494,7 +3600,7 @@ function renderSlides(rows) {
       const btn2 = s.btn2_text
         ? `<a href="${s.btn2_url||'#'}" class="hsc-btn-outline" target="_blank" rel="noopener">${s.btn2_text}</a>` : '';
       cardHtml += `
-      <div class="hero-slide-card${i===0?' active-card':''}" onclick="openStreamPlayer('${s.btn1_url||'#'}','${escJs(s.title||'Live Stream')}')">
+      <div class="hero-slide-card${i===0?' active-card':''}" onclick="sxHeroWatch('${escJs(s.btn1_url||'#')}','${escJs(s.location||'')}','${escJs(s.title||'Live Stream')}')">
         <div class="hsc-banner">
           <div class="hsc-banner-bg" style="background-image:url('${s.bg_image_url}')"></div>
           <div class="hsc-banner-overlay"></div>
@@ -3509,7 +3615,7 @@ function renderSlides(rows) {
             <div class="hsc-sub">${s.subtitle||''}</div>
           </div>
           <div class="hsc-btn-row">
-            <a href="#" class="hsc-btn-watch" onclick="event.preventDefault();event.stopPropagation();openStreamPlayer('${s.btn1_url||'#'}','${escJs(s.title||'Live Stream')}')">▶ ${s.btn1_text||'Watch'}</a>
+            <a href="#" class="hsc-btn-watch" onclick="event.preventDefault();event.stopPropagation();sxHeroWatch('${escJs(s.btn1_url||'#')}','${escJs(s.location||'')}','${escJs(s.title||'Live Stream')}')">▶ ${s.btn1_text||'Watch'}</a>
             ${btn2}
           </div>
         </div>
@@ -3570,7 +3676,7 @@ function renderSlides(rows) {
         <div class="slide-title">${s.title||''}</div>
         <div class="slide-sub">${s.subtitle||''}</div>
         <div class="slide-btns">
-          <a href="#" class="btn-slide-watch" onclick="event.preventDefault();openStreamPlayer('${s.btn1_url||'#'}','${escJs(s.title||'Live Stream')}')">${s.btn1_text||'Watch Now'}</a>
+          <a href="#" class="btn-slide-watch" onclick="event.preventDefault();sxHeroWatch('${escJs(s.btn1_url||'#')}','${escJs(s.location||'')}','${escJs(s.title||'Live Stream')}')">${s.btn1_text||'Watch Now'}</a>
           ${btn2}
         </div>
       </div>
@@ -3882,16 +3988,15 @@ function renderMatchCards(rows) {
     }
   });
 
-  el.innerHTML = html;
+  el.innerHTML = html.trim() ? html : `<div class="smo-empty-box">NO MATCHES LISTED</div>`;
 
   // ── Inject match card data into desktop hero slide cards ──────
   injectMatchInfoIntoHeroCards(cards);
 
-  // Show match overlay section header if cards exist
-  if (html.trim()) {
-    const mSection = document.getElementById('match-overlay-section');
-    if (mSection) mSection.style.display = '';
-  }
+  // Match overlay section stays visible either way — showing real cards,
+  // or the "NO MATCHES LISTED" box above when there aren't any.
+  const mSection = document.getElementById('match-overlay-section');
+  if (mSection) mSection.style.display = '';
 
   timers.forEach(({ timerDisplayId, timerWrapId, badgeId, liveBadgeHtml, target }) => {
     setTimeout(() => {
@@ -5616,12 +5721,6 @@ function closeAdminChatDiscordPopup(){
 #stream-player-frame{
   width: 100%; height: 100%; border: none; display: block; background: #000;
 }
-#stream-player-banner-row{
-  flex-shrink: 0; z-index: 6; position: relative;
-  display: flex; align-items: center; justify-content: center;
-  padding: 4px 0; background: rgba(0,0,0,0.92);
-  max-height: 68px; overflow: hidden;
-}
 #stream-player-ad-bar{
   flex-shrink: 0; z-index: 6; position: relative;
   display: flex; align-items: center; justify-content: center;
@@ -5684,9 +5783,6 @@ function closeAdminChatDiscordPopup(){
       </div>
     </div>
   </div>
-  <div id="stream-player-banner-row">
-    <div id="container-f33a71c8dbb5b2d11aff42ff668079e4-player"></div>
-  </div>
   <div id="stream-player-ad-bar">
     <div id="stream-player-alt-row">
       <img id="stream-player-alt-logo" src="" alt="RISHI.EV" style="display:none">
@@ -5697,84 +5793,25 @@ function closeAdminChatDiscordPopup(){
 </div>
 
 <script>
-// Small banner ad in the stream player, loaded once the first time any
-// stream is opened. Wrapped in its own blank iframe (same as the FIFA
-// panel banner) so the atOptions/highperformanceformat.com script's
-// document.write() only ever touches that isolated iframe's document,
-// never the main page.
-var __sxPlayerBannerLoaded = false;
-function sxLoadPlayerBanner(){
-  if (__sxPlayerBannerLoaded) return;
-  __sxPlayerBannerLoaded = true;
-  var c = document.getElementById('container-f33a71c8dbb5b2d11aff42ff668079e4-player');
-  if (!c) return;
-  var atOptions = {
-    'key' : 'f33a71c8dbb5b2d11aff42ff668079e4',
-    'format' : 'iframe',
-    'height' : 60,
-    'width' : 468,
-    'params' : {}
-  };
-  var iframe = document.createElement('iframe');
-  iframe.style.cssText = 'width:468px;max-width:100%;height:60px;border:0;overflow:hidden;display:block;';
-  iframe.setAttribute('scrolling', 'no');
-  iframe.setAttribute('frameborder', '0');
-  c.appendChild(iframe);
-  var doc = iframe.contentWindow.document;
-  doc.open();
-  doc.write(
-    '<body style="margin:0;padding:0;background:transparent;">' +
-    '<script>atOptions=' + JSON.stringify(atOptions) + ';<\/script>' +
-    '<script src="https://www.highperformanceformat.com/f33a71c8dbb5b2d11aff42ff668079e4/invoke.js"><\/script>' +
-    '</body>'
-  );
-  doc.close();
+// ── SITE MOVED popup ──────────────────────────────────────────────
+// Every path that used to open a stream/match/player now routes here
+// instead of actually loading anything.
+function sxShowSiteMovedPopup(){
+  var ov = document.getElementById('site-moved-overlay');
+  if (ov) ov.classList.add('open');
 }
+function sxCloseSiteMovedPopup(){
+  var ov = document.getElementById('site-moved-overlay');
+  if (ov) ov.classList.remove('open');
+}
+function sxGoToNewSite(){
+  window.location.href = 'https://evsports.gt.tc/';
+}
+// openStreamPlayer is called from every match card, hero slide, EPG
+// channel row, and fpx/FIFA channel in the site — kept as the single
+// chokepoint so nothing actually plays; it just shows the moved popup.
 function openStreamPlayer(url, name){
-  if (!url || url === '#') return;
-  const label = name || 'Live Stream';
-  document.getElementById('stream-player-title').textContent = label;
-  const src = url.includes('#') ? url : url + '#' + encodeURIComponent(label);
-  sxLoadPlayerBanner();
-  // Loading overlay shows for a flat 3s to mask any cross-origin iframe
-  // flicker/redirect on first paint — but the stream itself starts loading
-  // immediately underneath, not after the 3s. Setting the iframe src here,
-  // before the overlay timer, means the stream is already fetching in the
-  // background while the loader is up.
-  const loadingEl = document.getElementById('stream-player-loading');
-  if (loadingEl){
-    loadingEl.classList.remove('sp-loading-hide');
-    loadingEl.style.display = 'flex';
-  }
-  clearTimeout(window._spLoadingTimer);
-  document.getElementById('stream-player-frame').src = src;
-  document.getElementById('stream-player-overlay').classList.add('open');
-  spShowTopbar();
-  (function(){
-    var altLogo = document.getElementById('stream-player-alt-logo');
-    var navLogo = document.getElementById('nav-logo-img');
-    if (altLogo) {
-      altLogo.src = (navLogo && navLogo.src) ? navLogo.src : 'https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/magenta.png';
-      altLogo.style.display = '';
-    }
-    // Show whichever mirrors the visitor ISN'T already on — no point
-    // sending someone on pages.dev to pages.dev if the stream fails.
-    var altLinksWrap = document.getElementById('stream-player-alt-links');
-    if (altLinksWrap) {
-      var mirrors = [
-        { host: 'evsports.gt.tc', url: 'https://evsports.gt.tc/', label: 'EV SPORTS OFFICIAL' },
-        { host: 'saptarshiorg.github.io', url: 'https://saptarshiorg.github.io/', label: 'GITHUB SX SPORTS' },
-        { host: 'saptarshixtrasports.pages.dev', url: 'https://saptarshixtrasports.pages.dev/', label: 'SAPTARSHI PAGES DEV' }
-      ];
-      var others = mirrors.filter(function(m){ return m.host.toLowerCase() !== location.hostname.toLowerCase(); });
-      altLinksWrap.innerHTML = others.map(function(m){
-        return '<a class="sp-alt-link" href="' + m.url + '" target="_blank" rel="noopener noreferrer">' + m.label + ' ↗</a>';
-      }).join('<span class="sp-alt-sep"> · </span>');
-    }
-  })();
-  window._spLoadingTimer = setTimeout(() => {
-    if (loadingEl) loadingEl.classList.add('sp-loading-hide');
-  }, 3000);
+  sxShowSiteMovedPopup();
 }
 function closeStreamPlayer(){
   document.getElementById('stream-player-overlay').classList.remove('open');
@@ -5947,17 +5984,17 @@ function closeLiveTV(){
   document.body.style.overflow = '';
 }
 function openFanCode(){
-  sxPlayPanelIntro();
-  document.getElementById('fancode-overlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
-  window.scrollTo(0,0);
-  document.querySelectorAll('[data-sxtab]').forEach(el => el.classList.toggle('active', el.dataset.sxtab === 'fancode'));
+  // FanCode is itself a live player (its iframe starts streaming as
+  // soon as the panel opens), so route it through the moved popup too
+  // instead of opening the panel.
+  sxShowSiteMovedPopup();
 }
 function closeFanCode(){
   document.getElementById('fancode-overlay').classList.remove('open');
   document.body.style.overflow = '';
 }
 function openFifa(){
+  if (!window.SX_FIFA_ENABLED) return;
   sxPlayPanelIntro();
   document.getElementById('fifa-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -6434,6 +6471,24 @@ function closeVip(){
 })();
 </script>
 
+<!-- ── Catch the few watch/player links that are plain <a href target="_blank">
+     tags (fixture "WATCH" buttons, the Watch popup's channel list, and the
+     FanCode embed-fallback link) — these bypass openStreamPlayer entirely,
+     so they need their own capture-phase intercept to also show the
+     site-moved popup instead of actually navigating. ── -->
+<script>
+(function(){
+  document.addEventListener('click', function(e){
+    var link = e.target.closest && e.target.closest('.btn-watch-sm, .watch-sx-featured, .watch-channel-btn, #fancode-embed-fallback a');
+    if (!link) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (typeof closeWatch === 'function') closeWatch();
+    sxShowSiteMovedPopup();
+  }, true);
+})();
+</script>
+
 <!-- ── Popup / popunder guard ─────────────────────────────────────────
      Two layers, neither touching the stream iframe's sandbox attribute
      (kept off deliberately since sandboxing breaks many stream embeds):
@@ -6475,22 +6530,5 @@ function closeVip(){
   });
 })();
 </script>
-      <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Redirecting...</title>
-
-    <!-- Instant redirect -->
-    <meta http-equiv="refresh" content="0; url=https://evsports.gt.tc/">
-
-    <script>
-        window.location.replace("https://evsports.gt.tc/");
-    </script>
-</head>
-<body>
-    <p>If you are not redirected automatically,
-        <a href="https://evsports.gt.tc/">click here</a>.
-    </p>
 </body>
 </html>
-
