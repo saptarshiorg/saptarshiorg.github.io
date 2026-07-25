@@ -32,5 +32,26 @@
     allow="autoplay; fullscreen; picture-in-picture"
     allowfullscreen>
   </iframe>
+  <script>
+  // 1. Block Inspect Element & DevTools Shortcuts
+  document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  document.onkeydown = (e) => {
+    // F12 key
+    if (e.keyCode === 123) return false;
+    
+    // Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C
+    if (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) return false;
+    
+    // Ctrl+U (View Source)
+    if (e.ctrlKey && e.keyCode === 85) return false;
+  };
+
+  // 2. Block Pasting Content
+  document.addEventListener('paste', (e) => {
+    e.preventDefault();
+  });
+</script>
+
 </body>
 </html>
