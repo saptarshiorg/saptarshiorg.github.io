@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal 4K HLS / DASH Player</title>
+    <!-- Video.js Styles -->
+    <link href="https://zencdn.net" rel="stylesheet" />
+    <link href="https://unpkg.com" rel="stylesheet">
+    <style>
+        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; }
+        .player-container { width: 90%; max-width: 1000px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .video-js { width: 100% !important; height: auto !important; aspect-ratio: 16/9; }
+    </style>
+</head>
+<body>
+
+<div class="player-container">
+    <video id="my-video" class="video-js vjs-theme-city vjs-big-play-centered" controls preload="auto" crossorigin="anonymous">
+        <p class="vjs-no-js">To view this video please enable JavaScript, and consider upgrading to a web browser that supports HTML5 video</p>
+    </video>
+</div>
+
+<!-- Core Video Scripts -->
+<script src="https://zencdn.net"></script>
+<!-- DASH & DRM Playback Capabilities -->
+<script src="https://jsdelivr.net"></script>
+<script src="https://jsdelivr.net"></script>
+
+<script>
+    // --- CONFIGURATION SETUP ---
+    // Change this to your proxy URL (HLS or DASH)
+    const streamUrl = "https://workers.dev";
+    
+    // ClearKey DRM Credentials (Leave empty if using a standard unencrypted HLS link)
+    const clearKeyId = "81872faa1d6b45fa9045cdeb2e310000";
+    const clearKeyValue = "9b88168e61274587a471962c46b94675";
+    // ----------------------------
+
+    const player = videojs('my-video', {
+        html5: {
+            vhs: { overrideNative: true },
+            nativeAudioTracks: false,
+            nativeVideoTracks: false
+        }
+    });
+
+    // Detect Stream Type Automatically
+    let streamType = "application/x-mpegURL"; // Default HLS
+    let srcOptions = { src: streamUrl, type: streamType };
+
+    if (streamUrl.includes(".mpd")) {
+        streamType = "application/dash+xml";
+        srcOptions = {
+            src: streamUrl,
+            type: streamType,
+            keySystemOptions: [
+                {
+                    name: 'org.w3.clearkey',
+                    options: {
+                        clearkey: {
+                            [clearKeyId]: clearKeyValue
+                        }
+                    }
+                }
+            ]
+        };
+    }
+
+    // Load stream into player
+    player.src(srcOptions);
+
+    // Force 4K Maximum Resolution Allocation
+    player.ready(function() {
+        player.volume(0.5);
+        
+        // Handle maximum bandwidth for immediate 4K playback scaling
+        if (streamType === "application/dash+xml") {
+            player.dash.mediaPlayer.updateSettings({
+                'streaming': {
+                    'abr': { 'maxBitrate': { 'video': 25000000 } } // Allows up to 25 Mbps 4K data
+                }
+            });
+        }
+    });
+</script>
+</body>
+</html>
