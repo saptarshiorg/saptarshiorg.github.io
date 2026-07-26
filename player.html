@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Universal 4K HLS / DASH Player</title>
+    <title>Universal 4K Player</title>
     <!-- Video.js Styles -->
     <link href="https://zencdn.net" rel="stylesheet" />
     <link href="https://unpkg.com" rel="stylesheet">
@@ -17,7 +17,7 @@
 
 <div class="player-container">
     <video id="my-video" class="video-js vjs-theme-city vjs-big-play-centered" controls preload="auto" crossorigin="anonymous">
-        <p class="vjs-no-js">To view this video please enable JavaScript, and consider upgrading to a web browser that supports HTML5 video</p>
+        <p class="vjs-no-js">To view this video please enable JavaScript</p>
     </video>
 </div>
 
@@ -28,14 +28,13 @@
 <script src="https://jsdelivr.net"></script>
 
 <script>
-    // --- CONFIGURATION SETUP ---
-    // Change this to your proxy URL (HLS or DASH)
+    // --- INTEGRATED CLOUDFLARE WORKER STREAM CONFIG ---
     const streamUrl = "https://workers.dev";
     
-    // ClearKey DRM Credentials (Leave empty if using a standard unencrypted HLS link)
+    // Decryption License Parameters
     const clearKeyId = "81872faa1d6b45fa9045cdeb2e310000";
     const clearKeyValue = "9b88168e61274587a471962c46b94675";
-    // ----------------------------
+    // --------------------------------------------------
 
     const player = videojs('my-video', {
         html5: {
@@ -45,11 +44,11 @@
         }
     });
 
-    // Detect Stream Type Automatically
-    let streamType = "application/x-mpegURL"; // Default HLS
+    // Determine engine routing profile based on stream extension type
+    let streamType = "application/x-mpegURL"; // Default HLS profile
     let srcOptions = { src: streamUrl, type: streamType };
 
-    if (streamUrl.includes(".mpd")) {
+    if (streamUrl.includes(".mpd") || streamUrl.includes("dash")) {
         streamType = "application/dash+xml";
         srcOptions = {
             src: streamUrl,
@@ -67,18 +66,18 @@
         };
     }
 
-    // Load stream into player
+    // Pass the proxy URL packages into the main media rendering track
     player.src(srcOptions);
 
-    // Force 4K Maximum Resolution Allocation
+    // Initialise maximum resolution engine performance parameters
     player.ready(function() {
-        player.volume(0.5);
+        player.volume(0.7);
         
-        // Handle maximum bandwidth for immediate 4K playback scaling
-        if (streamType === "application/dash+xml") {
+        // Remove stream quality choke limits to unlock maximum 4K content rendering
+        if (streamType === "application/dash+xml" && player.dash && player.dash.mediaPlayer) {
             player.dash.mediaPlayer.updateSettings({
                 'streaming': {
-                    'abr': { 'maxBitrate': { 'video': 25000000 } } // Allows up to 25 Mbps 4K data
+                    'abr': { 'maxBitrate': { 'video': 25000000 } } 
                 }
             });
         }
