@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<link rel="icon" href="https://i.postimg.cc/X7kyz6c8/Chat-GPT-Image-May-18-2026-09-32-18-AM.png" type="image/png">
-<meta property="og:image" content="">
+<link rel="icon" href="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/magenta.png" type="image/png">
+<meta property="og:image" content="https://i.postimg.cc/GtKyCWmv/Chat-GPT-Image-Jul-19-2026-06-25-19-PM.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="675">
 
@@ -13,7 +13,9 @@
 <meta name="robots" content="index, follow" />
 
 <!-- Optimizes how your page title looks in search results (Keep under 60 characters) -->
-<title>SX SPORTS — RISHI.EV</title>
+<title>ENTERTAUNMENT VERSE  EV SPORTS (Powered by Saptarshi SX Sports)</title>
+
+<meta property="og:site_name" content="EV SPORTS (Powered by Saptarshi SX Sports)" />
 
 <!-- Optimizes the summary snippet under your link (Keep under 155 characters) -->
 <meta name="description" content="SPORTS Live",  ALL SPORTS Teams, Cricket, Football, Soccer, FIFA World Cup & More — Watch Sports Anytime on SX SPORTS — Saptarshi XTRA Grand Television Telecom." />
@@ -21,9 +23,42 @@
 <meta name="referrer" content="no-referrer-when-downgrade">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title id="page-title">SX Sports</title>
-<link id="favicon" rel="icon" type="image/png" href="">
+<title id="page-title">EV SPORTS (Powered by Saptarshi SX Sports)</title>
+<link id="favicon" rel="icon" type="image/png" href="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/magenta.png">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Rajdhani:wght@400;500;600;700&family=Chakra+Petch:wght@400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- ── Player-safe guard for the sitewide popunder/social-bar script ──
+     This has to be registered BEFORE the ad script below loads. Capture-
+     phase listeners on document always run before any bubble-phase
+     listener the ad script attaches (regardless of load order), so this
+     swallows the click at the door — the ad script's own listener never
+     sees it — whenever the click originated inside the open stream
+     player. Everywhere else on the site, clicks pass through untouched. -->
+<script>
+(function(){
+  function sxBlockOverPlayer(e){
+    var overlay = document.getElementById('stream-player-overlay');
+    if (!overlay || !overlay.classList.contains('open')) return;
+    if (!overlay.contains(e.target)) return;
+    // Let our own player controls (back button, alt-mirror links, the
+    // stream iframe itself) work normally — only swallow clicks that
+    // would otherwise bubble past them to the ad script's page-wide
+    // listener (e.g. clicks on blank overlay space).
+    var allow = e.target.closest && e.target.closest(
+      '#stream-player-back, .sp-alt-link, #stream-player-frame, #stream-player-alt-links, #stream-player-banner-row, #stream-player-banner-row *'
+    );
+    if (allow) return;
+    e.stopPropagation();
+    if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+  }
+  ['pointerdown','mousedown','click','touchstart'].forEach(function(type){
+    document.addEventListener(type, sxBlockOverPlayer, true);
+  });
+})();
+</script>
+
+<!-- ── Sitewide ad network script (effectivecpmnetwork) ── -->
+<script src="https://pl30435711.effectivecpmnetwork.com/3d/84/a7/3d84a7b3eab34e4351ded24c712c2110.js"></script>
 
 <!-- SX SPORTS -->
 
@@ -36,7 +71,7 @@
      ╚═════╝╚═╝     ╚═╝╚══════╝
   ▸ Replace YOUR_SPREADSHEET_ID_HERE with your Google Sheets ID
   ▸ Then publish your sheet: File → Share → Publish to web → CSV
-  ▸ LIVE CHANNELS tab now has a "group" column → Star Sports | Sony Sports | fox | FanCode | International | Other
+  ▸ LIVE CHANNELS tab now has a "group" column → Star Sports | Sony Sports | fox | FanCode | International | ZEE | News | sky | espn | tnt | willow | Other
   ▸ New tab "PANELS" controls extra panels (FIFA, WT20, future ones):
       columns: active_true_false | panel_id | tab_name | display_title
       Set active_true_false = FALSE on a row to hide that whole panel.
@@ -342,6 +377,12 @@ body::after {
   width: auto;
   object-fit: contain;
   display: block;
+  animation: loaderLogoPulse 1.8s ease-in-out infinite;
+  filter: drop-shadow(0 0 0 rgba(224,33,156,0));
+}
+@keyframes loaderLogoPulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(224,33,156,0.35)); }
+  50%      { transform: scale(1.05); filter: drop-shadow(0 0 34px rgba(224,33,156,0.75)); }
 }
 
 .loader-goldbar {
@@ -372,12 +413,79 @@ body::after {
 .loader-powered strong { color: #fff; font-weight: 700; }
 
 /* ────────────────────────────────────────────
+   PANEL-OPEN LOGO INTRO
+   Brief logo splash played over Live TV / FIFA / FanCode (and News, which
+   routes through Live TV) the moment their overlay opens. Sits above all
+   three overlays (each z-index:1200) and removes itself once the animation
+   finishes — see sxPlayPanelIntro() in the panel-open functions.
+──────────────────────────────────────────── */
+#sx-panel-intro {
+  position: fixed; inset: 0; z-index: 1400;
+  background: #000000;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 1; transition: opacity 0.4s var(--ease);
+  pointer-events: none;
+}
+#sx-panel-intro.fading { opacity: 0; }
+#sx-panel-intro img {
+  height: 120px; max-width: 70vw; width: auto; object-fit: contain;
+  animation: sxPanelIntroPop 0.7s var(--spring) both;
+}
+@keyframes sxPanelIntroPop {
+  0%   { opacity: 0; transform: scale(0.7); filter: drop-shadow(0 0 0 rgba(224,33,156,0)); }
+  55%  { opacity: 1; transform: scale(1.08); filter: drop-shadow(0 0 30px rgba(224,33,156,0.65)); }
+  100% { opacity: 1; transform: scale(1); filter: drop-shadow(0 0 14px rgba(224,33,156,0.4)); }
+}
+
+/* ────────────────────────────────────────────
+   TICKER
+──────────────────────────────────────────── */
+.ticker-wrap {
+  display: none; /* bar removed from markup */
+}
+.ticker-label {
+  background: rgba(8,8,9,0.88);
+  color: #FFB347;
+  font-family: var(--font-display); font-weight: 800;
+  font-size: 11px; letter-spacing: 2px;
+  padding: 0 16px; height: 100%;
+  display: flex; align-items: center; white-space: nowrap; flex-shrink: 0; z-index: 2;
+}
+.ticker-track {
+  display: flex;
+  animation: tickerScroll 34s linear infinite;
+  align-items: center; height: 100%; padding-left: 16px;
+  will-change: transform;
+}
+.ticker-item {
+  white-space: nowrap;
+  font-family: var(--font-display); font-weight: 700;
+  font-size: 12px; color: rgba(255,255,255,0.90);
+  padding-right: 48px;
+  display: flex; align-items: center; gap: 8px;
+}
+@keyframes tickerScroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ────────────────────────────────────────────
    HEADER / NAV
 ──────────────────────────────────────────── */
 header {
-  background: transparent;
+  background: rgba(8,8,9,0);
   box-shadow: none;
   position: sticky; top: 0; z-index: 200;
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  transition: all 0.3s var(--ease);
+  border-bottom: 1px solid rgba(255,255,255,0);
+}
+header.scrolled {
+  background: rgba(8,8,9,0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 .header-inner {
   max-width: 1400px; margin: 0 auto;
@@ -420,62 +528,63 @@ header {
 .header-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
 .btn-get-vip-nav {
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-  background: linear-gradient(135deg,#F7C55A,#E0A82E); color: #171205;
+  display: flex; align-items: center; justify-content: center; gap: 0;
+  background: linear-gradient(135deg,#F7C55A,#E0A82E); color: #1A0A05;
   border: none; cursor: pointer;
   font-family: var(--font-display); font-weight: 800; font-size: 12px; letter-spacing: 0.5px;
-  padding: 7px 13px; border-radius: 0; text-decoration: none; white-space: nowrap;
-  box-shadow: 0 0 0 rgba(247,197,90,0.5);
+  padding: 8px; border-radius: 50%; text-decoration: none; white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(247,197,90,0.35);
   transition: all 0.18s var(--ease);
 }
-.btn-get-vip-nav:hover { background: linear-gradient(135deg,#FFD97A,#F0BB40); box-shadow: 0 4px 16px rgba(247,197,90,0.45); }
+.btn-get-vip-nav:hover { background: linear-gradient(135deg,#FFD97A,#F0BB40); box-shadow: 0 6px 18px rgba(247,197,90,0.50); transform: translateY(-1px); }
 .btn-vip-icon { display: flex; align-items: center; flex-shrink: 0; }
-.btn-vip-icon svg { width: 15px; height: 13px; display: block; }
+.btn-vip-icon svg { width: 18px; height: 15px; display: block; }
 @media(max-width:560px) {
   .btn-vip-icon svg { width: 18px; height: 15px; }
 }
-.btn-vip-label { display: inline; }
+.btn-vip-label { display: none; }
 
 .btn-yt {
-  display: flex; align-items: center; gap: 6px;
-  background: #F04FB0; color: #fff;
+  display: flex; align-items: center; justify-content: center; gap: 0;
+  background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.75);
   font-family: var(--font-display); font-weight: 800; font-size: 12px; letter-spacing: 0.5px;
-  padding: 7px 13px; border-radius: 0; text-decoration: none; white-space: nowrap;
-  transition: background 0.18s var(--ease);
+  padding: 8px; border-radius: 50%; text-decoration: none; white-space: nowrap;
+  transition: all 0.18s var(--ease); backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.10);
 }
-.btn-yt:hover { background: #cc0000; }
+.btn-yt:hover { background: rgba(255,255,255,0.15); color: #fff; }
+.btn-yt svg { width: 18px; height: 18px; flex-shrink: 0; }
 
 .btn-discord {
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-  background: #00C8E0; color: #fff;
+  display: flex; align-items: center; justify-content: center; gap: 0;
+  background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.75);
   font-family: var(--font-display); font-weight: 800; font-size: 12px; letter-spacing: 0.5px;
-  padding: 7px 13px; border-radius: 0; text-decoration: none; white-space: nowrap;
-  transition: all 0.18s var(--ease);
+  padding: 8px; border-radius: 50%; text-decoration: none; white-space: nowrap;
+  transition: all 0.18s var(--ease); backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.10);
 }
-.btn-discord:hover { background: #00A3B8; }
-.btn-discord svg { width: 16px; height: 13px; flex-shrink: 0; display: block; overflow: visible; }
-.btn-discord .btn-discord-label { display: inline; }
+.btn-discord:hover { background: rgba(255,255,255,0.15); color: #fff; }
+.btn-discord svg { width: 18px; height: 15px; flex-shrink: 0; display: block; overflow: visible; }
+.btn-discord .btn-discord-label { display: none; }
 @media(max-width:560px) {
-  .btn-discord { width: 36px; height: 36px; padding: 0; border-radius: 50%; flex-shrink: 0; box-sizing: border-box; }
-  .btn-discord svg { width: 18px; height: 14px; margin: 0; }
-  .btn-discord .btn-discord-label { display: none; }
+  .btn-discord { width: 40px; height: 40px; padding: 0; flex-shrink: 0; box-sizing: border-box; }
+  .btn-discord svg { width: 18px; height: 14px; }
 }
 
-.btn-whatsapp {
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-  background: #fff; color: #128C4F;
+.btn-telegram {
+  display: flex; align-items: center; justify-content: center; gap: 0;
+  background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.75);
   font-family: var(--font-display); font-weight: 800; font-size: 12px; letter-spacing: 0.5px;
-  padding: 7px 13px; border-radius: 0; text-decoration: none; white-space: nowrap;
-  border: 1px solid rgba(0,0,0,0.06);
-  transition: all 0.18s var(--ease);
+  padding: 8px; border-radius: 50%; text-decoration: none; white-space: nowrap;
+  transition: all 0.18s var(--ease); backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.10);
 }
-.btn-whatsapp:hover { background: #eafaf0; }
-.btn-whatsapp-icon { width: 16px; height: 16px; flex-shrink: 0; display: block; object-fit: contain; }
-.btn-whatsapp .btn-whatsapp-label { display: inline; }
+.btn-telegram:hover { background: rgba(255,255,255,0.15); color: #fff; }
+.btn-telegram-icon { width: 18px; height: 18px; flex-shrink: 0; display: block; object-fit: contain; }
+.btn-telegram .btn-telegram-label { display: none; }
 @media(max-width:560px) {
-  .btn-whatsapp { width: 36px; height: 36px; padding: 0; border-radius: 50%; flex-shrink: 0; box-sizing: border-box; }
-  .btn-whatsapp-icon { width: 20px; height: 20px; margin: 0; }
-  .btn-whatsapp .btn-whatsapp-label { display: none; }
+  .btn-telegram { width: 40px; height: 40px; padding: 0; flex-shrink: 0; box-sizing: border-box; }
+  .btn-telegram-icon { width: 18px; height: 18px; }
 }
 
 .hamburger {
@@ -545,7 +654,7 @@ header {
 /* ────────────────────────────────────────────
    HERO — Desktop card grid
 ──────────────────────────────────────────── */
-.hero { position: relative; background: transparent; overflow: hidden; height: auto; }
+.hero { position: relative; background: transparent; overflow: hidden; height: auto; z-index: 100; }
 .hero-cards-section { display: none !important; padding: 24px 0 16px; }
 .hero-card-dots { display: none !important; }
 .hero-cards-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
@@ -722,7 +831,10 @@ header {
   #watch-ch-strip { display: grid; grid-template-columns: repeat(2,1fr); gap: 7px; padding: 10px 14px 4px; }
   .wcs-btn { justify-content: center; font-size: 11px; padding: 7px 10px; gap: 5px; }
   .wcs-btn svg { width: 12px; height: 12px; }
-  .wcs-btn:last-child:nth-child(odd) { grid-column: 1/-1; }
+  /* Set by sxLayoutWatchStrip() on the last currently-VISIBLE button only —
+     unlike a plain :nth-child(odd) selector this stays correct no matter
+     how many quick-strip buttons are shown/hidden (e.g. FIFA toggling). */
+  .wcs-btn.wcs-span-full { grid-column: 1/-1; }
 }
 
 /* ────────────────────────────────────────────
@@ -784,6 +896,16 @@ header {
   transition: transform 0.2s var(--spring), box-shadow 0.2s var(--ease);
 }
 .smo-btn:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 -2px 0 rgba(140,98,0,0.4) inset, 0 6px 0 -1px rgba(120,84,0,0.5), 0 10px 26px rgba(224,33,156,0.45); }
+
+.smo-empty-box {
+  width: 100%; text-align: center;
+  background: var(--glass); backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 1px dashed rgba(255,255,255,0.14);
+  border-radius: 0; padding: 22px 16px;
+  font-family: var(--font-display); font-weight: 800; font-size: 11px;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted);
+}
 
 /* ── Match cards: 3-col grid on desktop ── */
 @media(min-width:901px) {
@@ -1303,13 +1425,14 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
 
 /* QR Panel */
 .nav-qr-wrap { position: relative; display: flex; align-items: center; }
-.nav-qr-btn { width: 38px; height: 38px; background: var(--s2); border-radius: 0; display: flex; align-items: center; justify-content: center; font-size: 17px; cursor: pointer; transition: all 0.18s; flex-shrink: 0; }
-.nav-qr-btn:hover,.nav-qr-btn.active { background: rgba(224,33,156,0.12); }
+.nav-qr-btn { width: 38px; height: 38px; background: transparent; border: none; outline: none; border-radius: 0; display: flex; align-items: center; justify-content: center; font-size: 17px; cursor: pointer; transition: all 0.18s; flex-shrink: 0; padding: 2px; box-shadow: none; }
+.nav-qr-btn:hover,.nav-qr-btn.active { background: transparent; opacity: 0.85; }
+.nav-qr-btn-img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .qr-float-panel { position: absolute; top: calc(100% + 14px); right: 0; z-index: 500; background: rgba(8,8,9,0.97); backdrop-filter: var(--blur); border-radius: 0; padding: 18px; box-shadow: 0 0 44px rgba(224,33,156,0.15), 0 14px 44px rgba(0,0,0,0.75); text-align: center; transform: scale(0.88) translateY(-8px); opacity: 0; pointer-events: none; transform-origin: top right; transition: all 0.25s var(--spring); width: 196px; }
 .qr-float-panel.open { transform: scale(1) translateY(0); opacity: 1; pointer-events: all; }
 .qr-float-title { font-family: var(--font-display); font-size: 14px; font-weight: 800; letter-spacing: 0.1em; color: var(--lavender); margin-bottom: 4px; }
 .qr-float-sub { font-size: 10px; color: var(--text-muted); letter-spacing: 0.05em; margin-bottom: 12px; }
-.qr-float-panel img { width: 158px; height: 158px; background: #fff; padding: 8px; border-radius: 0; display: block; }
+.qr-float-panel img { width: 158px; height: 158px; background: #ffffff; padding: 8px; border: none; border-radius: 0; display: block; outline: none; box-shadow: none; }
 .qr-open-btn { display: block; margin-top: 12px; background: var(--grad-gold); color: #1A0A05; border: none; padding: 9px 0; border-radius: 0; width: 100%; font-family: var(--font-display); font-weight: 800; font-size: 12px; text-decoration: none; box-shadow: 0 1px 0 rgba(255,255,255,0.5) inset, 0 6px 18px rgba(224,33,156,0.30); transition: all 0.18s; }
 .qr-open-btn:hover { transform: translateY(-1px); box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 10px 26px rgba(224,33,156,0.45); }
 .qr-open-btn:hover { opacity: 0.9; }
@@ -1330,10 +1453,10 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
 
   /* Hamburger + QR/scanner: flat, magenta */
   .nav-qr-btn {
-    background: transparent; border: 1.5px solid rgba(224,33,156,0.55);
+    background: transparent; border: none;
     color: #E0219C; box-shadow: none;
   }
-  .nav-qr-btn:hover, .nav-qr-btn.active { background: rgba(224,33,156,0.12); }
+  .nav-qr-btn:hover, .nav-qr-btn.active { background: transparent; }
   .hamburger { background: transparent; box-shadow: none; }
   .hamburger span { background: #E0219C; }
 
@@ -1528,6 +1651,9 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
 body::before{ opacity:0.5; }
 body::after{ opacity:0.02; }
 body{ background:var(--cu-bg) !important; }
+
+/* ── Top utility bar — removed (bar element deleted from markup) ── */
+#cu-topbar{ display:none; }
 
 /* ── Header: flat, minimal, transparent ── */
 header{
@@ -1901,7 +2027,7 @@ body::before{ display:none !important; }
 <!-- LOADING FULL SCREEN -->
 <div id="cms-loader">
   <div class="loader-popup">
-    <div class="loader-brand"><img src="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/main/loading.png" alt="RISHI.EV" class="loader-brand-img"></div>
+    <div class="loader-brand"><img src="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/magenta.png" alt="RISHI.EV" class="loader-brand-img"></div>
     <div class="loader-goldbar"><div class="loader-goldbar-inner"></div></div>
   </div>
 </div>
@@ -1938,6 +2064,11 @@ body::before{ display:none !important; }
         <img src="https://static.vecteezy.com/system/resources/previews/069/146/538/non_2x/fancode-app-icon-on-transparent-background-free-png.png" alt="FanCode" class="pcqn-icon" style="border-radius: 0;">
         FanCode
       </a>
+      <a class="pcqn-item" data-sxtab="fifa" href="#sxTabPanels" onclick="event.preventDefault();openFifa();">
+        <img src="https://upload.wikimedia.org/wikipedia/en/1/17/2026_FIFA_World_Cup_emblem.svg" alt="FIFA" class="pcqn-icon" style="filter:drop-shadow(0 0 4px rgba(0,160,255,0.5));">
+        FIFA
+      </a>
+
     </nav>
     <div style="flex:1"></div>
     <div class="header-actions">
@@ -1945,13 +2076,13 @@ body::before{ display:none !important; }
         <span class="btn-vip-icon"><svg viewBox="0 0 24 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2 6.5a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm20 0a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm-10-2a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zM2 7.8l4.6 3.4L12 5l5.4 6.2L22 7.8 20 17H4L2 7.8z"/></svg></span>
         <span class="btn-vip-label">Get VIP</span>
       </button>
-      <a class="btn-discord" href="https://discord.gg/E8YyPRNF6" target="_blank" rel="noopener" aria-label="Join Discord" title="Join our Discord">
+      <a class="btn-discord" href="https://discord.gg/w46C6mQgrY" target="_blank" rel="noopener" aria-label="Join Discord" title="Join our Discord">
         <svg viewBox="0 0 127.14 96.36" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"/></svg>
         <span class="btn-discord-label">Discord</span>
       </a>
-      <a class="btn-whatsapp" href="https://whatsapp.com/channel/0029VbD7I5a2975FbLIcgX2W" target="_blank" rel="noopener" aria-label="Join WhatsApp Channel" title="Join our WhatsApp Channel">
-        <svg class="btn-whatsapp-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12.004 2.003c-5.514 0-9.997 4.483-9.997 9.997 0 1.762.464 3.484 1.346 4.997L2 22l5.176-1.323a9.965 9.965 0 0 0 4.822 1.226h.005c5.514 0 9.997-4.483 9.997-9.997 0-2.669-1.04-5.176-2.929-7.065A9.935 9.935 0 0 0 12.004 2.003zm0 18.174h-.004a8.34 8.34 0 0 1-4.253-1.164l-.305-.181-3.15.805.842-3.075-.199-.316a8.318 8.318 0 0 1-1.284-4.462c0-4.61 3.75-8.36 8.363-8.36 2.233 0 4.332.87 5.911 2.449a8.302 8.302 0 0 1 2.447 5.913c0 4.61-3.75 8.36-8.363 8.36z"/><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/></svg>
-        <span class="btn-whatsapp-label">WhatsApp</span>
+      <a class="btn-telegram" href="https://t.me/rishievofficial" target="_blank" rel="noopener" aria-label="Join Telegram" title="Join our Telegram">
+        <img class="btn-telegram-icon" src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Telegram_2019_Logo.svg/960px-Telegram_2019_Logo.svg.png" alt="Telegram">
+        <span class="btn-telegram-label">Telegram</span>
       </a>
     </div>
     <div class="nav-device-info" id="nav-device-info" title="This device's name and ID">
@@ -1959,7 +2090,7 @@ body::before{ display:none !important; }
       <span class="nav-device-id" id="nav-device-id"></span>
     </div>
     <div class="nav-qr-wrap" id="nav-qr-wrap">
-      <button class="nav-qr-btn" id="nav-qr-btn" onclick="toggleQr()" aria-label="Scan QR">📱</button>
+      <button class="nav-qr-btn" id="nav-qr-btn" onclick="toggleQr()" aria-label="Scan QR"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/QR_Code_Example.svg/500px-QR_Code_Example.svg.png" alt="QR" class="nav-qr-btn-img"></button>
       <div class="qr-float-panel" id="qr-panel">
         <div class="qr-float-title" id="qr-title">Scan to Watch</div>
         <div class="qr-float-sub" id="qr-sub">Open on any device</div>
@@ -1972,6 +2103,21 @@ body::before{ display:none !important; }
     </button>
   </div>
 </header>
+<script>
+// Header scroll transparency effect
+(function(){
+  const header = document.querySelector('header');
+  function updateHeaderScroll(){
+    if (window.scrollY > 80) {
+      header.classList.add('scrolled');
+    } else {
+      header.classList.remove('scrolled');
+    }
+  }
+  window.addEventListener('scroll', updateHeaderScroll, {passive: true});
+  updateHeaderScroll();
+})();
+</script>
 <script>
 (function(){
   // Device name: broad UA-based browser + OS/platform guess, including
@@ -2087,7 +2233,7 @@ body::before{ display:none !important; }
   <!-- MOBILE FULL-WIDTH SLIDES (hidden on desktop via CSS) -->
   <div class="slides-container" id="slides-container"></div>
 </section>
-<!-- QUICK TAB SWITCHER STRIP (Live TV / Matches / FIFA / FanCode / Movies) -->
+<!-- QUICK TAB SWITCHER STRIP (Live TV / Matches / FIFA / News / FanCode) -->
 <div id="watch-ch-strip">
   <a class="wcs-btn active" id="wcs-matches" data-sxtab="matches" href="#sxTabPanels" onclick="event.preventDefault();sxSwitchTab('matches');">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>
@@ -2097,23 +2243,195 @@ body::before{ display:none !important; }
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
     Live TV
   </a>
-  <a class="wcs-btn" id="wcs-fancode" data-sxtab="fancode" href="#sxTabPanels" onclick="event.preventDefault();openFanCode();">
-    <img src="https://static.vecteezy.com/system/resources/previews/069/146/538/non_2x/fancode-app-icon-on-transparent-background-free-png.png" alt="FanCode" style="height:15px;width:15px;object-fit:contain;display:block;flex-shrink:0;border-radius: 0;">
-    FanCode
+  <a class="wcs-btn" id="wcs-fifa" data-sxtab="fifa" href="#sxTabPanels" onclick="event.preventDefault();openFifa();">
+    <img src="https://upload.wikimedia.org/wikipedia/en/1/17/2026_FIFA_World_Cup_emblem.svg" alt="FIFA" style="height:15px;width:15px;object-fit:contain;display:block;flex-shrink:0;">
+    FIFA
   </a>
   <a class="wcs-btn" id="wcs-news" data-sxtab="livetv" href="#sxTabPanels" onclick="event.preventDefault();openLiveTV();setTimeout(()=>{const t=document.querySelector('#chTabs .ch-tab[data-grp=\'News\']');if(t)t.click();},80);">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h8M6 12h12M6 16h8"/></svg>
     News
   </a>
+  <a class="wcs-btn" id="wcs-fancode" data-sxtab="fancode" href="#sxTabPanels" onclick="event.preventDefault();openFanCode();">
+    <img src="https://static.vecteezy.com/system/resources/previews/069/146/538/non_2x/fancode-app-icon-on-transparent-background-free-png.png" alt="FanCode" style="height:15px;width:15px;object-fit:contain;display:block;flex-shrink:0;border-radius: 0;">
+    FanCode
+  </a>
 </div>
 
+<!-- ── Quick-strip buttons: skeuomorphic (raised/glossy) finish ──
+     Matches = saffron / white text. Live TV = white / dark-blue text.
+     News & FanCode keep a neutral dark-glass version of the same finish.
+     ID selectors + !important so this wins over the earlier flat-theme
+     passes regardless of where those rules sit in the stylesheet. -->
+<style>
+#watch-ch-strip .wcs-btn{
+  border-radius: 999px !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  transition: transform 0.15s var(--ease,ease), box-shadow 0.15s var(--ease,ease) !important;
+}
+#watch-ch-strip .wcs-btn:active{ transform: translateY(1px) scale(0.98) !important; }
 
+#wcs-matches{
+  background: linear-gradient(180deg,#FFB347 0%,#FF9933 45%,#F07F00 100%) !important;
+  color: #000 !important;
+  border-color: rgba(255,255,255,0.35) !important;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.25) !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.55) inset,
+    0 -3px 6px rgba(140,60,0,0.35) inset,
+    0 4px 10px rgba(240,127,0,0.40) !important;
+}
+#wcs-matches svg{ color:#000 !important; }
+#wcs-matches:hover,#wcs-matches:active{
+  background: linear-gradient(180deg,#FFC168 0%,#FFA13D 45%,#F58600 100%) !important;
+  color:#000 !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.6) inset,
+    0 -3px 6px rgba(140,60,0,0.35) inset,
+    0 6px 16px rgba(240,127,0,0.55) !important;
+}
+
+#wcs-all{
+  background: linear-gradient(180deg,#ffffff 0%,#F1F3F8 45%,#E2E6EF 100%) !important;
+  color: #0A2A6B !important;
+  border-color: rgba(10,42,107,0.18) !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.9) inset,
+    0 -3px 6px rgba(180,190,210,0.6) inset,
+    0 4px 10px rgba(10,42,107,0.22) !important;
+}
+#wcs-all svg{ color:#0A2A6B !important; }
+#wcs-all:hover,#wcs-all:active{
+  background: linear-gradient(180deg,#ffffff 0%,#E9ECF4 45%,#D7DCEA 100%) !important;
+  color:#0A2A6B !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.9) inset,
+    0 -3px 6px rgba(180,190,210,0.6) inset,
+    0 6px 16px rgba(10,42,107,0.32) !important;
+}
+
+#wcs-news{
+  background: linear-gradient(180deg,#4CAF50 0%,#2E9E39 45%,#1F7A28 100%) !important;
+  color: #fff !important;
+  border-color: rgba(255,255,255,0.30) !important;
+  text-shadow: 0 1px 1px rgba(10,50,10,0.45) !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.5) inset,
+    0 -3px 6px rgba(15,70,20,0.40) inset,
+    0 4px 10px rgba(31,122,40,0.40) !important;
+}
+#wcs-news svg{ color:#fff !important; }
+#wcs-news:hover,#wcs-news:active{
+  background: linear-gradient(180deg,#5CC160 0%,#38B046 45%,#248A2F 100%) !important;
+  color:#fff !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.55) inset,
+    0 -3px 6px rgba(15,70,20,0.40) inset,
+    0 6px 16px rgba(31,122,40,0.55) !important;
+}
+
+#wcs-fancode{
+  background: linear-gradient(180deg,#3A3A42 0%,#232328 45%,#151517 100%) !important;
+  color: #fff !important;
+  border-color: rgba(255,255,255,0.16) !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.18) inset,
+    0 -3px 6px rgba(0,0,0,0.45) inset,
+    0 4px 10px rgba(0,0,0,0.35) !important;
+}
+#wcs-fancode:hover,#wcs-fancode:active{
+  background: linear-gradient(180deg,#46464F 0%,#2B2B31 45%,#1A1A1D 100%) !important;
+  color:#fff !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.22) inset,
+    0 -3px 6px rgba(0,0,0,0.45) inset,
+    0 6px 16px rgba(224,33,156,0.30) !important;
+}
+</style>
+
+<!-- ── Home screen banner ad — same ad unit as the stream player ── -->
+<div id="home-banner-ad" style="margin:14px auto 18px;max-width:468px;min-height:60px;display:flex;justify-content:center;overflow:hidden;">
+  <div id="container-f33a71c8dbb5b2d11aff42ff668079e4-home"></div>
+</div>
+<script>
+// Same 468x60 highperformanceformat.com banner as sxLoadPlayerBanner() in
+// the stream player, wrapped in its own blank iframe so the ad script's
+// document.write() only ever touches that isolated iframe, never the
+// main page. This one loads immediately since the slot is always visible
+// on the home screen (the player version loads lazily, on first stream open).
+document.addEventListener('DOMContentLoaded', () => {
+  var c = document.getElementById('container-f33a71c8dbb5b2d11aff42ff668079e4-home');
+  if (!c) return;
+  var atOptions = {
+    'key' : 'f33a71c8dbb5b2d11aff42ff668079e4',
+    'format' : 'iframe',
+    'height' : 60,
+    'width' : 468,
+    'params' : {}
+  };
+  var iframe = document.createElement('iframe');
+  iframe.style.cssText = 'width:468px;max-width:100%;height:60px;border:0;overflow:hidden;display:block;';
+  iframe.setAttribute('scrolling', 'no');
+  iframe.setAttribute('frameborder', '0');
+  c.appendChild(iframe);
+  var doc = iframe.contentWindow.document;
+  doc.open();
+  doc.write(
+    '<body style="margin:0;padding:0;background:transparent;">' +
+    '<script>atOptions=' + JSON.stringify(atOptions) + ';<\/script>' +
+    '<script src="https://www.highperformanceformat.com/f33a71c8dbb5b2d11aff42ff668079e4/invoke.js"><\/script>' +
+    '</body>'
+  );
+  doc.close();
+});
+</script>
 
 <script>
 function fpxLoad(card, url, name) {
   if (!url || url === '#') return;
   openStreamPlayer(url, name || 'Live Stream');
 }
+function fpxSelectChange(sel) {
+  const idx = sel.value;
+  if (idx === '') return;
+  const realCards = document.querySelectorAll('#fpx-grid .fpx-card:not(.fpx-empty-slot)');
+  const card = realCards[idx];
+  if (card) card.click();
+  sel.selectedIndex = 0;
+}
+
+// ── FIFA WORLD CUP TOGGLE ──────────────────────────────────────────────
+// The 2026 tournament is over. Flip this to true whenever FIFA (or the
+// next World Cup) needs to come back — every nav entry point, the panel
+// renderer, and the registry fail-safe below all read this one flag, so
+// nothing else needs to change.
+window.SX_FIFA_ENABLED = false;
+
+// Hide every FIFA nav entry point (quick-nav item, tab-switcher strip
+// button, mobile tab bar item) while the toggle above is off. Nothing
+// here is deleted — re-showing it is just SX_FIFA_ENABLED = true.
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.SX_FIFA_ENABLED) return;
+  document.querySelectorAll('[data-sxtab="fifa"]').forEach(el => {
+    el.style.display = 'none';
+  });
+});
+
+// Mobile quick-strip layout fix: on the 2-column grid, if the number of
+// currently VISIBLE buttons is odd, the last visible one spans the full
+// width so it doesn't sit alone with an empty gap beside it. Recomputed
+// on load/resize so it stays correct whether FIFA is shown or hidden.
+function sxLayoutWatchStrip(){
+  const strip = document.getElementById('watch-ch-strip');
+  if (!strip) return;
+  const btns = Array.from(strip.querySelectorAll('.wcs-btn'));
+  btns.forEach(b => b.classList.remove('wcs-span-full'));
+  const visible = btns.filter(b => getComputedStyle(b).display !== 'none');
+  if (visible.length % 2 === 1) {
+    visible[visible.length - 1].classList.add('wcs-span-full');
+  }
+}
+document.addEventListener('DOMContentLoaded', sxLayoutWatchStrip);
+window.addEventListener('resize', sxLayoutWatchStrip);
 
 // ── FIFA panel: CMS-driven from its own "FIFA CHANNELS" sheet tab ──
 window.renderFifaPanel = function(rows) {
@@ -2223,6 +2541,17 @@ window.renderFifaPanel = function(rows) {
       </div>
     </div>`;
   }).join('');
+
+  const selectEl = document.getElementById('fpx-ch-select');
+  if (selectEl) {
+    const realCards = Array.from(grid.querySelectorAll('.fpx-card:not(.fpx-empty-slot)'));
+    selectEl.innerHTML = '<option value="">Jump to channel…</option>' +
+      realCards.map((c, i) => {
+        const nm = (c.querySelector('.fpx-name') || {}).textContent || ('Channel ' + (i + 1));
+        const soon = c.classList.contains('fpx-coming-soon');
+        return `<option value="${i}"${soon ? ' disabled' : ''}>${nm}${soon ? ' (Soon)' : ''}</option>`;
+      }).join('');
+  }
 };
 
 // ── PANELS registry: lets panels (FIFA, future ones) be added,
@@ -2237,11 +2566,12 @@ async function renderPanelsFromRegistry(panelRows) {
   // null/empty), assume FIFA is active so the site doesn't break before
   // this tab is set up.
   const usingDefault = !panelRows || !panelRows.length;
-  const rows = usingDefault
+  const rows = (usingDefault
     ? [
-        {panel_id:'fifa', tab_name:'FIFA CHANNELS', active_true_false:'TRUE'}
+        {panel_id:'fifa', tab_name:'FIFA CHANNELS', active_true_false: window.SX_FIFA_ENABLED ? 'TRUE' : 'FALSE'}
       ]
-    : panelRows.filter(r => (r.active_true_false||'').toUpperCase() !== 'FALSE');
+    : panelRows.filter(r => (r.active_true_false||'').toUpperCase() !== 'FALSE')
+  ).filter(r => (r.panel_id||'').toLowerCase() !== 'fifa' || window.SX_FIFA_ENABLED);
 
   for (const p of rows) {
     const renderer = window._panelRenderers[(p.panel_id||'').toLowerCase()];
@@ -2354,7 +2684,8 @@ window.addEventListener('resize', () => {
 
 function sxSwitchTab(name){
   if (name === 'fancode') { openFanCode(); return; }
-  const panelMap = { matches:'matches-panel', fifa:'fifa-panel-tab' };
+  if (name === 'fifa') { openFifa(); return; }
+  const panelMap = { matches:'matches-panel' };
   const targetId = panelMap[name];
   if (!targetId) return;
 
@@ -2397,6 +2728,398 @@ window.sxSwitchTab = sxSwitchTab;
 </div>
 </div>
 
+<!-- ══════════════════════════════════════════════════════════════════════
+     FIFA WORLD CUP — full in-site page (same treatment as Live TV /
+     FanCode): a separate fixed full-screen overlay, own topbar w/ Back
+     button, not part of the normal scrolling tab flow.
+═══════════════════════════════════════════════════════════════════════ -->
+<style>
+#fifa-overlay{
+  display: none; position: fixed; inset: 0; z-index: 1200;
+  background:
+    linear-gradient(180deg,rgba(8,6,0,0.90),rgba(6,5,0,0.97)),
+    url('https://i.ytimg.com/vi/HmpzUm5j4OE/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLCd1unbiR80dTwcQHDAJfNL91ycEw') center/cover fixed no-repeat;
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
+}
+#fifa-overlay.open{ display: block; }
+
+#fifa-topbar{
+  position: sticky; top: 0; z-index: 3;
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 20px; background: rgba(10,10,11,0.92);
+  backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+#fifa-back{
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(224,33,156,0.14); border: 1px solid rgba(224,33,156,0.30); color: #fff;
+  font-family: var(--cu-font,inherit); font-weight: 700; font-size: 12px;
+  padding: 8px 12px; cursor: pointer; border-radius: 0; letter-spacing: 0.03em;
+}
+#fifa-back:hover{ background: rgba(224,33,156,0.24); }
+#fifa-back svg{ width: 14px; height: 14px; flex-shrink: 0; color: #E0219C; }
+#fifa-topbar-title{
+  font-family: var(--cu-font,inherit); font-weight: 800; font-size: 13px;
+  color: rgba(255,255,255,0.75); letter-spacing: 0.04em; text-transform: uppercase;
+}
+</style>
+<div id="fifa-overlay">
+  <div id="fifa-topbar">
+    <button id="fifa-back" onclick="closeFifa()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      Back
+    </button>
+    <span id="fifa-topbar-title">⚽ FIFA World Cup</span>
+  </div>
+<div id="fifa-panel-wrap">
+  <style>
+  #fifa-panel-wrap{padding:0 !important;max-width:none !important;margin:0 !important;}
+
+  /* panel shell — no boxed card look; the glass now lives on the full-screen overlay itself.
+     !important needed here because an earlier site-wide "clean theme" pass
+     (#fifa-panel{background/border/box-shadow !important}) would otherwise re-box it. */
+  #fifa-panel{
+    position:relative !important;
+    background:none !important;
+    border:none !important;
+    box-shadow:none !important;
+    border-radius:0 !important;
+    overflow:visible !important;
+  }
+  #fifa-panel-bg{ display:none !important; }
+
+  /* header bar */
+  #fifa-panel-hdr{
+    position:relative;z-index:2;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:12px 16px 10px;
+    background:rgba(30,20,0,0.38);
+    backdrop-filter:blur(8px);
+  }
+  #fifa-panel-hdr-left{display:flex;align-items:center;gap:10px;}
+  #fifa-panel-logo{height:30px;width:auto;filter:drop-shadow(0 0 8px rgba(224,33,156,0.55));}
+  #fifa-panel-title{font-family:var(--font-display);font-weight:900;font-size:14px;letter-spacing:.06em;color:#fff;}
+  #fifa-panel-title span{color:#E0219C;}
+  #fifa-panel-live{
+    display:flex;align-items:center;gap:5px;
+    font-family:var(--font-display);font-size:10px;font-weight:800;letter-spacing:1.8px;
+    color:#ff4060;
+  }
+  .fpx-dot{width:7px;height:7px;border-radius:50%;background:#ff2442;box-shadow:0 0 6px #ff2442;animation:fpxDot 1.2s ease-in-out infinite;flex-shrink:0;}
+  @keyframes fpxDot{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(1.5);}}
+  #fifa-panel-ext{
+    display:flex;align-items:center;gap:5px;
+    text-decoration:none;
+    font-family:var(--font-display);font-size:10px;font-weight:700;letter-spacing:.06em;
+    color:rgba(245,210,140,0.75);
+    padding:4px 12px;border-radius: 0;
+    background:rgba(180,130,0,0.12);
+    transition:all .18s;
+  }
+  #fifa-panel-ext:hover{color:#fff;background:rgba(180,130,0,0.22);}
+
+  /* player */
+  #fpx-player-wrap{position:relative;z-index:2;}
+  #fpx-topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:8px 14px;
+    background:rgba(22,16,0,0.40);
+  }
+  #fpx-ch-name{
+    display:flex;align-items:center;gap:7px;
+    font-family:var(--font-display);font-weight:800;font-size:12px;letter-spacing:.06em;color:#fff;
+  }
+  #fpx-ch-name .fpx-dot{width:6px;height:6px;}
+  #fpx-badge{font-family:var(--font-display);font-size:9px;font-weight:700;letter-spacing:1.2px;color:#E0219C;background:rgba(224,33,156,0.10);padding:2px 8px;border-radius: 0;}
+  #fpx-iframe-box{position:relative;width:100%;padding-top:42%;}
+  #fpx-placeholder{
+    position:absolute;inset:0;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+    background:linear-gradient(135deg,rgba(20,14,0,0.90),rgba(34,24,0,0.95));
+    color:rgba(245,210,140,0.45);
+    font-family:var(--font-display);font-size:12px;letter-spacing:.06em;
+  }
+  #fpx-placeholder svg{opacity:.25;}
+  #fpx-iframe{position:absolute;inset:0;width:100%;height:100%;border:none;background:#000;display:none;}
+
+  /* channel grid */
+  #fpx-ch-section{position:relative;z-index:2;padding:12px 14px 14px;}
+  #fpx-ch-hdr{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
+  #fpx-ch-select{
+    margin-left:auto;
+    font-family:var(--font-display);font-weight:700;font-size:10.5px;letter-spacing:.04em;
+    color:#fff;background:rgba(40,28,0,0.45);border:1px solid rgba(224,33,156,0.25);
+    border-radius:0;padding:6px 10px;cursor:pointer;
+  }
+  #fpx-ch-select:focus{outline:none;border-color:rgba(224,33,156,0.55);}
+  #fpx-ch-hdr-title{font-family:var(--font-display);font-weight:800;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#fff;}
+  #fpx-ch-hdr-title::before{content:'';display:inline-block;width:3px;height:14px;background:linear-gradient(180deg,#E0219C,#fff3c4);border-radius: 0;margin-right:7px;vertical-align:middle;}
+  #fpx-ch-count{font-family:var(--font-display);font-size:9px;font-weight:700;letter-spacing:1px;color:#E0219C;background:rgba(224,33,156,0.10);padding:2px 8px;border-radius: 0;}
+  #fpx-discord-note{display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:8px 12px;background:rgba(224,33,156,0.12);border-radius: 0;}
+  #fpx-discord-note svg{flex-shrink:0;width:16px;height:16px;}
+  #fpx-discord-note span{font-family:var(--font-body);font-size:11px;line-height:1.4;color:rgba(225,228,255,0.88);}
+  #fpx-discord-note strong{color:#d7dce1;font-weight:800;}
+  #fpx-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(130px,1fr));
+    gap:8px;
+  }
+  .fpx-card.fpx-empty-slot{display:none;}
+  .fpx-card{
+    position:relative;
+    background:rgba(40,28,0,0.28);
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    border-radius: 0;overflow:hidden;
+    cursor:pointer;transition:transform .22s cubic-bezier(.34,1.3,.64,1),box-shadow .22s ease;
+    display:flex;flex-direction:column;
+    box-shadow:0 4px 20px rgba(0,0,0,0.50);
+  }
+  .fpx-card:hover{transform:translateY(-3px);box-shadow:0 10px 36px rgba(0,0,0,0.70),0 0 18px rgba(224,33,156,0.12);}
+  .fpx-card.fpx-active{box-shadow:0 0 0 2px rgba(224,33,156,0.35),0 8px 28px rgba(0,0,0,0.60);}
+  .fpx-card.fpx-active::after{content:'▶ NOW PLAYING';position:absolute;bottom:4px;right:6px;font-family:var(--font-display);font-size:7px;font-weight:800;letter-spacing:.8px;color:#E0219C;background:rgba(0,20,60,0.88);padding:2px 5px;border-radius: 0;}
+  .fpx-thumb-wrap{position:relative;width:100%;padding-top:56.25%;overflow:hidden;background:#120d00;}
+  .fpx-thumb{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .32s ease;}
+  .fpx-card:hover .fpx-thumb{transform:scale(1.05);}
+  .fpx-thumb-ov{position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(0,0,8,0.85) 100%);}
+  .fpx-live-dot{position:absolute;top:6px;left:7px;width:6px;height:6px;border-radius:50%;background:#ff2442;box-shadow:0 0 5px #ff2442;animation:fpxDot 1.2s ease-in-out infinite;}
+  .fpx-body{padding:8px 10px 10px;}
+  .fpx-name{font-family:var(--font-display);font-weight:800;font-size:11px;letter-spacing:.05em;color:#fff;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .fpx-sub-label{font-family:var(--font-display);font-size:7.5px;font-weight:700;letter-spacing:.7px;color:rgba(245,210,140,0.60);text-transform:uppercase;margin-bottom:3px;}
+  .fpx-meta{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+  .fpx-pill{font-family:var(--font-display);font-size:8px;font-weight:700;letter-spacing:.8px;background:rgba(224,33,156,0.14);color:#E0219C;padding:1px 6px;border-radius: 0;}
+  .fpx-live-lbl{font-size:9px;color:rgba(245,210,140,0.55);}
+  .fpx-premium{display:inline-flex;align-items:center;gap:3px;font-family:var(--font-display);font-size:8px;font-weight:800;letter-spacing:1px;color:#1a1200;background:linear-gradient(135deg,#fff3c4,#E0219C 45%,#b8860b);padding:1px 7px;border-radius: 0;box-shadow:0 0 8px rgba(224,33,156,0.30);}
+
+  /* 4K Diamond — premium feed cards */
+  .fpx-card.fpx-diamond{
+    background:linear-gradient(135deg,rgba(11,32,58,0.75),rgba(3,10,22,0.92));
+    box-shadow:0 4px 20px rgba(0,0,0,0.50), 0 0 0 1px rgba(224,33,156,0.12) inset;
+  }
+  .fpx-card.fpx-diamond:hover{
+    transform:translateY(-3px);
+    box-shadow:0 12px 40px rgba(0,0,0,0.75), 0 0 26px rgba(224,33,156,0.30), 0 0 0 1px rgba(224,33,156,0.20) inset;
+  }
+  .fpx-card.fpx-diamond .fpx-name{color:#eaf6ff;}
+  .fpx-4k-badge-big{position:absolute;bottom:6px;right:6px;width:52px;height:52px;object-fit:contain;z-index:2;filter:drop-shadow(0 2px 10px rgba(224,33,156,0.5));}
+  .fpx-free4k-lbl{font-size:9px;color:rgba(200,230,255,0.75);font-weight:700;}
+  .fpx-pill-4k{font-family:var(--font-display);font-size:8px;font-weight:800;letter-spacing:.8px;background:linear-gradient(135deg,#FFB347,#E0219C 60%,#7A0F5C);color:#1A0A05;padding:1px 7px;border-radius: 0;box-shadow:0 0 8px rgba(224,33,156,0.35);}
+
+  /* Coming Soon */
+  .fpx-card.fpx-coming-soon{opacity:.60;cursor:not-allowed;pointer-events:none;}
+  .fpx-card.fpx-coming-soon:hover{transform:none;box-shadow:0 4px 20px rgba(0,0,0,0.50);}
+  .fpx-soon-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.50);backdrop-filter:blur(2px);}
+  .fpx-soon-overlay span{font-family:var(--font-display);font-size:9px;font-weight:800;letter-spacing:1.5px;color:#fff;background:rgba(20,20,60,0.80);padding:3px 9px;border-radius: 0;}
+  .fpx-pill-soon{font-family:var(--font-display);font-size:8px;font-weight:700;letter-spacing:.8px;background:rgba(100,100,140,0.16);color:rgba(200,200,240,0.50);padding:1px 6px;border-radius: 0;}
+
+  /* Knockout bracket (Semi-finals -> Final) */
+  #fifa-knockout-wrap{position:relative;z-index:2;padding:0 16px 12px;}
+  #fifa-knockout-card{
+    background:rgba(24,17,0,0.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border:1px solid rgba(255,255,255,0.08);border-radius:0;padding:16px 18px 20px;
+  }
+  #fifa-knockout-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;}
+  #fifa-knockout-title{font-family:var(--font-display);font-weight:900;font-size:16px;color:#fff;}
+  #fifa-knockout-crumb{font-family:var(--font-body);font-size:11px;font-weight:600;color:rgba(255,255,255,0.42);margin-top:3px;}
+  #fifa-knockout-crumb span{margin:0 5px;color:rgba(255,255,255,0.25);}
+  #fifa-knockout-chev{width:20px;height:20px;color:rgba(255,255,255,0.30);flex-shrink:0;margin-top:2px;}
+
+  #fifa-bracket{display:flex;align-items:stretch;gap:0;}
+  #fifa-bracket-left{display:flex;flex-direction:column;gap:14px;flex:1;min-width:0;}
+  .fifa-bracket-match{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);
+    border-radius:0;padding:12px 16px;
+  }
+  .fifa-bracket-team{display:flex;align-items:center;gap:8px;font-family:var(--font-display);font-weight:800;font-size:13px;color:#fff;white-space:nowrap;}
+  .fifa-bracket-flag{width:22px;height:16px;object-fit:cover;border-radius:0;box-shadow:0 0 0 1px rgba(255,255,255,0.15);}
+  .fifa-bracket-vs{font-family:var(--font-display);font-size:10px;font-weight:700;letter-spacing:.06em;color:rgba(255,255,255,0.32);text-transform:uppercase;}
+
+  #fifa-bracket-lines{position:relative;width:34px;flex-shrink:0;}
+  .fifa-bracket-line{position:absolute;left:0;width:17px;border-right:2px solid rgba(255,255,255,0.15);}
+  .fifa-bracket-line-top{top:0;height:50%;border-top:2px solid rgba(255,255,255,0.15);}
+  .fifa-bracket-line-bottom{bottom:0;height:50%;border-bottom:2px solid rgba(255,255,255,0.15);}
+  .fifa-bracket-line-h{position:absolute;top:50%;left:17px;width:17px;height:2px;background:rgba(255,255,255,0.15);transform:translateY(-1px);}
+
+  #fifa-bracket-final{
+    display:flex;align-items:center;gap:14px;align-self:center;
+    background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);
+    border-radius:0;padding:14px 22px;flex-shrink:0;
+  }
+  .fifa-bracket-shield{width:30px;height:30px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.16);}
+  .fifa-bracket-shield svg{width:100%;height:100%;}
+  .fifa-bracket-final-team{font-size:14px;}
+  .fifa-bracket-final-team .fifa-bracket-flag{width:26px;height:19px;}
+  .fifa-bracket-vs-final{color:#3B82F6 !important;font-weight:900 !important;font-size:11px !important;}
+
+  @media(max-width:600px){
+    #fifa-knockout-wrap{padding:0 0 10px;}
+    #fifa-knockout-card{border-radius:0;margin:0 8px;padding:12px 12px 16px;}
+    #fifa-bracket{flex-direction:column;align-items:stretch;gap:0;}
+    #fifa-bracket-lines{
+      display:block;position:relative;
+      width:100%;height:26px;flex:none;align-self:stretch;
+    }
+    .fifa-bracket-line{border-right:none;}
+    .fifa-bracket-line-top{
+      top:0;left:25%;width:0;height:50%;
+      border-top:none;border-left:2px solid rgba(255,255,255,0.15);
+    }
+    .fifa-bracket-line-bottom{
+      top:0;bottom:auto;left:75%;width:0;height:50%;
+      border-bottom:none;border-left:2px solid rgba(255,255,255,0.15);
+    }
+    .fifa-bracket-line-h{ top:50%;left:25%;width:50%; }
+    #fifa-bracket-lines::after{
+      content:''; position:absolute; left:50%; top:50%;
+      width:2px; height:50%; background:rgba(255,255,255,0.15);
+      transform:translateX(-1px);
+    }
+    #fifa-bracket-final{justify-content:center;align-self:stretch;}
+  }
+
+  @media(max-width:600px){
+    #fifa-panel-wrap{padding:8px 0 4px;}
+    #fifa-panel{border-radius: 0;}
+    #fpx-iframe-box{padding-top:56.25%;}
+    /* Small SQUARE cards — same shape as PC, just shrunk down (4-up grid) */
+    #fpx-grid{grid-template-columns:repeat(4,1fr);gap:5px;}
+    .fpx-card{flex-direction:column;align-items:stretch;border-radius: 0;min-height:0;padding:0;}
+    .fpx-card.fpx-sx-solo{grid-column:auto;}
+    .fpx-card.fpx-col-4k,.fpx-card.fpx-col-hd{grid-column:auto;}
+    .fpx-card.fpx-row-2,.fpx-card.fpx-row-3,.fpx-card.fpx-row-4,.fpx-card.fpx-row-5,.fpx-card.fpx-row-6,.fpx-card.fpx-row-7,.fpx-card.fpx-row-8{grid-row:auto;}
+    /* banner shown FULLY (contain, not cropped) on a flat background */
+    .fpx-thumb-wrap{position:relative;flex:unset;width:100%;padding-top:0;height:46px;border-radius: 0;overflow:hidden;background:#0a0700;}
+    .fpx-thumb{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;}
+    .fpx-thumb-ov{background:linear-gradient(180deg,transparent 70%,rgba(0,0,8,0.75) 100%);}
+    .fpx-card .fpx-4k-badge-big{width:14px;height:14px;bottom:1px;right:1px;}
+    .fpx-body{flex:unset;padding:3px 4px 4px;display:flex;flex-direction:column;gap:1px;min-width:0;}
+    .fpx-card .fpx-name{font-size:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:0;}
+    .fpx-card .fpx-sub-label{font-size:5.5px;}
+    .fpx-card .fpx-meta{gap:1.5px;flex-wrap:wrap;}
+    .fpx-card .fpx-pill,.fpx-card .fpx-pill-4k{font-size:5.5px;padding:0.5px 3px;}
+    .fpx-card .fpx-live-lbl,.fpx-card .fpx-free4k-lbl{font-size:5.5px;}
+    .fpx-card.fpx-active::after{font-size:5.5px;bottom:2px;right:3px;padding:1px 3px;content:'▶';}
+    .fpx-card.fpx-empty-slot{display:flex;background:transparent;border:1.5px dashed rgba(255,255,255,0.16);box-shadow:none;justify-content:center;align-items:center;min-height:0;aspect-ratio:1/1.1;border-radius: 0;cursor:default;pointer-events:none;}
+    .fpx-card.fpx-empty-slot:hover{transform:none;box-shadow:none;}
+    .fpx-card.fpx-empty-slot .fpx-empty-lbl{font-size:6px;font-weight:700;letter-spacing:.3px;color:rgba(255,255,255,0.30);text-transform:uppercase;}
+    .fpx-4k-badge-big{width:14px;height:14px;bottom:1px;right:1px;}
+    #fifa-panel-title{font-size:12px;}
+    #fifa-panel-logo{height:24px;}
+  }
+</style>
+
+  <div id="fifa-panel">
+    <div id="fifa-panel-bg"></div>
+
+    <!-- panel header -->
+    <div id="fifa-panel-hdr">
+      <div id="fifa-panel-hdr-left">
+        <img id="fifa-panel-logo" src="https://upload.wikimedia.org/wikipedia/en/1/17/2026_FIFA_World_Cup_emblem.svg" alt="FIFA 2026">
+        <div id="fifa-panel-title">FIFA <span>2026</span> LIVE</div>
+      </div>
+    </div>
+
+    <!-- Knockout bracket: Semi-finals -> Final -->
+    <div id="fifa-knockout-wrap">
+      <div id="fifa-knockout-card">
+        <div id="fifa-knockout-hdr">
+          <div>
+            <div id="fifa-knockout-title">Knockout</div>
+            <div id="fifa-knockout-crumb">Semi-finals<span>›</span>Final</div>
+          </div>
+        </div>
+        <div id="fifa-bracket">
+          <div id="fifa-bracket-left">
+            <div class="fifa-bracket-match">
+              <div class="fifa-bracket-team"><img class="fifa-bracket-flag" src="https://flagcdn.com/w40/fr.png" alt="FRA">FRA</div>
+              <span class="fifa-bracket-vs">vs</span>
+              <div class="fifa-bracket-team">ESP<img class="fifa-bracket-flag" src="https://flagcdn.com/w40/es.png" alt="ESP"></div>
+            </div>
+            <div class="fifa-bracket-match">
+              <div class="fifa-bracket-team"><img class="fifa-bracket-flag" src="https://flagcdn.com/w40/gb-eng.png" alt="ENG">ENG</div>
+              <span class="fifa-bracket-vs">vs</span>
+              <div class="fifa-bracket-team">ARG<img class="fifa-bracket-flag" src="https://flagcdn.com/w40/ar.png" alt="ARG"></div>
+            </div>
+          </div>
+          <div id="fifa-bracket-lines">
+            <div class="fifa-bracket-line fifa-bracket-line-top"></div>
+            <div class="fifa-bracket-line fifa-bracket-line-bottom"></div>
+            <div class="fifa-bracket-line-h"></div>
+          </div>
+          <div id="fifa-bracket-final">
+            <div class="fifa-bracket-team fifa-bracket-final-team"><img class="fifa-bracket-flag" src="https://flagcdn.com/w40/es.png" alt="ESP">ESP</div>
+            <span class="fifa-bracket-vs fifa-bracket-vs-final">vs</span>
+            <div class="fifa-bracket-team fifa-bracket-final-team">ARG<img class="fifa-bracket-flag" src="https://flagcdn.com/w40/ar.png" alt="ARG"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- player -->
+    <div id="fpx-player-wrap" style="display:none">
+      <div id="fpx-topbar">
+        <div id="fpx-ch-name"><span class="fpx-dot"></span><span id="fpx-active-name">Select a Channel</span></div>
+        <span id="fpx-badge">LIVE STREAM</span>
+      </div>
+      <div id="fpx-iframe-box">
+        <div id="fpx-placeholder">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <span>Pick a channel below</span>
+        </div>
+        <iframe id="fpx-iframe" src="" allowfullscreen allow="autoplay; fullscreen" scrolling="no"></iframe>
+      </div>
+    </div>
+
+    <!-- channels -->
+    <div id="fpx-ch-section">
+      <div id="fpx-ch-hdr">
+        <span id="fpx-ch-hdr-title">All Channels</span>
+        <span id="fpx-ch-count">12 CHANNELS</span>
+        <select id="fpx-ch-select" onchange="fpxSelectChange(this)">
+          <option value="">Jump to channel…</option>
+        </select>
+      </div>
+
+      <div id="fpx-discord-note">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.5 1.5 21h21L12 2.5Z" stroke="#E0219C" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 9.5v5" stroke="#E0219C" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="17.2" r="0.9" fill="#E0219C"/></svg>
+        <span>⚠️ Channel Available during Live match.</span>
+      </div>
+
+      <div id="fpx-grid"></div><!-- /fpx-grid : populated by renderFifaPanel() via PANELS registry -->
+
+      <div style="display:flex;justify-content:center;overflow:hidden;margin:0 0 14px;">
+        <div id="container-f33a71c8dbb5b2d11aff42ff668079e4"></div>
+      </div>
+      <script>
+        (function(){
+          var atOptions = {
+            'key' : 'f33a71c8dbb5b2d11aff42ff668079e4',
+            'format' : 'iframe',
+            'height' : 60,
+            'width' : 468,
+            'params' : {}
+          };
+          var c = document.getElementById('container-f33a71c8dbb5b2d11aff42ff668079e4');
+          var iframe = document.createElement('iframe');
+          iframe.style.cssText = 'width:468px;max-width:100%;height:60px;border:0;overflow:hidden;display:block;';
+          iframe.setAttribute('scrolling', 'no');
+          iframe.setAttribute('frameborder', '0');
+          c.appendChild(iframe);
+          var doc = iframe.contentWindow.document;
+          doc.open();
+          doc.write(
+            '<body style="margin:0;padding:0;background:transparent;">' +
+            '<script>atOptions=' + JSON.stringify(atOptions) + ';<\/script>' +
+            '<script src="https://www.highperformanceformat.com/f33a71c8dbb5b2d11aff42ff668079e4/invoke.js"><\/script>' +
+            '</body>'
+          );
+          doc.close();
+        })();
+      </script>
+
+    </div><!-- /fpx-ch-section -->
+  </div><!-- /fifa-panel -->
+</div><!-- /fifa-panel-wrap -->
+</div><!-- /fifa-overlay -->
 
 <style>
   /* ══════════════════════════════════════════════════════════════════════
@@ -2503,9 +3226,46 @@ window.sxSwitchTab = sxSwitchTab;
   }
   </style>
 
-<!-- ══════════════════════════════════════════════
-     FANCODE EMBEDDED PANEL
-══════════════════════════════════════════════ -->
+<!-- ── FIFA channels: COMPACT GRID, 4-per-line (overrides the card-grid
+     layouts above, desktop and mobile alike) + the "Jump to channel" dropdown ── -->
+<style>
+  #fpx-grid{
+    display:grid !important;
+    grid-template-columns:repeat(4,1fr) !important;
+    gap:6px !important;
+  }
+  .fpx-card{
+    flex-direction:column !important; align-items:stretch !important;
+    gap:0 !important; padding:0 !important; min-height:0 !important;
+    background:rgba(40,28,0,0.32) !important; border:1px solid rgba(255,255,255,0.07) !important;
+    backdrop-filter:blur(8px) !important; -webkit-backdrop-filter:blur(8px) !important;
+  }
+  .fpx-card:hover{ transform:translateY(-2px) !important; border-color:rgba(224,33,156,0.30) !important; }
+  .fpx-card.fpx-empty-slot{ display:none !important; }
+  .fpx-thumb-wrap{
+    position:relative !important; width:100% !important; flex:unset !important;
+    aspect-ratio:16/10 !important; height:auto !important; padding-top:0 !important;
+    border-radius:0 !important; overflow:hidden !important; background:#120d00 !important;
+  }
+  .fpx-thumb{ position:absolute !important; inset:0 !important; width:100% !important; height:100% !important; object-fit:cover !important; }
+  .fpx-live-dot{ top:4px !important; left:4px !important; }
+  .fpx-body{
+    flex:unset !important; padding:5px 6px 6px !important; min-width:0 !important;
+    display:flex !important; flex-direction:column !important; gap:2px !important;
+    background:none !important;
+  }
+  .fpx-name{ font-size:9.5px !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; margin-bottom:0 !important; }
+  .fpx-sub-label{ font-size:6.5px !important; order:0 !important; }
+  .fpx-meta{ gap:3px !important; }
+  .fpx-pill,.fpx-pill-4k{ font-size:6.5px !important; padding:1px 5px !important; }
+  .fpx-live-lbl,.fpx-free4k-lbl{ font-size:6.5px !important; }
+  .fpx-4k-badge-big{ width:22px !important; height:22px !important; bottom:3px !important; right:3px !important; }
+  @media(max-width:600px){
+    #fpx-grid{ grid-template-columns:repeat(4,1fr) !important; gap:5px !important; }
+    .fpx-name{ font-size:7px !important; }
+    .fpx-body{ padding:3px 4px 4px !important; }
+  }
+</style>
 <style>
 #fancode-overlay{
   display: none; position: fixed; inset: 0; z-index: 1200;
@@ -2605,7 +3365,7 @@ window.sxSwitchTab = sxSwitchTab;
         <button type="button" class="btn-get-vip" onclick="openVip()">
           <span class="btn-vip-icon-inline"><svg viewBox="0 0 24 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2 6.5a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm20 0a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm-10-2a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zM2 7.8l4.6 3.4L12 5l5.4 6.2L22 7.8 20 17H4L2 7.8z"/></svg></span> Get VIP
         </button>
-        <a class="btn-join-discord-footer" href="https://discord.gg/E8YyPRNF6" target="_blank" rel="noopener">
+        <a class="btn-join-discord-footer" href="https://discord.gg/w46C6mQgrY" target="_blank" rel="noopener">
           <svg viewBox="0 0 24 18" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M20.317 1.492c-1.53-.703-3.17-1.222-4.885-1.49a.077.077 0 00-.079.036c-.21.375-.444.865-.608 1.25-1.844-.276-3.68-.276-5.487 0-.164-.394-.406-.875-.617-1.25a.08.08 0 00-.079-.037c-1.714.27-3.354.788-4.885 1.49a.07.07 0 00-.032.028C.533 6.09-.32 10.545.099 14.946a.08.08 0 00.031.056c1.998 1.468 3.936 2.361 5.837 2.95a.078.078 0 00.084-.028c.45-.615.85-1.263 1.194-1.945a.076.076 0 00-.041-.106c-.636-.24-1.24-.535-1.821-.87a.077.077 0 01-.008-.128c.123-.092.245-.188.362-.285a.075.075 0 01.078-.01c3.818 1.744 7.955 1.744 11.727 0a.075.075 0 01.079.01c.117.097.239.193.363.285a.077.077 0 01-.006.128c-.582.335-1.185.63-1.822.87a.076.076 0 00-.04.107c.35.68.749 1.328 1.192 1.943a.077.077 0 00.084.028c1.9-.588 3.837-1.481 5.837-2.949a.077.077 0 00.031-.055c.5-5.094-.838-9.51-3.548-13.427a.06.06 0 00-.031-.029zM8.02 12.278c-1.182 0-2.157-1.085-2.157-2.419 0-1.333.955-2.418 2.157-2.418 1.21 0 2.176 1.094 2.157 2.418 0 1.334-.955 2.419-2.157 2.419zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.418 2.157-2.418 1.21 0 2.176 1.094 2.157 2.418 0 1.334-.946 2.419-2.157 2.419z"/></svg>
           Join Discord
         </a>
@@ -2794,22 +3554,33 @@ function renderSettings(rows) {
   rows.forEach(r => { if (r.setting_key) s[r.setting_key] = r.value; });
   window._settings = s;
 
-  if (s.site_title)      { document.title = s.site_title; document.getElementById('page-title').textContent = s.site_title; }
-  if (s.site_favicon_url){ document.getElementById('favicon').href = s.site_favicon_url; }
+  // NOTE: every DOM write below is null-guarded on purpose. Previously several
+  // lines called .textContent/.src straight on document.getElementById(...)
+  // with no null check — the moment ANY one of those ids was missing from the
+  // page (e.g. the ticker bar, which has now been removed entirely) it threw
+  // and silently killed every setting queued after it in this function
+  // (logo_url, footer, QR, etc. never got applied). Guarding each one means a
+  // single missing/renamed element can no longer take the rest down with it.
+  const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  const setAttr = (id, attr, val) => { const el = document.getElementById(id); if (el) el[attr] = val; };
+
+  if (s.site_title)      { document.title = s.site_title; setText('page-title', s.site_title); }
+  if (s.site_favicon_url){ setAttr('favicon', 'href', s.site_favicon_url); }
+  if (s.ticker_label)    { setText('ticker-label', s.ticker_label); } // ticker bar removed — no-op if absent
   if (s.youtube_url)     { const b = document.getElementById('yt-btn'); if (b) { b.href = s.youtube_url; b.textContent = `▶ ${s.youtube_label||'YouTube'}`; } }
-  if (s.cta_title)       { const el = document.getElementById('cta-title'); if (el) el.textContent = s.cta_title; }
-  if (s.cta_subtitle)    { const el = document.getElementById('cta-sub'); if (el) el.textContent = s.cta_subtitle; }
+  if (s.cta_title)       { setText('cta-title', s.cta_title); }
+  if (s.cta_subtitle)    { setText('cta-sub', s.cta_subtitle); }
   if (s.cta_btn1_text)   { const b = document.getElementById('cta-btn1'); if (b) { b.textContent = s.cta_btn1_text; b.href = s.cta_btn1_url||'#'; } }
   if (s.cta_btn2_text)   { const b = document.getElementById('cta-btn2'); if (b) { b.textContent = s.cta_btn2_text; b.href = s.cta_btn2_url||'#'; } }
-  if (s.social_bar_text) { document.getElementById('social-text').textContent = s.social_bar_text; }
-  if (s.footer_tagline)  { document.getElementById('footer-tagline').textContent = s.footer_tagline; }
-  if (s.footer_copy)     { document.getElementById('footer-copy').textContent = s.footer_copy; }
-  if (s.footer_logo_url) { document.getElementById('footer-logo').src = s.footer_logo_url; }
-  if (s.qr_title)        { document.getElementById('qr-title').textContent = s.qr_title; }
-  if (s.qr_sub)          { document.getElementById('qr-sub').textContent = s.qr_sub; }
-  if (s.qr_image_url)    { document.getElementById('qr-img').src = s.qr_image_url; }
-  if (s.qr_btn_text)     { const b = document.getElementById('qr-btn'); b.textContent = s.qr_btn_text; b.href = s.qr_btn_url||'#'; }
-  if (s.watch_popup_footer){ document.getElementById('watch-modal-footer').textContent = s.watch_popup_footer; }
+  if (s.social_bar_text) { setText('social-text', s.social_bar_text); }
+  if (s.footer_tagline)  { setText('footer-tagline', s.footer_tagline); }
+  if (s.footer_copy)     { setText('footer-copy', s.footer_copy); }
+  if (s.footer_logo_url) { setAttr('footer-logo', 'src', s.footer_logo_url); }
+  if (s.qr_title)        { setText('qr-title', s.qr_title); }
+  if (s.qr_sub)          { setText('qr-sub', s.qr_sub); }
+  if (s.qr_image_url)    { setAttr('qr-img', 'src', s.qr_image_url); }
+  if (s.qr_btn_text)     { const b = document.getElementById('qr-btn'); if (b) { b.textContent = s.qr_btn_text; b.href = s.qr_btn_url||'#'; } }
+  if (s.watch_popup_footer){ setText('watch-modal-footer', s.watch_popup_footer); }
 
   // logo
   if (s.logo_url) {
@@ -2818,6 +3589,17 @@ function renderSettings(rows) {
     const drawerLogo = document.getElementById('drawer-logo');
     if (drawerLogo) { drawerLogo.src = s.logo_url; drawerLogo.style.display = ''; }
   }
+}
+
+function renderTicker(rows) {
+  if (!rows) return;
+  const track = document.getElementById('ticker-track');
+  if (!track) return; // ticker bar removed from markup — nothing to render into
+  const items = active(rows);
+  const html = [...items, ...items].map(r =>
+    `<div class="ticker-item"><span>●</span> ${r.emoji||''} ${r.text}</div>`
+  ).join('');
+  track.innerHTML = html;
 }
 
 function renderNav(rows) {
@@ -2866,6 +3648,24 @@ function renderNav_CMS_UNUSED(rows) {
   drawerNav.innerHTML = mHtml;
 }
 
+// ── Hero banner "#" routing ─────────────────────────────────────────────
+// HERO SLIDES sheet: if a row's btn1_url is exactly "#", its "location"
+// column (livetv / matches / fancode / fifa) sends the click to that
+// in-site panel instead of trying to open a stream player with "#".
+// Any other btn1_url value plays as a normal stream, same as before.
+function sxHeroWatch(url, location, title) {
+  const u = (url || '').trim();
+  if (u === '#') {
+    const loc = (location || '').trim().toLowerCase();
+    if (loc === 'fancode') { openFanCode(); return; }
+    if (loc === 'fifa')    { openFifa(); return; }
+    if (loc === 'livetv')  { openLiveTV(); return; }
+    if (loc === 'matches') { sxSwitchTab('matches'); return; }
+    return; // blank/unrecognised location — do nothing rather than break
+  }
+  openStreamPlayer(u, title);
+}
+
 function renderSlides(rows) {
   if (!rows) return;
   const slides = active(rows);
@@ -2881,7 +3681,7 @@ function renderSlides(rows) {
       const btn2 = s.btn2_text
         ? `<a href="${s.btn2_url||'#'}" class="hsc-btn-outline" target="_blank" rel="noopener">${s.btn2_text}</a>` : '';
       cardHtml += `
-      <div class="hero-slide-card${i===0?' active-card':''}" onclick="openStreamPlayer('${s.btn1_url||'#'}','${escJs(s.title||'Live Stream')}')">
+      <div class="hero-slide-card${i===0?' active-card':''}" onclick="sxHeroWatch('${escJs(s.btn1_url||'#')}','${escJs(s.location||'')}','${escJs(s.title||'Live Stream')}')">
         <div class="hsc-banner">
           <div class="hsc-banner-bg" style="background-image:url('${s.bg_image_url}')"></div>
           <div class="hsc-banner-overlay"></div>
@@ -2896,7 +3696,7 @@ function renderSlides(rows) {
             <div class="hsc-sub">${s.subtitle||''}</div>
           </div>
           <div class="hsc-btn-row">
-            <a href="#" class="hsc-btn-watch" onclick="event.preventDefault();event.stopPropagation();openStreamPlayer('${s.btn1_url||'#'}','${escJs(s.title||'Live Stream')}')">▶ ${s.btn1_text||'Watch'}</a>
+            <a href="#" class="hsc-btn-watch" onclick="event.preventDefault();event.stopPropagation();sxHeroWatch('${escJs(s.btn1_url||'#')}','${escJs(s.location||'')}','${escJs(s.title||'Live Stream')}')">▶ ${s.btn1_text||'Watch'}</a>
             ${btn2}
           </div>
         </div>
@@ -2957,7 +3757,7 @@ function renderSlides(rows) {
         <div class="slide-title">${s.title||''}</div>
         <div class="slide-sub">${s.subtitle||''}</div>
         <div class="slide-btns">
-          <a href="#" class="btn-slide-watch" onclick="event.preventDefault();openStreamPlayer('${s.btn1_url||'#'}','${escJs(s.title||'Live Stream')}')">${s.btn1_text||'Watch Now'}</a>
+          <a href="#" class="btn-slide-watch" onclick="event.preventDefault();sxHeroWatch('${escJs(s.btn1_url||'#')}','${escJs(s.location||'')}','${escJs(s.title||'Live Stream')}')">${s.btn1_text||'Watch Now'}</a>
           ${btn2}
         </div>
       </div>
@@ -3269,16 +4069,15 @@ function renderMatchCards(rows) {
     }
   });
 
-  el.innerHTML = html;
+  el.innerHTML = html.trim() ? html : `<div class="smo-empty-box">NO MATCHES LISTED</div>`;
 
   // ── Inject match card data into desktop hero slide cards ──────
   injectMatchInfoIntoHeroCards(cards);
 
-  // Show match overlay section header if cards exist
-  if (html.trim()) {
-    const mSection = document.getElementById('match-overlay-section');
-    if (mSection) mSection.style.display = '';
-  }
+  // Match overlay section stays visible either way — showing real cards,
+  // or the "NO MATCHES LISTED" box above when there aren't any.
+  const mSection = document.getElementById('match-overlay-section');
+  if (mSection) mSection.style.display = '';
 
   timers.forEach(({ timerDisplayId, timerWrapId, badgeId, liveBadgeHtml, target }) => {
     setTimeout(() => {
@@ -3428,6 +4227,7 @@ function renderWatchPopup(rows) {
 async function init() {
   const steps = [
     ['SETTINGS',     renderSettings,   15, 'Loading settings…'],
+    ['TICKER',       renderTicker,     22, 'Loading live ticker…'],
     ['NAVBAR',       renderNav,        30, 'Building navigation…'],
     ['HERO SLIDES',  renderSlides,     38, 'Loading featured slides…'],
     ['MATCH CARDS',  renderMatchCards, 46, 'Loading match cards…'],
@@ -3493,6 +4293,44 @@ function toggleQr() {
   document.getElementById('nav-qr-btn').classList.toggle('active');
 }
 
+// ── GEO CHECK — Star Sports / Sony Sports / ZEE are India & Sri Lanka only.
+// Detect the visitor's country once (client-side IP lookup) and, for those
+// three categories, show a banner telling non-IN/LK visitors to use an
+// Indian VPN. Non-blocking: browsing/watching still works either way.
+(function(){
+  const INDIA_LOCKED_GROUPS = ['Star Sports', 'Sony Sports', 'ZEE'];
+  const ALLOWED_COUNTRIES = ['IN', 'LK'];
+  window._sxCountry = null; // 'IN' | 'LK' | other ISO code | 'UNKNOWN'
+
+  function updateGeoBanner(activeGrp) {
+    const banner = document.getElementById('epg-geo-banner');
+    const browser = document.getElementById('ch-browser');
+    const country = window._sxCountry;
+    const isForeign = country && country !== 'UNKNOWN' && !ALLOWED_COUNTRIES.includes(country);
+    // The red card/badge styling for Star Sports, Sony Sports & ZEE cards
+    // should only ever show for visitors outside India & Sri Lanka — never
+    // for Indian/Sri Lankan users, and never before geo detection resolves.
+    if (browser) browser.classList.toggle('geo-foreign', !!isForeign);
+    if (!banner) return;
+    const needsIndia = INDIA_LOCKED_GROUPS.includes(activeGrp);
+    banner.style.display = (needsIndia && isForeign) ? 'flex' : 'none';
+  }
+  window._sxUpdateGeoBanner = updateGeoBanner;
+
+  fetch('https://ipwho.is/')
+    .then(r => r.json())
+    .then(d => {
+      window._sxCountry = (d && d.success && d.country_code) ? d.country_code : 'UNKNOWN';
+    })
+    .catch(() => { window._sxCountry = 'UNKNOWN'; })
+    .finally(() => {
+      // Re-check the banner against whatever tab is active once geo resolves,
+      // in case the user already clicked Star/Sony/ZEE before detection finished.
+      const activeTab = document.querySelector('#ch-browser .ch-tab.active');
+      updateGeoBanner(activeTab ? activeTab.dataset.grp : 'All');
+    });
+})();
+
 // ── CMS-DRIVEN CHANNELS BROWSER (reads LIVE CHANNELS sheet) — EPG list UI ──
 (function(){
   const OTHERS_LOGO = 'https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/main/logo.png';
@@ -3504,6 +4342,7 @@ function toggleQr() {
     document.querySelectorAll('#ch-browser .ch-tab').forEach(t => t.classList.remove('active'));
     el.classList.add('active');
     chActiveGrp = el.dataset.grp;
+    if (window._sxUpdateGeoBanner) window._sxUpdateGeoBanner(chActiveGrp);
     if (grid) grid.style.display = 'flex';
     chFilter();
     // Smooth scroll so top of guide is just visible below the sticky header
@@ -3546,7 +4385,7 @@ function toggleQr() {
     grid.innerHTML = '';
 
     // All channels now come straight from the LIVE CHANNELS sheet.
-    // Use the "group" column (Star Sports / Sony Sports / fox / FanCode / International / Other)
+    // Use the "group" column (Star Sports / Sony Sports / fox / FanCode / International / ZEE / News / sky / espn / tnt / willow / Other)
     // to sort into the sidebar tabs.
     const all = window._cmsChannels || [];
     const filtered = all.filter(c => {
@@ -3578,6 +4417,10 @@ function toggleQr() {
       const isIntl = grp === 'International';
       const isZee = grp === 'ZEE';
       const isNews = grp === 'News';
+      const isSky = grp === 'sky';
+      const isEspn = grp === 'espn';
+      const isTnt = grp === 'tnt';
+      const isWillow = grp === 'willow';
       let rowClass = 'epg-row';
       if (isFanCode) rowClass += ' fancode-row';
       else if (isStarSports) rowClass += ' star-row';
@@ -3586,6 +4429,10 @@ function toggleQr() {
       else if (isIntl) rowClass += ' intl-row';
       else if (isZee) rowClass += ' zee-row';
       else if (isNews) rowClass += ' news-row';
+      else if (isSky) rowClass += ' sky-row';
+      else if (isEspn) rowClass += ' espn-row';
+      else if (isTnt) rowClass += ' tnt-row';
+      else if (isWillow) rowClass += ' willow-row';
       const a = document.createElement('div');
       a.className = rowClass;
       a.setAttribute('role', 'button');
@@ -3599,6 +4446,7 @@ function toggleQr() {
         ? '<span class="epg-badge epg-badge-live"><span class="epg-live-blip"></span>LIVE</span>'
         : '<span class="epg-badge epg-badge-off">OFF AIR</span>';
       const premiumBadge = isFanCode ? '<span class="epg-premium-icon" title="FanCode Premium"></span>' : '';
+      const indiaAlert = (isStarSports || isSony || isZee) ? '<div class="epg-india-alert">Outside India/Sri Lanka? Use VPN</div>' : '';
       a.innerHTML = `
         <div class="epg-thumb">
           ${chLogoHTML(c)}
@@ -3606,6 +4454,7 @@ function toggleQr() {
         <div class="epg-meta">
           <div class="epg-group-tag">${grp}</div>
           <div class="epg-name">${c.channel_name||''}${premiumBadge}</div>
+          ${indiaAlert}
           <div class="epg-now">24/7 Channel</div>
         </div>
         <div class="epg-badges">${liveBadge}${hdBadge}</div>
@@ -3694,6 +4543,10 @@ document.addEventListener('DOMContentLoaded', () => {
   <a class="mtab" data-sxtab="fancode" href="#sxTabPanels" onclick="event.preventDefault();openFanCode();">
     <img src="https://static.vecteezy.com/system/resources/previews/069/146/538/non_2x/fancode-app-icon-on-transparent-background-free-png.png" alt="FanCode" style="width:22px;height:22px;object-fit:contain;display:block;margin:0 auto 1px;border-radius: 0;">
     FanCode
+  </a>
+  <a class="mtab" data-sxtab="fifa" href="#sxTabPanels" onclick="event.preventDefault();openFifa();">
+    <img src="https://upload.wikimedia.org/wikipedia/en/1/17/2026_FIFA_World_Cup_emblem.svg" alt="FIFA 2026" style="width:22px;height:22px;object-fit:contain;display:block;margin:0 auto 1px;filter:drop-shadow(0 0 3px rgba(0,160,255,0.6));">
+    FIFA
   </a>
 </nav>
 <script>
@@ -4381,7 +5234,7 @@ footer{
         Need it faster?
       </div>
       <div id="adminchat-discord-popup-msg">Join our Discord for the quickest response — requests raised there get picked up first.</div>
-      <a id="adminchat-discord-popup-btn" href="https://discord.gg/E8YyPRNF6" target="_blank" rel="noopener" onclick="closeAdminChatDiscordPopup()">
+      <a id="adminchat-discord-popup-btn" href="https://discord.gg/w46C6mQgrY" target="_blank" rel="noopener" onclick="closeAdminChatDiscordPopup()">
         <span>Join Discord</span>
       </a>
     </div>
@@ -4391,6 +5244,8 @@ footer{
 <script>
 function openAdminChat(){
   document.getElementById('adminchat-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  window.scrollTo(0,0);
   clearTimeout(window.__adminchatPopupTimer);
   window.__adminchatPopupTimer = setTimeout(function(){
     document.getElementById('adminchat-discord-popup').classList.add('open');
@@ -4398,6 +5253,7 @@ function openAdminChat(){
 }
 function closeAdminChat(){
   document.getElementById('adminchat-overlay').classList.remove('open');
+  document.body.style.overflow = '';
   closeAdminChatDiscordPopup();
 }
 function closeAdminChatDiscordPopup(){
@@ -4457,10 +5313,6 @@ function closeAdminChatDiscordPopup(){
       Back
     </button>
     <span id="livetv-topbar-title">📡 Live TV</span>
-    <button id="livetv-adfree-btn" onclick="openAdFreeTip()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z"/><path d="M9 12l2 2 4-4"/></svg>
-      Ad-Free Tips
-    </button>
   </div>
   <div id="livetv-page-inner">
 <!-- LIVE CHANNELS -->
@@ -4547,6 +5399,20 @@ function closeAdminChatDiscordPopup(){
 }
 
 .epg-list-wrap{ flex:1; min-width:0; }
+.epg-geo-banner{
+  display: flex; align-items: center; gap: 6px;
+  margin: 0 0 12px 0; padding: 5px 10px;
+  border-radius: 6px;
+  background: rgba(232,185,35,0.06);
+  border: 1px solid rgba(232,185,35,0.18);
+  color: rgba(245,197,24,0.85);
+  font-size: 10.5px; font-weight: 500; line-height: 1.3;
+}
+.epg-geo-banner strong{ color: #F5C518; font-weight: 700; }
+.epg-geo-banner svg{ color: rgba(245,197,24,0.7); width: 12px; height: 12px; }
+@media (max-width: 640px){
+  .epg-geo-banner{ font-size: 10px; padding: 5px 8px; }
+}
 .epg-list{ display:flex !important; flex-direction:column; gap:10px; }
 
 .epg-no-results{ padding:48px 20px; text-align:center; color:rgba(255,255,255,0.45); font-size:14px; }
@@ -4563,6 +5429,18 @@ function closeAdminChatDiscordPopup(){
 }
 .epg-row:hover{ transform:translateY(-2px); background:rgba(255,255,255,0.055) !important; }
 
+#ch-browser.geo-foreign .epg-row.star-row,
+#ch-browser.geo-foreign .epg-row.sony-row,
+#ch-browser.geo-foreign .epg-row.zee-row{
+  background: #c81e1e !important;
+  border: none !important;
+}
+#ch-browser.geo-foreign .epg-row.star-row:hover,
+#ch-browser.geo-foreign .epg-row.sony-row:hover,
+#ch-browser.geo-foreign .epg-row.zee-row:hover{
+  background: #d62828 !important;
+}
+
 .epg-thumb{ position:relative; flex:0 0 128px; aspect-ratio:16/9; border-radius:0 !important; overflow:hidden; background:#000; }
 .epg-logo-box{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
 .epg-logo-box img{ width:100%; height:100%; object-fit:cover; }
@@ -4570,6 +5448,13 @@ function closeAdminChatDiscordPopup(){
 
 .epg-meta{ flex:1; min-width:0; display:flex; flex-direction:column; gap:4px; }
 .epg-name{ font-family:var(--font-display) !important; font-weight:800 !important; font-size:15px !important; color:#fff !important; display:flex; align-items:center; gap:6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.epg-india-alert{
+  display: none;
+  font-size: 9.5px !important; font-weight: 800; letter-spacing: .03em;
+  text-transform: uppercase; color: #fff !important;
+  margin-top: 3px;
+}
+#ch-browser.geo-foreign .epg-india-alert{ display: inline-block; }
 .epg-sub-row{ display:flex; align-items:center; gap:6px; font-size:12px; color:rgba(255,255,255,0.48); }
 .epg-group-tag{ text-transform:uppercase; letter-spacing:.04em; font-weight:700; font-size:11px !important; color:rgba(255,255,255,0.45) !important; }
 .epg-dot{ opacity:.5; }
@@ -4645,6 +5530,12 @@ function closeAdminChatDiscordPopup(){
   }
   #chGrid.epg-list .epg-badge-hd{ display:inline-flex !important; }
   #chGrid.epg-list .epg-watch{ display:none !important; }
+  #ch-browser.geo-foreign #chGrid.epg-list .epg-row.star-row,
+  #ch-browser.geo-foreign #chGrid.epg-list .epg-row.sony-row,
+  #ch-browser.geo-foreign #chGrid.epg-list .epg-row.zee-row{
+    background:#c81e1e !important;
+    border:none !important;
+  }
 }
 
 /* ── PC ONLY: Live TV channel list → 5-per-row grid of flat 16:9 cards,
@@ -4693,6 +5584,12 @@ function closeAdminChatDiscordPopup(){
   }
   #chGrid.epg-list .epg-badge-hd{ display:none !important; }
   #chGrid.epg-list .epg-watch{ display:none !important; }
+  #ch-browser.geo-foreign #chGrid.epg-list .epg-row.star-row,
+  #ch-browser.geo-foreign #chGrid.epg-list .epg-row.sony-row,
+  #ch-browser.geo-foreign #chGrid.epg-list .epg-row.zee-row{
+    background:#c81e1e !important;
+    border:none !important;
+  }
 }
 </style>
 
@@ -4710,6 +5607,11 @@ function closeAdminChatDiscordPopup(){
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 6 6 18M6 6l12 12"/></svg>
           </button>
         </div>
+      </div>
+
+      <div id="epg-geo-banner" class="epg-geo-banner" style="display:none;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 0 20 15.3 15.3 0 0 1 0-20z"/></svg>
+        <span>Outside India and Sri Lanka? <strong>Use an Indian VPN</strong> to watch.</span>
       </div>
 
       <div class="epg-body">
@@ -4737,6 +5639,22 @@ function closeAdminChatDiscordPopup(){
           <div class="ch-tab epg-tab ch-tab-intl" data-grp="International" onclick="chSetTab(this)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10z"/></svg>
             <span>Intl</span>
+          </div>
+          <div class="ch-tab epg-tab ch-tab-sky" data-grp="sky" onclick="chSetTab(this)">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTrjjNgzdKBYE-CR5jJGf21C_8D9mxJruF4_UCEllL0eA&s" alt="Sky Sports" style="height:16px;width:16px;object-fit:contain;border-radius: 0;flex-shrink:0;">
+            <span>Sky Sports</span>
+          </div>
+          <div class="ch-tab epg-tab ch-tab-espn" data-grp="espn" onclick="chSetTab(this)">
+            <img src="https://www.pngarts.com/files/16/ESPN-Logo-PNG-Photo-HQ.png" alt="ESPN" style="height:16px;width:auto;max-width:32px;object-fit:contain;flex-shrink:0;">
+            <span>ESPN</span>
+          </div>
+          <div class="ch-tab epg-tab ch-tab-tnt" data-grp="tnt" onclick="chSetTab(this)">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/TNT_Sports_%282023%29.svg/3840px-TNT_Sports_%282023%29.svg.png" alt="TNT" style="height:16px;width:auto;max-width:32px;object-fit:contain;flex-shrink:0;">
+            <span>TNT</span>
+          </div>
+          <div class="ch-tab epg-tab ch-tab-willow" data-grp="willow" onclick="chSetTab(this)">
+            <img src="https://static.wikia.nocookie.net/logopedia/images/7/7d/Willow_2023_stacked.svg/revision/latest?cb=20240927132511" alt="Willow" style="height:16px;width:auto;max-width:32px;object-fit:contain;flex-shrink:0;">
+            <span style="text-transform:uppercase;">Willow</span>
           </div>
           <div class="ch-tab epg-tab ch-tab-zee" data-grp="ZEE" onclick="chSetTab(this)">
             <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Zee_entertainment_enterprises_logo.svg/3840px-Zee_entertainment_enterprises_logo.svg.png" alt="ZEE" style="height:16px;width:auto;max-width:38px;object-fit:contain;flex-shrink:0;">
@@ -4770,7 +5688,7 @@ function closeAdminChatDiscordPopup(){
 <section class="section sx-compact-wrap">
   <div class="section-inner">
     <div class="sx-compact-row">
-      <a class="sx-compact-card sx-compact-discord" href="https://discord.gg/E8YyPRNF6" target="_blank" rel="noopener">
+      <a class="sx-compact-card sx-compact-discord" href="https://discord.gg/w46C6mQgrY" target="_blank" rel="noopener">
         <svg viewBox="0 0 127.14 96.36" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"/></svg>
         <div class="sx-compact-card-text">
           <div class="sx-compact-card-title">Join SX Sports Discord</div>
@@ -4879,9 +5797,58 @@ function closeAdminChatDiscordPopup(){
   max-width: 100%; max-height: 100%;
   aspect-ratio: 16/9;
   margin: auto;
+  position: relative;
 }
 #stream-player-frame{
   width: 100%; height: 100%; border: none; display: block; background: #000;
+}
+#stream-player-banner-row{
+  flex-shrink: 0; z-index: 6; position: relative;
+  display: flex; align-items: center; justify-content: center;
+  padding: 4px 0; background: rgba(0,0,0,0.92);
+  max-height: 68px; overflow: hidden;
+}
+#stream-player-ad-bar{
+  flex-shrink: 0; z-index: 6; position: relative;
+  display: flex; align-items: center; justify-content: center;
+  padding: 3px 10px; background: rgba(0,0,0,0.92);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  max-height: 22px; overflow: hidden;
+}
+#stream-player-alt-row{
+  display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 6px;
+  font-family: var(--cu-font,inherit); text-align: center;
+}
+#stream-player-alt-logo{ height: 14px; width: auto; object-fit: contain; filter: drop-shadow(0 0 10px rgba(224,33,156,0.35)); }
+#stream-player-alt-text{
+  font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.6);
+  letter-spacing: 0.02em;
+}
+.sp-alt-link{
+  color: #4FC3F7; font-weight: 900; text-decoration: none;
+  letter-spacing: 0.02em; font-size: 11px;
+}
+.sp-alt-link:hover{ text-decoration: underline; }
+.sp-alt-sep{ color: rgba(255,255,255,0.25); font-size: 10px; }
+
+#stream-player-loading{
+  position: absolute; inset: 0; z-index: 5;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; background: #0a0a0a;
+  opacity: 1; transition: opacity .35s ease;
+  pointer-events: none;
+}
+#stream-player-loading.sp-loading-hide{ opacity: 0; }
+.sp-spinner{
+  width: 42px; height: 42px; border-radius: 50%;
+  border: 3px solid rgba(232,185,35,0.18);
+  border-top-color: #E8B923;
+  animation: sp-spin .8s linear infinite;
+}
+@keyframes sp-spin{ to{ transform: rotate(360deg); } }
+.sp-loading-text{
+  font-size: 12.5px; font-weight: 700; letter-spacing: .04em;
+  text-transform: uppercase; color: rgba(255,255,255,0.55);
 }
 </style>
 
@@ -4897,25 +5864,114 @@ function closeAdminChatDiscordPopup(){
   <div id="stream-player-body">
     <div id="stream-player-frame-wrap">
       <iframe id="stream-player-frame" src="" title="Live Stream" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
+      <div id="stream-player-loading">
+        <div class="sp-spinner"></div>
+        <div class="sp-loading-text">Loading stream…</div>
+      </div>
+    </div>
+  </div>
+  <div id="stream-player-banner-row">
+    <div id="container-f33a71c8dbb5b2d11aff42ff668079e4-player"></div>
+  </div>
+  <div id="stream-player-ad-bar">
+    <div id="stream-player-alt-row">
+      <img id="stream-player-alt-logo" src="" alt="RISHI.EV" style="display:none">
+      <div id="stream-player-alt-text">Stream not loading?</div>
+      <span id="stream-player-alt-links"></span>
     </div>
   </div>
 </div>
 
 <script>
+// Small banner ad in the stream player, loaded once the first time any
+// stream is opened. Wrapped in its own blank iframe (same as the FIFA
+// panel banner) so the atOptions/highperformanceformat.com script's
+// document.write() only ever touches that isolated iframe's document,
+// never the main page.
+var __sxPlayerBannerLoaded = false;
+function sxLoadPlayerBanner(){
+  if (__sxPlayerBannerLoaded) return;
+  __sxPlayerBannerLoaded = true;
+  var c = document.getElementById('container-f33a71c8dbb5b2d11aff42ff668079e4-player');
+  if (!c) return;
+  var atOptions = {
+    'key' : 'f33a71c8dbb5b2d11aff42ff668079e4',
+    'format' : 'iframe',
+    'height' : 60,
+    'width' : 468,
+    'params' : {}
+  };
+  var iframe = document.createElement('iframe');
+  iframe.style.cssText = 'width:468px;max-width:100%;height:60px;border:0;overflow:hidden;display:block;';
+  iframe.setAttribute('scrolling', 'no');
+  iframe.setAttribute('frameborder', '0');
+  c.appendChild(iframe);
+  var doc = iframe.contentWindow.document;
+  doc.open();
+  doc.write(
+    '<body style="margin:0;padding:0;background:transparent;">' +
+    '<script>atOptions=' + JSON.stringify(atOptions) + ';<\/script>' +
+    '<script src="https://www.highperformanceformat.com/f33a71c8dbb5b2d11aff42ff668079e4/invoke.js"><\/script>' +
+    '</body>'
+  );
+  doc.close();
+}
 function openStreamPlayer(url, name){
   if (!url || url === '#') return;
   const label = name || 'Live Stream';
   document.getElementById('stream-player-title').textContent = label;
   const src = url.includes('#') ? url : url + '#' + encodeURIComponent(label);
+  sxLoadPlayerBanner();
+  // Loading overlay shows for a flat 3s to mask any cross-origin iframe
+  // flicker/redirect on first paint — but the stream itself starts loading
+  // immediately underneath, not after the 3s. Setting the iframe src here,
+  // before the overlay timer, means the stream is already fetching in the
+  // background while the loader is up.
+  const loadingEl = document.getElementById('stream-player-loading');
+  if (loadingEl){
+    loadingEl.classList.remove('sp-loading-hide');
+    loadingEl.style.display = 'flex';
+  }
+  clearTimeout(window._spLoadingTimer);
   document.getElementById('stream-player-frame').src = src;
   document.getElementById('stream-player-overlay').classList.add('open');
   spShowTopbar();
-  if (window.__runGateCheck) window.__runGateCheck();
+  (function(){
+    var altLogo = document.getElementById('stream-player-alt-logo');
+    var navLogo = document.getElementById('nav-logo-img');
+    if (altLogo) {
+      altLogo.src = (navLogo && navLogo.src) ? navLogo.src : 'https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/magenta.png';
+      altLogo.style.display = '';
+    }
+    // Show whichever mirrors the visitor ISN'T already on — no point
+    // sending someone on pages.dev to pages.dev if the stream fails.
+    var altLinksWrap = document.getElementById('stream-player-alt-links');
+    if (altLinksWrap) {
+      var mirrors = [
+        { host: 'evsports.gt.tc', url: 'https://evsports.gt.tc/', label: 'EV SPORTS OFFICIAL' },
+        { host: 'saptarshiorg.github.io', url: 'https://saptarshiorg.github.io/', label: 'GITHUB SX SPORTS' },
+        { host: 'saptarshixtrasports.pages.dev', url: 'https://saptarshixtrasports.pages.dev/', label: 'SAPTARSHI PAGES DEV' }
+      ];
+      var others = mirrors.filter(function(m){ return m.host.toLowerCase() !== location.hostname.toLowerCase(); });
+      altLinksWrap.innerHTML = others.map(function(m){
+        return '<a class="sp-alt-link" href="' + m.url + '" target="_blank" rel="noopener noreferrer">' + m.label + ' ↗</a>';
+      }).join('<span class="sp-alt-sep"> · </span>');
+    }
+  })();
+  window._spLoadingTimer = setTimeout(() => {
+    if (loadingEl) loadingEl.classList.add('sp-loading-hide');
+  }, 3000);
 }
 function closeStreamPlayer(){
   document.getElementById('stream-player-overlay').classList.remove('open');
   document.getElementById('stream-player-frame').src = '';
   clearTimeout(window._spHideTimer);
+  clearTimeout(window._spLoadingTimer);
+  const loadingEl = document.getElementById('stream-player-loading');
+  if (loadingEl){
+    // Reset so the next stream opened shows the loader again from the start.
+    loadingEl.classList.remove('sp-loading-hide');
+  }
 }
 // ── Floating back button / title overlay: shown briefly, then goes idle
 // so it doesn't sit on top of the video permanently. In the idle state the
@@ -4938,92 +5994,6 @@ function spShowTopbar(){
 })();
 </script>
 
-<!-- ══════════════════════════════════════════════════════════════════════
-     AD-FREE / SMOOTH STREAMS TIP POPUP — shown from the Live TV page,
-     tells viewers to use Brave Browser + a fast DNS resolver.
-═══════════════════════════════════════════════════════════════════════ -->
-<style>
-#adfree-overlay{
-  display: none; position: fixed; inset: 0; z-index: 1300;
-  background: rgba(0,0,0,0.72); backdrop-filter: blur(6px);
-  align-items: center; justify-content: center; padding: 20px;
-}
-#adfree-overlay.open{ display: flex; }
-#adfree-modal{
-  width: 100%; max-width: 420px; max-height: 86vh; overflow-y: auto;
-  background: #121214; border: 1px solid rgba(224,33,156,0.25);
-  padding: 26px 24px 24px; position: relative;
-}
-#adfree-close{
-  position: absolute; top: 14px; right: 14px;
-  width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
-  background: rgba(255,255,255,0.06); border: none; color: #fff;
-  cursor: pointer; font-size: 14px; border-radius: 0;
-}
-#adfree-close:hover{ background: rgba(255,255,255,0.14); }
-#adfree-icon{
-  width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;
-  background: rgba(224,33,156,0.14); color: #E0219C; margin-bottom: 14px;
-}
-#adfree-icon svg{ width: 26px; height: 26px; }
-#adfree-title{
-  font-family: var(--cu-font,inherit); font-weight: 900; font-size: 19px;
-  color: #fff; margin-bottom: 10px; line-height: 1.3;
-}
-#adfree-body{
-  font-family: var(--cu-font,inherit); font-size: 13px; line-height: 1.6;
-  color: rgba(255,255,255,0.75);
-}
-#adfree-body p{ margin: 0 0 12px; }
-#adfree-body ul{ margin: 0 0 12px; padding-left: 18px; }
-#adfree-body li{ margin-bottom: 8px; }
-#adfree-body ul ul{ margin-top: 6px; margin-bottom: 0; }
-#adfree-body strong{ color: #fff; }
-#adfree-body code{
-  background: rgba(224,33,156,0.14); color: #F0A8D6;
-  padding: 1px 6px; font-family: monospace; font-size: 12px;
-}
-#adfree-got-it{
-  width: 100%; margin-top: 6px;
-  background: linear-gradient(135deg,#E0219C,#7A0F5C); color: #fff; border: none;
-  font-family: var(--cu-font,inherit); font-weight: 800; font-size: 14px;
-  padding: 13px 0; cursor: pointer; letter-spacing: 0.03em; border-radius: 0;
-}
-#adfree-got-it:hover{ opacity: 0.9; }
-</style>
-
-<div id="adfree-overlay">
-  <div id="adfree-modal">
-    <button id="adfree-close" onclick="closeAdFreeTip()">✕</button>
-    <div id="adfree-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z"/><path d="M9 12l2 2 4-4"/></svg>
-    </div>
-    <div id="adfree-title">Want Ad-Free, Smoother Streams?</div>
-    <div id="adfree-body">
-      <p>A couple of quick settings on your end make a big difference:</p>
-      <ul>
-        <li><strong>Use Brave Browser</strong> — its built-in Shields block most ad and pop-up scripts automatically, so streams load with far fewer interruptions.</li>
-        <li><strong>Use a faster DNS resolver</strong> — you can set either resolver in your router or device settings.
-          <ul>
-            <li>For Cloudflare, use <code>1.1.1.1</code> and <code>1.0.0.1</code></li>
-            <li>For Google, use <code>8.8.8.8</code> and <code>8.8.4.4</code></li>
-          </ul>
-        </li>
-      </ul>
-      <p>Use this combo for noticeably better, smoother streams.</p>
-    </div>
-    <button id="adfree-got-it" onclick="closeAdFreeTip()">Got it</button>
-  </div>
-</div>
-
-<script>
-function openAdFreeTip(){
-  document.getElementById('adfree-overlay').classList.add('open');
-}
-function closeAdFreeTip(){
-  document.getElementById('adfree-overlay').classList.remove('open');
-}
-</script>
 
 <!-- ══════════════════════════════════════════════════════════════════════
      DMCA & COPYRIGHT DISCLAIMER — opened from the Live TV sidebar button.
@@ -5114,8 +6084,45 @@ function closeDmca(){
 }
 </script>
 
+<!-- ══════════════════════════════════════════════════════════════════════
+     TELEGRAM JOIN POPUP — shown once per visit on the main screen,
+     Telegram-blue themed, links out to the channel.
+═══════════════════════════════════════════════════════════════════════ -->
+<style>
+
+</style>
+
 <script>
+// Plays a brief logo splash over whichever panel overlay (Live TV / FIFA /
+// FanCode) is about to open. Reuses the current nav logo (whatever the
+// SETTINGS sheet's logo_url is set to) so it always matches the live logo
+// instead of a second hardcoded image. One shared element, created lazily.
+function sxPlayPanelIntro(){
+  var el = document.getElementById('sx-panel-intro');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'sx-panel-intro';
+    el.innerHTML = '<img id="sx-panel-intro-img" alt="">';
+    document.body.appendChild(el);
+  }
+  var img = document.getElementById('sx-panel-intro-img');
+  var navLogo = document.getElementById('nav-logo-img');
+  img.src = (navLogo && navLogo.src) ? navLogo.src : 'https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/magenta.png';
+  el.classList.remove('fading');
+  el.style.display = 'flex';
+  // restart the pop-in animation even if the intro is triggered again quickly
+  img.style.animation = 'none';
+  void img.offsetWidth;
+  img.style.animation = '';
+  clearTimeout(el._sxTimer);
+  el._sxTimer = setTimeout(function(){
+    el.classList.add('fading');
+    setTimeout(function(){ el.style.display = 'none'; }, 400);
+  }, 750);
+}
+
 function openLiveTV(){
+  sxPlayPanelIntro();
   document.getElementById('livetv-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   window.scrollTo(0,0);
@@ -5126,14 +6133,27 @@ function closeLiveTV(){
   document.body.style.overflow = '';
 }
 function openFanCode(){
+  sxPlayPanelIntro();
   document.getElementById('fancode-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   window.scrollTo(0,0);
   document.querySelectorAll('[data-sxtab]').forEach(el => el.classList.toggle('active', el.dataset.sxtab === 'fancode'));
-  if (window.__runGateCheck) window.__runGateCheck();
 }
 function closeFanCode(){
   document.getElementById('fancode-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function openFifa(){
+  if (!window.SX_FIFA_ENABLED) return;
+  sxPlayPanelIntro();
+  document.getElementById('fifa-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  window.scrollTo(0,0);
+  window.__sxCurrentTab = 'fifa';
+  document.querySelectorAll('[data-sxtab]').forEach(el => el.classList.toggle('active', el.dataset.sxtab === 'fifa'));
+}
+function closeFifa(){
+  document.getElementById('fifa-overlay').classList.remove('open');
   document.body.style.overflow = '';
 }
 </script>
@@ -5262,6 +6282,7 @@ function closeFanCode(){
   font-family: var(--cu-font,inherit); font-weight: 900; font-size: 11px;
 }
 
+
 #vip-discord-btn{
   display: flex; align-items: center; justify-content: center; gap: 8px;
   background: #5865F2; color: #fff; text-decoration: none; border-radius: 0;
@@ -5365,7 +6386,7 @@ function closeFanCode(){
       </ol>
     </div>
 
-    <a id="vip-discord-btn" href="https://discord.gg/E8YyPRNF6" target="_blank" rel="noopener" onclick="closeVip()">
+    <a id="vip-discord-btn" href="https://discord.gg/w46C6mQgrY" target="_blank" rel="noopener" onclick="closeVip()">
       <svg viewBox="0 0 24 18" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M20.317 1.492c-1.53-.703-3.17-1.222-4.885-1.49a.077.077 0 00-.079.036c-.21.375-.444.865-.608 1.25-1.844-.276-3.68-.276-5.487 0-.164-.394-.406-.875-.617-1.25a.08.08 0 00-.079-.037c-1.714.27-3.354.788-4.885 1.49a.07.07 0 00-.032.028C.533 6.09-.32 10.545.099 14.946a.08.08 0 00.031.056c1.998 1.468 3.936 2.361 5.837 2.95a.078.078 0 00.084-.028c.45-.615.85-1.263 1.194-1.945a.076.076 0 00-.041-.106c-.636-.24-1.24-.535-1.821-.87a.077.077 0 01-.008-.128c.123-.092.245-.188.362-.285a.075.075 0 01.078-.01c3.818 1.744 7.955 1.744 11.727 0a.075.075 0 01.079.01c.117.097.239.193.363.285a.077.077 0 01-.006.128c-.582.335-1.185.63-1.822.87a.076.076 0 00-.04.107c.35.68.749 1.328 1.192 1.943a.077.077 0 00.084.028c1.9-.588 3.837-1.481 5.837-2.949a.077.077 0 00.031-.055c.5-5.094-.838-9.51-3.548-13.427a.06.06 0 00-.031-.029zM8.02 12.278c-1.182 0-2.157-1.085-2.157-2.419 0-1.333.955-2.418 2.157-2.418 1.21 0 2.176 1.094 2.157 2.418 0 1.334-.955 2.419-2.157 2.419zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.418 2.157-2.418 1.21 0 2.176 1.094 2.157 2.418 0 1.334-.946 2.419-2.157 2.419z"/></svg>
       Ask for VIP in Discord
     </a>
@@ -5377,6 +6398,11 @@ function openVip(){
   document.getElementById('vip-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   window.scrollTo(0,0);
+}
+function closeVip(){
+  document.getElementById('vip-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
 </script>
 
 <!-- ── DevTools blocking ─────────────────────────────────────────────
@@ -5399,6 +6425,52 @@ function openVip(){
     if (e.ctrlKey && (k === 's' || k === 'S')) { e.preventDefault(); return false; }
     if (e.metaKey && e.altKey && (k === 'I' || k === 'i' || k === 'J' || k === 'j' || k === 'C' || k === 'c')) { e.preventDefault(); return false; } // Mac Cmd+Opt+I/J/C
   }, false);
+
+  // Best-effort DevTools-open detection: only active while the stream
+  // player is open, and skipped entirely on Smart TV browsers (no real
+  // devtools risk there, and TV browser viewport reporting triggers
+  // false positives). If an open devtools panel is detected, silently
+  // closes the player and returns to the main page (no visible warning).
+  // Uses a widened-viewport heuristic (works for docked panels) plus a
+  // debugger-timing check (catches most undocked/console usage).
+  // Still just a speed bump, not real protection.
+  function isTvBrowser(){
+    var ua = navigator.userAgent || '';
+    return /Tizen|Web[O0]S|LG Browser|NetCast|GoogleTV|Google TV|AFT|AmazonWebAppPlatform|Silk-Accelerated|Roku|Android.*(TV|BRAVIA)|CrKey/i.test(ua);
+  }
+  if (isTvBrowser()) return;
+
+  var dtTripped = false;
+  function isPlayerOpen(){
+    var el = document.getElementById('stream-player-overlay');
+    return !!(el && el.classList.contains('open'));
+  }
+  function dtTrip(){
+    if (dtTripped) return;
+    if (!isPlayerOpen()) return;
+    dtTripped = true;
+    if (typeof closeStreamPlayer === 'function') closeStreamPlayer();
+    window.scrollTo(0, 0);
+  }
+  function dtReset(){ dtTripped = false; }
+  var dtThreshold = 160;
+  function checkSizeHeuristic(){
+    if (!isPlayerOpen()) { dtReset(); return; }
+    var widthDiff = window.outerWidth - window.innerWidth;
+    var heightDiff = window.outerHeight - window.innerHeight;
+    if (widthDiff > dtThreshold || heightDiff > dtThreshold) dtTrip();
+    else dtReset();
+  }
+  setInterval(checkSizeHeuristic, 800);
+  window.addEventListener('resize', checkSizeHeuristic, false);
+
+  (function debuggerLoop(){
+    var start = performance.now();
+    debugger;
+    var delta = performance.now() - start;
+    if (delta > 100) dtTrip(); else if (isPlayerOpen()) dtReset();
+    setTimeout(debuggerLoop, 1000);
+  })();
 })();
 </script>
 
@@ -5546,186 +6618,6 @@ function openVip(){
       }, 600);
     }
   }, false);
-})();
-</script>
-
-<!-- ── Ad blocker / Brave requirement gate ───────────────────────────
-     Desktop: Brave users are skipped entirely (built-in shield covers
-     it). Other Chromium/Firefox desktop users must have an ad blocker
-     — detected via a bait element that ad-block filter lists hide —
-     or they see a gate requiring the AdBlock extension (Brave offered
-     as an easier optional alternative). Mobile: always shown a
-     caution recommending Brave, since many stream embeds are ad-heavy
-     and can misbehave without it. Both are dismissible via "Got it". -->
-<ins id="ad-bait" class="adsbygoogle" style="position:absolute;left:-9999px;top:0;display:block;width:300px;height:250px;" data-ad-client="ca-pub-1234567890123456" data-ad-slot="1234567890" data-ad-format="auto" data-full-width-responsive="true"></ins>
-<div id="ad-bait-2" class="ad-slot ad-unit ad_unit textAd text-ad sponsorad google-ads" style="position:absolute;left:-9999px;top:0;width:300px;height:250px;background:#eee;"></div>
-<style>
-#gate-overlay{
-  display:none; position:fixed; inset:0; z-index:1000000;
-  background:rgba(6,6,7,0.92); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
-  align-items:center; justify-content:center; padding:20px;
-}
-#gate-overlay.open{ display:flex; }
-#gate-card{
-  max-width:420px; width:100%;
-  background:#0F0F11; border:1px solid rgba(224,33,156,0.35);
-  padding:26px 24px; text-align:center; font-family:var(--cu-font,inherit);
-}
-#gate-card .gate-icon{ font-size:34px; margin-bottom:10px; }
-#gate-card h3{ margin:0 0 8px; font-size:17px; font-weight:900; color:#fff; letter-spacing:0.02em; }
-#gate-card p{ margin:0 0 16px; font-size:13px; line-height:1.55; color:rgba(255,255,255,0.65); }
-#gate-card .gate-caution{
-  display:flex; gap:8px; align-items:flex-start; text-align:left;
-  background:rgba(224,33,156,0.10); border:1px solid rgba(224,33,156,0.25);
-  padding:10px 12px; margin:0 0 18px; font-size:12px; color:rgba(255,255,255,0.75); line-height:1.5;
-}
-#gate-card .gate-btn{
-  display:block; width:100%; box-sizing:border-box; text-align:center;
-  padding:12px 16px; font-weight:800; font-size:13px; letter-spacing:0.02em;
-  text-decoration:none; cursor:pointer; border:none; margin-bottom:10px;
-  font-family:var(--cu-font,inherit);
-}
-#gate-card .gate-btn-primary{ background:var(--cu-accent,#E0219C); color:#fff; }
-#gate-card .gate-btn-primary:hover{ background:#C41E96; }
-#gate-card .gate-btn-secondary{ background:rgba(255,255,255,0.07); color:#fff; border:1px solid rgba(255,255,255,0.14); }
-#gate-card .gate-btn-secondary:hover{ background:rgba(255,255,255,0.12); }
-#gate-card .gate-btn-ghost{ background:transparent; color:rgba(255,255,255,0.5); margin-bottom:0; padding:8px; font-weight:700; }
-#gate-card .gate-btn-ghost:hover{ color:rgba(255,255,255,0.8); }
-</style>
-<div id="gate-overlay">
-  <div id="gate-card"></div>
-</div>
-<script>
-(function(){
-  function isBrave(){
-    return (navigator.brave && typeof navigator.brave.isBrave === 'function')
-      ? navigator.brave.isBrave().catch(function(){ return false; })
-      : Promise.resolve(false);
-  }
-  function adblockDetected(){
-    // Signal 1: cosmetic hiding of a bait element (catches CSS/element-hiding blockers).
-    function cosmeticCheck(){
-      return new Promise(function(resolve){
-        setTimeout(function(){
-          function isHidden(el){
-            return !el || el.offsetParent === null || el.offsetHeight === 0 || el.offsetWidth === 0 || getComputedStyle(el).display === 'none' || getComputedStyle(el).visibility === 'hidden';
-          }
-          var hidden = isHidden(document.getElementById('ad-bait')) || isHidden(document.getElementById('ad-bait-2'));
-          resolve(hidden);
-        }, 900); // give slower extensions time to inject their hiding CSS
-      });
-    }
-    // Signal 2: real requests to several well-known ad-serving domains —
-    // this is what most ad blockers (uBlock Origin, Brave Shields, most of
-    // AdBlock) actually act on. Testing several domains in parallel means
-    // one whitelisted/allowed domain doesn't wrongly read as "no blocker".
-    // Note: there is no way to ask the browser "is an extension installed?"
-    // directly (browsers hide that from pages on purpose, for privacy) —
-    // this is the closest reliable proxy: does a real ad request get blocked.
-    function networkCheck(){
-      var baitUrls = [
-        'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js',
-        'https://www.googletagservices.com/tag/js/gpt.js',
-        'https://static.doubleclick.net/instream/ad_status.js',
-        'https://ib.adnxs.com/ttj'
-      ];
-      function testUrl(url){
-        return new Promise(function(resolve){
-          var done = false;
-          var finish = function(blocked){ if (!done) { done = true; resolve(blocked); } };
-          var s = document.createElement('script');
-          s.src = url;
-          s.async = true;
-          s.onload = function(){ finish(false); };
-          s.onerror = function(){ finish(true); };
-          document.head.appendChild(s);
-          setTimeout(function(){ finish(true); }, 1200);
-        });
-      }
-      return Promise.all(baitUrls.map(testUrl)).then(function(results){
-        // Ad blocker present if it blocked ANY of the well-known domains —
-        // one whitelist exception shouldn't wrongly say "no blocker".
-        return results.some(function(r){ return r; });
-      });
-    }
-    return Promise.all([cosmeticCheck(), networkCheck()]).then(function(results){
-      return results[0] || results[1]; // either signal firing means a blocker is present
-    });
-  }
-  function showGate(html){
-    document.getElementById('gate-card').innerHTML = html;
-    document.getElementById('gate-overlay').classList.add('open');
-  }
-  function closeGate(){
-    document.getElementById('gate-overlay').classList.remove('open');
-  }
-  window.__closeGate = closeGate;
-
-  var ADBLOCK_URL = 'https://chromewebstore.google.com/detail/adblock-%E2%80%94-block-ads-acros/gighmmpiobklfepjocnamgkkbiglidom';
-  var BRAVE_URL = 'https://brave.com/download/';
-
-  function desktopGateHTML(){
-    return '' +
-      '<div class="gate-icon">🛡️</div>' +
-      '<h3>Ad Blocker Required</h3>' +
-      '<p>To keep streams playable and free of intrusive redirect ads, an ad blocker is required on desktop browsers.</p>' +
-      '<div class="gate-caution">⚠️ Without an ad blocker, some streams may show pop-ups, redirects, or fail to play properly.</div>' +
-      '<a class="gate-btn gate-btn-primary" href="' + ADBLOCK_URL + '" target="_blank" rel="noopener">Install AdBlock Extension ↗</a>' +
-      '<a class="gate-btn gate-btn-secondary" href="' + BRAVE_URL + '" target="_blank" rel="noopener">Or Switch to Brave (optional, built-in blocker)</a>' +
-      '<button class="gate-btn gate-btn-ghost" onclick="window.__closeGate()">Got it</button>';
-  }
-  function mobileGateHTML(kind){
-    var label = kind === 'tv' ? 'TV' : 'Mobile';
-    return '' +
-      '<div class="gate-icon">' + (kind === 'tv' ? '📺' : '📱') + '</div>' +
-      '<h3>Use Brave Browser on ' + label + '</h3>' +
-      '<p>For the smoothest, safest streaming experience, we recommend the Brave browser — it blocks ads and trackers automatically.</p>' +
-      '<div class="gate-caution">⚠️ Caution: without Brave (or another ad blocker), streams may not play or may open unwanted pop-ups.</div>' +
-      '<a class="gate-btn gate-btn-primary" href="' + BRAVE_URL + '" target="_blank" rel="noopener">Download Brave ↗</a>' +
-      '<button class="gate-btn gate-btn-ghost" onclick="window.__closeGate()">Got it</button>';
-  }
-
-  // Real device-type detection via User-Agent — NOT screen/window size.
-  // Width-based checks are unreliable here: a resized PC browser window
-  // can dip under a "desktop" breakpoint, a TV's browser reports a huge
-  // width that looks like desktop, and a landscape tablet can exceed a
-  // "mobile" breakpoint. None of that reflects what the device actually
-  // is or what it's capable of (e.g. installing a browser extension).
-  function sxDeviceKind(){
-    var ua = navigator.userAgent || '';
-    var tvPattern = /SmartTV|SMART-TV|GoogleTV|AppleTV|HbbTV|NetCast|Viera|AQUOS|Roku|Tizen.*TV|Web0S|WebOS.*TV|CrKey|DLNADOC|CE-HTML|BRAVIA|AFTB|AFTS|AFTM|AFTT|Fire TV|VIDAA|POV_TV|NETRANGEMMH/i;
-    var mobilePattern = /Mobi|Android|iPhone|iPod|iPad|IEMobile|BlackBerry|Opera Mini|Windows Phone/i;
-    if (tvPattern.test(ua)) return 'tv';
-    if (mobilePattern.test(ua)) return 'mobile';
-    return 'desktop';
-  }
-
-  function run(){
-    var kind = sxDeviceKind();
-    if (kind === 'mobile' || kind === 'tv') {
-      // Mobile and TV can't install a browser extension, so they're normally
-      // shown the Brave recommendation — but if the visitor (Android, other
-      // phone/tablet, or a TV browser) is ALREADY using Brave, its built-in
-      // Shields already cover ad/pop-up blocking, so skip the gate entirely
-      // instead of nagging someone who already did what we're asking for.
-      isBrave().then(function(brave){
-        if (brave) return; // Already on Brave: no popup needed.
-        showGate(mobileGateHTML(kind));
-      });
-      return;
-    }
-    isBrave().then(function(brave){
-      if (brave) return; // Brave desktop users: ad blocker not required, no gate.
-      adblockDetected().then(function(blocked){
-        if (blocked) return; // Ad blocker already active: no gate needed.
-        showGate(desktopGateHTML());
-      });
-    });
-  }
-
-  // Exposed so the gate check runs when a stream actually starts loading
-  // (openStreamPlayer / openFanCode), not on first page landing.
-  window.__runGateCheck = run;
 })();
 </script>
 
