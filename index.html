@@ -729,6 +729,41 @@ header {
    MATCH OVERLAY (SMO)
 ──────────────────────────────────────────── */
 .match-overlay-section { display: block; padding: 6px 0 4px; }
+.match-tabs-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 4px 20px 10px;
+}
+.match-tabs {
+  display: flex; align-items: center; gap: 8px;
+  overflow-x: auto; flex: 1; min-width: 0;
+  scrollbar-width: none;
+}
+.match-tabs::-webkit-scrollbar { display: none; }
+.match-tab {
+  flex-shrink: 0; white-space: nowrap; cursor: pointer;
+  font-family: var(--font-display); font-weight: 800; font-size: 11px;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: rgba(255,255,255,0.55);
+  background: rgba(255,255,255,0.04);
+  border-radius: 0; padding: 8px 14px;
+  transition: background .18s ease, color .18s ease;
+}
+.match-tab:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.match-tab.active {
+  background: linear-gradient(135deg, rgba(224,33,156,0.28), rgba(224,33,156,0.12));
+  color: #E0219C;
+}
+.match-dropdown {
+  flex-shrink: 0; max-width: 190px;
+  background: rgba(255,255,255,0.04); border: none; border-radius: 0;
+  color: #fff; font-family: var(--font-body); font-weight: 700; font-size: 12px;
+  padding: 9px 10px; cursor: pointer;
+}
+.match-dropdown:focus { outline: none; box-shadow: 0 0 0 2px rgba(255,179,71,0.35); }
+@media(max-width:600px){
+  .match-tabs-bar { padding: 4px 14px 10px; }
+  .match-dropdown { max-width: 130px; font-size: 11px; }
+}
 .slider-match-overlay {
   display: flex; flex-direction: column; gap: 8px; overflow-x: visible;
   padding: 4px 20px 8px;
@@ -2393,6 +2428,10 @@ window.sxSwitchTab = sxSwitchTab;
 
 <div class="sx-tab-panel active" id="matches-panel">
 <div class="match-overlay-section" id="match-overlay-section">
+  <div class="match-tabs-bar" id="matchTabsBar">
+    <div class="match-tabs" id="matchTabs"></div>
+    <select class="match-dropdown" id="matchDropdown" onchange="matchSetGame(this.value)"></select>
+  </div>
   <div class="slider-match-overlay" id="match-overlay"></div>
 </div>
 </div>
@@ -2987,6 +3026,7 @@ function renderSlides(rows) {
 //    e.g. "#fifa-panel" switches to the FIFA tab, "#wt20-panel" switches
 //    to the WT20 tab, anything else scrolls to that element on the page.
 function escJs(s) { return String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
+function escAttr(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
 
 function matchWatchHref(url) {
   const u = (url || '').trim();
@@ -3262,7 +3302,7 @@ function renderMatchCards(rows) {
     });
 
     if (sectionHtml) {
-      html += `<div class="smo-section">`;
+      html += `<div class="smo-section" data-game="${escAttr(gameName)}">`;
       html += `<div class="smo-section-label">${gameName}</div>`;
       html += sectionHtml;
       html += `</div>`; // close smo-section
@@ -3270,6 +3310,23 @@ function renderMatchCards(rows) {
   });
 
   el.innerHTML = html;
+
+  // ── Build the game tabs + dropdown (same options, kept in sync) ──
+  const gameNames = Array.from(groups.keys());
+  const tabsWrap = document.getElementById('matchTabs');
+  const dropdownEl = document.getElementById('matchDropdown');
+  if (tabsWrap && dropdownEl) {
+    const optionNames = ['All', ...gameNames];
+    const prevActive = optionNames.includes(window._matchActiveGame) ? window._matchActiveGame : 'All';
+    window._matchActiveGame = prevActive;
+    tabsWrap.innerHTML = optionNames.map(name => (
+      `<div class="match-tab${name === prevActive ? ' active' : ''}" data-game="${escAttr(name)}" onclick="matchSetGame('${escJs(name)}')">${name === 'All' ? 'All Matches' : name}</div>`
+    )).join('');
+    dropdownEl.innerHTML = optionNames.map(name => (
+      `<option value="${escAttr(name)}"${name === prevActive ? ' selected' : ''}>${name === 'All' ? 'All Matches' : name}</option>`
+    )).join('');
+  }
+  matchApplyGameFilter();
 
   // ── Inject match card data into desktop hero slide cards ──────
   injectMatchInfoIntoHeroCards(cards);
