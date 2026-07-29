@@ -3669,6 +3669,8 @@ function sxHeroWatch(url, location, title) {
 function renderSlides(rows) {
   if (!rows) return;
   const slides = active(rows);
+  window._cmsHeroSlides = slides;
+  if (typeof renderSxDiscontinuedHeroPreview === 'function') renderSxDiscontinuedHeroPreview();
 
   // ── DESKTOP: Hotstar-style 1:1 cards ───────────────────────
   const track = document.getElementById('hero-cards-track');
@@ -6085,12 +6087,144 @@ function closeDmca(){
 </script>
 
 <!-- ══════════════════════════════════════════════════════════════════════
-     TELEGRAM JOIN POPUP — shown once per visit on the main screen,
-     Telegram-blue themed, links out to the channel.
+     SITE DISCONTINUED / DISCORD NOTICE POPUP — shown once per browser
+     session, shortly after load. Explains the temporary status, links to
+     Discord for match links, flags that VIP/Premium still get everything,
+     and mirrors the live hero-slide data as a small preview so visitors
+     can see today's still-available matches without leaving the popup.
 ═══════════════════════════════════════════════════════════════════════ -->
 <style>
-
+#sx-discontinued-overlay{
+  display:none; position:fixed; inset:0; z-index:1400;
+  background:rgba(0,0,0,0.78); backdrop-filter:blur(6px);
+  align-items:center; justify-content:center; padding:20px;
+}
+#sx-discontinued-overlay.open{ display:flex; }
+#sx-discontinued-modal{
+  width:100%; max-width:520px; max-height:90vh; overflow-y:auto;
+  background:#121214; border:1px solid rgba(224,33,156,0.25);
+  padding:28px 24px 24px; position:relative;
+}
+#sx-discontinued-close{
+  position:absolute; top:14px; right:14px;
+  width:26px; height:26px; display:flex; align-items:center; justify-content:center;
+  background:rgba(255,255,255,0.06); border:none; color:#fff;
+  cursor:pointer; font-size:14px; border-radius:0;
+}
+#sx-discontinued-close:hover{ background:rgba(255,255,255,0.14); }
+#sx-discontinued-badge{
+  display:inline-flex; align-items:center; gap:6px;
+  font-family:var(--cu-font,inherit); font-weight:800; font-size:10px;
+  letter-spacing:0.08em; text-transform:uppercase; color:#FF6B6B;
+  background:rgba(239,68,68,0.14); padding:5px 10px; margin-bottom:14px;
+}
+#sx-discontinued-title{
+  font-family:var(--cu-font,inherit); font-weight:900; font-size:19px;
+  color:#fff; line-height:1.35; margin-bottom:8px;
+}
+#sx-discontinued-body{
+  font-family:var(--cu-font,inherit); font-size:13px; line-height:1.65;
+  color:rgba(255,255,255,0.72); margin-bottom:18px;
+}
+#sx-discontinued-body p{ margin:0 0 10px; }
+#sx-discord-cta{
+  display:flex; align-items:center; gap:12px;
+  background:rgba(88,101,242,0.12); border:1px solid rgba(88,101,242,0.3);
+  padding:14px; margin-bottom:12px;
+}
+#sx-discord-cta svg{ width:28px; height:28px; flex-shrink:0; color:#5865F2; }
+#sx-discord-cta-text{ flex:1; font-family:var(--cu-font,inherit); font-size:12.5px; line-height:1.5; color:rgba(255,255,255,0.85); }
+#sx-discord-cta-btn{
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  width:100%; margin-bottom:18px;
+  background:#5865F2; color:#fff; border:none; text-decoration:none;
+  font-family:var(--cu-font,inherit); font-weight:800; font-size:13.5px;
+  padding:12px 0; cursor:pointer; letter-spacing:0.02em;
+}
+#sx-discord-cta-btn:hover{ background:#4752C4; }
+#sx-discontinued-vip{
+  font-family:var(--cu-font,inherit); font-weight:800; font-size:11.5px;
+  letter-spacing:0.03em; color:#FFB347; text-align:center;
+  background:rgba(255,179,71,0.1); border:1px solid rgba(255,179,71,0.25);
+  padding:10px 12px; margin-bottom:20px;
+}
+#sx-discontinued-hero-note{
+  font-family:var(--cu-font,inherit); font-weight:700; font-size:11px;
+  letter-spacing:0.06em; text-transform:uppercase; color:rgba(255,255,255,0.5);
+  margin-bottom:10px;
+}
+#sx-discontinued-hero-preview{
+  display:flex; gap:10px; overflow-x:auto; padding-bottom:4px; scrollbar-width:none;
+}
+#sx-discontinued-hero-preview::-webkit-scrollbar{ display:none; }
+.dpx-hero-card{ flex:0 0 148px; cursor:pointer; background:rgba(255,255,255,0.04); overflow:hidden; }
+.dpx-hero-card-bg{ width:100%; aspect-ratio:16/9; background-size:cover; background-position:center; background-color:#000; }
+.dpx-hero-card-title{
+  font-family:var(--cu-font,inherit); font-weight:800; font-size:11.5px;
+  color:#fff; padding:8px 8px 2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.dpx-hero-card-sub{
+  font-family:var(--cu-font,inherit); font-size:10px; color:rgba(255,255,255,0.45);
+  padding:0 8px 8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+#sx-discontinued-hero-empty{ font-family:var(--cu-font,inherit); font-size:12px; color:rgba(255,255,255,0.4); padding:14px 0; }
 </style>
+
+<div id="sx-discontinued-overlay">
+  <div id="sx-discontinued-modal">
+    <button id="sx-discontinued-close" onclick="closeSxDiscontinued()">✕</button>
+    <div id="sx-discontinued-badge">Temporarily Discontinued</div>
+    <div id="sx-discontinued-title">This site is temporarily discontinued</div>
+    <div id="sx-discontinued-body">
+      <p>We're taking a break and will be back during 2026 — thanks for sticking with us.</p>
+    </div>
+    <div id="sx-discord-cta">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.369a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.058a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .078-.01c3.927 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .079.01c.12.099.246.197.373.291a.077.077 0 0 1-.006.128 12.3 12.3 0 0 1-1.873.892.076.076 0 0 0-.04.106c.36.698.772 1.362 1.225 1.994a.077.077 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.057c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.331c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.211 0 2.176 1.096 2.157 2.42 0 1.333-.955 2.418-2.157 2.418zm7.974 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.211 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+      <div id="sx-discord-cta-text">Join our Discord — we'll share you match links there, so you never miss a game.</div>
+    </div>
+    <a id="sx-discord-cta-btn" href="https://discord.gg/a7T9tfZmPA" target="_blank" rel="noopener" onclick="closeSxDiscontinued()">Join Discord</a>
+    <div id="sx-discontinued-vip">⭐ Premium or VIP users still have access to all content</div>
+    <div id="sx-discontinued-hero-note">Some matches are still available — listed below</div>
+    <div id="sx-discontinued-hero-preview"></div>
+  </div>
+</div>
+
+<script>
+function openSxDiscontinued(){
+  const ov = document.getElementById('sx-discontinued-overlay');
+  if (ov) ov.classList.add('open');
+  renderSxDiscontinuedHeroPreview();
+}
+function closeSxDiscontinued(){
+  const ov = document.getElementById('sx-discontinued-overlay');
+  if (ov) ov.classList.remove('open');
+}
+function renderSxDiscontinuedHeroPreview(){
+  const wrap = document.getElementById('sx-discontinued-hero-preview');
+  if (!wrap) return;
+  const slides = window._cmsHeroSlides || [];
+  if (!slides.length) {
+    wrap.innerHTML = '<div id="sx-discontinued-hero-empty">Loading today&rsquo;s matches&hellip;</div>';
+    return;
+  }
+  wrap.innerHTML = slides.map(function(s){
+    return '<div class="dpx-hero-card" onclick="closeSxDiscontinued();sxHeroWatch(\'' + escJs(s.btn1_url||'#') + '\',\'' + escJs(s.location||'') + '\',\'' + escJs(s.title||'Live Stream') + '\')">'
+      + '<div class="dpx-hero-card-bg" style="background-image:url(\'' + (s.bg_image_url||'') + '\')"></div>'
+      + '<div class="dpx-hero-card-title">' + (s.title||'') + '</div>'
+      + '<div class="dpx-hero-card-sub">' + (s.subtitle||'') + '</div>'
+      + '</div>';
+  }).join('');
+}
+// Show once per browser session, shortly after load so the CMS hero-slide
+// data has a chance to arrive first (for the in-popup match preview).
+document.addEventListener('DOMContentLoaded', function(){
+  if (sessionStorage.getItem('sxDiscontinuedSeen')) return;
+  setTimeout(function(){
+    openSxDiscontinued();
+    sessionStorage.setItem('sxDiscontinuedSeen', '1');
+  }, 900);
+});
+</script>
 
 <script>
 // Plays a brief logo splash over whichever panel overlay (Live TV / FIFA /
