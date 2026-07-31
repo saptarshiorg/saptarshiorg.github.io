@@ -151,7 +151,7 @@
   --text-dim: rgba(255,255,255,0.32);
 
   /* Surfaces */
-  --s0: #07090A;
+  --s0: #000000;
   --s1: rgba(255,255,255,0.03);
   --s2: rgba(255,255,255,0.055);
   --s3: rgba(255,255,255,0.08);
@@ -173,8 +173,8 @@
   --spring: cubic-bezier(0.34,1.3,0.64,1);
 
   /* Gradients */
-  --grad-brand: linear-gradient(135deg,#0A0A0A 0%,#7A0F5C 50%,#E0219C 100%);
-  --grad-brand-h: linear-gradient(90deg,#0A0A0A,#7A0F5C,#E0219C,#FFB347);
+  --grad-brand: linear-gradient(135deg,#000000 0%,#7A0F5C 50%,#E0219C 100%);
+  --grad-brand-h: linear-gradient(90deg,#000000,#7A0F5C,#E0219C,#FFB347);
   --grad-magenta: linear-gradient(135deg,#7A0F5C,#E0219C);
   --grad-gold: linear-gradient(135deg,#FFB347 0%,#E0219C 55%,#7A0F5C 100%);
   --grad-gold-h: linear-gradient(90deg,#7A0F5C,#E0219C,#FFB347,#E0219C,#7A0F5C);
@@ -195,10 +195,10 @@
   --cyan-glow: rgba(224,33,156,0.50);
   --bhagva: #E0219C;
   --bhagva-dark: #7A0F5C;
-  --black: #07090A;
-  --bg: #07090A;
-  --bg2: #080809;
-  --bg3: #0A0A0B;
+  --black: #000000;
+  --bg: #000000;
+  --bg2: #000000;
+  --bg3: #000000;
   --gray-50: #F7F7F7;
   --gray-100: #EEEEEE;
   --gray-200: #DDDDDD;
@@ -207,7 +207,7 @@
   --red-live: #F04FB0;
   --blue: #E0219C;
   --logo-grad: var(--grad-gold);
-  --logo-grad-rev: linear-gradient(135deg,#E0219C 0%,#7A0F5C 55%,#0A0A0A 100%);
+  --logo-grad-rev: linear-gradient(135deg,#E0219C 0%,#7A0F5C 55%,#000000 100%);
   --logo-grad-h: var(--grad-gold-h);
   --purple-glow: 0 0 40px rgba(224,33,156,0.5),0 0 80px rgba(224,33,156,0.3);
 }
@@ -924,6 +924,54 @@ header.scrolled {
 }
 
 /* ────────────────────────────────────────────
+   EVENT SELECTOR TOOLBAR (dropdown + PC tabs)
+   Lets the visitor pick a single "game" (event) from the MATCH CARDS
+   sheet instead of scrolling through every event's cards stacked
+   together. Dropdown always available; on PC the events also show as
+   side-by-side pill tabs (game1) (game2) ... for one-tap switching.
+──────────────────────────────────────────── */
+.smo-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; flex-wrap: wrap;
+  max-width: 1280px; margin: 0 auto; padding: 10px 20px 0;
+}
+.smo-game-tabs { display: none; align-items: center; gap: 8px; flex-wrap: wrap; }
+.smo-game-tab {
+  display: inline-flex; align-items: center;
+  background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+  border: 1px solid rgba(255,255,255,0.10);
+  color: var(--text-muted);
+  font-family: var(--font-display); font-weight: 700; font-size: 11px; letter-spacing: 0.6px; text-transform: uppercase;
+  padding: 7px 14px; border-radius: 0; cursor: pointer;
+  transition: all 0.18s var(--ease);
+  white-space: nowrap;
+}
+.smo-game-tab:hover { color: var(--white); border-color: rgba(255,255,255,0.22); }
+.smo-game-tab.active {
+  color: #1A0A05; background: var(--grad-gold); border-color: transparent;
+  box-shadow: 0 4px 14px rgba(224,33,156,0.30);
+}
+.smo-game-select {
+  background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+  border: 1px solid rgba(255,255,255,0.14);
+  color: var(--white);
+  font-family: var(--font-display); font-weight: 700; font-size: 11px; letter-spacing: 0.6px; text-transform: uppercase;
+  padding: 8px 32px 8px 14px; border-radius: 0; cursor: pointer;
+  -webkit-appearance: none; -moz-appearance: none; appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M0 0L5 6L10 0Z' fill='%23FFB347'/></svg>");
+  background-repeat: no-repeat; background-position: right 12px center;
+}
+.smo-game-select option { background: #1A0A18; color: var(--white); }
+@media(min-width:901px) {
+  .smo-game-tabs { display: flex; }
+  .smo-game-select { margin-left: auto; }
+}
+@media(max-width:900px) {
+  .smo-toolbar { justify-content: stretch; padding: 8px 14px 0; }
+  .smo-game-select { width: 100%; }
+}
+
+/* ────────────────────────────────────────────
    SECTIONS
 ──────────────────────────────────────────── */
 .section { padding: 36px 0; position: relative; z-index: 1; }
@@ -1635,9 +1683,9 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
 :root{
-  --cu-bg:#0A0A0B;
-  --cu-panel:#111214;
-  --cu-panel-2:#17181B;
+  --cu-bg:#000000;
+  --cu-panel:#000000;
+  --cu-panel-2:#000000;
   --cu-line:rgba(255,255,255,0.08);
   --cu-text:#FFFFFF;
   --cu-text-dim:rgba(255,255,255,0.55);
@@ -1679,12 +1727,12 @@ header{
 .nav-links-desktop a.active{ position:relative; }
 #pc-quicknav{ display:none !important; } /* reference nav is short & clean — quicknav pills clutter it */
 .nav-watch-btn{
-  background:#fff !important; color:#0A0A0B !important;
+  background:#fff !important; color:#000000 !important;
   font-family:var(--cu-font) !important; font-weight:700 !important;
   box-shadow:none !important; border-radius: 0 !important;
 }
 .nav-watch-btn:hover{ background:#eee !important; transform:none; box-shadow:none !important; }
-.btn-discord{ background:#1C1D20 !important; border:1px solid var(--cu-line); }
+.btn-discord{ background:#000000 !important; border:1px solid var(--cu-line); }
 .btn-discord:hover{ background:#26272B !important; }
 .btn-yt{ background:var(--cu-accent) !important; }
 .btn-yt:hover{ background:#6528D7 !important; }
@@ -1703,19 +1751,19 @@ header{
   .slide-overlay{
     background:
       linear-gradient(90deg, rgba(5,5,6,0.97) 0%, rgba(5,5,6,0.88) 30%, rgba(5,5,6,0.45) 55%, rgba(5,5,6,0.08) 75%, transparent 100%),
-      linear-gradient(0deg, #050506 0%, rgba(5,5,6,0.6) 22%, transparent 55%) !important;
+      linear-gradient(0deg, #000000 0%, rgba(5,5,6,0.6) 22%, transparent 55%) !important;
   }
   .slide-content{
     max-width:1400px; margin:0 auto; left:0; right:0;
     padding:0 64px 80px !important;
   }
   .slide-sport-badge{
-    background:#fff !important; color:#0A0A0B !important;
+    background:#fff !important; color:#000000 !important;
     font-family:var(--cu-font) !important; font-weight:800 !important;
     letter-spacing:0.05em !important; font-size:10px !important;
     padding:6px 13px !important; border-radius: 0 !important; text-transform:uppercase;
   }
-  .slide-badge-live{ background:#fff !important; color:#0A0A0B !important; }
+  .slide-badge-live{ background:#fff !important; color:#000000 !important; }
   .slide-title{
     font-family:var(--cu-font) !important; font-weight:800 !important;
     font-size:clamp(18px,1.8vw,26px) !important; letter-spacing:-0.01em !important; line-height:1.15 !important;
@@ -1724,7 +1772,7 @@ header{
   .slide-sub{ font-size:14px !important; max-width:520px; margin-bottom:22px !important; line-height:1.6 !important; color:rgba(255,255,255,0.72) !important; }
   .slide-btns{ gap:12px !important; }
   .btn-slide-watch{
-    background:#fff !important; color:#0A0A0B !important;
+    background:#fff !important; color:#000000 !important;
     font-family:var(--cu-font) !important; font-weight:800 !important;
     font-size:13px !important; padding:13px 28px !important;
     border-radius: 0 !important; box-shadow:none !important;
@@ -1740,7 +1788,7 @@ header{
   .btn-slide-outline:hover{ background:rgba(255,255,255,0.15) !important; }
 }
 .slide-live-badge{
-  background:#fff !important; color:#0A0A0B !important;
+  background:#fff !important; color:#000000 !important;
   font-family:var(--cu-font) !important; font-weight:800 !important;
 }
 .dot.active{ background:#fff !important; }
@@ -1768,7 +1816,7 @@ header{
 }
 .ch-tab:hover{ background:var(--cu-panel-2) !important; color:#fff !important; }
 .ch-tab.active{
-  background:#fff !important; color:#0A0A0B !important; border-color:#fff;
+  background:#fff !important; color:#000000 !important; border-color:#fff;
 }
 
 /* ── Channel grid cards: thumbnail-on-top, info-panel-below ── */
@@ -1794,7 +1842,7 @@ header{
 .ch-thumb .ch-logo-wrap img{ width:100%; height:100%; object-fit:contain; }
 .ch-live-dot{
   position:absolute; top:10px; left:10px; width:auto; height:auto;
-  background:#fff; color:#0A0A0B;
+  background:#fff; color:#000000;
   font-family:var(--cu-font); font-weight:800; font-size:9px; letter-spacing:0.06em;
   padding:4px 9px; border-radius: 0; text-transform:uppercase;
   animation:none; box-shadow:0 2px 8px rgba(0,0,0,0.35);
@@ -1831,7 +1879,7 @@ header{
 .cat-card:hover{ box-shadow:0 14px 30px rgba(0,0,0,0.45) !important; }
 .cat-name{ font-family:var(--cu-font) !important; font-weight:800 !important; text-transform:none !important; letter-spacing:0 !important; }
 .broadcast-name{ font-family:var(--cu-font) !important; font-weight:800 !important; letter-spacing:0 !important; }
-.match-live-tag{ background:#fff !important; color:#0A0A0B !important; font-family:var(--cu-font) !important; }
+.match-live-tag{ background:#fff !important; color:#000000 !important; font-family:var(--cu-font) !important; }
 
 /* ── CTA / footer: white primary action ── */
 .cta-box{ box-shadow:none !important; border:1px solid var(--cu-line); background:var(--cu-panel) !important; backdrop-filter:none !important; }
@@ -1841,7 +1889,7 @@ header{
   text-transform:none !important; letter-spacing:-0.01em !important;
 }
 .cta-btn-primary{
-  background:#fff !important; color:#0A0A0B !important;
+  background:#fff !important; color:#000000 !important;
   font-family:var(--cu-font) !important; font-weight:700 !important;
   border-radius: 0 !important; box-shadow:none !important; text-transform:uppercase;
 }
@@ -1888,7 +1936,7 @@ footer{ border-top:1px solid var(--cu-line); }
 #fifa-panel-title,#wt20-panel-title{ font-family:var(--cu-font) !important; font-weight:800 !important; letter-spacing:0 !important; }
 #fifa-panel-title span,#wt20-panel-title span{ color:var(--cu-accent-light) !important; }
 #fifa-panel-live,#wt20-panel-live{
-  background:#fff !important; color:#0A0A0B !important;
+  background:#fff !important; color:#000000 !important;
   font-family:var(--cu-font) !important; font-weight:800 !important;
 }
 .fpx-dot,.wt20-dot{ background:#fff !important; box-shadow:none !important; }
@@ -1911,7 +1959,7 @@ footer{ border-top:1px solid var(--cu-line); }
 .fpx-sub-label,.wt20-sub-label{ font-family:var(--cu-font) !important; color:var(--cu-text-faint) !important; }
 .fpx-pill,.wt20-pill{ background:var(--cu-panel) !important; color:rgba(255,255,255,0.7) !important; font-family:var(--cu-font) !important; }
 .fpx-premium,.fpx-pill-4k{
-  background:#fff !important; color:#0A0A0B !important; box-shadow:none !important;
+  background:#fff !important; color:#000000 !important; box-shadow:none !important;
   font-family:var(--cu-font) !important;
 }
 .fpx-live-dot,.wt20-live-dot{ background:#fff !important; box-shadow:none !important; }
@@ -1973,7 +2021,7 @@ body::before{ display:none !important; }
 #fpx-badge,#fpx-ch-count,#wt20-ch-count{
   border-radius: 0 !important; box-shadow:none !important;
 }
-.fpx-premium,.fpx-pill-4k{ background:#fff !important; color:#0A0A0B !important; }
+.fpx-premium,.fpx-pill-4k{ background:#fff !important; color:#000000 !important; }
 
 /* 6) Category cards: one flat magenta-accented look instead of a rainbow
       of per-sport gradients (cricket blue / football green / tennis
@@ -1995,13 +2043,13 @@ body::before{ display:none !important; }
 /* 10) LIVE badges — unify every one of them to the same white-bg/black-text
        pill used in the hero, with no colored dots or emoji circles left over */
 .smo-live-badge{
-  background:#fff !important; color:#0A0A0B !important;
+  background:#fff !important; color:#000000 !important;
   font-family:var(--cu-font) !important; font-weight:800 !important; letter-spacing:0.04em !important;
 }
 .smo-live-badge .live-dot-r{ display:none !important; }
 .smo-upcoming-badge{ background:var(--cu-panel-2) !important; color:rgba(255,255,255,0.7) !important; }
 #fifa-panel-live .fpx-dot,#wt20-panel-live .wt20-dot{ display:none !important; }
-.hsc-live-badge{ background:#fff !important; color:#0A0A0B !important; font-family:var(--cu-font) !important; }
+.hsc-live-badge{ background:#fff !important; color:#000000 !important; font-family:var(--cu-font) !important; }
 
 /* 11) Live badges — bring the curve back (rounded pill), per request */
 .smo-live-badge,.hsc-live-badge,.slide-live-badge,.match-live-tag,.ch-live-dot,
@@ -2330,7 +2378,7 @@ body::before{ display:none !important; }
 }
 
 #wcs-fancode{
-  background: linear-gradient(180deg,#3A3A42 0%,#232328 45%,#151517 100%) !important;
+  background: linear-gradient(180deg,#3A3A42 0%,#232328 45%,#000000 100%) !important;
   color: #fff !important;
   border-color: rgba(255,255,255,0.16) !important;
   box-shadow:
@@ -2339,7 +2387,7 @@ body::before{ display:none !important; }
     0 4px 10px rgba(0,0,0,0.35) !important;
 }
 #wcs-fancode:hover,#wcs-fancode:active{
-  background: linear-gradient(180deg,#46464F 0%,#2B2B31 45%,#1A1A1D 100%) !important;
+  background: linear-gradient(180deg,#46464F 0%,#2B2B31 45%,#000000 100%) !important;
   color:#fff !important;
   box-shadow:
     0 1px 0 rgba(255,255,255,0.22) inset,
@@ -2723,6 +2771,10 @@ window.sxSwitchTab = sxSwitchTab;
 <div id="sxTabPanels">
 
 <div class="sx-tab-panel active" id="matches-panel">
+<div class="smo-toolbar" id="smo-toolbar" style="display:none;">
+  <div class="smo-game-tabs" id="smo-game-tabs"></div>
+  <select class="smo-game-select" id="smo-game-select" aria-label="Select event"></select>
+</div>
 <div class="match-overlay-section" id="match-overlay-section">
   <div class="slider-match-overlay" id="match-overlay"></div>
 </div>
@@ -3169,7 +3221,7 @@ window.sxSwitchTab = sxSwitchTab;
     }
     .fpx-live-dot::after{
       content:'LIVE'; font-family:var(--cu-font); font-weight:800; font-size:9px;
-      letter-spacing:0.06em; color:#0A0A0B; text-transform:uppercase;
+      letter-spacing:0.06em; color:#000000; text-transform:uppercase;
     }
 
     .fpx-body{
@@ -3205,14 +3257,14 @@ window.sxSwitchTab = sxSwitchTab;
     .broadcast-logo-wrap{ background:var(--cu-panel-2) !important; border-radius: 0 !important; }
     .broadcast-name{ font-family:var(--cu-font) !important; font-weight:700 !important; font-size:15px !important; letter-spacing:0 !important; }
     .broadcast-quality{
-      background:#fff !important; color:#0A0A0B !important; font-family:var(--cu-font) !important;
+      background:#fff !important; color:#000000 !important; font-family:var(--cu-font) !important;
       font-weight:800 !important; letter-spacing:0.06em !important; border-radius: 0 !important;
     }
     .broadcast-desc{ font-family:var(--cu-font) !important; color:var(--cu-text-faint) !important; }
     .partner-logo-box{ background:var(--cu-panel-2) !important; border-radius: 0 !important; }
     .partner-logo-label{ font-family:var(--cu-font) !important; color:var(--cu-text-faint) !important; }
     .bc-watch-btn{
-      background:#fff !important; color:#0A0A0B !important; box-shadow:none !important;
+      background:#fff !important; color:#000000 !important; box-shadow:none !important;
       font-family:var(--cu-font) !important; font-weight:700 !important; border-radius: 0 !important;
     }
     .bc-watch-btn:hover{ background:#eee !important; transform:none !important; box-shadow:none !important; }
@@ -3322,7 +3374,7 @@ window.sxSwitchTab = sxSwitchTab;
 </div><!-- /sxTabPanels -->
 
 <!-- LIVE FIXTURES -->
-<section class="section" style="display:none;background:linear-gradient(180deg,#0E0E0F,#0A0A0A);padding:40px 0;" id="fixtures-section">
+<section class="section" style="display:none;background:linear-gradient(180deg,#000000,#000000);padding:40px 0;" id="fixtures-section">
   <div class="section-inner">
     <div class="section-hdr">
       <h2 class="section-title">🔴 Live &amp; Upcoming Matches</h2>
@@ -3466,12 +3518,29 @@ async function fetchSheet(name) {
   }
 }
 
+// Looks across every plausible column name for the active/inactive flag,
+// instead of only "active" then "active_true_false". This matters because
+// toObj() only normalizes PUNCTUATION/CASE in a header, not its wording — if
+// a sheet's column is literally spelled differently (extra word, renamed,
+// typo'd) the old code silently fell through to "" (treated as active) and
+// a FALSE row would keep showing up with no error anywhere.
+const ACTIVE_FLAG_KEYS = ['active_true_false', 'active', 'is_active', 'isactive', 'enabled', 'show', 'visible'];
+function activeFlagRaw(r) {
+  for (const k of ACTIVE_FLAG_KEYS) {
+    if (r[k] !== undefined && r[k] !== null && String(r[k]).trim() !== '') return r[k];
+  }
+  return '';
+}
+function isRowActive(r) {
+  // Strip stray wrapping quotes (some sheet exports/CSV tools leave these
+  // in) before comparing, then treat any of the common "off" spellings —
+  // not just an exact "FALSE" — as inactive.
+  const a = String(activeFlagRaw(r)).trim().replace(/^['"]+|['"]+$/g, '').toUpperCase();
+  return a !== 'FALSE' && a !== 'NO' && a !== 'N' && a !== '0' && a !== 'OFF';
+}
 function active(rows) {
   if (!rows) return [];
-  return rows.filter(r => {
-    const a = (r.active || r.active_true_false || '').toUpperCase();
-    return a !== 'FALSE';
-  });
+  return rows.filter(isRowActive);
 }
 
 function setProgress(pct, text) { /* loader is now a flat 8s timer — no progress UI */ }
@@ -3669,8 +3738,6 @@ function sxHeroWatch(url, location, title) {
 function renderSlides(rows) {
   if (!rows) return;
   const slides = active(rows);
-  window._cmsHeroSlides = slides;
-  if (typeof renderSxDiscontinuedHeroPreview === 'function') renderSxDiscontinuedHeroPreview();
 
   // ── DESKTOP: Hotstar-style 1:1 cards ───────────────────────
   const track = document.getElementById('hero-cards-track');
@@ -3995,11 +4062,148 @@ function isMatchFinished(c) {
   return MATCH_FINISHED_RE.test(matchStatusText(c));
 }
 
+// ── Auto-hide cards 15 hours after their scheduled start ──────────────
+// Once countdown_to_iso_datetime (or countdown_to) is 15+ hours in the
+// past, the match card disappears from the match-overlay/hero on its own —
+// no need to manually mark the sheet row inactive after every match.
+const SMO_HIDE_AFTER_MS = 15 * 60 * 60 * 1000; // 15 hours
+function smoHideAtMs(c) {
+  const iso = (c.countdown_to_iso_datetime || c.countdown_to || '').trim();
+  if (!iso) return null; // no scheduled time given — never auto-hide
+  const t = new Date(iso).getTime();
+  if (isNaN(t)) return null; // unparsable date — don't silently drop the card
+  return t + SMO_HIDE_AFTER_MS;
+}
+function smoIsExpired(c) {
+  const hideAt = smoHideAtMs(c);
+  return hideAt !== null && Date.now() >= hideAt;
+}
+
+// Currently-selected event/game in the toolbar. 'ALL' shows every event's
+// cards stacked (the original behaviour); any other value filters the
+// match-overlay down to just that one game/event.
+window._smoActiveGame = window._smoActiveGame || 'ALL';
+
+function smoBuildToolbar(gameNames) {
+  const wrap = document.getElementById('smo-toolbar');
+  const tabsEl = document.getElementById('smo-game-tabs');
+  const selectEl = document.getElementById('smo-game-select');
+  if (!wrap || !tabsEl || !selectEl) return;
+
+  // Only one event listed → nothing to switch between, hide the toolbar.
+  if (!gameNames || gameNames.length < 2) {
+    wrap.style.display = 'none';
+    window._smoActiveGame = 'ALL';
+    return;
+  }
+  wrap.style.display = '';
+
+  // Keep the current selection if it's still a valid event, otherwise reset.
+  if (window._smoActiveGame !== 'ALL' && gameNames.indexOf(window._smoActiveGame) === -1) {
+    window._smoActiveGame = 'ALL';
+  }
+
+  selectEl.innerHTML = '<option value="ALL">All Events</option>';
+  gameNames.forEach(g => {
+    const opt = document.createElement('option');
+    opt.value = g;
+    opt.textContent = g;
+    selectEl.appendChild(opt);
+  });
+  selectEl.value = window._smoActiveGame;
+  selectEl.onchange = () => smoSelectGame(selectEl.value);
+
+  tabsEl.innerHTML = '';
+  const allBtn = document.createElement('button');
+  allBtn.type = 'button';
+  allBtn.className = 'smo-game-tab' + (window._smoActiveGame === 'ALL' ? ' active' : '');
+  allBtn.dataset.game = 'ALL';
+  allBtn.textContent = 'All';
+  allBtn.addEventListener('click', () => smoSelectGame('ALL'));
+  tabsEl.appendChild(allBtn);
+
+  gameNames.forEach(g => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'smo-game-tab' + (window._smoActiveGame === g ? ' active' : '');
+    btn.dataset.game = g;
+    btn.textContent = g;
+    btn.addEventListener('click', () => smoSelectGame(g));
+    tabsEl.appendChild(btn);
+  });
+}
+
+function smoSelectGame(name) {
+  window._smoActiveGame = name;
+  const selectEl = document.getElementById('smo-game-select');
+  if (selectEl) selectEl.value = name;
+  document.querySelectorAll('.smo-game-tab').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.game === name);
+  });
+  smoApplyFilter();
+}
+
+function smoApplyFilter() {
+  const name = window._smoActiveGame || 'ALL';
+  const el = document.getElementById('match-overlay');
+  if (!el) return;
+  const sections = el.querySelectorAll('.smo-section');
+  let anyVisible = false;
+  sections.forEach(sec => {
+    const matchesGame = (name === 'ALL') || (sec.dataset.game === name);
+    // A section can also be empty because every card in it has auto-hidden
+    // (see smoSweepExpiredCards) — collapse it too in that case.
+    const hasVisibleCard = Array.from(sec.querySelectorAll('.smo-card')).some(c => c.style.display !== 'none');
+    const show = matchesGame && hasVisibleCard;
+    if (show) sec.style.removeProperty('display');
+    else sec.style.setProperty('display', 'none', 'important');
+    if (show) anyVisible = true;
+  });
+  // Only manage a "filtered to nothing" message when there are sections to
+  // filter in the first place — if there were no cards at all, leave the
+  // genuine "NO MATCHES LISTED" box (rendered by renderMatchCards) alone.
+  if (!sections.length) return;
+  let filterEmptyBox = el.querySelector('.smo-filter-empty-box');
+  if (!anyVisible) {
+    if (!filterEmptyBox) {
+      filterEmptyBox = document.createElement('div');
+      filterEmptyBox.className = 'smo-empty-box smo-filter-empty-box';
+      filterEmptyBox.textContent = 'NO MATCHES FOR THIS EVENT';
+      el.appendChild(filterEmptyBox);
+    }
+    filterEmptyBox.style.display = '';
+  } else if (filterEmptyBox) {
+    filterEmptyBox.style.display = 'none';
+  }
+}
+window.smoSelectGame = smoSelectGame;
+
+// Re-checks every open match card against its 15h auto-hide deadline —
+// catches cards that cross the line while the page is left open (the sheet
+// itself is only fetched once on load, so this doesn't need a refetch).
+function smoSweepExpiredCards() {
+  const now = Date.now();
+  let changed = false;
+  document.querySelectorAll('#match-overlay .smo-card[data-expire-at]').forEach(card => {
+    const t = parseInt(card.dataset.expireAt, 10);
+    if (t && now >= t && card.style.display !== 'none') {
+      card.style.setProperty('display', 'none', 'important');
+      changed = true;
+    }
+  });
+  if (changed) smoApplyFilter();
+}
+setInterval(smoSweepExpiredCards, 60000);
+
 function renderMatchCards(rows) {
   if (!rows) { console.warn('[MATCH CARDS] fetchSheet returned null — check the tab name is exactly "MATCH CARDS" and the sheet is shared ("Anyone with the link can view").'); return; }
   console.log('[MATCH CARDS] raw rows from sheet:', rows.length, rows);
-  const cards = active(rows);
-  console.log('[MATCH CARDS] after active() filter:', cards.length, cards);
+  console.log('[MATCH CARDS] active-flag per row:', rows.map(r => ({ game: r.game, flag_used: activeFlagRaw(r), kept: isRowActive(r) })));
+  const allActiveCards = active(rows);
+  console.log('[MATCH CARDS] after active() filter:', allActiveCards.length, allActiveCards);
+  // Drop anything already 15h+ past its scheduled start (countdown_to_iso_datetime)
+  // so old matches disappear from the site on their own.
+  const cards = allActiveCards.filter(c => !smoIsExpired(c));
   window._matchCardsData = cards; // store globally for hero card injection
   const el = document.getElementById('match-overlay');
 
@@ -4013,6 +4217,7 @@ function renderMatchCards(rows) {
 
   let html = '';
   const timers = [];
+  const gameOrder = [];
 
   groups.forEach((groupCards, gameName) => {
     let sectionHtml = '';
@@ -4034,6 +4239,7 @@ function renderMatchCards(rows) {
       const countdown = (isLive || isFinished) ? '' : (c.countdown_to_iso_datetime || c.countdown_to || '');
       const timerId = 'timer-' + uid;
       const timerWrapId = 'timerwrap-' + uid;
+      const hideAt = smoHideAtMs(c);
       // Always render the timer wrapper — even when there's no start time at
       // all — so its height is always reserved and the Watch Live button
       // never shifts up/down depending on whether a countdown value exists.
@@ -4042,7 +4248,7 @@ function renderMatchCards(rows) {
       const detailsHtml = c.details ? `<div class="smo-details">${c.details}</div>` : '';
 
       sectionHtml += `
-      <div class="smo-card" id="${cardId}">
+      <div class="smo-card" id="${cardId}"${hideAt !== null ? ` data-expire-at="${hideAt}"` : ''}>
         <div class="smo-header">${badge}<span class="smo-date">${dateLabel}</span></div>
         ${detailsHtml}
         <div class="smo-teams">
@@ -4064,6 +4270,7 @@ function renderMatchCards(rows) {
     });
 
     if (sectionHtml) {
+      gameOrder.push(gameName);
       html += `<div class="smo-section">`;
       html += `<div class="smo-section-label">${gameName}</div>`;
       html += sectionHtml;
@@ -4072,6 +4279,15 @@ function renderMatchCards(rows) {
   });
 
   el.innerHTML = html.trim() ? html : `<div class="smo-empty-box">NO MATCHES LISTED</div>`;
+
+  // Tag each rendered section with its game name (via the DOM property,
+  // not an HTML attribute string, so no escaping worries even if a game
+  // name from the sheet contains quotes) so the toolbar can filter by it.
+  const renderedSections = el.querySelectorAll(':scope > .smo-section');
+  renderedSections.forEach((sec, i) => { sec.dataset.game = gameOrder[i]; });
+
+  // ── Build/refresh the event-selector toolbar (dropdown + PC tabs) ──
+  smoBuildToolbar(gameOrder);
 
   // ── Inject match card data into desktop hero slide cards ──────
   injectMatchInfoIntoHeroCards(cards);
@@ -4086,6 +4302,10 @@ function renderMatchCards(rows) {
       wireAutoLiveCountdown(target, { timerDisplayId, timerWrapId, badgeId, liveBadgeHtml });
     }, 100);
   });
+
+  // Re-apply whatever event is currently selected in the toolbar (defaults
+  // to "All Events" the first time, keeps the visitor's choice on refresh).
+  smoApplyFilter();
 }
 
 function renderChannels(rows) {
@@ -4126,7 +4346,7 @@ function renderFixtures(rows) {
       </div>
       <div class="fixture-footer">
         <span class="fixture-venue-label">${f.venue||''}</span>
-        <a class="btn-watch-sm" href="${f.watch_url||'#'}">▶ WATCH</a>
+        <a class="btn-watch-sm" href="${f.watch_url||'#'}" onclick="return sxWatchLinkClick(event, this);">▶ WATCH</a>
       </div>
     </div>`;
   }).join('');
@@ -4193,7 +4413,7 @@ function renderWatchPopup(rows) {
   let html = '';
   featured.forEach(f => {
     html += `
-    <a class="watch-sx-featured" href="${f.watch_url||'#'}" target="_blank" rel="noopener">
+    <a class="watch-sx-featured" href="${sxResolveFanCodeMatchUrl(f.watch_url||'#')}" target="_blank" rel="noopener">
       <div class="watch-ch-logo">${img(f.logo_url,'',)}</div>
       <div class="watch-ch-info">
         <div class="watch-ch-name" style="font-size:16px;font-weight:900">${f.channel_name}</div>
@@ -4210,7 +4430,7 @@ function renderWatchPopup(rows) {
     groupItems.forEach(ch => {
       const isUnavail = (ch.badge||'').toLowerCase() === 'unavail';
       html += `
-      <a class="watch-channel-btn${isUnavail?' unavail-card':''}" href="${ch.watch_url||'#'}" target="_blank" rel="noopener">
+      <a class="watch-channel-btn${isUnavail?' unavail-card':''}" href="${sxResolveFanCodeMatchUrl(ch.watch_url||'#')}" target="_blank" rel="noopener">
         <div class="watch-ch-logo">${img(ch.logo_url,'')}</div>
         <div class="watch-ch-info">
           <div class="watch-ch-name">${ch.channel_name}</div>
@@ -4330,6 +4550,9 @@ function toggleQr() {
       // in case the user already clicked Star/Sony/ZEE before detection finished.
       const activeTab = document.querySelector('#ch-browser .ch-tab.active');
       updateGeoBanner(activeTab ? activeTab.dataset.grp : 'All');
+      // Also correct the FanCode panel's mirror in case it was opened
+      // before geo detection finished (it defaults to the India mirror).
+      if (typeof sxApplyFanCodeUrl === 'function') sxApplyFanCodeUrl();
     });
 })();
 
@@ -4800,7 +5023,7 @@ header{
     display: flex !important; align-items: center !important; gap: 3px !important;
   }
   .fpx-live-dot::before{ content:''; width:4px; height:4px; border-radius:50%; background:#FF3B30; }
-  .fpx-live-dot::after{ content:'LIVE'; font-family:var(--cu-font); font-weight:800; font-size:6.5px; color:#0A0A0B; }
+  .fpx-live-dot::after{ content:'LIVE'; font-family:var(--cu-font); font-weight:800; font-size:6.5px; color:#000000; }
   .fpx-4k-badge-big{ position: absolute !important; width: 30px !important; height: 30px !important; bottom: 4px !important; right: 4px !important; z-index: 4 !important; }
   .fpx-premium,.fpx-pill,.fpx-pill-4k,.fpx-pill-soon,.fpx-live-lbl,.fpx-free4k-lbl{ display: none !important; }
 
@@ -4823,19 +5046,19 @@ header{
     background-size: contain !important;
     background-position: top center !important;
     background-repeat: no-repeat !important;
-    background-color: var(--cu-bg,#0A0A0B) !important;
+    background-color: var(--cu-bg,#000000) !important;
   }
   .slide-overlay{
-    background: linear-gradient(0deg, #050506 0%, rgba(5,5,6,0.88) 35%, rgba(5,5,6,0.30) 65%, transparent 100%) !important;
+    background: linear-gradient(0deg, #000000 0%, rgba(5,5,6,0.88) 35%, rgba(5,5,6,0.30) 65%, transparent 100%) !important;
   }
   .slide-content{ padding: 0 16px 24px !important; }
   .slide-sport-badge{
-    background: #fff !important; color: #0A0A0B !important;
+    background: #fff !important; color: #000000 !important;
     font-family: var(--cu-font) !important; font-weight: 800 !important;
     letter-spacing: 0.05em !important; font-size: 8px !important;
     padding: 3px 9px !important; border-radius: 0 !important; text-transform: uppercase;
   }
-  .slide-badge-live,.slide-live-badge{ background: #fff !important; color: #0A0A0B !important; }
+  .slide-badge-live,.slide-live-badge{ background: #fff !important; color: #000000 !important; }
   .slide-title{
     font-family: var(--cu-font) !important; font-weight: 800 !important;
     font-size: clamp(16px,5vw,20px) !important; letter-spacing: -0.01em !important; line-height: 1.15 !important;
@@ -4844,7 +5067,7 @@ header{
   .slide-sub{ font-size: 11px !important; margin-bottom: 12px !important; line-height: 1.5 !important; color: rgba(255,255,255,0.72) !important; display: block !important; }
   .slide-btns{ gap: 8px !important; }
   .btn-slide-watch{
-    background: #fff !important; color: #0A0A0B !important;
+    background: #fff !important; color: #000000 !important;
     font-family: var(--cu-font) !important; font-weight: 800 !important;
     font-size: 11px !important; padding: 9px 18px !important;
     border-radius: 0 !important; box-shadow: none !important;
@@ -4977,10 +5200,10 @@ header{
 ═══════════════════════════════════════════════════════════════════════ */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #E0219C #17181B;
+  scrollbar-color: #E0219C #000000;
 }
 *::-webkit-scrollbar { width: 6px; height: 6px; }
-*::-webkit-scrollbar-track { background: #17181B; }
+*::-webkit-scrollbar-track { background: #000000; }
 *::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg,#E0219C,#C41E96);
   border-radius: 0;
@@ -5103,7 +5326,7 @@ footer{
 ═══════════════════════════════════════════════════════════════════════ */
 #adminchat-overlay{
   position: fixed; inset: 0; z-index: 1200;
-  background: #0A0A0B; display: flex; flex-direction: column;
+  background: #000000; display: flex; flex-direction: column;
   opacity: 0; visibility: hidden; pointer-events: none;
   transform: translateY(28px) scale(0.98);
   transition: opacity 0.32s cubic-bezier(.22,.9,.32,1),
@@ -5176,7 +5399,7 @@ footer{
   display: none; position: absolute; z-index: 5;
   top: 16px; right: 16px; left: auto; bottom: auto; transform: none;
   width: calc(100% - 32px); max-width: 320px;
-  background: #0E0E10; border: 1px solid rgba(224,33,156,0.35);
+  background: #000000; border: 1px solid rgba(224,33,156,0.35);
   box-shadow: 0 10px 30px rgba(0,0,0,0.45);
   padding: 16px 16px 14px; border-radius: 0;
   animation: adminchat-popup-in 0.28s ease;
@@ -5274,7 +5497,7 @@ function closeAdminChatDiscordPopup(){
 <style>
 #livetv-overlay{
   display: none; position: fixed; inset: 0; z-index: 1200;
-  background: #0A0A0B; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  background: #000000; overflow-y: auto; -webkit-overflow-scrolling: touch;
 }
 #livetv-overlay.open{ display: block; }
 
@@ -5446,7 +5669,7 @@ function closeAdminChatDiscordPopup(){
 .epg-thumb{ position:relative; flex:0 0 128px; aspect-ratio:16/9; border-radius:0 !important; overflow:hidden; background:#000; }
 .epg-logo-box{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
 .epg-logo-box img{ width:100%; height:100%; object-fit:cover; }
-.epg-logo-ph{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-weight:800; font-size:14px; color:#fff; background:linear-gradient(135deg,#242424,#0e0e0e); }
+.epg-logo-ph{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-weight:800; font-size:14px; color:#fff; background:linear-gradient(135deg,#242424,#000000); }
 
 .epg-meta{ flex:1; min-width:0; display:flex; flex-direction:column; gap:4px; }
 .epg-name{ font-family:var(--font-display) !important; font-weight:800 !important; font-size:15px !important; color:#fff !important; display:flex; align-items:center; gap:6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -5576,12 +5799,12 @@ function closeAdminChatDiscordPopup(){
   }
   #chGrid.epg-list .epg-badge{ border-radius:0 !important; }
   #chGrid.epg-list .epg-badge-live{
-    background:#fff !important; color:#0a0a0a !important;
+    background:#fff !important; color:#000000 !important;
     padding:4px 10px !important; font-size:10px !important; font-weight:800 !important;
   }
   #chGrid.epg-list .epg-badge-live .epg-live-blip{ display:none !important; }
   #chGrid.epg-list .epg-badge-off{
-    background:rgba(255,255,255,0.85) !important; color:#0a0a0a !important;
+    background:rgba(255,255,255,0.85) !important; color:#000000 !important;
     padding:4px 10px !important; font-size:10px !important; font-weight:800 !important;
   }
   #chGrid.epg-list .epg-badge-hd{ display:none !important; }
@@ -5836,7 +6059,7 @@ function closeAdminChatDiscordPopup(){
 #stream-player-loading{
   position: absolute; inset: 0; z-index: 5;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 14px; background: #0a0a0a;
+  gap: 14px; background: #000000;
   opacity: 1; transition: opacity .35s ease;
   pointer-events: none;
 }
@@ -5920,6 +6143,16 @@ function sxLoadPlayerBanner(){
 }
 function openStreamPlayer(url, name){
   if (!url || url === '#') return;
+  // Match cards, hero slides, and Live TV all funnel every stream link
+  // through here — so this is the single choke point to catch any
+  // famcodexwebs.pages.dev link and send it to a real new tab instead of
+  // the in-page iframe overlay (that site doesn't play nicely embedded).
+  if (/famcodexwebs\.pages\.dev/i.test(url)) {
+    url = sxResolveFanCodeMatchUrl(url);
+    window.__sxAllowPopup = true; // this is one of our own links, not an injected popup
+    window.open(url, '_blank', 'noopener,noreferrer');
+    return;
+  }
   const label = name || 'Live Stream';
   document.getElementById('stream-player-title').textContent = label;
   const src = url.includes('#') ? url : url + '#' + encodeURIComponent(label);
@@ -6009,7 +6242,7 @@ function spShowTopbar(){
 #dmca-overlay.open{ display: flex; }
 #dmca-modal{
   width: 100%; max-width: 480px; max-height: 86vh; overflow-y: auto;
-  background: #121214; border: 1px solid rgba(224,33,156,0.25);
+  background: #000000; border: 1px solid rgba(224,33,156,0.25);
   padding: 26px 24px 24px; position: relative;
 }
 #dmca-close{
@@ -6087,144 +6320,12 @@ function closeDmca(){
 </script>
 
 <!-- ══════════════════════════════════════════════════════════════════════
-     SITE DISCONTINUED / DISCORD NOTICE POPUP — shown once per browser
-     session, shortly after load. Explains the temporary status, links to
-     Discord for match links, flags that VIP/Premium still get everything,
-     and mirrors the live hero-slide data as a small preview so visitors
-     can see today's still-available matches without leaving the popup.
+     TELEGRAM JOIN POPUP — shown once per visit on the main screen,
+     Telegram-blue themed, links out to the channel.
 ═══════════════════════════════════════════════════════════════════════ -->
 <style>
-#sx-discontinued-overlay{
-  display:none; position:fixed; inset:0; z-index:1400;
-  background:rgba(0,0,0,0.78); backdrop-filter:blur(6px);
-  align-items:center; justify-content:center; padding:20px;
-}
-#sx-discontinued-overlay.open{ display:flex; }
-#sx-discontinued-modal{
-  width:100%; max-width:520px; max-height:90vh; overflow-y:auto;
-  background:#121214; border:1px solid rgba(224,33,156,0.25);
-  padding:28px 24px 24px; position:relative;
-}
-#sx-discontinued-close{
-  position:absolute; top:14px; right:14px;
-  width:26px; height:26px; display:flex; align-items:center; justify-content:center;
-  background:rgba(255,255,255,0.06); border:none; color:#fff;
-  cursor:pointer; font-size:14px; border-radius:0;
-}
-#sx-discontinued-close:hover{ background:rgba(255,255,255,0.14); }
-#sx-discontinued-badge{
-  display:inline-flex; align-items:center; gap:6px;
-  font-family:var(--cu-font,inherit); font-weight:800; font-size:10px;
-  letter-spacing:0.08em; text-transform:uppercase; color:#FF6B6B;
-  background:rgba(239,68,68,0.14); padding:5px 10px; margin-bottom:14px;
-}
-#sx-discontinued-title{
-  font-family:var(--cu-font,inherit); font-weight:900; font-size:19px;
-  color:#fff; line-height:1.35; margin-bottom:8px;
-}
-#sx-discontinued-body{
-  font-family:var(--cu-font,inherit); font-size:13px; line-height:1.65;
-  color:rgba(255,255,255,0.72); margin-bottom:18px;
-}
-#sx-discontinued-body p{ margin:0 0 10px; }
-#sx-discord-cta{
-  display:flex; align-items:center; gap:12px;
-  background:rgba(88,101,242,0.12); border:1px solid rgba(88,101,242,0.3);
-  padding:14px; margin-bottom:12px;
-}
-#sx-discord-cta svg{ width:28px; height:28px; flex-shrink:0; color:#5865F2; }
-#sx-discord-cta-text{ flex:1; font-family:var(--cu-font,inherit); font-size:12.5px; line-height:1.5; color:rgba(255,255,255,0.85); }
-#sx-discord-cta-btn{
-  display:flex; align-items:center; justify-content:center; gap:8px;
-  width:100%; margin-bottom:18px;
-  background:#5865F2; color:#fff; border:none; text-decoration:none;
-  font-family:var(--cu-font,inherit); font-weight:800; font-size:13.5px;
-  padding:12px 0; cursor:pointer; letter-spacing:0.02em;
-}
-#sx-discord-cta-btn:hover{ background:#4752C4; }
-#sx-discontinued-vip{
-  font-family:var(--cu-font,inherit); font-weight:800; font-size:11.5px;
-  letter-spacing:0.03em; color:#FFB347; text-align:center;
-  background:rgba(255,179,71,0.1); border:1px solid rgba(255,179,71,0.25);
-  padding:10px 12px; margin-bottom:20px;
-}
-#sx-discontinued-hero-note{
-  font-family:var(--cu-font,inherit); font-weight:700; font-size:11px;
-  letter-spacing:0.06em; text-transform:uppercase; color:rgba(255,255,255,0.5);
-  margin-bottom:10px;
-}
-#sx-discontinued-hero-preview{
-  display:flex; gap:10px; overflow-x:auto; padding-bottom:4px; scrollbar-width:none;
-}
-#sx-discontinued-hero-preview::-webkit-scrollbar{ display:none; }
-.dpx-hero-card{ flex:0 0 148px; cursor:pointer; background:rgba(255,255,255,0.04); overflow:hidden; }
-.dpx-hero-card-bg{ width:100%; aspect-ratio:16/9; background-size:cover; background-position:center; background-color:#000; }
-.dpx-hero-card-title{
-  font-family:var(--cu-font,inherit); font-weight:800; font-size:11.5px;
-  color:#fff; padding:8px 8px 2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-}
-.dpx-hero-card-sub{
-  font-family:var(--cu-font,inherit); font-size:10px; color:rgba(255,255,255,0.45);
-  padding:0 8px 8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-}
-#sx-discontinued-hero-empty{ font-family:var(--cu-font,inherit); font-size:12px; color:rgba(255,255,255,0.4); padding:14px 0; }
+
 </style>
-
-<div id="sx-discontinued-overlay">
-  <div id="sx-discontinued-modal">
-    <button id="sx-discontinued-close" onclick="closeSxDiscontinued()">✕</button>
-    <div id="sx-discontinued-badge">Temporarily Discontinued</div>
-    <div id="sx-discontinued-title">This site is temporarily discontinued</div>
-    <div id="sx-discontinued-body">
-      <p>We're taking a break and will be back during 2026 — thanks for sticking with us.</p>
-    </div>
-    <div id="sx-discord-cta">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.369a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.058a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .078-.01c3.927 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .079.01c.12.099.246.197.373.291a.077.077 0 0 1-.006.128 12.3 12.3 0 0 1-1.873.892.076.076 0 0 0-.04.106c.36.698.772 1.362 1.225 1.994a.077.077 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.057c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.331c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.211 0 2.176 1.096 2.157 2.42 0 1.333-.955 2.418-2.157 2.418zm7.974 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.211 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
-      <div id="sx-discord-cta-text">Join our Discord — we'll share you match links there, so you never miss a game.</div>
-    </div>
-    <a id="sx-discord-cta-btn" href="https://discord.gg/a7T9tfZmPA" target="_blank" rel="noopener" onclick="closeSxDiscontinued()">Join Discord</a>
-    <div id="sx-discontinued-vip">⭐ Premium or VIP users still have access to all content</div>
-    <div id="sx-discontinued-hero-note">Some matches are still available — listed below</div>
-    <div id="sx-discontinued-hero-preview"></div>
-  </div>
-</div>
-
-<script>
-function openSxDiscontinued(){
-  const ov = document.getElementById('sx-discontinued-overlay');
-  if (ov) ov.classList.add('open');
-  renderSxDiscontinuedHeroPreview();
-}
-function closeSxDiscontinued(){
-  const ov = document.getElementById('sx-discontinued-overlay');
-  if (ov) ov.classList.remove('open');
-}
-function renderSxDiscontinuedHeroPreview(){
-  const wrap = document.getElementById('sx-discontinued-hero-preview');
-  if (!wrap) return;
-  const slides = window._cmsHeroSlides || [];
-  if (!slides.length) {
-    wrap.innerHTML = '<div id="sx-discontinued-hero-empty">Loading today&rsquo;s matches&hellip;</div>';
-    return;
-  }
-  wrap.innerHTML = slides.map(function(s){
-    return '<div class="dpx-hero-card" onclick="closeSxDiscontinued();sxHeroWatch(\'' + escJs(s.btn1_url||'#') + '\',\'' + escJs(s.location||'') + '\',\'' + escJs(s.title||'Live Stream') + '\')">'
-      + '<div class="dpx-hero-card-bg" style="background-image:url(\'' + (s.bg_image_url||'') + '\')"></div>'
-      + '<div class="dpx-hero-card-title">' + (s.title||'') + '</div>'
-      + '<div class="dpx-hero-card-sub">' + (s.subtitle||'') + '</div>'
-      + '</div>';
-  }).join('');
-}
-// Show once per browser session, shortly after load so the CMS hero-slide
-// data has a chance to arrive first (for the in-popup match preview).
-document.addEventListener('DOMContentLoaded', function(){
-  if (sessionStorage.getItem('sxDiscontinuedSeen')) return;
-  setTimeout(function(){
-    openSxDiscontinued();
-    sessionStorage.setItem('sxDiscontinuedSeen', '1');
-  }, 900);
-});
-</script>
 
 <script>
 // Plays a brief logo splash over whichever panel overlay (Live TV / FIFA /
@@ -6266,8 +6367,59 @@ function closeLiveTV(){
   document.getElementById('livetv-overlay').classList.remove('open');
   document.body.style.overflow = '';
 }
+// Sheet-supplied match/hero/live-tv links point at famcodexwebs.pages.dev
+// with a country path — /IN?...&q=1080 for India (1080p is India-only) or
+// /WW?id=... for worldwide. For visitors outside India, an /IN link is
+// auto-swapped to the /WW path with the q=1080 param stripped; /WW links
+// and India visitors pass through untouched.
+function sxResolveFanCodeMatchUrl(url){
+  try {
+    const u = new URL(url);
+    if (!/famcodexwebs\.pages\.dev$/i.test(u.hostname)) return url;
+    const isIndiaPath = /^\/IN\/?$/i.test(u.pathname);
+    const isForeign = window._sxCountry && window._sxCountry !== 'IN';
+    if (isIndiaPath && isForeign) {
+      u.pathname = '/WW';
+      u.searchParams.delete('q');
+      return u.toString();
+    }
+  } catch (e) { /* not a valid absolute URL — leave it as-is */ }
+  return url;
+}
+// A few anchors (e.g. the match-card WATCH button) link straight to a
+// watch_url instead of routing through openStreamPlayer. This intercepts
+// just the famcodexwebs.pages.dev links on click — geo-resolves IN→WW
+// and forces a real new tab — and leaves every other link's normal
+// click-through behavior completely untouched.
+function sxWatchLinkClick(evt, a){
+  const raw = a.getAttribute('href') || '';
+  if (!/famcodexwebs\.pages\.dev/i.test(raw)) return true; // navigate normally
+  evt.preventDefault();
+  window.__sxAllowPopup = true; // this is one of our own links, not an injected popup
+  window.open(sxResolveFanCodeMatchUrl(raw), '_blank', 'noopener,noreferrer');
+  return false;
+}
+// FanCode PANEL tab shows a different mirror depending on the visitor's
+// country: India stays on famcodexwebs.pages.dev (plural), everyone
+// outside India gets famcodexweb.pages.dev (singular). Uses the same
+// window._sxCountry client-side IP lookup set up by the geo-check IIFE
+// above. If country hasn't resolved yet, default to the India mirror and
+// let sxApplyFanCodeUrl() swap it in once geo detection finishes.
+const FANCODE_URL_IN = 'https://famcodexwebs.pages.dev/';
+const FANCODE_URL_INTL = 'https://famcodexweb.pages.dev/';
+function sxFanCodeUrl(){
+  return (window._sxCountry && window._sxCountry !== 'IN') ? FANCODE_URL_INTL : FANCODE_URL_IN;
+}
+function sxApplyFanCodeUrl(){
+  const url = sxFanCodeUrl();
+  const iframe = document.getElementById('fancode-iframe');
+  const fallbackLink = document.querySelector('#fancode-embed-fallback a');
+  if (iframe && iframe.src !== url) iframe.src = url;
+  if (fallbackLink) fallbackLink.href = url;
+}
 function openFanCode(){
   sxPlayPanelIntro();
+  sxApplyFanCodeUrl();
   document.getElementById('fancode-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   window.scrollTo(0,0);
@@ -6300,7 +6452,7 @@ function closeFifa(){
 <style>
 #vip-overlay{
   display: none; position: fixed; inset: 0; z-index: 1200;
-  background: #0A0A0B; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  background: #000000; overflow-y: auto; -webkit-overflow-scrolling: touch;
 }
 #vip-overlay.open{ display: block; }
 
@@ -6347,6 +6499,46 @@ function closeFifa(){
   margin-bottom: 14px;
 }
 
+/* ── Pricing plans ── */
+#vip-pricing{ margin-bottom: 40px; }
+.vip-price-grid{
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;
+}
+.vip-price-card{
+  position: relative;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+  padding: 18px 10px; text-align: center;
+}
+.vip-price-name{
+  font-family: var(--cu-font,inherit); font-size: 11px; font-weight: 800;
+  letter-spacing: 0.05em; text-transform: uppercase; color: rgba(255,255,255,0.55);
+  margin-bottom: 8px;
+}
+.vip-price-amount{
+  font-family: var(--cu-font,inherit); font-weight: 900; font-size: 22px; color: #fff;
+  margin-bottom: 8px;
+}
+.vip-price-amount span{
+  font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.45);
+}
+.vip-price-tier{
+  display: inline-block; font-family: var(--cu-font,inherit); font-weight: 800;
+  font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 3px 10px; background: rgba(224,33,156,0.16); color: var(--cu-accent,#E0219C);
+}
+.vip-price-card-gold{
+  background: rgba(247,197,90,0.08); border-color: rgba(247,197,90,0.35);
+}
+.vip-price-tier-gold{
+  background: linear-gradient(135deg,#FFD97A,#F0BB40); color: #000;
+}
+.vip-price-badge{
+  position: absolute; top: -9px; left: 50%; transform: translateX(-50%);
+  background: linear-gradient(135deg,#FFD97A,#F0BB40); color: #000;
+  font-family: var(--cu-font,inherit); font-weight: 900; font-size: 9px;
+  letter-spacing: 0.05em; padding: 3px 8px; white-space: nowrap;
+}
+
 /* ── Free vs VIP comparison table ── */
 #vip-compare{ margin-bottom: 40px; }
 #vip-compare-table{
@@ -6362,7 +6554,7 @@ function closeFifa(){
   color: rgba(255,255,255,0.55);
 }
 #vip-compare-table th.vip-col-head{ color: #fff; background: rgba(224,33,156,0.16); }
-#vip-compare-table th.vip2-col-head{ color: #0A0A0B; background: linear-gradient(135deg,#FFD97A,#F0BB40); }
+#vip-compare-table th.vip2-col-head{ color: #000000; background: linear-gradient(135deg,#FFD97A,#F0BB40); }
 #vip-compare-table td.vip-feature{
   text-align: left; font-size: 12.5px; color: rgba(255,255,255,0.85); font-weight: 600;
 }
@@ -6432,6 +6624,7 @@ function closeFifa(){
   #vip-compare-table th, #vip-compare-table td{ padding: 8px 4px; font-size: 10px; }
   #vip-compare-table td.vip-feature{ font-size: 11px; }
   #vip-compare{ overflow-x: auto; }
+  .vip-price-grid{ grid-template-columns: 1fr 1fr; }
 }
 </style>
 
@@ -6449,6 +6642,39 @@ function closeFifa(){
       <div id="vip-crown"><svg viewBox="0 0 24 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2 6.5a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm20 0a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm-10-2a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zM2 7.8l4.6 3.4L12 5l5.4 6.2L22 7.8 20 17H4L2 7.8z"/></svg></div>
       <div id="vip-title">Get VIP Access</div>
       <div id="vip-sub">VIP unlocks the full SX Sports experience — see exactly how it compares below, what you get, and how to claim it.</div>
+    </div>
+
+    <div id="vip-pricing">
+      <div class="vip-section-label">Choose Your Plan</div>
+      <div class="vip-price-grid">
+        <div class="vip-price-card">
+          <div class="vip-price-name">Monthly</div>
+          <div class="vip-price-amount">₹199<span>/month</span></div>
+          <div class="vip-price-tier">VIP</div>
+        </div>
+        <div class="vip-price-card">
+          <div class="vip-price-name">3 Months</div>
+          <div class="vip-price-amount">₹299</div>
+          <div class="vip-price-tier">VIP</div>
+        </div>
+        <div class="vip-price-card">
+          <div class="vip-price-name">6 Months</div>
+          <div class="vip-price-amount">₹599</div>
+          <div class="vip-price-tier">VIP</div>
+        </div>
+        <div class="vip-price-card">
+          <div class="vip-price-name">Lifetime</div>
+          <div class="vip-price-amount">₹999</div>
+          <div class="vip-price-tier">VIP</div>
+        </div>
+        <div class="vip-price-card vip-price-card-gold">
+          <div class="vip-price-badge">BEST VALUE</div>
+          <div class="vip-price-name">Lifetime</div>
+          <div class="vip-price-amount">₹1199</div>
+          <div class="vip-price-tier vip-price-tier-gold">VIP 2.0</div>
+        </div>
+      </div>
+      <p style="font-family:var(--cu-font,inherit);font-size:11px;line-height:1.5;color:rgba(255,255,255,0.4);margin-top:10px;">All prices in INR. Lifetime VIP 2.0 is a one-time payment and includes exclusive delivery of the RISHi.EV IPTV Box.</p>
     </div>
 
     <div id="vip-compare">
