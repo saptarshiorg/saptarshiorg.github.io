@@ -2344,7 +2344,7 @@ document.addEventListener('DOMContentLoaded', function(){
     <img src="https://upload.wikimedia.org/wikipedia/en/1/17/2026_FIFA_World_Cup_emblem.svg" alt="FIFA" style="height:15px;width:15px;object-fit:contain;display:block;flex-shrink:0;">
     FIFA
   </a>
-  <a class="wcs-btn" id="wcs-news" data-sxtab="livetv" href="#sxTabPanels" onclick="event.preventDefault();openLiveTV();setTimeout(()=>{const t=document.querySelector('#chTabs .ch-tab[data-grp=\'News\']');if(t)t.click();},80);">
+  <a class="wcs-btn" id="wcs-news" data-sxtab="livetv" href="#sxTabPanels" onclick="event.preventDefault();openLiveTV();setTimeout(()=>{if(window.chSelectCategory)chSelectCategory('News');},80);">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h8M6 12h12M6 16h8"/></svg>
     News
   </a>
@@ -3730,7 +3730,7 @@ function renderNav(rows) {
     { label:'Home',    href:'#' },
     { label:'Live TV', href:'#sxTabPanels', onclick:"openLiveTV();return false;" },
     { label:'Matches', href:'#sxTabPanels', onclick:"sxSwitchTab('matches');return false;" },
-    { label:'News',    href:'#sxTabPanels', onclick:"openLiveTV();setTimeout(()=>{const t=document.querySelector('#chTabs .ch-tab[data-grp=\\'News\\']');if(t)t.click();},80);return false;" },
+    { label:'News',    href:'#sxTabPanels', onclick:"openLiveTV();setTimeout(()=>{if(window.chSelectCategory)chSelectCategory('News');},80);return false;" },
     { label:'Feedback', href:'#', onclick:"openAdminChat();return false;" },
   ];
   let dHtml = '', mHtml = '';
@@ -4361,6 +4361,7 @@ function renderChannels(rows) {
   if (!rows) return;
   // Store CMS channels globally so the browser's Other group can include them
   window._cmsChannels = active(rows);
+  if (typeof window.chBuildCategories === 'function') window.chBuildCategories();
   if (typeof window.chFilter === 'function') window.chFilter();
 }
 
@@ -4597,8 +4598,8 @@ function toggleQr() {
     .finally(() => {
       // Re-check the banner against whatever tab is active once geo resolves,
       // in case the user already clicked Star/Sony/ZEE before detection finished.
-      const activeTab = document.querySelector('#ch-browser .ch-tab.active');
-      updateGeoBanner(activeTab ? activeTab.dataset.grp : 'All');
+      const catSel = document.getElementById('chCategorySelect');
+      updateGeoBanner(catSel ? catSel.value : 'All');
       // Also correct the FanCode panel's mirror in case it was opened
       // before geo detection finished (it defaults to the India mirror).
       if (typeof sxApplyFanCodeUrl === 'function') sxApplyFanCodeUrl();
@@ -4609,24 +4610,43 @@ function toggleQr() {
 (function(){
   const OTHERS_LOGO = 'https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/main/logo.png';
 
-  let chActiveGrp = 'All'; // EPG guide is open by default now — it's its own tab
+  let chActiveGrp = 'All'; // EPG guide is open by default now — it's its own view
 
-  window.chSetTab = function(el) {
-    const grid = document.getElementById('chGrid');
-    document.querySelectorAll('#ch-browser .ch-tab').forEach(t => t.classList.remove('active'));
-    el.classList.add('active');
-    chActiveGrp = el.dataset.grp;
-    if (window._sxUpdateGeoBanner) window._sxUpdateGeoBanner(chActiveGrp);
-    if (grid) grid.style.display = 'flex';
-    chFilter();
-    // Smooth scroll so top of guide is just visible below the sticky header
-    requestAnimationFrame(() => {
-      const browser = document.getElementById('ch-browser');
-      if (!browser) return;
-      const headerH = (document.querySelector('header') || {offsetHeight:0}).offsetHeight || 0;
-      const top = browser.getBoundingClientRect().top + window.scrollY - headerH - 12;
-      window.scrollTo({top, behavior:'smooth'});
+  // Category dropdown is built dynamically from whatever values appear in
+  // the sheet's "group" column — no hardcoded categories anymore. Any
+  // channel/category name placed in that column will just show up here.
+  window.chBuildCategories = function() {
+    const sel = document.getElementById('chCategorySelect');
+    if (!sel) return;
+    const prevVal = sel.value || chActiveGrp || 'All';
+    const all = window._cmsChannels || [];
+    const seen = new Set();
+    const cats = [];
+    all.forEach(c => {
+      const grp = (c.group || '').trim() || 'Other';
+      if (!seen.has(grp)) { seen.add(grp); cats.push(grp); }
     });
+    sel.innerHTML = '<option value="All">All Channels</option>' +
+      cats.map(g => `<option value="${g}">${g}</option>`).join('');
+    sel.value = cats.includes(prevVal) ? prevVal : 'All';
+    chActiveGrp = sel.value;
+  };
+
+  window.chOnCategoryChange = function() {
+    const sel = document.getElementById('chCategorySelect');
+    chActiveGrp = sel ? sel.value : 'All';
+    if (window._sxUpdateGeoBanner) window._sxUpdateGeoBanner(chActiveGrp);
+    chFilter();
+  };
+
+  // Used by quick-link buttons (e.g. the "News" shortcut) to jump straight
+  // to a category. Falls back to "All" if that category isn't present.
+  window.chSelectCategory = function(grp) {
+    const sel = document.getElementById('chCategorySelect');
+    if (!sel) return;
+    const hasOption = [...sel.options].some(o => o.value === grp);
+    sel.value = hasOption ? grp : 'All';
+    chOnCategoryChange();
   };
 
   window.chClearSearch = function() {
@@ -4648,6 +4668,8 @@ function toggleQr() {
   window.chFilter = function() {
     const qInput = document.getElementById('chSearchInput');
     const q = (qInput ? qInput.value : '').toLowerCase().trim();
+    const sel = document.getElementById('chCategorySelect');
+    if (sel) chActiveGrp = sel.value || 'All';
     const grid = document.getElementById('chGrid');
     const clearBtn = document.getElementById('epgSearchClear');
     const countEl = document.getElementById('epgCount');
@@ -4659,8 +4681,7 @@ function toggleQr() {
     grid.innerHTML = '';
 
     // All channels now come straight from the LIVE CHANNELS sheet.
-    // Use the "group" column (Star Sports / Sony Sports / fox / FanCode / International / ZEE / News / sky / espn / tnt / willow / Other)
-    // to sort into the sidebar tabs.
+    // Category is whatever's in the sheet's "group" column — no fixed list.
     const all = window._cmsChannels || [];
     const filtered = all.filter(c => {
       const grp = c.group || 'Other';
@@ -4740,14 +4761,34 @@ function toggleQr() {
       grid.appendChild(a);
     }
 
-    filtered.forEach(appendRow);
+    if (effectiveGrp === 'All') {
+      // Group by category, each with its own heading, in the order
+      // categories first appear in the sheet.
+      const order = [];
+      const buckets = {};
+      filtered.forEach(c => {
+        const grp = c.group || 'Other';
+        if (!buckets[grp]) { buckets[grp] = []; order.push(grp); }
+        buckets[grp].push(c);
+      });
+      order.forEach(grp => {
+        const heading = document.createElement('div');
+        heading.className = 'epg-cat-heading';
+        heading.textContent = grp;
+        grid.appendChild(heading);
+        buckets[grp].forEach(appendRow);
+      });
+    } else {
+      filtered.forEach(appendRow);
+    }
   };
 
-  // Guide is open by default, showing "All" — the first tab starts active.
+  // Guide is open by default, showing "All" — category list is built
+  // fresh from the sheet's group column as soon as channels arrive.
   document.addEventListener('DOMContentLoaded', () => {
     const g = document.getElementById('chGrid');
     if (g) g.style.display = 'flex';
-    if (window._cmsChannels) chFilter();
+    if (window._cmsChannels) { chBuildCategories(); chFilter(); }
   });
 })();
 // ── END CMS-DRIVEN CHANNELS BROWSER ──────────────────────────
@@ -5626,51 +5667,46 @@ function closeAdminChatDiscordPopup(){
 
 .epg-body{ display:flex; gap:18px; align-items:flex-start; }
 
-.epg-sidebar.epg-sidebar{
-  display:flex !important; flex-direction:column !important; gap:5px !important;
-  flex:0 0 210px; width:210px;
-  background:rgba(255,255,255,0.03) !important;
-  border:none !important;
-  border-radius:0 !important;
-  padding:10px !important;
-  position:sticky; top:90px;
-  margin-bottom:0 !important;
-}
-.epg-tab.epg-tab{
-  display:flex !important; align-items:center; gap:10px !important;
-  width:100% !important;
-  padding:10px 12px !important;
-  border-radius:0 !important;
-  background:transparent !important;
-  border:none !important;
-  color:rgba(255,255,255,0.55) !important;
-  font-family:var(--font-body) !important; font-weight:700 !important; font-size:13px !important;
-  cursor:pointer; white-space:nowrap;
-  transition:background .18s ease,color .18s ease,box-shadow .18s ease;
-}
-.epg-tab.epg-tab:hover{ background:rgba(255,255,255,0.06) !important; color:#fff !important; }
-.epg-tab.epg-tab.active{
-  background:linear-gradient(135deg,rgba(0,217,255,0.28),rgba(0,217,255,0.12)) !important;
-  color:#00D9FF !important;
-  border-color:transparent !important;
-  box-shadow:none !important;
-}
+/* Controls row: search bar + category dropdown (built from the sheet's
+   "group" column — no fixed category list) + DMCA icon button. */
+.epg-controls{ display:flex !important; align-items:center; gap:10px; flex-wrap:wrap; }
 
-.epg-dmca-btn{
-  display: flex; align-items: center; gap: 10px;
-  width: 100%; margin-top: 10px; padding-top: 14px;
-  border: none; border-top: 1px solid rgba(255,255,255,0.08);
-  background: transparent; cursor: pointer;
-  font-family: var(--font-body); font-weight: 600; font-size: 11px;
-  line-height: 1.35; text-align: left;
-  color: rgba(255,255,255,0.40);
+.epg-select-wrap{ position:relative; display:flex; align-items:center; flex-shrink:0; }
+.epg-select-wrap select{
+  appearance:none; -webkit-appearance:none; -moz-appearance:none;
+  background:rgba(255,255,255,0.04) !important;
+  border:none !important; border-radius:0 !important;
+  padding:11px 34px 11px 16px !important;
+  color:#fff !important;
+  font-family:var(--font-body) !important; font-weight:700 !important; font-size:13px !important;
+  cursor:pointer; min-width:180px;
+  backdrop-filter:blur(10px) !important; -webkit-backdrop-filter:blur(10px) !important;
+  transition:box-shadow .2s ease;
 }
-.epg-dmca-btn:hover{ color: rgba(255,255,255,0.70); }
-.epg-dmca-btn svg{ flex-shrink: 0; color: rgba(255,255,255,0.35); }
-.epg-dmca-btn:hover svg{ color: #00D9FF; }
-@media(max-width:900px){
-  .epg-dmca-btn{ width:auto; flex-shrink:0; border-top:none; border-left:1px solid rgba(255,255,255,0.08); margin-top:0; padding-top:0; padding-left:14px; }
+.epg-select-wrap select:focus{ outline:none; box-shadow:0 0 0 2px rgba(255,179,71,0.35); }
+.epg-select-wrap select option{ background:#111318; color:#fff; }
+.epg-select-chevron{ position:absolute; right:12px; pointer-events:none; color:#FFB347; }
+
+.epg-dmca-btn-inline{
+  display:flex; align-items:center; justify-content:center;
+  width:40px; height:40px; flex-shrink:0;
+  border:none; border-radius:0 !important;
+  background:rgba(255,255,255,0.04) !important;
+  color:rgba(255,255,255,0.45); cursor:pointer;
 }
+.epg-dmca-btn-inline:hover{ color:#00D9FF; }
+
+/* Category headings shown before each group's channels in the
+   "All Channels" view. */
+.epg-cat-heading{
+  font-family:var(--font-display) !important; font-weight:800 !important;
+  font-size:13px !important; letter-spacing:.05em; text-transform:uppercase;
+  color:#FFB347 !important;
+  padding:16px 2px 6px !important;
+  border-bottom:1px solid rgba(255,255,255,0.08);
+  margin-bottom:2px;
+}
+.epg-cat-heading:first-child{ padding-top:0 !important; }
 
 .epg-list-wrap{ flex:1; min-width:0; }
 .epg-geo-banner{
@@ -5748,9 +5784,8 @@ function closeAdminChatDiscordPopup(){
 
 @media(max-width:900px){
   .epg-body{ flex-direction:column; }
-  .epg-sidebar.epg-sidebar{ flex-direction:row !important; overflow-x:auto; width:100%; flex-basis:auto; position:static; gap:6px !important; }
-  .epg-tab.epg-tab{ flex-shrink:0; width:auto !important; }
   .epg-search-box{ max-width:none; }
+  .epg-select-wrap select{ min-width:0; }
   .epg-name{ font-size:13px !important; }
   .epg-title{ font-size:16px !important; }
 
@@ -5820,6 +5855,7 @@ function closeAdminChatDiscordPopup(){
     grid-template-columns:repeat(5,1fr) !important;
     gap:16px !important;
   }
+  #chGrid.epg-list .epg-cat-heading{ grid-column:1 / -1 !important; }
   #chGrid.epg-list .epg-row{
     position:relative !important;
     flex-direction:column !important;
@@ -5874,6 +5910,9 @@ function closeAdminChatDiscordPopup(){
           <span class="epg-title">📡 Live TV Guide</span>
           <span class="epg-count" id="epgCount"></span>
         </div>
+      </div>
+
+      <div class="epg-controls">
         <div class="epg-search-box">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           <input id="chSearchInput" type="text" placeholder="Search channels, sports, networks…" autocomplete="off" oninput="chFilter()">
@@ -5881,6 +5920,17 @@ function closeAdminChatDiscordPopup(){
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 6 6 18M6 6l12 12"/></svg>
           </button>
         </div>
+
+        <div class="epg-select-wrap">
+          <select id="chCategorySelect" onchange="chOnCategoryChange()">
+            <option value="All">All Channels</option>
+          </select>
+          <svg class="epg-select-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+
+        <button type="button" class="epg-dmca-btn-inline" onclick="openDmca()" title="SX SPORTS (Owned by Rishi Entertainment Verse) — DMCA / Copyright">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z"/><path d="M12 8v5M12 16h.01"/></svg>
+        </button>
       </div>
 
       <div id="epg-geo-banner" class="epg-geo-banner" style="display:none;">
@@ -5889,65 +5939,6 @@ function closeAdminChatDiscordPopup(){
       </div>
 
       <div class="epg-body">
-        <nav class="ch-tabs epg-sidebar" id="chTabs">
-          <div class="ch-tab epg-tab active" data-grp="All" onclick="chSetTab(this)">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-            <span>All Channels</span>
-          </div>
-          <div class="ch-tab epg-tab ch-tab-star" data-grp="Star Sports" onclick="chSetTab(this)">
-            <img src="https://indiantelevision.com/wp-content/uploads/2025/12/Untitled-1_23-33.jpg" alt="Star Sports" style="height:16px;width:16px;object-fit:cover;border-radius: 0;flex-shrink:0;">
-            <span style="color:#fff;font-weight:800;letter-spacing:0.06em;">STAR SPORTS</span>
-          </div>
-          <div class="ch-tab epg-tab ch-tab-sony" data-grp="Sony Sports" onclick="chSetTab(this)">
-            <img src="https://upload.wikimedia.org/wikipedia/en/thumb/c/cd/Sony_Sports_Network.svg/1280px-Sony_Sports_Network.svg.png" alt="" style="height:16px;width:auto;max-width:32px;object-fit:contain;flex-shrink:0;">
-            <span>Sony</span>
-          </div>
-          <div class="ch-tab epg-tab ch-tab-fox" data-grp="fox" onclick="chSetTab(this)">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/0/0b/Fox_sports.png" alt="" style="height:16px;width:auto;max-width:32px;object-fit:contain;flex-shrink:0;">
-            <span>Fox</span>
-          </div>
-          <div class="ch-tab epg-tab ch-tab-fancode" data-grp="FanCode" onclick="chSetTab(this)">
-            <img src="https://static.vecteezy.com/system/resources/previews/069/146/538/non_2x/fancode-app-icon-on-transparent-background-free-png.png" alt="" style="height:16px;width:16px;object-fit:contain;flex-shrink:0;">
-            <img src="https://www.cricuspl.com/wp-content/uploads/2024/11/FanCode-Logo-2022_FanCode-OrangeOnTransarent.png" alt="FanCode" style="height:16px;width:auto;max-width:56px;object-fit:contain;flex-shrink:0;">
-          </div>
-          <div class="ch-tab epg-tab ch-tab-intl" data-grp="International" onclick="chSetTab(this)">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10z"/></svg>
-            <span>Intl</span>
-          </div>
-          <div class="ch-tab epg-tab ch-tab-sky" data-grp="sky" onclick="chSetTab(this)">
-            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTrjjNgzdKBYE-CR5jJGf21C_8D9mxJruF4_UCEllL0eA&s" alt="Sky Sports" style="height:16px;width:16px;object-fit:contain;border-radius: 0;flex-shrink:0;">
-            <span>Sky Sports</span>
-          </div>
-          <div class="ch-tab epg-tab ch-tab-espn" data-grp="espn" onclick="chSetTab(this)">
-            <img src="https://www.pngarts.com/files/16/ESPN-Logo-PNG-Photo-HQ.png" alt="ESPN" style="height:16px;width:auto;max-width:32px;object-fit:contain;flex-shrink:0;">
-            <span>ESPN</span>
-          </div>
-          <div class="ch-tab epg-tab ch-tab-tnt" data-grp="tnt" onclick="chSetTab(this)">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/TNT_Sports_%282023%29.svg/3840px-TNT_Sports_%282023%29.svg.png" alt="TNT" style="height:16px;width:auto;max-width:32px;object-fit:contain;flex-shrink:0;">
-            <span>TNT</span>
-          </div>
-          <div class="ch-tab epg-tab ch-tab-willow" data-grp="willow" onclick="chSetTab(this)">
-            <img src="https://static.wikia.nocookie.net/logopedia/images/7/7d/Willow_2023_stacked.svg/revision/latest?cb=20240927132511" alt="Willow" style="height:16px;width:auto;max-width:32px;object-fit:contain;flex-shrink:0;">
-            <span style="text-transform:uppercase;">Willow</span>
-          </div>
-          <div class="ch-tab epg-tab ch-tab-zee" data-grp="ZEE" onclick="chSetTab(this)">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Zee_entertainment_enterprises_logo.svg/3840px-Zee_entertainment_enterprises_logo.svg.png" alt="ZEE" style="height:16px;width:auto;max-width:38px;object-fit:contain;flex-shrink:0;">
-            <span style="font-family:var(--font-display);font-weight:800;font-size:12px;letter-spacing:0.04em;">Zee</span>
-          </div>
-          <div class="ch-tab epg-tab ch-tab-news" data-grp="News" onclick="chSetTab(this)">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="flex-shrink:0"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h8M6 12h12M6 16h8"/></svg>
-            <span>News</span>
-          </div>
-          <div class="ch-tab epg-tab ch-tab-other" data-grp="Other" onclick="chSetTab(this)">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="flex-shrink:0"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
-            <span>Other</span>
-          </div>
-          <button type="button" class="epg-dmca-btn" onclick="openDmca()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="flex-shrink:0"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z"/><path d="M12 8v5M12 16h.01"/></svg>
-            <span>SX SPORTS (Owned by Rishi Entertainment Verse)</span>
-          </button>
-        </nav>
-
         <div class="epg-list-wrap">
           <div class="epg-list" id="chGrid"></div>
         </div>
