@@ -1472,29 +1472,35 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
    more than one working btn_url (btn_url, btn_url_2..5)
    filled in the MATCH CARDS sheet tab. Single-server
    cards skip this and go straight to the player as before.
+   Style: flat (square corners, no heavy shadows/gradients)
+   + glassmorphism (translucent frosted panels, hairline borders).
 ──────────────────────────────────────────── */
-.server-select-overlay { display: none; position: fixed; inset: 0; z-index: 10000; background: rgba(0,0,0,0.80); backdrop-filter: blur(10px); align-items: center; justify-content: center; padding: 16px; }
+.server-select-overlay { display: none; position: fixed; inset: 0; z-index: 10000; background: rgba(0,0,0,0.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); align-items: center; justify-content: center; padding: 16px; }
 .server-select-overlay.open { display: flex; animation: fadeUp 0.22s var(--ease); }
 .server-select-modal {
-  background: rgba(8,8,9,0.97); backdrop-filter: var(--blur);
+  background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+  border: 1px solid rgba(255,255,255,0.10);
   border-radius: 0; width: 100%; max-width: 380px; max-height: 90vh; overflow-y: auto;
-  position: relative; box-shadow: 0 0 80px rgba(0,217,255,0.15), 0 32px 90px rgba(0,0,0,0.90);
+  position: relative; box-shadow: none;
   animation: modalIn 0.28s var(--spring) both;
 }
-.server-select-header { padding: 18px 20px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: rgba(255,255,255,0.02); position: sticky; top: 0; z-index: 2; backdrop-filter: var(--blur-sm); }
+.server-select-header { padding: 18px 20px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: transparent; position: sticky; top: 0; z-index: 2; backdrop-filter: var(--blur-sm); -webkit-backdrop-filter: var(--blur-sm); border-bottom: 1px solid rgba(255,255,255,0.08); }
 .server-select-title { font-family: var(--font-display); font-size: 15px; font-weight: 900; letter-spacing: 0.04em; color: var(--lavender); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.server-select-close { width: 30px; height: 30px; flex-shrink: 0; border-radius: 50%; background: var(--s2); color: rgba(255,255,255,0.75); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; border: 0; }
-.server-select-close:hover { background: rgba(255,50,50,0.18); color: #fff; }
-.server-select-body { padding: 14px 16px 18px; display: flex; flex-direction: column; gap: 9px; }
+.server-select-close { width: 30px; height: 30px; flex-shrink: 0; border-radius: 0; background: var(--glass); border: 1px solid rgba(255,255,255,0.10); color: rgba(255,255,255,0.75); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+.server-select-close:hover { background: rgba(255,50,50,0.14); border-color: rgba(255,50,50,0.3); color: #fff; }
+.server-select-body { padding: 14px 16px 18px; display: flex; flex-direction: column; gap: 8px; }
 .server-select-btn {
   display: flex; align-items: center; gap: 12px; width: 100%; padding: 13px 14px;
-  border: 0; border-radius: 0; background: var(--s1); text-decoration: none; color: var(--white);
-  transition: all 0.2s var(--ease); cursor: pointer; font-family: var(--font-body); text-align: left;
+  border: 1px solid rgba(255,255,255,0.08); border-radius: 0; background: var(--glass);
+  backdrop-filter: var(--blur-sm); -webkit-backdrop-filter: var(--blur-sm);
+  text-decoration: none; color: var(--white);
+  transition: all 0.2s var(--ease); cursor: pointer; font-family: var(--font-body); text-align: left; box-shadow: none;
 }
-.server-select-btn:hover { background: var(--s2); transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,217,255,0.18); }
-.server-select-num { width: 24px; height: 24px; flex-shrink: 0; border-radius: 50%; background: rgba(0,217,255,0.14); color: var(--cu-accent,#00D9FF); font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+.server-select-btn:hover { background: var(--glass-h); border-color: rgba(0,217,255,0.35); transform: none; box-shadow: none; }
+.server-select-num { width: 24px; height: 24px; flex-shrink: 0; border-radius: 0; background: rgba(0,217,255,0.12); border: 1px solid rgba(0,217,255,0.25); color: var(--cu-accent,#00D9FF); font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
 .server-select-label { flex: 1; font-size: 13px; font-weight: 700; letter-spacing: 0.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .server-select-play { font-size: 11px; color: rgba(0,217,255,0.55); flex-shrink: 0; }
+
 
 /* Device name / ID — top right corner, desktop only */
 .nav-device-info {
@@ -4065,7 +4071,7 @@ function injectMatchInfoIntoHeroCards(matchCards) {
         ${timerBlock}
       </div>
       <div class="hsc-btn-row" style="margin-top:6px;flex-shrink:0;">
-        <a href="${matchWatchHref(m.btn_url)}" class="hsc-btn-watch" style="font-size:10px;padding:6px 8px;" onclick="event.stopPropagation();return sxHandleMatchWatch(event,'${sxServersEnc(m)}','${escJs(m.btn_url)}','${escJs((m.team1_code||'')+' vs '+(m.team2_code||''))}')">▶ ${m.btn_text||'Watch Now'}</a>
+        <a href="${matchWatchHref(m.btn_url)}" class="hsc-btn-watch" style="font-size:10px;padding:6px 8px;" onclick="event.stopPropagation();return sxHandleMatchWatch(event,'${sxServersEnc(m)}','${escJs(m.btn_url)}','${escJs((m.team1_code||'')+' vs '+(m.team2_code||''))}')">▶ Watch Now</a>
       </div>`;
 
     card.setAttribute('onclick', `return sxHandleMatchWatch(event,'${sxServersEnc(m)}','${escJs(m.btn_url)}','${escJs((m.team1_code||'')+' vs '+(m.team2_code||''))}')`);
@@ -4128,7 +4134,7 @@ function injectMatchInfoIntoHeroCards(matchCards) {
           ${timerBlock}
         </div>
         <div class="hsc-btn-row" style="margin-top:6px;flex-shrink:0;">
-          <a href="${matchWatchHref(m.btn_url)}" class="hsc-btn-watch" style="font-size:10px;padding:6px 8px;" onclick="event.stopPropagation();return sxHandleMatchWatch(event,'${sxServersEnc(m)}','${escJs(m.btn_url)}','${escJs((m.team1_code||'')+' vs '+(m.team2_code||''))}')">▶ ${m.btn_text||'Watch Now'}</a>
+          <a href="${matchWatchHref(m.btn_url)}" class="hsc-btn-watch" style="font-size:10px;padding:6px 8px;" onclick="event.stopPropagation();return sxHandleMatchWatch(event,'${sxServersEnc(m)}','${escJs(m.btn_url)}','${escJs((m.team1_code||'')+' vs '+(m.team2_code||''))}')">▶ Watch Now</a>
         </div>
       </div>`;
 
@@ -4365,7 +4371,7 @@ function renderMatchCards(rows) {
           </div>
         </div>
         ${timerBlock}
-        <a class="smo-btn" href="${matchWatchHref(c.btn_url)}" onclick="return sxHandleMatchWatch(event,'${sxServersEnc(c)}','${escJs(c.btn_url)}','${escJs((c.team1_code||'')+' vs '+(c.team2_code||''))}')">${c.btn_text||'Watch Live'}</a>
+        <a class="smo-btn" href="${matchWatchHref(c.btn_url)}" onclick="return sxHandleMatchWatch(event,'${sxServersEnc(c)}','${escJs(c.btn_url)}','${escJs((c.team1_code||'')+' vs '+(c.team2_code||''))}')">Watch Now</a>
       </div>`;
 
       if (!isLive && countdown) timers.push({ timerDisplayId: timerId, timerWrapId, badgeId, liveBadgeHtml, target: countdown });
