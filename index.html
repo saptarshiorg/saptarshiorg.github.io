@@ -1468,11 +1468,10 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
 .unavail-card { opacity: 0.5; pointer-events: none; }
 
 /* ────────────────────────────────────────────
-   MATCH WATCH SCREEN — full-screen takeover shown when a match
-   card has more than one working btn_url (btn_url, btn_url_2..5
+   MATCH WATCH SCREEN — full-screen takeover shown for every match
+   card that has at least one working btn_url (btn_url, btn_url_2..5
    in the MATCH CARDS sheet tab). Left = match details, right =
-   list of watch/server links. Single-server cards skip this
-   entirely and jump straight to the player, unchanged.
+   list of watch/server links (just one entry if only btn_url is set).
    Style: flat (square corners, no heavy shadows) + heavy
    glassmorphism (frosted translucent panels, hairline borders).
 ──────────────────────────────────────────── */
@@ -3543,10 +3542,10 @@ window.sxSwitchTab = sxSwitchTab;
   </div>
 </div>
 
-<!-- MATCH WATCH SCREEN — full-screen takeover shown when a match card
-     has 2+ working server URLs (btn_url, btn_url_2..5). Left = match
-     details, right = watch/server links. A card with only one URL
-     skips this and plays directly, exactly like before. -->
+<!-- MATCH WATCH SCREEN — full-screen takeover shown for every match card
+     with at least one working server URL (btn_url, btn_url_2..5). Left =
+     match details, right = watch/server links (one entry if only
+     btn_url is filled). -->
 <div class="mws-overlay" id="mwsOverlay">
   <div class="mws-bg" id="mwsBg"></div>
   <button class="mws-close" onclick="closeMatchWatchScreen()" aria-label="Close">✕</button>
@@ -4016,11 +4015,11 @@ function sxGoToMatchUrl(e, rawUrl, name) {
 //   btn_url_3 / btn_text_3  →  Server 3
 //   btn_url_4 / btn_text_4  →  Server 4
 //   btn_url_5 / btn_text_5  →  Server 5
-// Blank / "#" slots are ignored. If a card ends up with 2+ working
-// server URLs, tapping "Watch Now" opens a full-screen match watch
-// screen (match details on the left, server list on the right)
-// instead of jumping straight to the stream; a card with only one
-// URL behaves exactly as before — direct play, no extra screen.
+// Blank / "#" slots are ignored. Tapping "Watch Now" always opens the
+// full-screen match watch screen (match details on the left, server
+// list on the right) as long as at least one server URL is filled —
+// even with just one server, the screen still opens (single entry
+// list) instead of playing directly.
 function sxGetMatchServers(m) {
   m = m || {};
   const raw = [
@@ -4060,7 +4059,7 @@ function sxMatchInfoEnc(m, name) {
 function sxHandleMatchWatch(e, serversEnc, fallbackUrl, name, matchInfoEnc) {
   let servers = [];
   try { servers = JSON.parse(decodeURIComponent(serversEnc || '')); } catch (err) { servers = []; }
-  if (servers.length > 1) {
+  if (servers.length >= 1) {
     if (e && e.preventDefault) e.preventDefault();
     if (e && e.stopPropagation) e.stopPropagation();
     let info = { name };
@@ -4068,8 +4067,7 @@ function sxHandleMatchWatch(e, serversEnc, fallbackUrl, name, matchInfoEnc) {
     openMatchWatchScreen(servers, info);
     return false;
   }
-  const url = servers.length === 1 ? servers[0].url : fallbackUrl;
-  return sxGoToMatchUrl(e, url, name);
+  return sxGoToMatchUrl(e, fallbackUrl, name);
 }
 
 function openMatchWatchScreen(servers, info) {
