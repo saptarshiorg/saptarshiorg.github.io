@@ -3688,7 +3688,7 @@ function startCountdown(el, target, onComplete) {
   function update() {
     const diff = new Date(target) - Date.now();
     if (diff <= 0) {
-      el.textContent = 'STARTING SOON';
+      el.textContent = 'LIVE';
       if (handle) clearInterval(handle);
       if (!fired) { fired = true; if (onComplete) onComplete(); }
       return;
@@ -4078,14 +4078,18 @@ function openMatchWatchScreen(servers, info) {
 
   const isLive = info.status === 'live';
   const isFinished = info.status === 'finished';
+  const uid = Math.random().toString(36).slice(2);
+  const badgeId = 'mws-badge-' + uid;
+  const liveBadgeHtml = `<div class="smo-live-badge" id="${badgeId}"><div class="live-dot-r"></div>LIVE</div>`;
   const badgeHtml = isLive
-    ? `<div class="smo-live-badge"><div class="live-dot-r"></div>LIVE</div>`
+    ? liveBadgeHtml
     : isFinished
-      ? `<div class="smo-upcoming-badge">FINISHED</div>`
-      : `<div class="smo-upcoming-badge">⏰ UPCOMING</div>`;
+      ? `<div class="smo-upcoming-badge" id="${badgeId}">FINISHED</div>`
+      : `<div class="smo-upcoming-badge" id="${badgeId}">⏰ UPCOMING</div>`;
 
   const showTimer = !isLive && !isFinished && info.countdown;
-  const timerId = 'mws-timer-' + Math.random().toString(36).slice(2);
+  const timerId = 'mws-timer-' + uid;
+  const timerWrapId = 'mws-timerwrap-' + uid;
 
   const leftEl = document.getElementById('mwsLeft');
   if (leftEl) {
@@ -4106,13 +4110,12 @@ function openMatchWatchScreen(servers, info) {
           <div class="mws-team-full">${info.team2_full_name || ''}</div>
         </div>
       </div>
-      ${showTimer ? `<div><div class="mws-timer-label">Starts in</div><div class="mws-timer" id="${timerId}">--:--:--</div></div>` : ''}
+      ${showTimer ? `<div id="${timerWrapId}"><div class="mws-timer-label">Starts in</div><div class="mws-timer" id="${timerId}">--:--:--</div></div>` : ''}
     `;
   }
   if (showTimer) {
     setTimeout(() => {
-      const el = document.getElementById(timerId);
-      if (el) startCountdown(el, info.countdown);
+      wireAutoLiveCountdown(info.countdown, { timerDisplayId: timerId, timerWrapId, badgeId, liveBadgeHtml });
     }, 30);
   }
 
