@@ -1467,6 +1467,35 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
 .badge-unavail { background: rgba(255,60,60,0.08); border-radius: 0; padding: 1px 6px; font-size: 9px; letter-spacing: 0.08em; color: #ff7070; font-weight: 700; }
 .unavail-card { opacity: 0.5; pointer-events: none; }
 
+/* ────────────────────────────────────────────
+   SERVER SELECT MODAL — shown when a match card has
+   more than one working btn_url (btn_url, btn_url_2..5)
+   filled in the MATCH CARDS sheet tab. Single-server
+   cards skip this and go straight to the player as before.
+──────────────────────────────────────────── */
+.server-select-overlay { display: none; position: fixed; inset: 0; z-index: 10000; background: rgba(0,0,0,0.80); backdrop-filter: blur(10px); align-items: center; justify-content: center; padding: 16px; }
+.server-select-overlay.open { display: flex; animation: fadeUp 0.22s var(--ease); }
+.server-select-modal {
+  background: rgba(8,8,9,0.97); backdrop-filter: var(--blur);
+  border-radius: 0; width: 100%; max-width: 380px; max-height: 90vh; overflow-y: auto;
+  position: relative; box-shadow: 0 0 80px rgba(0,217,255,0.15), 0 32px 90px rgba(0,0,0,0.90);
+  animation: modalIn 0.28s var(--spring) both;
+}
+.server-select-header { padding: 18px 20px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: rgba(255,255,255,0.02); position: sticky; top: 0; z-index: 2; backdrop-filter: var(--blur-sm); }
+.server-select-title { font-family: var(--font-display); font-size: 15px; font-weight: 900; letter-spacing: 0.04em; color: var(--lavender); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.server-select-close { width: 30px; height: 30px; flex-shrink: 0; border-radius: 50%; background: var(--s2); color: rgba(255,255,255,0.75); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; border: 0; }
+.server-select-close:hover { background: rgba(255,50,50,0.18); color: #fff; }
+.server-select-body { padding: 14px 16px 18px; display: flex; flex-direction: column; gap: 9px; }
+.server-select-btn {
+  display: flex; align-items: center; gap: 12px; width: 100%; padding: 13px 14px;
+  border: 0; border-radius: 0; background: var(--s1); text-decoration: none; color: var(--white);
+  transition: all 0.2s var(--ease); cursor: pointer; font-family: var(--font-body); text-align: left;
+}
+.server-select-btn:hover { background: var(--s2); transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,217,255,0.18); }
+.server-select-num { width: 24px; height: 24px; flex-shrink: 0; border-radius: 50%; background: rgba(0,217,255,0.14); color: var(--cu-accent,#00D9FF); font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+.server-select-label { flex: 1; font-size: 13px; font-weight: 700; letter-spacing: 0.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.server-select-play { font-size: 11px; color: rgba(0,217,255,0.55); flex-shrink: 0; }
+
 /* Device name / ID — top right corner, desktop only */
 .nav-device-info {
   display: flex; flex-direction: column; align-items: flex-end; justify-content: center;
@@ -3437,6 +3466,20 @@ window.sxSwitchTab = sxSwitchTab;
   </div>
 </div>
 
+<!-- SERVER SELECT POPUP — lists btn_url / btn_url_2..5 from a match card
+     as "Server 1..5" so visitors pick a mirror after tapping Watch Now.
+     Only shown when a match card has 2+ working server URLs; a card
+     with just one URL skips straight to the player like before. -->
+<div class="server-select-overlay" id="serverSelectOverlay" onclick="if(event.target===this)closeServerSelect()">
+  <div class="server-select-modal">
+    <div class="server-select-header">
+      <div class="server-select-title" id="serverSelectTitle">▶ Select Server</div>
+      <button class="server-select-close" onclick="closeServerSelect()">✕</button>
+    </div>
+    <div class="server-select-body" id="serverSelectBody"></div>
+  </div>
+</div>
+
 
 <!-- ════════════════════════════════════════════════
      CMS ENGINE — reads Google Sheets CSV
@@ -3884,6 +3927,72 @@ function sxGoToMatchUrl(e, rawUrl, name) {
   return true;
 }
 
+// ── Multi-server support for MATCH CARDS ─────────────────────────────
+// Sheet tab "MATCH CARDS" can have up to 5 server slots per row:
+//   btn_url / btn_text  →  Server 1 (falls back to "Server 1" if btn_text blank)
+//   btn_url_2 / btn_text_2  →  Server 2
+//   btn_url_3 / btn_text_3  →  Server 3
+//   btn_url_4 / btn_text_4  →  Server 4
+//   btn_url_5 / btn_text_5  →  Server 5
+// Blank / "#" slots are ignored. If a card ends up with 2+ working
+// server URLs, tapping "Watch Now" opens the server-select popup instead
+// of jumping straight to the stream; a card with only one URL behaves
+// exactly as before (no popup).
+function sxGetMatchServers(m) {
+  m = m || {};
+  const raw = [
+    { url: m.btn_url,   text: m.btn_text   || 'Server 1' },
+    { url: m.btn_url_2, text: m.btn_text_2 || 'Server 2' },
+    { url: m.btn_url_3, text: m.btn_text_3 || 'Server 3' },
+    { url: m.btn_url_4, text: m.btn_text_4 || 'Server 4' },
+    { url: m.btn_url_5, text: m.btn_text_5 || 'Server 5' }
+  ];
+  return raw.filter(s => s.url && String(s.url).trim() && String(s.url).trim() !== '#');
+}
+// URI-encoded JSON of a match row's server list — safe to drop straight into
+// a single-quoted string inside an inline onclick="" attribute (no raw
+// quotes/backslashes survive encodeURIComponent).
+function sxServersEnc(m) { return encodeURIComponent(JSON.stringify(sxGetMatchServers(m))); }
+
+// Card click / Watch Now handler — routes to the server-select popup when
+// there's more than one server, otherwise falls straight through to
+// sxGoToMatchUrl exactly like before. serversEnc is a URI-encoded JSON
+// string (built with sxGetMatchServers + encodeURIComponent(JSON.stringify(...)))
+// so it can safely sit inside an inline onclick="" attribute.
+function sxHandleMatchWatch(e, serversEnc, fallbackUrl, name) {
+  let servers = [];
+  try { servers = JSON.parse(decodeURIComponent(serversEnc || '')); } catch (err) { servers = []; }
+  if (servers.length > 1) {
+    if (e && e.preventDefault) e.preventDefault();
+    if (e && e.stopPropagation) e.stopPropagation();
+    openServerSelect(servers, name);
+    return false;
+  }
+  const url = servers.length === 1 ? servers[0].url : fallbackUrl;
+  return sxGoToMatchUrl(e, url, name);
+}
+
+function openServerSelect(servers, name) {
+  const label = name || 'Live Stream';
+  const titleEl = document.getElementById('serverSelectTitle');
+  if (titleEl) titleEl.textContent = '▶ ' + label;
+  const body = document.getElementById('serverSelectBody');
+  if (body) {
+    body.innerHTML = servers.map((s, i) => `
+      <button type="button" class="server-select-btn" onclick="closeServerSelect();sxGoToMatchUrl(null,'${escJs(s.url)}','${escJs(label)}')">
+        <span class="server-select-num">${i + 1}</span>
+        <span class="server-select-label">${s.text || ('Server ' + (i + 1))}</span>
+        <span class="server-select-play">▶</span>
+      </button>`).join('');
+  }
+  const overlay = document.getElementById('serverSelectOverlay');
+  if (overlay) overlay.classList.add('open');
+}
+function closeServerSelect() {
+  const overlay = document.getElementById('serverSelectOverlay');
+  if (overlay) overlay.classList.remove('open');
+}
+
 // ── Inject match card data into desktop hero slide cards ─────────────────────
 // Replaces hsc-info (title/sub/btns) in each hero-slide-card with the
 // corresponding match card's team data (by index). Mobile is unaffected.
@@ -3956,10 +4065,10 @@ function injectMatchInfoIntoHeroCards(matchCards) {
         ${timerBlock}
       </div>
       <div class="hsc-btn-row" style="margin-top:6px;flex-shrink:0;">
-        <a href="${matchWatchHref(m.btn_url)}" class="hsc-btn-watch" style="font-size:10px;padding:6px 8px;" onclick="event.stopPropagation();return sxGoToMatchUrl(event,'${escJs(m.btn_url)}','${escJs((m.team1_code||'')+' vs '+(m.team2_code||''))}')">▶ ${m.btn_text||'Watch Now'}</a>
+        <a href="${matchWatchHref(m.btn_url)}" class="hsc-btn-watch" style="font-size:10px;padding:6px 8px;" onclick="event.stopPropagation();return sxHandleMatchWatch(event,'${sxServersEnc(m)}','${escJs(m.btn_url)}','${escJs((m.team1_code||'')+' vs '+(m.team2_code||''))}')">▶ ${m.btn_text||'Watch Now'}</a>
       </div>`;
 
-    card.setAttribute('onclick', `return sxGoToMatchUrl(event,'${escJs(m.btn_url)}','${escJs((m.team1_code||'')+' vs '+(m.team2_code||''))}')`);
+    card.setAttribute('onclick', `return sxHandleMatchWatch(event,'${sxServersEnc(m)}','${escJs(m.btn_url)}','${escJs((m.team1_code||'')+' vs '+(m.team2_code||''))}')`);
 
     if (!isLive && countdown) {
       setTimeout(() => {
@@ -3991,7 +4100,7 @@ function injectMatchInfoIntoHeroCards(matchCards) {
 
     const div = document.createElement('div');
     div.className = 'hero-slide-card';
-    div.setAttribute('onclick', `return sxGoToMatchUrl(event,'${escJs(m.btn_url)}','${escJs((m.team1_code||'')+' vs '+(m.team2_code||''))}')`);
+    div.setAttribute('onclick', `return sxHandleMatchWatch(event,'${sxServersEnc(m)}','${escJs(m.btn_url)}','${escJs((m.team1_code||'')+' vs '+(m.team2_code||''))}')`);
     div.innerHTML = `
       <div class="hsc-banner">
         <div class="hsc-banner-bg" style="background-image:url('${fallbackBanner}')"></div>
@@ -4019,7 +4128,7 @@ function injectMatchInfoIntoHeroCards(matchCards) {
           ${timerBlock}
         </div>
         <div class="hsc-btn-row" style="margin-top:6px;flex-shrink:0;">
-          <a href="${matchWatchHref(m.btn_url)}" class="hsc-btn-watch" style="font-size:10px;padding:6px 8px;" onclick="event.stopPropagation();return sxGoToMatchUrl(event,'${escJs(m.btn_url)}','${escJs((m.team1_code||'')+' vs '+(m.team2_code||''))}')">▶ ${m.btn_text||'Watch Now'}</a>
+          <a href="${matchWatchHref(m.btn_url)}" class="hsc-btn-watch" style="font-size:10px;padding:6px 8px;" onclick="event.stopPropagation();return sxHandleMatchWatch(event,'${sxServersEnc(m)}','${escJs(m.btn_url)}','${escJs((m.team1_code||'')+' vs '+(m.team2_code||''))}')">▶ ${m.btn_text||'Watch Now'}</a>
         </div>
       </div>`;
 
@@ -4256,7 +4365,7 @@ function renderMatchCards(rows) {
           </div>
         </div>
         ${timerBlock}
-        <a class="smo-btn" href="${matchWatchHref(c.btn_url)}" onclick="return sxGoToMatchUrl(event,'${escJs(c.btn_url)}','${escJs((c.team1_code||'')+' vs '+(c.team2_code||''))}')">${c.btn_text||'Watch Live'}</a>
+        <a class="smo-btn" href="${matchWatchHref(c.btn_url)}" onclick="return sxHandleMatchWatch(event,'${sxServersEnc(c)}','${escJs(c.btn_url)}','${escJs((c.team1_code||'')+' vs '+(c.team2_code||''))}')">${c.btn_text||'Watch Live'}</a>
       </div>`;
 
       if (!isLive && countdown) timers.push({ timerDisplayId: timerId, timerWrapId, badgeId, liveBadgeHtml, target: countdown });
@@ -6108,9 +6217,6 @@ function closeAdminChatDiscordPopup(){
       Back
     </button>
     <span id="stream-player-title">Live Stream</span>
-    <button id="stream-player-cast" onclick="sxCastCurrentStream()" title="Cast to TV" aria-label="Cast to TV">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M1 18v3h3c0-1.66-1.34-3-3-3zm0-4v2c2.76 0 5 2.24 5 5h2c0-3.87-3.13-7-7-7zm18-7H5v1.63c3.96 1.28 7.09 4.41 8.37 8.37H19V7zM1 10v2c4.97 0 9 4.03 9 9h2c0-6.08-4.93-11-11-11zm22-7H3c-1.1 0-2 .9-2 2v3h2V5h18v14h-7v2h7c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
-    </button>
   </div>
   <div id="stream-player-body">
     <div id="stream-player-frame-wrap">
