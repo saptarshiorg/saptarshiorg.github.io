@@ -27,38 +27,13 @@
 <link id="favicon" rel="icon" type="image/png" href="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/magenta.png">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Rajdhani:wght@400;500;600;700&family=Chakra+Petch:wght@400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-<!-- ── Player-safe guard for the sitewide popunder/social-bar script ──
-     This has to be registered BEFORE the ad script below loads. Capture-
-     phase listeners on document always run before any bubble-phase
-     listener the ad script attaches (regardless of load order), so this
-     swallows the click at the door — the ad script's own listener never
-     sees it — whenever the click originated inside the open stream
-     player. Everywhere else on the site, clicks pass through untouched. -->
-<script>
-(function(){
-  function sxBlockOverPlayer(e){
-    var overlay = document.getElementById('stream-player-overlay');
-    if (!overlay || !overlay.classList.contains('open')) return;
-    if (!overlay.contains(e.target)) return;
-    // Let our own player controls (back button, alt-mirror links, the
-    // stream iframe itself) work normally — only swallow clicks that
-    // would otherwise bubble past them to the ad script's page-wide
-    // listener (e.g. clicks on blank overlay space).
-    var allow = e.target.closest && e.target.closest(
-      '#stream-player-back, .sp-alt-link, #stream-player-frame, #stream-player-alt-links, #stream-player-banner-row, #stream-player-banner-row *'
-    );
-    if (allow) return;
-    e.stopPropagation();
-    if (e.stopImmediatePropagation) e.stopImmediatePropagation();
-  }
-  ['pointerdown','mousedown','click','touchstart'].forEach(function(type){
-    document.addEventListener(type, sxBlockOverPlayer, true);
-  });
-})();
-</script>
-
-<!-- ── Sitewide ad network script (effectivecpmnetwork) ── -->
-<script src="https://pl30435711.effectivecpmnetwork.com/3d/84/a7/3d84a7b3eab34e4351ded24c712c2110.js"></script>
+<!-- ── Google Cast (Chromecast) Sender SDK — lets the stream player cast
+     the current channel to a TV/Chromecast device. Only works when the
+     currently-open channel resolves to a direct HLS (.m3u8) link; channels
+     whose watch_url is a third-party embed page (not a raw stream URL)
+     cannot be handed to a Cast receiver, since the SDK can only cast an
+     actual media URL, not the contents of a cross-origin iframe. ── -->
+<script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
 
 <!-- SX SPORTS -->
 
@@ -2200,10 +2175,6 @@ document.addEventListener('DOMContentLoaded', function(){
     </nav>
     <div style="flex:1"></div>
     <div class="header-actions">
-      <button type="button" class="btn-login-nav" onclick="openVipPlayer()" aria-label="Login" title="Already VIP? Login">
-        <span class="btn-login-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg></span>
-        <span class="btn-login-label">Login</span>
-      </button>
       <button type="button" class="btn-get-vip-nav" onclick="openVip()" aria-label="Get VIP" title="Get VIP">
         <span class="btn-vip-icon"><svg viewBox="0 0 24 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2 6.5a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm20 0a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm-10-2a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zM2 7.8l4.6 3.4L12 5l5.4 6.2L22 7.8 20 17H4L2 7.8z"/></svg></span>
         <span class="btn-vip-label">Get VIP</span>
@@ -2216,6 +2187,10 @@ document.addEventListener('DOMContentLoaded', function(){
         <img class="btn-telegram-icon" src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Telegram_2019_Logo.svg/960px-Telegram_2019_Logo.svg.png" alt="Telegram">
         <span class="btn-telegram-label">Telegram</span>
       </a>
+      <button type="button" class="btn-login-nav" onclick="openVipPlayer()" aria-label="VIP Login" title="VIP Login">
+        <span class="btn-login-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg></span>
+        <span class="btn-login-label">VIP Login</span>
+      </button>
     </div>
     <div class="nav-device-info" id="nav-device-info" title="This device's name and ID">
       <span class="nav-device-name" id="nav-device-name"></span>
@@ -3777,8 +3752,8 @@ function renderNav(rows) {
     mHtml += `<a href="${r.href}"${target}${click ? click : ' onclick="closeDrawer()"'}>${r.label}</a>`;
   });
   // VIP — hamburger drawer only (desktop already has the gold header button)
-  mHtml += `<a href="#" class="drawer-login" onclick="closeDrawer();openVipPlayer();return false;"><span class="drawer-login-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg></span>Login</a>`;
   mHtml += `<a href="#" class="drawer-vip" onclick="closeDrawer();openVip();return false;"><span class="drawer-vip-icon"><svg viewBox="0 0 24 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2 6.5a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm20 0a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm-10-2a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zM2 7.8l4.6 3.4L12 5l5.4 6.2L22 7.8 20 17H4L2 7.8z"/></svg></span>Get VIP</a>`;
+  mHtml += `<a href="#" class="drawer-login" onclick="closeDrawer();openVipPlayer();return false;"><span class="drawer-login-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg></span>VIP Login</a>`;
   desktop.innerHTML = dHtml;
   drawerNav.innerHTML = mHtml;
 }
@@ -6076,6 +6051,28 @@ function closeAdminChatDiscordPopup(){
 }
 #stream-player-back:hover{ background: rgba(255,255,255,0.18); }
 #stream-player-back svg{ width: 14px; height: 14px; flex-shrink: 0; }
+#stream-player-cast{
+  position: relative; z-index: 1; margin-left: auto;
+  display: none; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.10); border: none; color: #fff;
+  width: 34px; height: 34px; padding: 0; cursor: pointer; border-radius: 50%;
+  flex-shrink: 0; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  opacity: 1; pointer-events: auto;
+}
+#stream-player-cast:hover{ background: rgba(255,255,255,0.18); }
+#stream-player-cast svg{ width: 17px; height: 17px; flex-shrink: 0; display: block; }
+#stream-player-cast.sp-cast-active{ background: #E8B923; color: #101010; }
+#stream-player-cast.sp-cast-active:hover{ background: #F0BB40; }
+#sx-cast-toast{
+  position: fixed; left: 50%; bottom: 32px; transform: translateX(-50%) translateY(20px);
+  background: rgba(20,20,20,0.95); color: #fff; font-family: var(--cu-font,inherit);
+  font-size: 12.5px; font-weight: 600; letter-spacing: 0.01em;
+  padding: 10px 18px; border-radius: 0; max-width: 90vw; text-align: center;
+  z-index: 2000; opacity: 0; pointer-events: none;
+  transition: opacity .25s ease, transform .25s ease;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+#sx-cast-toast.show{ opacity: 1; transform: translateX(-50%) translateY(0); }
 #stream-player-title{
   position: relative; z-index: 1;
   font-family: var(--cu-font,inherit); font-weight: 800; font-size: 13px;
@@ -6161,6 +6158,9 @@ function closeAdminChatDiscordPopup(){
       Back
     </button>
     <span id="stream-player-title">Live Stream</span>
+    <button id="stream-player-cast" onclick="sxCastCurrentStream()" title="Cast to TV" aria-label="Cast to TV">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M1 18v3h3c0-1.66-1.34-3-3-3zm0-4v2c2.76 0 5 2.24 5 5h2c0-3.87-3.13-7-7-7zm18-7H5v1.63c3.96 1.28 7.09 4.41 8.37 8.37H19V7zM1 10v2c4.97 0 9 4.03 9 9h2c0-6.08-4.93-11-11-11zm22-7H3c-1.1 0-2 .9-2 2v3h2V5h18v14h-7v2h7c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
+    </button>
   </div>
   <div id="stream-player-body">
     <div id="stream-player-frame-wrap">
@@ -6217,6 +6217,101 @@ function sxLoadPlayerBanner(){
   );
   doc.close();
 }
+// ── Google Cast (Chromecast) ─────────────────────────────────────────
+// Casts whatever is currently open in the stream player to a TV. This
+// only works for channels whose watch_url is a direct HLS (.m3u8) feed —
+// the Cast receiver needs an actual media URL to fetch and play itself,
+// so it can't reach into a cross-origin iframe embed the way our own
+// player does. For embed-only channels we tell the user plainly rather
+// than pretending to cast something that won't play.
+var sxCastContext = null;
+var sxCastAvailable = false;
+var sxCurrentStreamRawUrl = '';
+
+window['__onGCastApiAvailable'] = function(isAvailable){
+  if (!isAvailable || !window.chrome || !chrome.cast || !cast.framework) return;
+  try {
+    sxCastContext = cast.framework.CastContext.getInstance();
+    sxCastContext.setOptions({
+      receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
+      autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+    });
+    sxCastAvailable = true;
+    var btn = document.getElementById('stream-player-cast');
+    if (btn) btn.style.display = 'flex';
+    sxCastContext.addEventListener(
+      cast.framework.CastContextEventType.CAST_STATE_CHANGED,
+      sxUpdateCastButtonState
+    );
+    sxUpdateCastButtonState();
+  } catch (e) {
+    console.warn('Cast init failed:', e);
+  }
+};
+
+function sxUpdateCastButtonState(){
+  var btn = document.getElementById('stream-player-cast');
+  if (!btn || !sxCastContext) return;
+  var connected = sxCastContext.getCastState() === cast.framework.CastState.CONNECTED;
+  btn.classList.toggle('sp-cast-active', connected);
+  btn.title = connected ? 'Casting to TV — tap to manage' : 'Cast to TV';
+}
+
+function sxIsHlsUrl(u){
+  return /\.m3u8(\?|#|$)/i.test(u) || /[?&](format|type)=m3u8/i.test(u);
+}
+
+function sxCastToast(msg){
+  var t = document.getElementById('sx-cast-toast');
+  if (!t){
+    t = document.createElement('div');
+    t.id = 'sx-cast-toast';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._sxCastToastTimer);
+  window._sxCastToastTimer = setTimeout(function(){ t.classList.remove('show'); }, 3400);
+}
+
+function sxCastCurrentStream(){
+  if (!sxCastAvailable || !sxCastContext){
+    sxCastToast('Chromecast isn\u2019t available in this browser.');
+    return;
+  }
+  var url = sxCurrentStreamRawUrl;
+  if (!url){
+    sxCastToast('Open a stream first, then cast it.');
+    return;
+  }
+  if (!sxIsHlsUrl(url)){
+    sxCastToast('This channel can\u2019t be cast directly \u2014 it\u2019s an embedded player page, not a direct stream link.');
+    return;
+  }
+  var mediaInfo = new chrome.cast.media.MediaInfo(url, 'application/x-mpegurl');
+  mediaInfo.streamType = chrome.cast.media.StreamType.LIVE;
+  mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
+  mediaInfo.metadata.title = document.getElementById('stream-player-title').textContent || 'Live Stream';
+  var request = new chrome.cast.media.LoadRequest(mediaInfo);
+
+  function loadOnSession(session){
+    if (!session) { sxCastToast('Could not connect to a Cast device.'); return; }
+    session.loadMedia(request).then(
+      function(){ sxCastToast('Casting to TV\u2026'); sxUpdateCastButtonState(); },
+      function(err){ sxCastToast('Cast failed \u2014 this stream may be blocked for TV playback.'); }
+    );
+  }
+  var session = sxCastContext.getCurrentSession();
+  if (session){
+    loadOnSession(session);
+  } else {
+    sxCastContext.requestSession().then(
+      function(){ loadOnSession(sxCastContext.getCurrentSession()); },
+      function(err){ if (err !== 'cancel') sxCastToast('Could not connect to a Cast device.'); }
+    );
+  }
+}
+
 function openStreamPlayer(url, name){
   if (!url || url === '#') return;
   // Match cards, hero slides, and Live TV all funnel every stream link
@@ -6231,6 +6326,7 @@ function openStreamPlayer(url, name){
   }
   const label = name || 'Live Stream';
   document.getElementById('stream-player-title').textContent = label;
+  sxCurrentStreamRawUrl = url; // used by sxCastCurrentStream() below
   const src = url.includes('#') ? url : url + '#' + encodeURIComponent(label);
   sxLoadPlayerBanner();
   // Loading overlay shows for a flat 3s to mask any cross-origin iframe
@@ -6276,6 +6372,7 @@ function openStreamPlayer(url, name){
 function closeStreamPlayer(){
   document.getElementById('stream-player-overlay').classList.remove('open');
   document.getElementById('stream-player-frame').src = '';
+  sxCurrentStreamRawUrl = '';
   clearTimeout(window._spHideTimer);
   clearTimeout(window._spLoadingTimer);
   const loadingEl = document.getElementById('stream-player-loading');
