@@ -6127,7 +6127,182 @@ function closeAdminChatDiscordPopup(){
   html.tv-mode #chGrid.epg-list .epg-name{ font-size:17px !important; }
   html.tv-mode #chGrid.epg-list .epg-group-tag,
   html.tv-mode #chGrid.epg-list .epg-now{ font-size:12px !important; }
+/* ══════════════════════════════════════════════════════════════
+   VIP PLAYER — merged into the main site's VIP tab (post-login).
+   Ported from the standalone VIP player page: profile card widget,
+   OTT teaser button row, and grouped/category-headed channel list.
+═══════════════════════════════════════════════════════════════ */
+.epg-groups{ display:flex; flex-direction:column; gap:26px; }
+.epg-group-section{ display:flex; flex-direction:column; gap:12px; }
+.epg-group-heading{
+  display:flex; align-items:baseline; gap:10px;
+  font-family:var(--font-display,inherit) !important; font-weight:700 !important;
+  font-size:15px !important; letter-spacing:.03em; text-transform:uppercase;
+  color:#fff !important;
+  padding-bottom:8px; border-bottom:1px solid rgba(232,185,35,0.35);
 }
+.epg-group-heading .epg-group-count{
+  font-weight:700 !important; font-size:11px !important; text-transform:none; letter-spacing:0;
+  color:rgba(255,255,255,0.45) !important;
+}
+
+.epg-ott-row{ display:flex; align-items:stretch; gap:10px; flex-wrap:wrap; width:100%; margin-bottom:18px; }
+.epg-ott-btn{
+  position:relative; overflow:hidden;
+  display:flex; flex-direction:column; align-items:flex-start; justify-content:center;
+  gap:3px; flex:1 1 150px; min-width:140px;
+  padding:10px 14px !important; border-radius:8px !important;
+  border:1px solid rgba(255,255,255,0.14) !important;
+  cursor:pointer; text-align:left; text-decoration:none;
+  font-family:'Satoshi',sans-serif !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 3px 10px rgba(0,0,0,0.45);
+  transition:transform .15s ease, box-shadow .2s ease;
+}
+.epg-ott-btn:hover{ transform:translateY(-2px); box-shadow: inset 0 1px 0 rgba(255,255,255,0.26), 0 6px 16px rgba(0,0,0,0.55); }
+.epg-ott-btn-name{ display:flex; align-items:center; gap:7px; font-weight:800 !important; font-size:13px !important; color:#fff !important; letter-spacing:.01em; text-shadow:0 1px 2px rgba(0,0,0,0.5); }
+.epg-ott-btn-name svg{ flex-shrink:0; }
+.epg-ott-btn-logo{
+  width:20px; height:20px; flex-shrink:0; object-fit:contain;
+  border-radius:6px; background:rgba(255,255,255,0.94); padding:2px;
+  box-shadow:0 1px 3px rgba(0,0,0,0.4);
+}
+.epg-ott-btn-logo-round{ border-radius:50%; }
+.epg-ott-btn-tag{
+  display:inline-flex; align-items:center; gap:4px;
+  font-size:9.5px !important; font-weight:800 !important; letter-spacing:.03em; text-transform:uppercase;
+  color:rgba(255,255,255,0.92) !important;
+}
+.epg-ott-btn-tag::before{ content:'🔒'; font-size:9px; }
+.epg-ott-btn-tag-open::before{ content:'✅'; font-size:9px; }
+
+.epg-ott-btn-fancode{ background: linear-gradient(135deg,#FF7A18 0%,#E11D2E 55%,#3A0A10 100%) !important; }
+.epg-ott-btn-fancode:hover{ background: linear-gradient(135deg,#FF9A3D 0%,#F5313F 55%,#520E16 100%) !important; }
+.epg-ott-btn-hotstar{ background: linear-gradient(135deg,#1B1F5C 0%,#6C2BD9 40%,#E63A83 72%,#FF8A2B 100%) !important; }
+.epg-ott-btn-hotstar:hover{ background: linear-gradient(135deg,#262B7A 0%,#8340F2 40%,#FF4E9C 72%,#FFA24F 100%) !important; }
+.epg-ott-btn-zee5{ background: linear-gradient(135deg,#8B2FC9 0%,#4A1259 100%) !important; }
+.epg-ott-btn-zee5:hover{ background: linear-gradient(135deg,#A24BE0 0%,#5E1873 100%) !important; }
+.epg-ott-btn-prime{ background: linear-gradient(135deg,#00A8E1 0%,#062036 100%) !important; }
+.epg-ott-btn-prime:hover{ background: linear-gradient(135deg,#22C0FA 0%,#0A2E4E 100%) !important; }
+.epg-ott-btn-sonyliv{ background: linear-gradient(135deg,#1E6FD9 0%,#0A1E4D 100%) !important; }
+.epg-ott-btn-sonyliv:hover{ background: linear-gradient(135deg,#3A8AF0 0%,#122A66 100%) !important; }
+.epg-ott-btn-netflix{ background: linear-gradient(135deg,#E50914 0%,#2B0002 100%) !important; }
+.epg-ott-btn-netflix:hover{ background: linear-gradient(135deg,#FF2430 0%,#450004 100%) !important; }
+.epg-ott-btn-hulu{ background: linear-gradient(135deg,#1CE783 0%,#0A1F14 100%) !important; }
+.epg-ott-btn-hulu:hover{ background: linear-gradient(135deg,#4CF29E 0%,#0F2C1C 100%) !important; }
+.epg-ott-btn-crunchyroll{ background: linear-gradient(135deg,#F47521 0%,#331200 100%) !important; }
+.epg-ott-btn-crunchyroll:hover{ background: linear-gradient(135deg,#FF8F3D 0%,#4A1B00 100%) !important; }
+.epg-ott-btn-iptv{ background: linear-gradient(135deg,#4F46E5 0%,#0EA5A0 100%) !important; }
+.epg-ott-btn-iptv:hover{ background: linear-gradient(135deg,#6D64FF 0%,#14C7C0 100%) !important; }
+
+@media(max-width:900px){
+  .epg-ott-row{ gap:8px; }
+  .epg-ott-btn{ flex:1 1 calc(50% - 8px); min-width:0; padding:9px 11px !important; }
+  .epg-ott-btn-name{ font-size:12px !important; }
+  .epg-ott-btn-tag{ font-size:9px !important; }
+  .epg-ott-btn-logo{ width:17px; height:17px; }
+}
+@media(max-width:480px){
+  .epg-ott-btn{ flex:1 1 100%; }
+}
+
+#ott-toast{
+  position:fixed; left:50%; bottom:26px; z-index:3000;
+  transform:translateX(-50%) translateY(16px); opacity:0; pointer-events:none;
+  display:flex; align-items:center; gap:10px; max-width:calc(100% - 32px);
+  padding:12px 18px; border-radius:10px !important;
+  background: linear-gradient(180deg, rgba(30,24,8,0.96) 0%, rgba(10,8,2,0.96) 100%);
+  border:1px solid rgba(232,185,35,0.4) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  font-family:'Satoshi',sans-serif !important; font-size:13px; font-weight:700; color:#fff;
+  transition: opacity .25s ease, transform .25s ease;
+}
+#ott-toast.show{ opacity:1; transform:translateX(-50%) translateY(0); pointer-events:auto; }
+#ott-toast .ott-toast-icon{ flex-shrink:0; font-size:16px; }
+#ott-toast .ott-toast-text strong{ color:#F5C518; }
+
+/* ── VIP PROFILE — TOP RIGHT CORNER WIDGET ── */
+.vip-profile{
+  display:none; position:fixed; top:16px; right:16px; z-index:1500;
+  font-family:'Satoshi',sans-serif !important; flex-direction:column; align-items:flex-end; gap:8px;
+}
+.vip-profile-trigger{
+  display:flex; align-items:center; gap:10px; padding:6px 14px 6px 6px; border-radius:999px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 100%), rgba(20,16,6,0.6);
+  -webkit-backdrop-filter: blur(14px) saturate(140%); backdrop-filter: blur(14px) saturate(140%);
+  border:1px solid rgba(232,185,35,0.4); cursor:pointer;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 6px 18px rgba(0,0,0,0.4);
+}
+.vip-profile-avatar{
+  width:36px; height:36px; flex-shrink:0; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-size:17px; background:linear-gradient(135deg,#F7C55A,#B8862E); box-shadow:0 0 0 2px rgba(247,197,90,0.3); overflow:hidden;
+}
+.vip-profile-avatar img{ width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.vip-profile-trigger-info{ display:flex; flex-direction:column; align-items:flex-start; gap:1px; }
+.vip-profile-name{ font-weight:700 !important; font-size:13px; color:#fff; }
+.vip-profile-location{ display:flex; align-items:center; gap:4px; font-weight:700 !important; font-size:10.5px; color:rgba(255,255,255,0.55); }
+.vip-profile-location .flag{ font-size:12px; line-height:1; }
+.vip-profile-chevron{ color:#F5C518; transition:transform .2s ease; flex-shrink:0; }
+.vip-profile.vip-profile-open .vip-profile-chevron{ transform:rotate(180deg); }
+
+.vip-profile-dropdown{
+  display:none; flex-direction:column; gap:12px; width:260px; box-sizing:border-box;
+  padding:18px; border-radius:14px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%), rgba(20,16,6,0.78);
+  -webkit-backdrop-filter: blur(18px) saturate(140%); backdrop-filter: blur(18px) saturate(140%);
+  border:1px solid rgba(232,185,35,0.4);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 12px 30px rgba(0,0,0,0.5);
+}
+.vip-profile.vip-profile-open .vip-profile-dropdown{ display:flex; }
+.vip-card-header{ display:flex; align-items:center; gap:12px; }
+.vip-card-avatar{
+  width:46px; height:46px; flex-shrink:0; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-size:21px; background:linear-gradient(135deg,#F7C55A,#B8862E); box-shadow:0 0 0 2px rgba(247,197,90,0.3); overflow:hidden;
+}
+.vip-card-avatar img{ width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.vip-card-header-info{ display:flex; flex-direction:column; gap:3px; min-width:0; }
+.vip-card-name{ font-weight:700 !important; font-size:15px; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.vip-card-divider{ height:1px; background:linear-gradient(90deg, transparent, rgba(232,185,35,0.3), transparent); }
+.vip-profile-plan{
+  align-self:flex-start;
+  font-weight:700 !important; font-size:10.5px; letter-spacing:.03em; text-transform:uppercase;
+  color:#F5C518; background:rgba(232,185,35,0.12); padding:4px 10px; border-radius:20px; border:1px solid rgba(232,185,35,0.3);
+  white-space:nowrap;
+}
+.vip-profile-plan.vip-profile-plan-premium{
+  color:#3A2400; background:linear-gradient(135deg,#F7C55A,#B8862E); border:1px solid rgba(255,244,214,0.5);
+}
+.vip-profile-timer{
+  font-weight:700 !important; font-size:12px; color:#fff; text-align:center;
+  background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.1); padding:8px 12px; border-radius:8px;
+}
+.vip-profile-startdate{ font-weight:700 !important; font-size:10.5px; color:rgba(255,255,255,0.4); }
+.vip-profile-tiers{ display:flex; gap:6px; flex-wrap:wrap; }
+.vip-profile-tier-badge{
+  font-weight:700 !important; font-size:10px; padding:3px 9px; border-radius:20px; letter-spacing:.02em;
+  color:rgba(255,255,255,0.4); background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12);
+}
+.vip-profile-tier-badge.vip-tier-active{ color:#F5C518; background:rgba(232,185,35,0.12); border-color:rgba(232,185,35,0.35); }
+.vip-profile-timer.vip-profile-timer-lifetime{ color:#F5C518; }
+.vip-profile-timer.vip-profile-timer-expired{ color:#ff6b6b; border-color:rgba(255,107,107,0.4); }
+.vip-profile-actions{ display:flex; flex-direction:column; align-items:stretch; gap:8px; }
+.vip-profile-renew{
+  display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:10px 16px; border-radius:8px;
+  border:1px solid rgba(255,244,214,0.4); background:linear-gradient(135deg,#F7C55A,#B8862E); color:#3A2400 !important;
+  font-weight:700 !important; font-size:12.5px; text-decoration:none; white-space:nowrap;
+}
+.vip-profile-logout{
+  background:none; border:none; color:rgba(255,255,255,0.5); cursor:pointer; font-size:11.5px;
+  font-weight:700 !important; text-decoration:underline; padding:0; font-family:'Satoshi',sans-serif !important;
+}
+.vip-profile-logout:hover{ color:#fff; }
+@media(max-width:640px){
+  .vip-profile{ top:10px; right:10px; }
+  .vip-profile-trigger-info{ display:none; }
+  .vip-profile-dropdown{ width:220px; }
+}
+
+#vip-player-panel{ padding:56px 20px 60px; max-width:1100px; margin:0 auto; }
+.vip-marketing-hidden{ display:none !important; }
 </style>
 
 <!-- ── CHANNELS BROWSER (EPG) ── -->
@@ -6964,6 +7139,7 @@ function closeFifa(){
   </div>
 
   <div id="vip-page-inner">
+    <div id="vip-marketing">
     <div id="vip-hero">
       <div id="vip-crown"><svg viewBox="0 0 24 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2 6.5a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm20 0a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm-10-2a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zM2 7.8l4.6 3.4L12 5l5.4 6.2L22 7.8 20 17H4L2 7.8z"/></svg></div>
       <div id="vip-title">Get VIP Access</div>
@@ -7089,8 +7265,470 @@ function closeFifa(){
       <svg viewBox="0 0 24 18" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M20.317 1.492c-1.53-.703-3.17-1.222-4.885-1.49a.077.077 0 00-.079.036c-.21.375-.444.865-.608 1.25-1.844-.276-3.68-.276-5.487 0-.164-.394-.406-.875-.617-1.25a.08.08 0 00-.079-.037c-1.714.27-3.354.788-4.885 1.49a.07.07 0 00-.032.028C.533 6.09-.32 10.545.099 14.946a.08.08 0 00.031.056c1.998 1.468 3.936 2.361 5.837 2.95a.078.078 0 00.084-.028c.45-.615.85-1.263 1.194-1.945a.076.076 0 00-.041-.106c-.636-.24-1.24-.535-1.821-.87a.077.077 0 01-.008-.128c.123-.092.245-.188.362-.285a.075.075 0 01.078-.01c3.818 1.744 7.955 1.744 11.727 0a.075.075 0 01.079.01c.117.097.239.193.363.285a.077.077 0 01-.006.128c-.582.335-1.185.63-1.822.87a.076.076 0 00-.04.107c.35.68.749 1.328 1.192 1.943a.077.077 0 00.084.028c1.9-.588 3.837-1.481 5.837-2.949a.077.077 0 00.031-.055c.5-5.094-.838-9.51-3.548-13.427a.06.06 0 00-.031-.029zM8.02 12.278c-1.182 0-2.157-1.085-2.157-2.419 0-1.333.955-2.418 2.157-2.418 1.21 0 2.176 1.094 2.157 2.418 0 1.334-.955 2.419-2.157 2.419zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.418 2.157-2.418 1.21 0 2.176 1.094 2.157 2.418 0 1.334-.946 2.419-2.157 2.419z"/></svg>
       Ask for VIP in Discord
     </a>
+    </div>
+    <!-- ── VIP PLAYER PANEL — shown instead of the marketing content once
+         logged in. Ported from the standalone VIP player: profile card,
+         OTT teaser buttons, and the channel guide (reuses the same
+         window._cmsChannels the free Live TV tab already fetched — no
+         second sheet fetch). NOTE: this brings over the profile card,
+         OTT teaser row and channel list only — the standalone player's
+         Movies/IMDB browser, OTT 2.0 Android-app menu, and IPTV Playlist
+         overlay are separate large subsystems not ported here yet. ── -->
+    <div id="vip-player-panel" style="display:none;">
+      <div class="vip-profile" id="vip-profile">
+        <button type="button" class="vip-profile-trigger" id="vip-profile-trigger" onclick="vipToggleProfile()">
+          <span class="vip-profile-avatar" id="vip-profile-avatar">🧑‍💻</span>
+          <span class="vip-profile-trigger-info">
+            <span class="vip-profile-name" id="vip-profile-name"></span>
+            <span class="vip-profile-location" id="vip-profile-location"><span class="flag">🌍</span> Locating…</span>
+          </span>
+          <svg class="vip-profile-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div class="vip-profile-dropdown" id="vip-profile-dropdown">
+          <div class="vip-card-header">
+            <span class="vip-card-avatar" id="vip-card-avatar">🧑‍💻</span>
+            <div class="vip-card-header-info">
+              <div class="vip-card-name" id="vip-card-name"></div>
+              <span class="vip-profile-location" id="vip-profile-location-2"><span class="flag">🌍</span> Locating…</span>
+            </div>
+          </div>
+          <div class="vip-card-divider"></div>
+          <div class="vip-profile-plan" id="vip-profile-plan"></div>
+          <div class="vip-profile-startdate" id="vip-profile-startdate"></div>
+          <div class="vip-profile-tiers" id="vip-profile-tiers"></div>
+          <div class="vip-card-divider"></div>
+          <div class="vip-profile-timer" id="vip-profile-timer"></div>
+          <div class="vip-profile-actions">
+            <a class="vip-profile-renew" id="vip-profile-renew" href="https://discord.com/invite/w46C6mQgrY" target="_blank" rel="noopener">🔄 Renew</a>
+            <button type="button" class="vip-profile-logout" onclick="vipPlayerLogout()">Logout</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="epg-ott-row">
+        <button type="button" class="epg-ott-btn epg-ott-btn-fancode" id="vipFancodeBtn" onclick="vipOpenFancode()">
+          <span class="epg-ott-btn-name">
+            <img class="epg-ott-btn-logo" src="https://static.vecteezy.com/system/resources/previews/069/146/538/non_2x/fancode-app-icon-on-transparent-background-free-png.png" alt="FanCode" loading="lazy">
+            FanCode
+          </span>
+          <span class="epg-ott-btn-tag epg-ott-btn-tag-open">Live · Free Access</span>
+        </button>
+        <button type="button" class="epg-ott-btn epg-ott-btn-hotstar" onclick="showOttNotice('JioHotstar')">
+          <span class="epg-ott-btn-name">
+            <img class="epg-ott-btn-logo" src="https://static.vecteezy.com/system/resources/previews/056/505/637/non_2x/jiohotstar-app-icon-on-transparent-background-free-png.png" alt="JioHotstar" loading="lazy">
+            JioHotstar
+          </span>
+          <span class="epg-ott-btn-tag">VIP 2.0 · Free</span>
+        </button>
+        <button type="button" class="epg-ott-btn epg-ott-btn-zee5" onclick="showOttNotice('ZEE5')">
+          <span class="epg-ott-btn-name">
+            <img class="epg-ott-btn-logo epg-ott-btn-logo-round" src="https://upload.wikimedia.org/wikipedia/commons/5/5a/Zee5-official-logo.jpeg" alt="ZEE5" loading="lazy">
+            ZEE5
+          </span>
+          <span class="epg-ott-btn-tag">VIP 2.0 · Free</span>
+        </button>
+        <button type="button" class="epg-ott-btn epg-ott-btn-prime" onclick="showOttNotice('Amazon Prime Video')">
+          <span class="epg-ott-btn-name">
+            <img class="epg-ott-btn-logo" src="https://static.vecteezy.com/system/resources/previews/019/766/188/non_2x/prime-video-logo-prime-video-icon-transparent-logo-free-png.png" alt="Prime Video" loading="lazy">
+            Prime Video
+          </span>
+          <span class="epg-ott-btn-tag">VIP 2.0 · Free</span>
+        </button>
+        <button type="button" class="epg-ott-btn epg-ott-btn-sonyliv" onclick="showOttNotice('SonyLIV')">
+          <span class="epg-ott-btn-name">
+            <img class="epg-ott-btn-logo" src="https://static.vecteezy.com/system/resources/previews/075/195/417/non_2x/sony-liv-logo-rounded-glossy-icon-with-transparent-background-free-png.png" alt="SonyLIV" loading="lazy">
+            SonyLIV
+          </span>
+          <span class="epg-ott-btn-tag">VIP 2.0 · Free</span>
+        </button>
+        <button type="button" class="epg-ott-btn epg-ott-btn-netflix" onclick="showOttNotice('Netflix')">
+          <span class="epg-ott-btn-name">
+            <img class="epg-ott-btn-logo" src="https://static.vecteezy.com/system/resources/previews/056/850/850/non_2x/netflix-app-icon-on-a-transparent-background-free-png.png" alt="Netflix" loading="lazy">
+            Netflix
+          </span>
+          <span class="epg-ott-btn-tag">VIP 2.0 · Free</span>
+        </button>
+        <button type="button" class="epg-ott-btn epg-ott-btn-hulu" onclick="showOttNotice('Hulu')">
+          <span class="epg-ott-btn-name">
+            <img class="epg-ott-btn-logo" src="https://static.vecteezy.com/system/resources/previews/057/355/787/non_2x/hulu-app-icon-on-transparent-background-free-png.png" alt="Hulu" loading="lazy">
+            Hulu
+          </span>
+          <span class="epg-ott-btn-tag">VIP 2.0 · Free</span>
+        </button>
+        <button type="button" class="epg-ott-btn epg-ott-btn-crunchyroll" onclick="showOttNotice('Crunchyroll')">
+          <span class="epg-ott-btn-name">
+            <img class="epg-ott-btn-logo" src="https://static.vecteezy.com/system/resources/previews/056/658/335/non_2x/crunchyroll-logo-square-rounded-crunchyroll-logo-crunchyroll-logo-free-download-free-png.png" alt="Crunchyroll" loading="lazy">
+            Crunchyroll
+          </span>
+          <span class="epg-ott-btn-tag">VIP 2.0 · Free</span>
+        </button>
+        <button type="button" class="epg-ott-btn epg-ott-btn-iptv" onclick="showOttNotice('IPTV Playlist')">
+          <span class="epg-ott-btn-name">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/><path d="M9 8h6M9 11h4"/></svg>
+            IPTV Playlist
+          </span>
+          <span class="epg-ott-btn-tag">VIP 2.0 · Free</span>
+        </button>
+      </div>
+
+      <div id="ott-toast">
+        <span class="ott-toast-icon">👑</span>
+        <span class="ott-toast-text">Only accessible through <strong>VIP 2.0</strong>.</span>
+      </div>
+
+      <div class="epg-search-row" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;width:100%;margin-bottom:14px;">
+        <div class="epg-search-box">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input id="vipChSearchInput" type="text" placeholder="Search channels, sports, networks…" autocomplete="off" oninput="vipChFilter()">
+          <button type="button" class="epg-search-clear" id="vipEpgSearchClear" onclick="vipChClearSearch()" aria-label="Clear search">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="epg-select-wrap">
+          <select id="vipChCategorySelect" onchange="vipChOnCategoryChange()">
+            <option value="All">All Channels</option>
+          </select>
+          <svg class="epg-select-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+        <span class="epg-count" id="vipEpgCount"></span>
+      </div>
+
+      <div class="epg-groups" id="vipChGrid"></div>
+    </div>
   </div>
 </div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// VIP PLAYER PANEL — post-login experience merged into the VIP tab.
+// Reuses window._cmsChannels (already fetched by the free Live TV
+// section) instead of hitting the sheet a second time.
+// ══════════════════════════════════════════════════════════════
+let vipChActiveGrp = 'All';
+
+function vipOpenFancode(){
+  const url = (typeof sxFanCodeUrl === 'function') ? sxFanCodeUrl() : 'https://fanncode.pages.dev/';
+  openStreamPlayer(url, 'FanCode');
+}
+
+function vipChBuildCategories(){
+  const sel = document.getElementById('vipChCategorySelect');
+  if (!sel) return;
+  const prevVal = sel.value || vipChActiveGrp || 'All';
+  const all = window._cmsChannels || [];
+  const seen = new Set();
+  const cats = [];
+  all.forEach(c => {
+    const grp = (c.group || '').trim() || 'Other';
+    if (!seen.has(grp)) { seen.add(grp); cats.push(grp); }
+  });
+  sel.innerHTML = '<option value="All">All Channels</option>' +
+    cats.map(g => `<option value="${g}">${g}</option>`).join('');
+  sel.value = cats.includes(prevVal) ? prevVal : 'All';
+  vipChActiveGrp = sel.value;
+}
+
+function vipChOnCategoryChange(){
+  const sel = document.getElementById('vipChCategorySelect');
+  vipChActiveGrp = sel ? sel.value : 'All';
+  vipChFilter();
+}
+
+function vipChClearSearch(){
+  const input = document.getElementById('vipChSearchInput');
+  if (!input) return;
+  input.value = '';
+  vipChFilter();
+  input.focus();
+}
+
+function vipChLogoHTML(c){
+  const url = c.icon_url || 'https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/main/logo.png';
+  const initials = (c.channel_name || '?').slice(0, 4).toUpperCase();
+  return `<div class="epg-logo-box">
+    <img src="${url}" alt="${c.channel_name||''}" onerror="this.parentElement.outerHTML='<div class=\\'epg-logo-ph\\'>${initials}</div>'">
+  </div>`;
+}
+
+function vipChBuildRow(c, list){
+  const isLive = (c.status_live_off||'').toUpperCase() === 'LIVE';
+  const grp = c.group || 'Other';
+  const isFanCode = grp === 'FanCode';
+  const isStarSports = grp === 'Star Sports';
+  const isSony = grp === 'Sony Sports';
+  const isZee = grp === 'ZEE';
+  let rowClass = 'epg-row';
+  if (isFanCode) rowClass += ' fancode-row';
+  else if (isStarSports) rowClass += ' star-row';
+  else if (isSony) rowClass += ' sony-row';
+  else if (isZee) rowClass += ' zee-row';
+  const a = document.createElement('div');
+  a.className = rowClass;
+  a.setAttribute('role', 'button');
+  a.setAttribute('tabindex', '0');
+  const streamUrl = c.watch_url || '#';
+  a.onclick = () => openStreamPlayer(streamUrl, c.channel_name || 'Live Stream');
+  a.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); a.onclick(); } };
+  const isHD = (c.quality||'').toUpperCase() === 'HD' || (c.quality||'').toUpperCase() === '4K';
+  const hdBadge = isHD ? `<span class="epg-badge epg-badge-hd">${(c.quality||'HD').toUpperCase()}</span>` : '';
+  const liveBadge = isLive
+    ? '<span class="epg-badge epg-badge-live"><span class="epg-live-blip"></span>LIVE</span>'
+    : '<span class="epg-badge epg-badge-off">OFF AIR</span>';
+  const premiumBadge = isFanCode ? '<span class="epg-premium-icon" title="FanCode Premium"></span>' : '';
+  const indiaAlert = (isStarSports || isSony || isZee) ? '<div class="epg-india-alert">Outside India/Sri Lanka? Use VPN</div>' : '';
+  a.innerHTML = `
+    <div class="epg-thumb">${vipChLogoHTML(c)}</div>
+    <div class="epg-meta">
+      <div class="epg-group-tag">${grp}</div>
+      <div class="epg-name">${c.channel_name||''}${premiumBadge}</div>
+      ${indiaAlert}
+      <div class="epg-now">24/7 Channel</div>
+    </div>
+    <div class="epg-badges">${liveBadge}${hdBadge}</div>
+    <div class="epg-watch">
+      <span>Watch</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 18 6-6-6-6"/></svg>
+    </div>
+  `;
+  list.appendChild(a);
+}
+
+function vipChFilter(){
+  const qInput = document.getElementById('vipChSearchInput');
+  const q = (qInput ? qInput.value : '').toLowerCase().trim();
+  const groupsWrap = document.getElementById('vipChGrid');
+  const clearBtn = document.getElementById('vipEpgSearchClear');
+  const countEl = document.getElementById('vipEpgCount');
+  if (!groupsWrap) return;
+  if (clearBtn) clearBtn.classList.toggle('show', !!q);
+
+  const all = window._cmsChannels || [];
+  vipChBuildCategories();
+
+  const effectiveGrp = q ? 'All' : vipChActiveGrp;
+  groupsWrap.innerHTML = '';
+
+  const matches = all.filter(c => {
+    const grp = c.group || 'Other';
+    const matchGrp = effectiveGrp === 'All' || grp === effectiveGrp;
+    const matchQ = !q || (c.channel_name||'').toLowerCase().includes(q);
+    return matchGrp && matchQ;
+  });
+
+  if (countEl){
+    const liveN = matches.filter(c => (c.status_live_off||'').toUpperCase() === 'LIVE').length;
+    countEl.textContent = matches.length ? `${matches.length} channel${matches.length===1?'':'s'} · ${liveN} live now` : '';
+  }
+
+  if (!matches.length){
+    groupsWrap.innerHTML = '<div class="epg-no-results">No channels found. Try a different search or category.</div>';
+    return;
+  }
+
+  const groupOrder = [];
+  matches.forEach(c => { const grp = c.group || 'Other'; if (!groupOrder.includes(grp)) groupOrder.push(grp); });
+  groupOrder.sort((a, b) => (a === 'Other') - (b === 'Other'));
+
+  groupOrder.forEach(grp => {
+    const items = matches.filter(c => (c.group || 'Other') === grp);
+    if (!items.length) return;
+    const section = document.createElement('div');
+    section.className = 'epg-group-section';
+    section.innerHTML = `<div class="epg-group-heading">${grp}<span class="epg-group-count">${items.length} channel${items.length===1?'':'s'}</span></div>`;
+    const list = document.createElement('div');
+    list.className = 'epg-list';
+    items.forEach(c => vipChBuildRow(c, list));
+    section.appendChild(list);
+    groupsWrap.appendChild(section);
+  });
+}
+
+// ── VIP 2.0 teaser toast (Hotstar/ZEE5/Prime/SonyLIV/Netflix/Hulu/
+// Crunchyroll/IPTV — hardcoded, not wired to anything real) ──
+function showOttNotice(platform){
+  const toast = document.getElementById('ott-toast');
+  if (!toast) return;
+  const textEl = toast.querySelector('.ott-toast-text');
+  if (textEl) textEl.innerHTML = platform + ' is only accessible through <strong>VIP 2.0</strong>.';
+  toast.classList.add('show');
+  clearTimeout(window._vipOttToastTimer);
+  window._vipOttToastTimer = setTimeout(() => toast.classList.remove('show'), 3200);
+}
+
+// ── Live geo location for the profile card ──
+function vipCountryCodeToFlag(cc){
+  if (!cc || cc.length !== 2) return '🌍';
+  return String.fromCodePoint(...[...cc.toUpperCase()].map(c => 127397 + c.charCodeAt(0)));
+}
+function vipRenderLocation(html){
+  ['vip-profile-location', 'vip-profile-location-2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+  });
+}
+async function vipDetectLocation(){
+  if (window._vipLocationDetected) return;
+  window._vipLocationDetected = true;
+  const attempts = [
+    { url: 'https://ipwho.is/', map: d => (d && d.success !== false) ? { city: d.city, country: d.country, cc: d.country_code } : null },
+    { url: 'https://ipapi.co/json/', map: d => (d && !d.error) ? { city: d.city, country: d.country_name, cc: d.country_code } : null }
+  ];
+  for (const a of attempts){
+    try {
+      const d = await fetch(a.url).then(r => r.json());
+      const loc = a.map(d);
+      if (loc && (loc.city || loc.country)){
+        vipRenderLocation('<span class="flag">' + vipCountryCodeToFlag(loc.cc) + '</span> ' + [loc.city, loc.country].filter(Boolean).join(', '));
+        return;
+      }
+    } catch(err){ /* try next provider */ }
+  }
+  vipRenderLocation('<span class="flag">📍</span> Location unavailable');
+}
+
+// ── Profile card render + expiry countdown (uses the same member
+// shape vipIndexLogin/vipIndexRenderStatus already produce) ──
+window._vipTimerInterval = null;
+window._vipProfileRefreshInterval = null;
+
+function vipRenderProfileCard(member){
+  const nameEl = document.getElementById('vip-profile-name');
+  const cardNameEl = document.getElementById('vip-card-name');
+  const avatarEl = document.getElementById('vip-profile-avatar');
+  const cardAvatarEl = document.getElementById('vip-card-avatar');
+  const planEl = document.getElementById('vip-profile-plan');
+  const startDateEl = document.getElementById('vip-profile-startdate');
+  const tiersEl = document.getElementById('vip-profile-tiers');
+  const timerEl = document.getElementById('vip-profile-timer');
+  const renewEl = document.getElementById('vip-profile-renew');
+
+  if (nameEl) nameEl.textContent = member.name;
+  if (cardNameEl) cardNameEl.textContent = member.name;
+  const initial = (member.name || 'V').trim().charAt(0).toUpperCase();
+  if (avatarEl) avatarEl.textContent = initial;
+  if (cardAvatarEl) cardAvatarEl.textContent = initial;
+
+  const isPremium = /lifetime/i.test(member.plan || '');
+  if (planEl){
+    planEl.textContent = isPremium ? '👑 ' + member.plan : (member.plan || 'VIP');
+    planEl.className = 'vip-profile-plan' + (isPremium ? ' vip-profile-plan-premium' : '');
+  }
+
+  if (startDateEl){
+    if (member.startDate){
+      const sd = new Date(member.startDate);
+      const label = isNaN(sd) ? member.startDate : sd.toLocaleDateString(undefined, { day:'numeric', month:'short', year:'numeric' });
+      startDateEl.textContent = 'Since ' + label + (member.trialDays ? (' · ' + member.trialDays + '-day trial') : '');
+      startDateEl.style.display = '';
+    } else {
+      startDateEl.style.display = 'none';
+    }
+  }
+
+  if (tiersEl){
+    tiersEl.innerHTML =
+      '<span class="vip-profile-tier-badge' + (member.vip1 ? ' vip-tier-active' : '') + '">VIP 1.0 ' + (member.vip1 ? '✓' : '✕') + '</span>' +
+      '<span class="vip-profile-tier-badge' + (member.vip2 ? ' vip-tier-active' : '') + '">VIP 2.0 ' + (member.vip2 ? '✓' : '✕') + '</span>';
+  }
+
+  if (renewEl){
+    renewEl.href = 'https://discord.com/invite/w46C6mQgrY';
+    renewEl.textContent = member.expires ? '🔄 Renew' : '💬 Join Discord';
+  }
+
+  clearInterval(window._vipTimerInterval);
+  if (timerEl){
+    if (member.expires){
+      const expiryEnd = new Date(member.expires + 'T23:59:59');
+      const tick = () => {
+        const diff = expiryEnd - new Date();
+        if (diff <= 0){
+          timerEl.textContent = '⏳ Access expired';
+          timerEl.className = 'vip-profile-timer vip-profile-timer-expired';
+          clearInterval(window._vipTimerInterval);
+          vipPlayerLogout();
+          return;
+        }
+        const d = Math.floor(diff / 86400000);
+        const h = Math.floor((diff % 86400000) / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        timerEl.textContent = '⏱ ' + d + 'd ' + h + 'h ' + m + 'm ' + s + 's left';
+        timerEl.className = 'vip-profile-timer';
+      };
+      tick();
+      window._vipTimerInterval = setInterval(tick, 1000);
+    } else {
+      timerEl.textContent = '♾ Lifetime Access';
+      timerEl.className = 'vip-profile-timer vip-profile-timer-lifetime';
+    }
+  }
+
+  clearInterval(window._vipProfileRefreshInterval);
+  window._vipProfileRefreshInterval = setInterval(() => vipPlayerRefreshProfile(member), 60000);
+}
+
+async function vipPlayerRefreshProfile(member){
+  let rows;
+  try { rows = await vipIndexFetchRows(); }
+  catch(err){ console.warn('VIP profile live refresh skipped (fetch failed):', err); return; }
+  const row = rows.find(r => r.username.toLowerCase() === member.name.toLowerCase());
+  if (!row) return;
+  const expiryDate = vipIndexComputeExpiry(row);
+  const updated = {
+    name: row.username, id: null, plan: row.access_package || 'VIP',
+    startDate: row.start_date || null, trialDays: row.trial_period_in_days || null,
+    expires: expiryDate ? expiryDate.toISOString().slice(0,10) : null,
+    vip1: (row.vip_1_0 || '').toUpperCase() === 'YES', vip2: (row.vip_2_0 || '').toUpperCase() === 'YES'
+  };
+  if (expiryDate && new Date() > expiryDate){ vipPlayerLogout(); return; }
+  try { localStorage.setItem('vip_member', JSON.stringify(updated)); } catch(err){}
+  vipRenderProfileCard(updated);
+}
+
+// ── Show/hide the VIP tab's marketing content vs. the player panel ──
+function vipShowPlayerPanel(member){
+  const marketing = document.getElementById('vip-marketing');
+  const panel = document.getElementById('vip-player-panel');
+  if (marketing) marketing.classList.add('vip-marketing-hidden');
+  if (panel) panel.style.display = 'block';
+  const profile = document.getElementById('vip-profile');
+  if (profile) profile.style.display = 'flex';
+  vipRenderProfileCard(member);
+  vipDetectLocation();
+  if (window._cmsChannels) {
+    vipChFilter();
+  } else {
+    clearInterval(window._vipChWaitPoll);
+    window._vipChWaitPoll = setInterval(() => {
+      if (window._cmsChannels) { clearInterval(window._vipChWaitPoll); vipChFilter(); }
+    }, 250);
+  }
+}
+
+function vipPlayerLogout(){
+  clearInterval(window._vipTimerInterval);
+  clearInterval(window._vipProfileRefreshInterval);
+  try { localStorage.removeItem('vip_member'); } catch(err){}
+  const marketing = document.getElementById('vip-marketing');
+  const panel = document.getElementById('vip-player-panel');
+  const profile = document.getElementById('vip-profile');
+  if (panel) panel.style.display = 'none';
+  if (profile) profile.style.display = 'none';
+  if (marketing) marketing.classList.remove('vip-marketing-hidden');
+  vipIndexRenderStatus();
+}
+
+function vipToggleProfile(){
+  const profile = document.getElementById('vip-profile');
+  if (profile) profile.classList.toggle('vip-profile-open');
+}
+document.addEventListener('click', (e) => {
+  const profile = document.getElementById('vip-profile');
+  if (!profile || !profile.classList.contains('vip-profile-open')) return;
+  if (!profile.contains(e.target)) profile.classList.remove('vip-profile-open');
+});
+</script>
 
 <script>
 function openVip(){
@@ -7203,8 +7841,7 @@ async function vipIndexLogin(e){
 }
 
 function vipIndexLogout(){
-  try { localStorage.removeItem('vip_member'); } catch(e){}
-  vipIndexRenderStatus();
+  vipPlayerLogout();
 }
 
 function vipIndexRenderLoggedIn(member){
@@ -7218,6 +7855,7 @@ function vipIndexRenderLoggedIn(member){
     statusEl.innerHTML = '✓ Logged in as <b style="margin:0 4px;">' + member.name + '</b> (' + (member.plan || 'VIP') + ') <button type="button" onclick="vipIndexLogout()">Log out</button>';
   }
   document.querySelectorAll('.btn-vip-label').forEach(el => { el.textContent = 'VIP ✓'; });
+  if (typeof vipShowPlayerPanel === 'function') vipShowPlayerPanel(member);
 }
 
 function vipIndexRenderStatus(){
