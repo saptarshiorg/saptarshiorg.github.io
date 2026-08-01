@@ -5986,7 +5986,7 @@ function closeAdminChatDiscordPopup(){
 #stream-player-back svg{ width: 14px; height: 14px; flex-shrink: 0; }
 #stream-player-cast{
   position: relative; z-index: 1; margin-left: auto;
-  display: none; align-items: center; justify-content: center;
+  display: flex; align-items: center; justify-content: center;
   background: rgba(255,255,255,0.10); border: none; color: #fff;
   width: 34px; height: 34px; padding: 0; cursor: pointer; border-radius: 50%;
   flex-shrink: 0; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
@@ -6030,6 +6030,7 @@ function closeAdminChatDiscordPopup(){
 .sx-cast-help-close:hover{ background: #F0BB40; }
 #stream-player-title{
   position: relative; z-index: 1;
+  flex: 1 1 auto; min-width: 0;
   font-family: var(--cu-font,inherit); font-weight: 800; font-size: 13px;
   color: #fff; letter-spacing: 0.02em;
   text-shadow: 0 1px 4px rgba(0,0,0,0.6);
@@ -6149,8 +6150,6 @@ window['__onGCastApiAvailable'] = function(isAvailable){
       autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
     });
     sxCastAvailable = true;
-    var btn = document.getElementById('stream-player-cast');
-    if (btn) btn.style.display = 'flex';
     sxCastContext.addEventListener(
       cast.framework.CastContextEventType.CAST_STATE_CHANGED,
       sxUpdateCastButtonState
@@ -6216,7 +6215,7 @@ function sxCloseCastHelp(){
 
 function sxCastCurrentStream(){
   if (!sxCastAvailable || !sxCastContext){
-    sxCastToast('Chromecast isn\u2019t available in this browser.');
+    sxCastToast('Cast needs Chrome on an https:// page \u2014 open this site in Chrome to cast.');
     return;
   }
   var url = sxCurrentStreamRawUrl;
