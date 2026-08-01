@@ -2455,43 +2455,6 @@ document.addEventListener('DOMContentLoaded', function(){
 }
 </style>
 
-<!-- ── Home screen banner ad — same ad unit as the stream player ── -->
-<div id="home-banner-ad" style="margin:14px auto 18px;max-width:468px;min-height:60px;display:flex;justify-content:center;overflow:hidden;">
-  <div id="container-f33a71c8dbb5b2d11aff42ff668079e4-home"></div>
-</div>
-<script>
-// Same 468x60 highperformanceformat.com banner as sxLoadPlayerBanner() in
-// the stream player, wrapped in its own blank iframe so the ad script's
-// document.write() only ever touches that isolated iframe, never the
-// main page. This one loads immediately since the slot is always visible
-// on the home screen (the player version loads lazily, on first stream open).
-document.addEventListener('DOMContentLoaded', () => {
-  var c = document.getElementById('container-f33a71c8dbb5b2d11aff42ff668079e4-home');
-  if (!c) return;
-  var atOptions = {
-    'key' : 'f33a71c8dbb5b2d11aff42ff668079e4',
-    'format' : 'iframe',
-    'height' : 60,
-    'width' : 468,
-    'params' : {}
-  };
-  var iframe = document.createElement('iframe');
-  iframe.style.cssText = 'width:468px;max-width:100%;height:60px;border:0;overflow:hidden;display:block;';
-  iframe.setAttribute('scrolling', 'no');
-  iframe.setAttribute('frameborder', '0');
-  c.appendChild(iframe);
-  var doc = iframe.contentWindow.document;
-  doc.open();
-  doc.write(
-    '<body style="margin:0;padding:0;background:transparent;">' +
-    '<script>atOptions=' + JSON.stringify(atOptions) + ';<\/script>' +
-    '<script src="https://www.highperformanceformat.com/f33a71c8dbb5b2d11aff42ff668079e4/invoke.js"><\/script>' +
-    '</body>'
-  );
-  doc.close();
-});
-</script>
-
 <script>
 function fpxLoad(card, url, name) {
   if (!url || url === '#') return;
@@ -3196,36 +3159,6 @@ window.sxSwitchTab = sxSwitchTab;
       </div>
 
       <div id="fpx-grid"></div><!-- /fpx-grid : populated by renderFifaPanel() via PANELS registry -->
-
-      <div style="display:flex;justify-content:center;overflow:hidden;margin:0 0 14px;">
-        <div id="container-f33a71c8dbb5b2d11aff42ff668079e4"></div>
-      </div>
-      <script>
-        (function(){
-          var atOptions = {
-            'key' : 'f33a71c8dbb5b2d11aff42ff668079e4',
-            'format' : 'iframe',
-            'height' : 60,
-            'width' : 468,
-            'params' : {}
-          };
-          var c = document.getElementById('container-f33a71c8dbb5b2d11aff42ff668079e4');
-          var iframe = document.createElement('iframe');
-          iframe.style.cssText = 'width:468px;max-width:100%;height:60px;border:0;overflow:hidden;display:block;';
-          iframe.setAttribute('scrolling', 'no');
-          iframe.setAttribute('frameborder', '0');
-          c.appendChild(iframe);
-          var doc = iframe.contentWindow.document;
-          doc.open();
-          doc.write(
-            '<body style="margin:0;padding:0;background:transparent;">' +
-            '<script>atOptions=' + JSON.stringify(atOptions) + ';<\/script>' +
-            '<script src="https://www.highperformanceformat.com/f33a71c8dbb5b2d11aff42ff668079e4/invoke.js"><\/script>' +
-            '</body>'
-          );
-          doc.close();
-        })();
-      </script>
 
     </div><!-- /fpx-ch-section -->
   </div><!-- /fifa-panel -->
@@ -6073,6 +6006,28 @@ function closeAdminChatDiscordPopup(){
   box-shadow: 0 8px 24px rgba(0,0,0,0.4);
 }
 #sx-cast-toast.show{ opacity: 1; transform: translateX(-50%) translateY(0); }
+.sx-cast-help-overlay{
+  display: none; position: fixed; inset: 0; z-index: 2100;
+  background: rgba(0,0,0,0.72);
+  align-items: center; justify-content: center; padding: 20px;
+}
+.sx-cast-help-overlay.open{ display: flex; }
+.sx-cast-help-box{
+  background: #16161a; border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 0; max-width: 360px; width: 100%; padding: 22px 22px 18px;
+  font-family: var(--cu-font,inherit); color: #fff;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.55);
+}
+.sx-cast-help-title{ font-size: 15px; font-weight: 800; margin-bottom: 10px; letter-spacing: 0.01em; }
+.sx-cast-help-body{ font-size: 12.5px; line-height: 1.55; color: rgba(255,255,255,0.75); margin: 0 0 12px; }
+.sx-cast-help-steps{ margin: 0 0 16px; padding-left: 18px; font-size: 12.5px; line-height: 1.7; color: rgba(255,255,255,0.85); }
+.sx-cast-help-steps b{ color: #E8B923; }
+.sx-cast-help-close{
+  width: 100%; background: #E8B923; color: #101010; border: none;
+  font-weight: 800; font-size: 12.5px; letter-spacing: 0.04em; text-transform: uppercase;
+  padding: 11px; cursor: pointer; border-radius: 0;
+}
+.sx-cast-help-close:hover{ background: #F0BB40; }
 #stream-player-title{
   position: relative; z-index: 1;
   font-family: var(--cu-font,inherit); font-weight: 800; font-size: 13px;
@@ -6099,12 +6054,6 @@ function closeAdminChatDiscordPopup(){
 }
 #stream-player-frame{
   width: 100%; height: 100%; border: none; display: block; background: #000;
-}
-#stream-player-banner-row{
-  flex-shrink: 0; z-index: 6; position: relative;
-  display: flex; align-items: center; justify-content: center;
-  padding: 4px 0; background: rgba(0,0,0,0.92);
-  max-height: 68px; overflow: hidden;
 }
 #stream-player-ad-bar{
   flex-shrink: 0; z-index: 6; position: relative;
@@ -6171,9 +6120,6 @@ function closeAdminChatDiscordPopup(){
       </div>
     </div>
   </div>
-  <div id="stream-player-banner-row">
-    <div id="container-f33a71c8dbb5b2d11aff42ff668079e4-player"></div>
-  </div>
   <div id="stream-player-ad-bar">
     <div id="stream-player-alt-row">
       <img id="stream-player-alt-logo" src="" alt="RISHI.EV" style="display:none">
@@ -6184,40 +6130,6 @@ function closeAdminChatDiscordPopup(){
 </div>
 
 <script>
-// Small banner ad in the stream player, loaded once the first time any
-// stream is opened. Wrapped in its own blank iframe (same as the FIFA
-// panel banner) so the atOptions/highperformanceformat.com script's
-// document.write() only ever touches that isolated iframe's document,
-// never the main page.
-var __sxPlayerBannerLoaded = false;
-function sxLoadPlayerBanner(){
-  if (__sxPlayerBannerLoaded) return;
-  __sxPlayerBannerLoaded = true;
-  var c = document.getElementById('container-f33a71c8dbb5b2d11aff42ff668079e4-player');
-  if (!c) return;
-  var atOptions = {
-    'key' : 'f33a71c8dbb5b2d11aff42ff668079e4',
-    'format' : 'iframe',
-    'height' : 60,
-    'width' : 468,
-    'params' : {}
-  };
-  var iframe = document.createElement('iframe');
-  iframe.style.cssText = 'width:468px;max-width:100%;height:60px;border:0;overflow:hidden;display:block;';
-  iframe.setAttribute('scrolling', 'no');
-  iframe.setAttribute('frameborder', '0');
-  c.appendChild(iframe);
-  var doc = iframe.contentWindow.document;
-  doc.open();
-  doc.write(
-    '<body style="margin:0;padding:0;background:transparent;">' +
-    '<script>atOptions=' + JSON.stringify(atOptions) + ';<\/script>' +
-    '<script src="https://www.highperformanceformat.com/f33a71c8dbb5b2d11aff42ff668079e4/invoke.js"><\/script>' +
-    '</body>'
-  );
-  doc.close();
-}
-// ── Google Cast (Chromecast) ─────────────────────────────────────────
 // Casts whatever is currently open in the stream player to a TV. This
 // only works for channels whose watch_url is a direct HLS (.m3u8) feed —
 // the Cast receiver needs an actual media URL to fetch and play itself,
@@ -6274,6 +6186,34 @@ function sxCastToast(msg){
   window._sxCastToastTimer = setTimeout(function(){ t.classList.remove('show'); }, 3400);
 }
 
+function sxShowCastHelp(){
+  var ov = document.getElementById('sx-cast-help-overlay');
+  if (!ov){
+    ov = document.createElement('div');
+    ov.id = 'sx-cast-help-overlay';
+    ov.className = 'sx-cast-help-overlay';
+    ov.innerHTML =
+      '<div class="sx-cast-help-box">' +
+        '<div class="sx-cast-help-title">Cast this channel to your TV</div>' +
+        '<p class="sx-cast-help-body">This channel streams through an embedded player, so one-tap Cast can\u2019t grab the video feed directly \u2014 only a direct stream link can be sent to a Cast device that way.</p>' +
+        '<p class="sx-cast-help-body">You can still send this whole tab to your TV using your browser\u2019s built-in Cast (this mirrors everything on screen, including this player):</p>' +
+        '<ol class="sx-cast-help-steps">' +
+          '<li>Open the <b>\u22ee</b> menu in Chrome (top right)</li>' +
+          '<li>Tap <b>Cast, save, and share</b> \u2192 <b>Cast\u2026</b></li>' +
+          '<li>Pick your TV / Chromecast device</li>' +
+        '</ol>' +
+        '<button class="sx-cast-help-close" onclick="sxCloseCastHelp()">Got it</button>' +
+      '</div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', function(e){ if (e.target === ov) sxCloseCastHelp(); });
+  }
+  ov.classList.add('open');
+}
+function sxCloseCastHelp(){
+  var ov = document.getElementById('sx-cast-help-overlay');
+  if (ov) ov.classList.remove('open');
+}
+
 function sxCastCurrentStream(){
   if (!sxCastAvailable || !sxCastContext){
     sxCastToast('Chromecast isn\u2019t available in this browser.');
@@ -6285,7 +6225,7 @@ function sxCastCurrentStream(){
     return;
   }
   if (!sxIsHlsUrl(url)){
-    sxCastToast('This channel can\u2019t be cast directly \u2014 it\u2019s an embedded player page, not a direct stream link.');
+    sxShowCastHelp();
     return;
   }
   var mediaInfo = new chrome.cast.media.MediaInfo(url, 'application/x-mpegurl');
@@ -6328,7 +6268,6 @@ function openStreamPlayer(url, name){
   document.getElementById('stream-player-title').textContent = label;
   sxCurrentStreamRawUrl = url; // used by sxCastCurrentStream() below
   const src = url.includes('#') ? url : url + '#' + encodeURIComponent(label);
-  sxLoadPlayerBanner();
   // Loading overlay shows for a flat 3s to mask any cross-origin iframe
   // flicker/redirect on first paint — but the stream itself starts loading
   // immediately underneath, not after the 3s. Setting the iframe src here,
