@@ -1561,6 +1561,75 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
 .mws-server-sub { font-size: 10px; color: rgba(255,255,255,0.4); letter-spacing: 0.04em; }
 .mws-server-play { font-size: 13px; color: rgba(0,217,255,0.6); flex-shrink: 0; }
 
+/* ── Ribbon accent + motion ──────────────────────────────────────────
+   A slow-flowing gradient "ribbon" line runs along the top edge of
+   each glass panel (cyan → lavender → gold → cyan, endlessly cycling),
+   plus a living, drifting background and a staggered fade/slide-in
+   for the panels, badge, teams and each server row so the screen
+   doesn't just snap into place. */
+.mws-bg { animation: mwsBgDrift 20s ease-in-out infinite alternate; }
+@keyframes mwsBgDrift {
+  from { transform: scale(1.15) translate(0, 0); }
+  to   { transform: scale(1.24) translate(-1.5%, 1.5%); }
+}
+
+.mws-panel { position: relative; overflow: hidden; }
+.mws-panel::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; z-index: 3;
+  background: linear-gradient(90deg, #00D9FF, #B98CFF, #FFB347, #00D9FF);
+  background-size: 300% 100%;
+  animation: mwsRibbonFlow 7s linear infinite;
+}
+@keyframes mwsRibbonFlow {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
+}
+
+.mws-close { animation: mwsFadeDown 0.45s var(--ease) both; }
+@keyframes mwsFadeDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: none; } }
+
+.mws-left  { animation: mwsSlideInLeft  0.5s var(--spring) both; }
+.mws-right { animation: mwsSlideInRight 0.5s var(--spring) both; animation-delay: 0.06s; }
+@keyframes mwsSlideInLeft  { from { opacity: 0; transform: translateX(-26px); } to { opacity: 1; transform: none; } }
+@keyframes mwsSlideInRight { from { opacity: 0; transform: translateX(26px);  } to { opacity: 1; transform: none; } }
+
+.mws-badge-row, .mws-details, .mws-date, .mws-teams, [id^="mws-timerwrap"], .mws-right-head {
+  animation: mwsFadeUp 0.5s var(--ease) both;
+}
+@keyframes mwsFadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.mws-badge-row  { animation-delay: 0.12s; }
+.mws-details    { animation-delay: 0.17s; }
+.mws-date       { animation-delay: 0.20s; }
+.mws-teams      { animation-delay: 0.25s; }
+[id^="mws-timerwrap"] { animation-delay: 0.32s; }
+.mws-right-head { animation-delay: 0.18s; }
+
+.mws-team-logo { transition: transform 0.3s var(--ease); }
+.mws-teams:hover .mws-team-logo { transform: scale(1.06); }
+
+/* Server rows fan in one after another, then get a soft ribbon-light
+   sweep across them on hover — like a glint of silk catching light. */
+.mws-server-btn { position: relative; overflow: hidden; animation: mwsFadeUp 0.4s var(--ease) both; }
+.mws-server-btn:nth-of-type(1) { animation-delay: 0.20s; }
+.mws-server-btn:nth-of-type(2) { animation-delay: 0.27s; }
+.mws-server-btn:nth-of-type(3) { animation-delay: 0.34s; }
+.mws-server-btn:nth-of-type(4) { animation-delay: 0.41s; }
+.mws-server-btn:nth-of-type(5) { animation-delay: 0.48s; }
+.mws-server-btn::after {
+  content: ''; position: absolute; top: 0; left: -60%; width: 35%; height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(255,255,255,0.16), transparent);
+  transform: skewX(-20deg); pointer-events: none;
+  transition: left 0.55s ease;
+}
+.mws-server-btn:hover::after { left: 130%; }
+.mws-server-btn:hover { transform: translateX(2px); }
+.mws-server-num { transition: transform 0.25s var(--spring); }
+.mws-server-btn:hover .mws-server-num { transform: scale(1.1); }
+
+@media (max-width: 900px) {
+  .mws-left, .mws-right { animation: mwsFadeUp 0.4s var(--ease) both; }
+}
+
 @media (max-width: 900px) {
   .mws-wrap { flex-direction: column; padding: 0; height: 100%; }
   .mws-left { flex: 0 0 auto; max-width: none; width: 100%; padding: 54px 24px 24px; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.10); }
