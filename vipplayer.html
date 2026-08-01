@@ -7097,10 +7097,12 @@ function openVip(){
   document.getElementById('vip-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   window.scrollTo(0,0);
+  if (location.hash !== '#vip') history.replaceState(null, '', '#vip');
 }
 function closeVip(){
   document.getElementById('vip-overlay').classList.remove('open');
   document.body.style.overflow = '';
+  if (location.hash === '#vip' || location.hash === '#vip-login') history.replaceState(null, '', location.pathname + location.search);
 }
 
 // ── "Already VIP? Log in" — same credential sheet + same localStorage
@@ -7233,6 +7235,26 @@ function vipIndexRenderStatus(){
   }
 }
 document.addEventListener('DOMContentLoaded', vipIndexRenderStatus);
+
+// A URL like yoursite.com/#vip (or #vip-login) opens straight to the
+// VIP page with the "Already VIP? Log In" form expanded — handy for
+// sharing a direct login link with existing members.
+function vipCheckHash(){
+  if (location.hash === '#vip' || location.hash === '#vip-login') {
+    openVip();
+    setTimeout(function(){
+      const form = document.getElementById('vip-index-login-form');
+      const toggleBtn = document.getElementById('vip-already-toggle-btn');
+      const statusEl = document.getElementById('vip-already-status');
+      const alreadyShown = statusEl && statusEl.style.display !== 'none';
+      if (!alreadyShown && form && form.style.display === 'none' && toggleBtn) {
+        vipIndexToggleLogin();
+      }
+    }, 60);
+  }
+}
+document.addEventListener('DOMContentLoaded', vipCheckHash);
+window.addEventListener('hashchange', vipCheckHash);
 </script>
 
 <!-- ── DevTools blocking ─────────────────────────────────────────────
