@@ -3935,7 +3935,7 @@ function renderSlides(rows) {
       const btn2 = s.btn2_text
         ? `<a href="${s.btn2_url||'#'}" class="hsc-btn-outline" target="_blank" rel="noopener">${s.btn2_text}</a>` : '';
       cardHtml += `
-      <div class="hero-slide-card${i===0?' active-card':''}" onclick="sxHeroWatch('${escJs(s.btn1_url||'#')}','${escJs(s.location||'')}','${escJs(s.title||'Live Stream')}')">
+      <div class="hero-slide-card${i===0?' active-card':''}" data-orig-title="${encodeURIComponent(s.title||'')}" onclick="sxHeroWatch('${escJs(s.btn1_url||'#')}','${escJs(s.location||'')}','${escJs(s.title||'Live Stream')}')">
         <div class="hsc-banner">
           <div class="hsc-banner-bg" style="background-image:url('${s.bg_image_url}')"></div>
           <div class="hsc-banner-overlay"></div>
@@ -4213,8 +4213,32 @@ function closeMatchWatchScreen() {
 }
 
 // ── Inject match card data into desktop hero slide cards ─────────────────────
-// Replaces hsc-info (title/sub/btns) in each hero-slide-card with the
-// corresponding match card's team data (by index). Mobile is unaffected.
+// Looks for a hero slide whose ORIGINAL sheet title is written as
+// "TEAM1 v TEAM2" (e.g. "IND v SRI") — team codes matching team1_code /
+// team2_code in the MATCH CARDS sheet, in either order. When found,
+// picks the best matching match card (preferring one that's currently
+// "upcoming", then "live", then whatever's left) and returns it.
+function sxFindHeroTitleMatch(rawTitle, matchCards) {
+  const t = (rawTitle || '').trim();
+  const m = t.match(/^([A-Za-z0-9]{2,6})\s+v\s+([A-Za-z0-9]{2,6})$/i);
+  if (!m) return null;
+  const code1 = m[1].toLowerCase();
+  const code2 = m[2].toLowerCase();
+  const candidates = matchCards.filter(mc => {
+    const a = (mc.team1_code || '').trim().toLowerCase();
+    const b = (mc.team2_code || '').trim().toLowerCase();
+    return (a === code1 && b === code2) || (a === code2 && b === code1);
+  });
+  if (!candidates.length) return null;
+  const byStatus = s => candidates.find(mc => (mc.status_live_upcoming || mc.status || '').trim().toLowerCase() === s);
+  return byStatus('upcoming') || byStatus('live') || candidates[0];
+}
+
+// Replaces hsc-info (title/sub/btns) in a hero-slide-card whose original
+// title is a "TEAM1 v TEAM2" pattern (e.g. "IND v SRI") with the matching
+// match card's live team data, found by team1_code/team2_code — not by
+// position. Slides whose title isn't that pattern, or that have no
+// matching match card, are left exactly as configured in HERO SLIDES.
 function injectMatchInfoIntoHeroCards(matchCards) {
   const heroCards = document.querySelectorAll('.hero-slide-card');
   const fallbackBanner = 'https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/main/ChatGPT%20Image%20Jun%207,%202026,%2010_27_17%20AM.png';
@@ -4232,20 +4256,16 @@ function injectMatchInfoIntoHeroCards(matchCards) {
   document.body.classList.remove('pc-no-featured');
   if (heroSection) heroSection.classList.remove('no-match-cards');
 
-  heroCards.forEach((card, i) => {
-    const m = matchCards[i];
+  const usedMatchCards = [];
 
-    // If no matching match card — replace banner with fallback image, leave info as hero slide info
-    if (!m) {
-      const bannerBg = card.querySelector('.hsc-banner-bg');
-      if (bannerBg) {
-        const src = bannerBg.style.backgroundImage;
-        if (!src || src === "url('')" || src === 'url("")') {
-          bannerBg.style.backgroundImage = `url('${fallbackBanner}')`;
-        }
-      }
-      return;
-    }
+  heroCards.forEach((card, i) => {
+    const rawTitle = decodeURIComponent(card.dataset.origTitle || '');
+    const m = sxFindHeroTitleMatch(rawTitle, matchCards);
+
+    // Title isn't a "TEAM1 v TEAM2" pattern, or no match found for it —
+    // leave this slide exactly as the sheet configured it.
+    if (!m) return;
+    usedMatchCards.push(m);
 
     const isLive = (m.status_live_upcoming || m.status || '').toLowerCase() === 'live';
     const badgeId = 'hsc-badge-' + i;
@@ -4296,8 +4316,9 @@ function injectMatchInfoIntoHeroCards(matchCards) {
     }
   });
 
-  // ── Create extra hero cards for match cards beyond hero slides count ──────────
-  const extra = matchCards.slice(heroCards.length);
+  // ── Create extra hero cards for match cards that weren't already
+  // matched into a "TEAM1 v TEAM2" titled slide above ──────────────
+  const extra = matchCards.filter(mc => !usedMatchCards.includes(mc));
   if (!extra.length || !track) return;
 
   extra.forEach((m, j) => {
