@@ -4001,10 +4001,10 @@ function renderSlides(rows) {
       : (s.sport_badge ? `<span class="slide-sport-badge">${s.sport_badge}</span>` : '');
     const btn2 = s.btn2_text ? `<a href="${s.btn2_url||'#'}" class="btn-slide-outline" target="_blank" rel="noopener">${s.btn2_text}</a>` : '';
     html += `
-    <div class="slide${i===0?' active':''}">
+    <div class="slide${i===0?' active':''}" data-orig-title="${encodeURIComponent(s.title||'')}">
       <div class="slide-bg" style="background-image:url('${s.bg_image_url}')"></div>
       <div class="slide-overlay"></div>
-      <div class="slide-content">
+      <div class="slide-content" id="slide-content-${i}">
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;">
           ${heroBadge}
         </div>
@@ -4390,6 +4390,67 @@ function injectMatchInfoIntoHeroCards(matchCards) {
   });
 }
 
+// Same "TEAM1 v TEAM2" title-detection as injectMatchInfoIntoHeroCards, but
+// applied to the carousel that's ACTUALLY visible on the site — the
+// #slides-container / .slide markup built in the "MOBILE: full-width
+// slides" part of renderSlides (the .hero-cards-section grid above this
+// is hidden by CSS on every screen size, so match data injected there
+// never reaches a real visitor). A slide titled e.g. "IND v SRI" gets its
+// content swapped for the matching MATCH CARDS row: team logos, badge,
+// live countdown, and a Watch Now button wired to the same multi-server
+// popup used everywhere else on the site. Slides that don't match the
+// pattern (or have no matching match card) are left exactly as configured.
+function injectMatchInfoIntoSlides(matchCards) {
+  const slides = document.querySelectorAll('#slides-container .slide');
+  slides.forEach((slide, i) => {
+    const rawTitle = decodeURIComponent(slide.dataset.origTitle || '');
+    const m = sxFindHeroTitleMatch(rawTitle, matchCards);
+    if (!m) return;
+
+    const isLive = (m.status_live_upcoming || m.status || '').toLowerCase() === 'live';
+    const badgeId = 'slide-badge-' + i;
+    const liveBadgeHtml = `<div class="smo-live-badge" id="${badgeId}"><div class="live-dot-r"></div>LIVE</div>`;
+    const badge = isLive
+      ? liveBadgeHtml
+      : `<div class="smo-upcoming-badge" id="${badgeId}">⏰ UPCOMING</div>`;
+
+    const countdown = m.countdown_to_iso_datetime || m.countdown_to || '';
+    const timerId = 'slide-timer-' + i;
+    const timerWrapId = 'slide-timerwrap-' + i;
+    const timerBlock = `<div class="smo-timer" id="${timerWrapId}" style="margin:2px 0 10px;visibility:${(!isLive && countdown) ? 'visible' : 'hidden'}"><div class="timer-label">STARTS IN</div><div class="timer-display" id="${timerId}">--:--:--</div></div>`;
+
+    const watchBtn = `<a href="${matchWatchHref(m.btn_url)}" class="btn-slide-watch" onclick="event.preventDefault();return sxHandleMatchWatch(event,'${sxServersEnc(m)}','${escJs(m.btn_url)}','${escJs((m.team1_code||'')+' vs '+(m.team2_code||''))}','${sxMatchInfoEnc(m,(m.team1_code||'')+' vs '+(m.team2_code||''))}')">▶ Watch Now</a>`;
+
+    const contentEl = slide.querySelector('.slide-content');
+    if (!contentEl) return;
+
+    contentEl.innerHTML = `
+      <div style="margin-bottom:10px;">${badge}</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:18px;margin-bottom:6px;">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:0;max-width:110px;">
+          ${img(m.team1_logo_url,'','smo-logo','')}
+          <div class="smo-name" style="font-size:13px;text-align:center;">${m.team1_code||''}</div>
+          <div class="smo-full" style="font-size:10px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">${m.team1_full_name||''}</div>
+        </div>
+        <div class="smo-vs" style="font-size:13px;flex-shrink:0;">VS</div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:0;max-width:110px;">
+          ${img(m.team2_logo_url,'','smo-logo','')}
+          <div class="smo-name" style="font-size:13px;text-align:center;">${m.team2_code||''}</div>
+          <div class="smo-full" style="font-size:10px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">${m.team2_full_name||''}</div>
+        </div>
+      </div>
+      ${timerBlock}
+      <div class="slide-btns">${watchBtn}</div>
+    `;
+
+    if (!isLive && countdown) {
+      setTimeout(() => {
+        wireAutoLiveCountdown(countdown, { timerDisplayId: timerId, timerWrapId, badgeId, liveBadgeHtml });
+      }, 150);
+    }
+  });
+}
+
 // Global store for match cards — populated before renderSlides is called if needed,
 // but init() runs HERO SLIDES first then MATCH CARDS. We defer hero card info injection
 // until match cards are available via a second-pass update function.
@@ -4633,6 +4694,7 @@ function renderMatchCards(rows) {
 
   // ── Inject match card data into desktop hero slide cards ──────
   injectMatchInfoIntoHeroCards(cards);
+  injectMatchInfoIntoSlides(cards);
 
   // Match overlay section stays visible either way — showing real cards,
   // or the "NO MATCHES LISTED" box above when there aren't any.
