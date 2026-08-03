@@ -1,4 +1,4 @@
-```markdown
+
 <p align="center">
   <img src="https://capsule-render.vercel.app/api?type=waving&height=240&color=0:0B1220,40:2563EB,100:38BDF8&text=RISHI%20FORGE&fontSize=54&fontColor=ffffff&animation=fadeIn&fontAlignY=38&desc=Code%20•%20Create%20•%20Innovate&descAlignY=60&descSize=18" />
 </p>
@@ -129,11 +129,11 @@ I enjoy building clean websites, open-source tools, automation workflows and mod
 
 > **Great ideas are forged through curiosity, creativity and code.**
 
----
+
 
 <p align="center">
 
 <img src="https://capsule-render.vercel.app/api?type=waving&section=footer&height=120&color=0:0B1220,40:2563EB,100:38BDF8"/>
 
 </p>
-```
+
