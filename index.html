@@ -3525,10 +3525,10 @@ window.sxSwitchTab = sxSwitchTab;
   </div>
 <div id="fancode-panel-wrap">
   <div id="fancode-iframe-wrap">
-    <iframe id="fancode-iframe" src="https://fanncode.pages.dev/" title="FanCode" loading="lazy" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer-when-downgrade" onerror="document.getElementById('fancode-embed-fallback').style.display='flex'"></iframe>
+    <iframe id="fancode-iframe" src="https://saptarshiorg.github.io/Fancode/" title="FanCode" loading="lazy" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer-when-downgrade" onerror="document.getElementById('fancode-embed-fallback').style.display='flex'"></iframe>
     <div id="fancode-embed-fallback">
       <div>FanCode didn't load in the embedded view.</div>
-      <a href="https://fanncode.pages.dev/" target="_blank" rel="noopener">Open FanCode ↗</a>
+      <a href="https://saptarshiorg.github.io/Fancode/" target="_blank" rel="noopener">Open FanCode ↗</a>
     </div>
   </div>
 </div><!-- /fancode-panel-wrap -->
@@ -6918,7 +6918,7 @@ function sxWatchLinkClick(evt, a){
 // window._sxCountry client-side IP lookup set up by the geo-check IIFE
 // above. If country hasn't resolved yet, default to the India mirror and
 // let sxApplyFanCodeUrl() swap it in once geo detection finishes.
-const FANCODE_URL_IN = 'https://fanncode.pages.dev/';
+const FANCODE_URL_IN = 'https://saptarshiorg.github.io/Fancode/';
 const FANCODE_URL_INTL = 'https://famcodexweb.pages.dev/';
 function sxFanCodeUrl(){
   return (window._sxCountry && window._sxCountry !== 'IN') ? FANCODE_URL_INTL : FANCODE_URL_IN;
