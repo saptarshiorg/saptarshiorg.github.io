@@ -1,12 +1,8 @@
-<?php
-// सिक्योरिटी के लिए सेशन शुरू
-session_start();
-?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FanCode Live | Secured Dashboard</title>
 
   <!-- Tailwind CSS & Google Fonts -->
@@ -69,8 +65,8 @@ session_start();
           <span class="bg-red-600 text-white font-black text-xs px-2 py-1 rounded">EV</span>
           <span class="text-red-500 font-black text-xl tracking-wider uppercase">FANCODE</span>
         </div>
-        <span class="text-[11px] text-gray-500 font-medium tracking-wide border-l border-gray-700 pl-3">
-          LAST UPDATE: <?php echo strtoupper(date('d M, h:i A')); ?> IST
+        <span id="lastUpdate" class="text-[11px] text-gray-500 font-medium tracking-wide border-l border-gray-700 pl-3">
+          LAST UPDATE:
         </span>
       </div>
 
@@ -203,7 +199,17 @@ session_start();
 
 <!-- ================= SECURITY SCRIPTS ================= -->
 <script>
-  // 1. Search Filter Functionality
+  // 1. Last update - set to current IST (approx using toLocaleString)
+  (function setLastUpdate() {
+    const el = document.getElementById('lastUpdate');
+    const now = new Date();
+    // Format roughly like "03 AUG, 07:00 PM IST"
+    const options = { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' };
+    const formatted = now.toLocaleString('en-GB', options).replace(',', '').toUpperCase();
+    el.textContent = `LAST UPDATE: ${formatted} IST`;
+  })();
+
+  // 2. Search Filter Functionality
   function filterMatches() {
     let input = document.getElementById('searchInput').value.toUpperCase();
     let cards = document.getElementsByClassName('card-match');
@@ -217,19 +223,19 @@ session_start();
     }
   }
 
-  // 2. Encrypted Play Trigger (Prevents URL Inspection)
+  // 3. Encrypted Play Trigger (Prevents URL Inspection)
   function playSecureStream(matchId) {
     // Generate secure token/hash
     let token = btoa(matchId + "_" + Date.now());
-    window.location.href = `player.php?id=${matchId}&token=${token}`;
+    window.location.href = `player.html?id=${matchId}&token=${token}`;
   }
 
-  // 3. SECURITY: Disable Right-Click
+  // 4. SECURITY: Disable Right-Click
   document.addEventListener('contextmenu', function(e) {
     e.preventDefault();
   });
 
-  // 4. SECURITY: Block Inspect Element & Shortcut Keys
+  // 5. SECURITY: Block Inspect Element & Shortcut Keys
   document.onkeydown = function(e) {
     // F12 key
     if (e.keyCode == 123) return false;
