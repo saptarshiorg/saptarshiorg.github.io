@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-  <title>TITU EV | OTT Stream Player</title>
+  <title>TITU EV | Stream Player</title>
 
   <!-- Google Fonts & Icons -->
   <link rel="preconnect" href="https://api.fontshare.com">
@@ -142,7 +142,7 @@
 <div class="ott-player-container" id="playerContainer">
   <div class="ambient-glow"></div>
 
-  <!-- Loading Indicator -->
+  <!-- Loading Screen -->
   <div id="loader" class="absolute inset-0 bg-black/95 z-[100] flex flex-col items-center justify-center">
     <div class="w-16 h-16 border-4 border-orange-500/20 border-t-orange-500 rounded-full animate-spin mb-4"></div>
     <div class="text-xs font-bold tracking-widest text-orange-500 uppercase animate-pulse">CONNECTING SECURE STREAM...</div>
@@ -181,7 +181,6 @@
         <button id="switchPlayerBtn" class="bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/40 text-yellow-300 px-3 py-1.5 rounded-lg text-xs font-bold transition backdrop-blur-md">
           Switch Engine (JW)
         </button>
-        <img id="tituLogo" src="" class="h-7 object-contain drop-shadow" alt="Logo">
       </div>
     </div>
 
@@ -292,7 +291,6 @@ let isJwActive = false;
 let controlsTimeout = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
-  document.getElementById("tituLogo").src = CONFIG.TITU_LOGO;
   videoElem = document.getElementById("video");
 
   const rawPayload = sessionStorage.getItem("__EV_TITU_STREAM__");
@@ -604,8 +602,7 @@ function initJWPlayer() {
     file: getStreamUrl(),
     drm: jwDrmObj,
     width: "100%", height: "100%",
-    autostart: true, stretching: "uniform",
-    logo: { file: CONFIG.TITU_LOGO, position: "top-right", margin: "15" }
+    autostart: true, stretching: "uniform"
   });
 }
 
