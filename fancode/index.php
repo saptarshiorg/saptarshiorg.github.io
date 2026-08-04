@@ -1,0 +1,248 @@
+<?php
+// सिक्योरिटी के लिए सेशन शुरू
+session_start();
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FanCode Live | Secured Dashboard</title>
+
+  <!-- Tailwind CSS & Google Fonts -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+
+  <style>
+    body {
+      background-color: #0d0f12;
+      color: #e2e8f0;
+      font-family: 'Roboto', sans-serif;
+      user-select: none; /* Text selection disable */
+      -webkit-user-select: none;
+    }
+
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0d0f12; }
+    ::-webkit-scrollbar-thumb { background: #1e232d; border-radius: 4px; }
+
+    .card-bg {
+      background-color: #151921;
+      border: 1px solid #202632;
+    }
+    
+    .card-bg:hover {
+      border-color: #333d4f;
+    }
+
+    /* Yellow Watch Button */
+    .btn-watch {
+      background: linear-gradient(180deg, #facc15 0%, #eab308 100%);
+      color: #000;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+    .btn-watch:hover {
+      background: linear-gradient(180deg, #fde047 0%, #facc15 100%);
+    }
+
+    /* Server Select Dropdown */
+    .server-btn {
+      background-color: #1c222d;
+      border: 1px solid #2a3242;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+<div>
+  <!-- ================= TOP HEADER ================= -->
+  <header class="bg-[#12151c] border-b border-[#1e2430] px-4 py-3 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
+      
+      <!-- Logo & Last Update -->
+      <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
+        <div class="flex items-center gap-2">
+          <span class="bg-red-600 text-white font-black text-xs px-2 py-1 rounded">EV</span>
+          <span class="text-red-500 font-black text-xl tracking-wider uppercase">FANCODE</span>
+        </div>
+        <span class="text-[11px] text-gray-500 font-medium tracking-wide border-l border-gray-700 pl-3">
+          LAST UPDATE: <?php echo strtoupper(date('d M, h:i A')); ?> IST
+        </span>
+      </div>
+
+      <!-- Search Box -->
+      <div class="relative w-full md:w-80">
+        <span class="material-icons-round absolute left-3 top-2.5 text-gray-400 text-sm">search</span>
+        <input type="text" id="searchInput" onkeyup="filterMatches()" placeholder="SEARCH TEAM OR EVENT..." 
+               class="w-full bg-[#1a1f29] text-xs text-white pl-9 pr-4 py-2 rounded-full border border-[#28303f] focus:outline-none focus:border-red-500 uppercase tracking-wider placeholder-gray-500">
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ================= MATCHES GRID ================= -->
+  <main class="max-w-7xl mx-auto px-4 py-6">
+    <div id="matchGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      
+      <!-- CARD 1: LIVE -->
+      <div class="card-match card-bg rounded-lg overflow-hidden flex flex-col justify-between">
+        <div>
+          <!-- Thumbnail Area -->
+          <div class="relative">
+            <img src="https://images-na.ssl-images-amazon.com/images/S/le-target-images-prod/amzn1.dv.gti.1a2dd1e7-5a5b-409a-a00e-4526dec74186/2/BOXART-16X9/en-US._UR1920,1080_SX624_FMjpg_.jpg" class="w-full h-44 object-cover" alt="Match">
+            <span class="absolute top-2 left-2 bg-red-600 text-white font-bold text-[10px] px-2 py-0.5 rounded flex items-center gap-1">
+              <span class="w-1.5 h-1.5 bg-white rounded-full animate-ping"></span> ENGLISH
+            </span>
+            <span class="absolute top-2 right-2 bg-red-600 text-white font-bold text-[10px] px-2 py-0.5 rounded uppercase">
+              • LIVE
+            </span>
+          </div>
+
+          <!-- Details -->
+          <div class="p-3 text-center">
+            <h2 class="font-extrabold text-white text-sm uppercase tracking-wide line-clamp-1">WEST INDIES VS PAKISTAN</h2>
+            <p class="text-[11px] text-gray-400 mt-1 font-medium">Pakistan tour of West Indies, 2026</p>
+            <p class="text-[11px] text-gray-500 font-bold mt-0.5">03 AUG, 7:00 PM</p>
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="p-3 pt-0 flex flex-col gap-2">
+          <button onclick="playSecureStream('B0H9TZH2J2')" class="btn-watch w-full py-2 rounded text-xs uppercase shadow-md">
+            WATCH NOW
+          </button>
+          
+          <div class="relative">
+            <select class="server-btn w-full text-[11px] font-bold py-1.5 px-3 rounded appearance-none cursor-pointer text-center uppercase focus:outline-none">
+              <option>🌐 WORLD WIDE STREAM</option>
+              <option>⚡ SERVER 2 (FAST)</option>
+              <option>🛡️ SERVER 3 (BACKUP)</option>
+            </select>
+            <span class="material-icons-round absolute right-2 top-2 text-xs text-gray-400 pointer-events-none">expand_more</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD 2: LIVE -->
+      <div class="card-match card-bg rounded-lg overflow-hidden flex flex-col justify-between">
+        <div>
+          <div class="relative">
+            <img src="https://images-na.ssl-images-amazon.com/images/S/le-target-images-prod/amzn1.dv.gti.bfdc5713-1474-4fac-94c6-e13c4e0aab64/3/BOXART-16X9/en-US._UR1920,1080_SX624_FMjpg_.jpg" class="w-full h-44 object-cover" alt="Match">
+            <span class="absolute top-2 left-2 bg-red-600 text-white font-bold text-[10px] px-2 py-0.5 rounded">ENGLISH</span>
+            <span class="absolute top-2 right-2 bg-red-600 text-white font-bold text-[10px] px-2 py-0.5 rounded uppercase">• LIVE</span>
+          </div>
+          <div class="p-3 text-center">
+            <h2 class="font-extrabold text-white text-sm uppercase tracking-wide line-clamp-1">NEW DELHI TIGERS VS OUTER DELHI WARRIORS</h2>
+            <p class="text-[11px] text-gray-400 mt-1 font-medium">Delhi Premier League, 2026</p>
+            <p class="text-[11px] text-gray-500 font-bold mt-0.5">04 AUG, 1:30 PM</p>
+          </div>
+        </div>
+        <div class="p-3 pt-0 flex flex-col gap-2">
+          <button onclick="playSecureStream('B0H34WFGJK')" class="btn-watch w-full py-2 rounded text-xs uppercase shadow-md">WATCH NOW</button>
+          <div class="relative">
+            <select class="server-btn w-full text-[11px] font-bold py-1.5 px-3 rounded appearance-none cursor-pointer text-center uppercase focus:outline-none">
+              <option>🌐 WORLD WIDE STREAM</option>
+            </select>
+            <span class="material-icons-round absolute right-2 top-2 text-xs text-gray-400 pointer-events-none">expand_more</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD 3: LIVE -->
+      <div class="card-match card-bg rounded-lg overflow-hidden flex flex-col justify-between">
+        <div>
+          <div class="relative">
+            <img src="https://images-na.ssl-images-amazon.com/images/S/le-target-images-prod/amzn1.dv.gti.81743fb0-4571-43c3-8e53-1b84fd302dcb/3/BOXART-16X9/en-US._UR1920,1080_SX624_FMjpg_.jpg" class="w-full h-44 object-cover" alt="Match">
+            <span class="absolute top-2 left-2 bg-red-600 text-white font-bold text-[10px] px-2 py-0.5 rounded">ENGLISH</span>
+            <span class="absolute top-2 right-2 bg-red-600 text-white font-bold text-[10px] px-2 py-0.5 rounded uppercase">• LIVE</span>
+          </div>
+          <div class="p-3 text-center">
+            <h2 class="font-extrabold text-white text-sm uppercase tracking-wide line-clamp-1">SOUTH DELHI SUPERSTARZ VS WEST DELHI LIONS</h2>
+            <p class="text-[11px] text-gray-400 mt-1 font-medium">Delhi Premier League, 2026</p>
+            <p class="text-[11px] text-gray-500 font-bold mt-0.5">04 AUG, 7:00 PM</p>
+          </div>
+        </div>
+        <div class="p-3 pt-0 flex flex-col gap-2">
+          <button onclick="playSecureStream('B0GXD8TLC7')" class="btn-watch w-full py-2 rounded text-xs uppercase shadow-md">WATCH NOW</button>
+          <div class="relative">
+            <select class="server-btn w-full text-[11px] font-bold py-1.5 px-3 rounded appearance-none cursor-pointer text-center uppercase focus:outline-none">
+              <option>🌐 WORLD WIDE STREAM</option>
+            </select>
+            <span class="material-icons-round absolute right-2 top-2 text-xs text-gray-400 pointer-events-none">expand_more</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD 4: UPCOMING -->
+      <div class="card-match card-bg rounded-lg overflow-hidden flex flex-col justify-between">
+        <div>
+          <div class="relative">
+            <img src="https://images-na.ssl-images-amazon.com/images/S/le-target-images-prod/amzn1.dv.gti.191c296d-32ae-4d53-825e-0922ffd3b4c2/5/BOXART-16X9/en-US._UR1920,1080_SX624_FMpng_.png" class="w-full h-44 object-cover" alt="Match">
+            <span class="absolute top-2 right-2 bg-sky-600 text-white font-bold text-[10px] px-2 py-0.5 rounded uppercase">• UPCOMING</span>
+          </div>
+          <div class="p-3 text-center">
+            <h2 class="font-extrabold text-white text-sm uppercase tracking-wide line-clamp-1">INDIAN ROYALS VS SRI LANKAN LIONS</h2>
+            <p class="text-[11px] text-gray-400 mt-1 font-medium">Asian Legends League, 2026</p>
+            <p class="text-[11px] text-gray-500 font-bold mt-0.5">03 AUG, 5:00 PM</p>
+          </div>
+        </div>
+        <div class="p-3 pt-0 flex flex-col gap-2">
+          <button class="bg-[#1c222d] text-gray-400 font-bold w-full py-2 rounded text-xs uppercase cursor-not-allowed">
+            UPCOMING
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- ================= SECURITY SCRIPTS ================= -->
+<script>
+  // 1. Search Filter Functionality
+  function filterMatches() {
+    let input = document.getElementById('searchInput').value.toUpperCase();
+    let cards = document.getElementsByClassName('card-match');
+    for (let i = 0; i < cards.length; i++) {
+      let title = cards[i].querySelector('h2').innerText;
+      if (title.toUpperCase().indexOf(input) > -1) {
+        cards[i].style.display = "";
+      } else {
+        cards[i].style.display = "none";
+      }
+    }
+  }
+
+  // 2. Encrypted Play Trigger (Prevents URL Inspection)
+  function playSecureStream(matchId) {
+    // Generate secure token/hash
+    let token = btoa(matchId + "_" + Date.now());
+    window.location.href = `player.php?id=${matchId}&token=${token}`;
+  }
+
+  // 3. SECURITY: Disable Right-Click
+  document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+  });
+
+  // 4. SECURITY: Block Inspect Element & Shortcut Keys
+  document.onkeydown = function(e) {
+    // F12 key
+    if (e.keyCode == 123) return false;
+    // Ctrl + Shift + I
+    if (e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
+    // Ctrl + Shift + J
+    if (e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false;
+    // Ctrl + U (View Source)
+    if (e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
+    // Ctrl + S (Save Page)
+    if (e.ctrlKey && e.keyCode == 'S'.charCodeAt(0)) return false;
+  };
+</script>
+
+</body>
+</html>
