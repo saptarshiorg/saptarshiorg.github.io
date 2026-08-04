@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Prime JSON — Match Board UI</title>
+  <title>Prime JSON — Match Board UI (with Watch)</title>
 
   <link rel="preconnect" href="https://api.fontshare.com">
   <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,600,700&display=swap" rel="stylesheet">
@@ -11,38 +11,23 @@
   <style>
     :root{
       --bg:#0a0b0d; --card:#131519; --card-2:#1a1d22; --border:#26292f; --muted:#9aa0a8;
-      --text:#f5f6f8; --accent:#ff5a1f; --soft:#ff5a1f22; --radius:6px;
-      --max-width:1200px;
+      --text:#f5f6f8; --accent:#ff5a1f; --soft:#ff5a1f22; --radius:6px; --max-width:1200px;
       font-family:'Satoshi', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
     }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
     .app{max-width:var(--max-width);margin:0 auto;padding:18px 16px 60px}
-    header{
-      position:sticky; top:0; z-index:30; background:rgba(10,11,13,0.85);
-      backdrop-filter: blur(8px); border-bottom:1px solid var(--border);
-      display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px;
-    }
+    header{position:sticky; top:0; z-index:30; background:rgba(10,11,13,0.85);backdrop-filter: blur(8px); border-bottom:1px solid var(--border);display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px;}
     .brand{display:flex;align-items:center;gap:12px}
     .brand img{height:34px}
     .last-update{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.4px}
     .controls{display:flex;gap:10px;align-items:center}
     .search-wrap{position:relative}
-    .search-wrap input{
-      width:320px; max-width:60vw; padding:10px 36px 10px 40px;
-      border-radius:0; border:1px solid var(--border); background:var(--card); color:var(--text);
-      font-weight:600; letter-spacing:.3px; outline:none;
-    }
+    .search-wrap input{width:320px; max-width:60vw; padding:10px 36px 10px 40px;border-radius:0; border:1px solid var(--border); background:var(--card); color:var(--text); font-weight:600; letter-spacing:.3px; outline:none;}
     .search-wrap svg{ position:absolute; left:10px; top:50%; transform:translateY(-50%); opacity:.6 }
     .btn{padding:9px 12px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text);cursor:pointer;font-weight:700}
     .btn.primary{background:var(--accent);border-color:transparent;color:#fff}
-    .grid{
-      margin-top:20px;
-      display:grid;
-      grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));
-      gap:18px;
-    }
-
+    .grid{margin-top:20px;display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:18px;}
     .card{background:var(--card);border:1px solid var(--border);border-radius:6px;overflow:hidden;display:flex;flex-direction:column}
     .thumb{position:relative;height:160px;background:#000;display:flex;align-items:center;justify-content:center}
     .thumb img{width:100%;height:100%;object-fit:cover;display:block}
@@ -55,22 +40,24 @@
     .status-up{color:#c7cad0;border:1px solid rgba(138,143,153,.18);background:transparent}
     .actions{margin-top:auto;display:flex;gap:8px;align-items:center}
     .watch{flex:1;padding:10px 12px;border-radius:6px;border:none;background:var(--accent);color:#fff;font-weight:800;cursor:pointer}
+    .watch.disabled{background:var(--card-2);color:var(--muted);cursor:not-allowed}
     .ww{padding:9px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text);font-weight:700;cursor:pointer}
     .ww.open{border-color:var(--accent);color:var(--accent)}
     .ww-panel{overflow:hidden;max-height:0;transition:max-height .28s ease,opacity .18s;opacity:0}
     .ww-panel.open{max-height:240px;opacity:1;margin-top:8px}
     .ww-row{display:flex;align-items:center;gap:10px;padding:8px;border-radius:6px;background:var(--card-2);border:1px solid var(--border);cursor:pointer}
     .empty{grid-column:1/-1;text-align:center;padding:44px 18px;border:1px dashed var(--border);color:var(--muted)}
-    .modal{
-      position:fixed;inset:0;display:grid;place-items:center;background:rgba(2,4,8,.6);padding:18px;opacity:0;pointer-events:none;transition:opacity .18s;
-    }
-    .modal[open]{opacity:1;pointer-events:auto}
-    .modal-card{width:min(900px,96%);max-height:86vh;overflow:auto;background:var(--card);border:1px solid var(--border);padding:16px;border-radius:8px}
-    .modal-close{position:absolute;right:18px;top:18px;border:none;background:transparent;color:var(--muted);font-weight:800;font-size:18px;cursor:pointer}
-    footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-    .vc{display:flex;gap:12px;align-items:center}
-    .vc .val{font-weight:800;font-size:15px}
-    @media (max-width:520px){ .search-wrap input{width:180px} .brand img{height:26px} }
+    /* modal / player */
+    .player-modal{position:fixed;inset:0;display:grid;place-items:center;background:rgba(2,4,8,.6);padding:18px;opacity:0;pointer-events:none;transition:opacity .18s}
+    .player-modal.open{opacity:1;pointer-events:auto}
+    .player-card{width:min(1100px,98%);max-width:1100px;background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;position:relative}
+    .player-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--border)}
+    .player-title{font-weight:800}
+    .player-close{background:transparent;border:none;color:var(--muted);font-weight:800;cursor:pointer;padding:8px}
+    .player-body{background:#000;display:flex;align-items:center;justify-content:center}
+    video{width:100%;height:60vh;max-height:74vh;background:#000}
+    iframe{width:100%;height:60vh;border:0}
+    @media (max-width:520px){ .search-wrap input{width:180px} .brand img{height:26px} video, iframe{height:45vh} }
   </style>
 </head>
 <body>
@@ -96,15 +83,24 @@
         <div class="empty" id="loading">LOADING MATCHES...</div>
       </div>
 
-      <dialog id="modal" class="modal" aria-hidden="true">
-        <div class="modal-card">
-          <button id="closeModal" class="modal-close">✕</button>
-          <pre id="modalContent" style="white-space:pre-wrap;color:var(--muted);font-size:13px"></pre>
+      <!-- Player modal -->
+      <div id="playerModal" class="player-modal" aria-hidden="true">
+        <div class="player-card" role="dialog" aria-modal="true" aria-label="Player">
+          <div class="player-header">
+            <div class="player-title" id="playerTitle">Player</div>
+            <div>
+              <button id="openInNew" class="btn" title="Open in new tab">Open</button>
+              <button id="playerClose" class="player-close" title="Close">✕</button>
+            </div>
+          </div>
+          <div class="player-body" id="playerBody">
+            <!-- video or iframe inserted here -->
+          </div>
         </div>
-      </dialog>
+      </div>
     </main>
 
-    <footer>
+    <footer style="margin-top:36px;padding-top:14px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
       <div class="note">UI inspired by FanCode • Built by you</div>
       <div class="vc" id="visitorCounter">
         <div><div class="val" id="vcTotal">—</div><div style="font-size:11px;color:var(--muted)">Visits</div></div>
@@ -113,6 +109,9 @@
       </div>
     </footer>
   </div>
+
+  <!-- hls.js for .m3u8 playback -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
   <script>
   (function(){
@@ -127,33 +126,19 @@
     const searchEl = document.getElementById('search');
     const refreshBtn = document.getElementById('refresh');
     const proxyBtn = document.getElementById('proxy');
-    const modal = document.getElementById('modal');
-    const modalContent = document.getElementById('modalContent');
-    const closeModal = document.getElementById('closeModal');
-    const vcTotal = document.getElementById('vcTotal');
-    const vcUnique = document.getElementById('vcUnique');
+
+    const playerModal = document.getElementById('playerModal');
+    const playerBody = document.getElementById('playerBody');
+    const playerTitle = document.getElementById('playerTitle');
+    const playerClose = document.getElementById('playerClose');
+    const openInNew = document.getElementById('openInNew');
 
     let dataRaw = [];
-    let snapshot = null;
-    let openWW = new Set();
+    let hlsInstance = null;
+    let currentStreamUrl = null;
 
-    function setLastUpdate(d){
-      if(!d) return lastUpdateEl.textContent = 'LAST UPDATE: UNAVAILABLE';
-      try { lastUpdateEl.textContent = 'LAST UPDATE: ' + (new Date(d)).toLocaleString('en-IN', { hour12:true }); } catch(e){}
-    }
-
-    function saveCache(obj){
-      try{ localStorage.setItem(CACHE_KEY, JSON.stringify({ts:Date.now(), data: obj})); }catch(e){}
-    }
-    function loadCache(){
-      try{
-        const raw = localStorage.getItem(CACHE_KEY);
-        if(!raw) return null;
-        const o = JSON.parse(raw);
-        if(Date.now() - o.ts > CACHE_TTL) return null;
-        return o.data;
-      }catch(e){ return null; }
-    }
+    function saveCache(obj){ try{ localStorage.setItem(CACHE_KEY, JSON.stringify({ts:Date.now(), data: obj})); }catch(e){} }
+    function loadCache(){ try{ const raw = localStorage.getItem(CACHE_KEY); if(!raw) return null; const o = JSON.parse(raw); if(Date.now() - o.ts > CACHE_TTL) return null; return o.data; }catch(e){ return null; } }
 
     function pickTitle(item){
       return item.title || item.name || item.label || item.teams || item.event || item.match || String(item.id || '').toUpperCase() || 'Untitled';
@@ -165,16 +150,8 @@
       return item.image || item.thumb || item.poster || item.artwork || '';
     }
     function pickTime(item){
-      // common time fields
       const candidates = [item.time, item.startTime, item.date, item.datetime, item.matchTime, item.updatedAt];
-      for(const c of candidates){
-        if(!c) continue;
-        const d = new Date(c);
-        if(!isNaN(d)) return d;
-        // try parsing common formats
-        const parsed = Date.parse(String(c));
-        if(!isNaN(parsed)) return new Date(parsed);
-      }
+      for(const c of candidates){ if(!c) continue; const d = new Date(c); if(!isNaN(d)) return d; const parsed = Date.parse(String(c)); if(!isNaN(parsed)) return new Date(parsed); }
       return null;
     }
     function pickStatus(item){
@@ -183,14 +160,37 @@
       if(s.includes('COMPLETE') || s.includes('FINISH') || s.includes('RESULT')) return 'COMPLETED';
       return 'UPCOMING';
     }
+    function timeLabel(d){ if(!d) return 'TIME TBA'; const opts = { day:'2-digit', month:'short' }; const datePart = d.toLocaleDateString('en-IN', opts).toUpperCase(); let h = d.getHours(); const mm = String(d.getMinutes()).padStart(2,'0'); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12; if(h === 0) h = 12; return `${datePart}, ${h}:${mm} ${ap}`; }
 
-    function timeLabel(d){
-      if(!d) return 'TIME TBA';
-      const opts = { day:'2-digit', month:'short' };
-      const datePart = d.toLocaleDateString('en-IN', opts).toUpperCase();
-      let h = d.getHours(); const mm = String(d.getMinutes()).padStart(2,'0'); const ap = h >= 12 ? 'PM' : 'AM';
-      h = h % 12; if(h === 0) h = 12;
-      return `${datePart}, ${h}:${mm} ${ap}`;
+    // Return best playable URL for an item (prioritized)
+    function findPlayableUrl(item){
+      // common candidate keys
+      const candidates = [];
+      // direct known fields
+      ['cnptvUrl','cnptv_cdn','stream','stream_url','streamUrl','url','fancode_cdn','play_url'].forEach(k => { if(item[k]) candidates.push(item[k]); });
+      // possible nested streams object
+      if(item.streams && typeof item.streams === 'object'){
+        Object.values(item.streams).forEach(v => { if(v) candidates.push(v); });
+      }
+      // common country-specific fields
+      ['lk','bd','np','in'].forEach(k => { if(item[k]) candidates.push(item[k]); });
+      // scan all string values for urls
+      Object.values(item).forEach(v => { if(typeof v === 'string' && v.startsWith('http')) candidates.push(v); });
+
+      // flatten and dedupe
+      const arr = Array.from(new Set(candidates.filter(Boolean).map(String)));
+      // prefer direct HLS/mp4/YouTube in this order: m3u8 > mp4 > youtube
+      for(const s of arr){
+        if(/\.m3u8(\?|$)/i.test(s)) return s;
+      }
+      for(const s of arr){
+        if(/\.(mp4|webm|ogg)(\?|$)/i.test(s)) return s;
+      }
+      for(const s of arr){
+        if(/youtube\.com|youtu\.be|vimeo\.com/i.test(s)) return s;
+      }
+      // otherwise return first candidate (may be playable)
+      return arr[0] || null;
     }
 
     function cardHTML(it, idx){
@@ -202,182 +202,270 @@
       const status = pickStatus(it);
       const statusClass = status === 'LIVE' ? 'status-live' : 'status-up';
       const hasImage = image.length > 6;
-      // build WW options if present
-      const ww = [];
-      if(it.lk) ww.push({k:'LK', flag:'🇱🇰', url:it.lk});
-      if(it.np) ww.push({k:'NP', flag:'🇳🇵', url:it.np});
-      if(it.bd) ww.push({k:'BD', flag:'🇧🇩', url:it.bd});
-      // use id fallback
       const id = it.id || it.match_id || ('i'+idx);
-
+      const playable = !!findPlayableUrl(it);
       return `
         <article class="card" data-idx="${idx}">
           <div class="thumb">
             <img src="${hasImage ? image : 'https://www.fancode.com/skillup-uploads/cms-media/Cricket_Fallback_Old_match-card.jpg'}" alt="${title}" loading="lazy" onerror="this.onerror=null;this.src='https://www.fancode.com/skillup-uploads/cms-media/Cricket_Fallback_Old_match-card.jpg'">
             <div class="status-badge ${statusClass}">${status}</div>
           </div>
-
           <div class="meta">
             <div class="title">${title}</div>
             <div class="subtitle">${subtitle}</div>
             <div class="time">${timelbl}</div>
-
             <div class="actions">
-              <button class="watch" data-idx="${idx}">VIEW DETAILS</button>
-              ${ ww.length ? `<button class="ww ${openWW.has(String(id)) ? 'open' : ''}" data-id="${id}" data-idx="${idx}">WORLDWIDE</button>` : ''}
+              <button class="watch ${playable ? '' : 'disabled'}" data-idx="${idx}" ${playable ? '' : 'disabled'}>${playable ? 'WATCH' : 'NO STREAM'}</button>
+              <button class="ww" data-idx="${idx}">WORLDWIDE</button>
             </div>
-
-            ${ ww.length ? `<div class="ww-panel ${openWW.has(String(id)) ? 'open' : ''}" data-panel="${id}">
-              ${ww.map(o=>`<div class="ww-row" data-url="${escapeHtml(o.url)}"><span style="font-size:16px">${o.flag}</span><div style="flex:1;font-weight:700">${escapeHtml(o.k)} / ${escapeHtml(title)}</div><div style="font-size:11px;color:var(--muted)">${escapeHtml(o.k)}</div></div>`).join('')}
-            </div>` : '' }
           </div>
         </article>
       `;
     }
 
-    function renderGrid(list){
-      if(!list || list.length === 0){
-        grid.innerHTML = `<div class="empty">No matches found.</div>`;
-        return;
-      }
-      grid.innerHTML = list.map((it, i) => cardHTML(it,i)).join('');
-    }
+    function escapeHtml(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-    function escapeHtml(s){
-      return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    function renderGrid(list){
+      if(!list || list.length === 0){ grid.innerHTML = `<div class="empty">No matches found.</div>`; return; }
+      grid.innerHTML = list.map((it, i) => cardHTML(it,i)).join('');
     }
 
     function attachDelegation(){
       grid.addEventListener('click', (ev) => {
-        const watch = ev.target.closest('.watch');
-        if(watch){
-          const idx = +watch.dataset.idx;
-          openDetails(idx);
+        const watchBtn = ev.target.closest('.watch');
+        if(watchBtn && !watchBtn.classList.contains('disabled')){
+          const idx = +watchBtn.dataset.idx;
+          const item = dataRaw[idx];
+          const url = findPlayableUrl(item);
+          openPlayer(url, pickTitle(item));
           return;
         }
-        const wwbtn = ev.target.closest('.ww');
-        if(wwbtn){
-          const id = wwbtn.dataset.id;
-          const panel = grid.querySelector(`.ww-panel[data-panel="${id}"]`);
-          if(panel){
-            const will = !panel.classList.contains('open');
-            panel.classList.toggle('open', will);
-            wwbtn.classList.toggle('open', will);
-            if(will) openWW.add(String(id)); else openWW.delete(String(id));
-          }
+        const wwBtn = ev.target.closest('.ww');
+        if(wwBtn){
+          const idx = +wwBtn.dataset.idx;
+          openWWPanel(idx);
           return;
         }
-        const wwrow = ev.target.closest('.ww-row');
-        if(wwrow && wwrow.dataset.url){
-          window.open(wwrow.dataset.url, '_blank');
-        }
-      });
-
-      grid.addEventListener('keydown', (e) => {
-        if(e.key !== 'Enter' && e.key !== ' ') return;
-        const wwrow = e.target.closest('.ww-row');
-        if(wwrow && wwrow.dataset.url){ window.open(wwrow.dataset.url, '_blank'); }
       });
     }
 
-    function openDetails(idx){
+    function openWWPanel(idx){
+      // simple toggle: find the card and show all URLs (if present)
       const item = dataRaw[idx];
-      if(!item) return;
-      modalContent.textContent = JSON.stringify(item, null, 2);
-      modal.setAttribute('open','');
-      modal.removeAttribute('aria-hidden');
-    }
-
-    closeModal.addEventListener('click', ()=>{ modal.removeAttribute('open'); modal.setAttribute('aria-hidden','true') });
-    modal.addEventListener('click', (e)=>{ if(e.target === modal) { modal.removeAttribute('open'); modal.setAttribute('aria-hidden','true') } });
-
-    function applySearch(){
-      const q = (searchEl.value || '').trim().toLowerCase();
-      if(!q) { renderGrid(dataRaw); return; }
-      const filtered = dataRaw.filter(it => {
-        const t = (pickTitle(it)+' '+pickSubtitle(it)).toLowerCase();
-        return t.includes(q);
-      });
-      renderGrid(filtered);
-    }
-
-    searchEl.addEventListener('input', () => { applySearch(); });
-
-    refreshBtn.addEventListener('click', () => { localStorage.removeItem(CACHE_KEY); loadData(DATA_URL, true); });
-    proxyBtn.addEventListener('click', () => { loadData(CORS_PROXY + encodeURIComponent(DATA_URL), true); });
-
-    function loadVisitorCounter(){
-      // optional: dummy/replace with your real counter endpoint
-      try{
-        // hide or set placeholders if you don't have a real counter
-        vcTotal.textContent = '—'; vcUnique.textContent = '—';
-      }catch(e){}
-    }
-
-    function useCacheIfPresent(){
-      const cached = loadCache();
-      if(cached && Array.isArray(cached)){
-        dataRaw = cached;
-        renderGrid(dataRaw);
-        setLastUpdate(null);
+      const card = grid.querySelector(`.card[data-idx="${idx}"]`);
+      if(!card) return;
+      // assemble ww rows from candidate urls
+      const candidates = [];
+      if(item.lk) candidates.push({label:'LK', url:item.lk});
+      if(item.np) candidates.push({label:'NP', url:item.np});
+      if(item.bd) candidates.push({label:'BD', url:item.bd});
+      // also scan streams object
+      if(item.streams && typeof item.streams === 'object'){
+        Object.entries(item.streams).forEach(([k,v]) => { if(v) candidates.push({label:k.toUpperCase(), url:v}); });
       }
+      // if none, show alert
+      if(candidates.length === 0){
+        alert('No worldwide / alternate streams available for this match.');
+        return;
+      }
+      // toggle panel insertion
+      let panel = card.querySelector('.ww-panel');
+      if(panel){
+        const isOpen = panel.classList.toggle('open');
+        const btn = card.querySelector('.ww');
+        btn.classList.toggle('open', isOpen);
+        return;
+      }
+      // create panel
+      panel = document.createElement('div');
+      panel.className = 'ww-panel open';
+      panel.dataset.panel = 'ww-'+idx;
+      panel.style.marginTop = '8px';
+      panel.innerHTML = candidates.map(c => `<div class="ww-row" data-url="${escapeHtml(c.url)}" style="margin-bottom:8px"><span style="font-size:16px">${escapeHtml(c.label)}</span><div style="flex:1;font-weight:700">${escapeHtml(c.label)} STREAM</div><div style="font-size:11px;color:var(--muted)">${escapeHtml(c.label)}</div></div>`).join('');
+      card.querySelector('.meta').appendChild(panel);
+      const btn = card.querySelector('.ww');
+      btn.classList.add('open');
+      // click handlers for rows
+      panel.addEventListener('click', (e) => {
+        const row = e.target.closest('.ww-row');
+        if(row && row.dataset.url) openPlayer(row.dataset.url, pickTitle(item) + ' — ' + row.dataset.url.split('/').pop());
+      });
     }
 
+    // Player handling
+    function openPlayer(url, title){
+      if(!url) { alert('No playable URL found.'); return; }
+      currentStreamUrl = url;
+      playerTitle.textContent = title || 'Player';
+      // clear previous
+      playerBody.innerHTML = '';
+      // close any hls instance
+      if(window.hlsInstance){ try{ window.hlsInstance.destroy(); }catch(e){} window.hlsInstance = null; }
+
+      // youtube / vimeo embed
+      if(/youtube\.com|youtu\.be|vimeo\.com/i.test(url)){
+        const embed = toEmbedUrl(url);
+        const iframe = document.createElement('iframe');
+        iframe.src = embed;
+        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+        iframe.setAttribute('allowfullscreen','');
+        playerBody.appendChild(iframe);
+        showModal();
+        openInNew.onclick = () => window.open(url, '_blank');
+        return;
+      }
+
+      // hls
+      if(/\.m3u8(\?|$)/i.test(url)){
+        const video = document.createElement('video');
+        video.controls = true;
+        video.autoplay = true;
+        video.playsInline = true;
+        playerBody.appendChild(video);
+        // use hls.js when available and supported
+        if(Hls && Hls.isSupported()){
+          const hls = new Hls();
+          window.hlsInstance = hls;
+          hls.loadSource(url);
+          hls.attachMedia(video);
+          hls.on(Hls.Events.MANIFEST_PARSED, function() { video.play().catch(()=>{}); });
+          hls.on(Hls.Events.ERROR, function(event, data) {
+            console.warn('hls.js error', event, data);
+          });
+        } else {
+          // try native playback (Safari)
+          video.src = url;
+          video.addEventListener('loadedmetadata', ()=> video.play().catch(()=>{}));
+        }
+        showModal();
+        openInNew.onclick = () => window.open(url, '_blank');
+        return;
+      }
+
+      // mp4/webm fallback
+      if(/\.(mp4|webm|ogg)(\?|$)/i.test(url)){
+        const video = document.createElement('video');
+        video.controls = true;
+        video.autoplay = true;
+        video.playsInline = true;
+        video.src = url;
+        playerBody.appendChild(video);
+        video.addEventListener('error', ()=> alert('Playback failed — opening in a new tab.'));
+        showModal();
+        openInNew.onclick = () => window.open(url, '_blank');
+        return;
+      }
+
+      // unknown: try to open in new tab or attempt to play with video element
+      // attempt to embed in iframe first
+      if(url.startsWith('http')){
+        const iframe = document.createElement('iframe');
+        iframe.src = url;
+        playerBody.appendChild(iframe);
+        showModal();
+        openInNew.onclick = () => window.open(url, '_blank');
+        return;
+      }
+
+      alert('Unable to play this stream.');
+    }
+
+    function toEmbedUrl(u){
+      // youtube -> embed URL
+      try{
+        const d = new URL(u);
+        if(d.hostname.includes('youtu.be')){
+          const id = d.pathname.slice(1);
+          return 'https://www.youtube.com/embed/' + id + '?autoplay=1';
+        }
+        if(d.hostname.includes('youtube.com')){
+          const p = d.searchParams.get('v') || d.pathname.split('/').pop();
+          return 'https://www.youtube.com/embed/' + p + '?autoplay=1';
+        }
+        if(d.hostname.includes('vimeo.com')){
+          const p = d.pathname.split('/').pop();
+          return 'https://player.vimeo.com/video/' + p + '?autoplay=1';
+        }
+      }catch(e){}
+      return u;
+    }
+
+    function showModal(){
+      playerModal.classList.add('open');
+      playerModal.removeAttribute('aria-hidden');
+      // scroll lock
+      document.body.style.overflow = 'hidden';
+    }
+    function closeModal(){
+      playerModal.classList.remove('open');
+      playerModal.setAttribute('aria-hidden','true');
+      playerBody.innerHTML = '';
+      if(window.hlsInstance){ try{ window.hlsInstance.destroy(); }catch(e){} window.hlsInstance = null; }
+      currentStreamUrl = null;
+      document.body.style.overflow = '';
+    }
+
+    playerClose.addEventListener('click', closeModal);
+    playerModal.addEventListener('click', (e) => { if(e.target === playerModal) closeModal(); });
+
+    // data / grid
     async function loadData(url, force=false){
       try{
-        loading && (loading.textContent = 'LOADING MATCHES...');
         if(!force){
           const cached = loadCache();
           if(cached && Array.isArray(cached)){
             dataRaw = cached;
             renderGrid(dataRaw);
-            setLastUpdate(null);
-            // still continue to fetch to update in background
           }
         }
         const resp = await fetch(url, { cache:'no-store' });
         if(!resp.ok) throw new Error('HTTP '+resp.status);
         const j = await resp.json();
 
-        // normalize: find best array inside JSON or use array directly
         let arr = [];
         if(Array.isArray(j)) arr = j;
         else if(Array.isArray(j.matches)) arr = j.matches;
         else {
-          // prefer deepest array value
           const vals = Object.values(j).filter(v => Array.isArray(v));
           arr = vals.length ? vals[0] : [j];
         }
-
-        // set/update
         dataRaw = Array.isArray(arr) ? arr : [arr];
         saveCache(dataRaw);
-        snapshot = JSON.stringify(arr).slice(0,5000);
         renderGrid(dataRaw);
-
-        // last update: try to get updatedAt field or Date header
-        const tryUpdatedAt = (j.updatedAt || j.updated || j.lastUpdated || j.timestamp || resp.headers.get('last-modified')) || null;
-        setLastUpdate(tryUpdatedAt || new Date());
-
+        // try updatedAt in payload or header
+        const tryUpdatedAt = j.updatedAt || j.updated || j.lastUpdated || j.timestamp || resp.headers.get('last-modified') || null;
+        lastUpdateEl.textContent = 'LAST UPDATE: ' + (tryUpdatedAt ? new Date(tryUpdatedAt).toLocaleString('en-IN', { hour12:true }) : 'UNAVAILABLE');
       } catch(err){
         console.error('Load failed', err);
         if(!dataRaw || !dataRaw.length){
           grid.innerHTML = `<div class="empty">Failed to load data. Open console for details.</div>`;
-          setLastUpdate(null);
+          lastUpdateEl.textContent = 'LAST UPDATE: UNAVAILABLE';
         } else {
-          // keep showing cached data
           console.warn('Using cached data fallback');
         }
       }
     }
 
+    searchEl.addEventListener('input', () => {
+      const q = (searchEl.value || '').trim().toLowerCase();
+      if(!q) { renderGrid(dataRaw); return; }
+      const filtered = dataRaw.filter(it => {
+        const title = (pickTitle(it) + ' ' + pickSubtitle(it)).toLowerCase();
+        return title.includes(q);
+      });
+      renderGrid(filtered);
+    });
+
+    refreshBtn.addEventListener('click', () => { localStorage.removeItem(CACHE_KEY); loadData(DATA_URL, true); });
+    proxyBtn.addEventListener('click', () => { loadData(CORS_PROXY + encodeURIComponent(DATA_URL), true); });
+
     // initial
     (function init(){
       attachDelegation();
-      useCacheIfPresent();
+      const cached = loadCache();
+      if(cached && Array.isArray(cached)){ dataRaw = cached; renderGrid(dataRaw); }
       loadData(DATA_URL);
-      loadVisitorCounter();
-      setInterval(()=> loadData(DATA_URL), 60*1000); // refresh every 60s
+      setInterval(()=> loadData(DATA_URL), 60*1000);
     })();
 
   })();
