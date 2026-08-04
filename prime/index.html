@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EV FANCODE — Match Board</title>
+
+<!-- Satoshi Font -->
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg: #07080a;
+  --card: #111318;
+  --card-hover: #161a22;
+  --card-2: #181c24;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 90, 31, 0.45);
+  --muted: #828894;
+  --text: #f8fafc;
+  --orange: #ff5a1f;
+  --orange-deep: #e0440b;
+  --orange-glow: rgba(255, 90, 31, 0.25);
+  --orange-soft: rgba(255, 90, 31, 0.12);
+  --orange-soft-border: rgba(255, 90, 31, 0.3);
+}
+
+*{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body{ margin: 0; padding: 0; }
+body{
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Satoshi', 'Segoe UI', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  -webkit-user-select: none;
+  min-height: 100vh;
+}
+button, input{ font-family: inherit; }
+img{ -webkit-user-drag: none; }
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: #1f2430; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--orange); }
+
+.app{ max-width: 1340px; margin: 0 auto; padding: 0 20px 60px; }
+
+/* PROPER HEADER ALIGNMENT */
+header{
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap;
+  padding: 14px 20px;
+  background: rgba(7, 8, 10, 0.88);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 28px;
+  border-radius: 0 0 16px 16px;
+}
+
+.brand{ display: flex; align-items: center; gap: 12px; }
+.brand-logos{ display: flex; align-items: center; gap: 10px; }
+.brand-logos img{
+  height: 28px; max-height: 28px; width: auto;
+  display: block; object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
+}
+.brand-divider{ width: 1px; height: 18px; background: var(--border); }
+
+.header-status {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(255, 90, 31, 0.08);
+  border: 1px solid rgba(255, 90, 31, 0.22);
+  padding: 6px 14px; border-radius: 20px;
+  font-size: 11px; font-weight: 700; color: var(--orange);
+  letter-spacing: 0.5px; white-space: nowrap;
+}
+.header-pulse {
+  width: 7px; height: 7px; background: var(--orange);
+  border-radius: 50%; box-shadow: 0 0 10px var(--orange);
+  animation: pulse 1.6s infinite; flex-shrink: 0;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.75); }
+}
+
+/* SEARCH ALIGNMENT */
+.controls{ display: flex; justify-content: flex-end; margin-bottom: 24px; }
+.search-wrap{ position: relative; width: 100%; max-width: 340px; display: flex; align-items: center; }
+.search-wrap svg{ position: absolute; left: 14px; top: 50%; transform: translateY(-50%); opacity: .45; pointer-events: none; transition: opacity 0.2s; }
+.search-wrap input{
+  width: 100%; background: var(--card); border: 1px solid var(--border);
+  color: var(--text); font-size: 13px; font-weight: 600;
+  padding: 11px 36px 11px 40px; outline: none; border-radius: 10px;
+  transition: all 0.25s ease;
+}
+.search-wrap input:focus{
+  border-color: var(--orange);
+  box-shadow: 0 0 18px var(--orange-glow);
+  background: #141720;
+}
+.search-wrap input:focus ~ svg { opacity: 1; color: var(--orange); }
+.search-clear {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  color: var(--muted); cursor: pointer; font-size: 13px; display: none; line-height: 1;
+}
+.search-clear:hover { color: var(--text); }
+
+/* GRID & CARDS ALIGNMENT */
+.grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.loading-state, .empty-state{
+  grid-column: 1/-1; text-align: center; padding: 60px 20px;
+  color: var(--muted); font-size: 13.5px; border: 1px dashed var(--border);
+  border-radius: 14px; background: var(--card);
+}
+
+.card{
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex; flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+.card:hover{
+  border-color: var(--border-hover);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px -8px var(--orange-glow);
+  background: var(--card-hover);
+}
+
+/* THUMBNAIL & BADGES ALIGNMENT */
+.thumb-wrap{
+  position: relative; width: 100%; height: 175px; background: #000;
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+  flex-shrink: 0;
+}
+.thumb-wrap img{
+  width: 100%; height: 100%; object-fit: contain; display: block;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.card:hover .thumb-wrap img{ transform: scale(1.05); }
+
+.lang-badge{
+  position: absolute; top: 10px; left: 10px; z-index: 2;
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(7, 8, 10, 0.88);
+  border: 1px solid rgba(255, 90, 31, 0.5);
+  color: var(--orange); font-size: 10px; font-weight: 800;
+  padding: 4px 8px; border-radius: 5px;
+  backdrop-filter: blur(8px);
+}
+
+.status-badge{
+  position: absolute; top: 10px; right: 10px; z-index: 2;
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(7, 8, 10, 0.88); font-size: 10px; font-weight: 800;
+  padding: 4px 8px; color: var(--orange);
+  border: 1px solid var(--orange-soft-border);
+  border-radius: 5px; backdrop-filter: blur(8px);
+}
+
+/* CARD CONTENT & BUTTON BASELINE ALIGNMENT */
+.meta{
+  padding: 16px;
+  display: flex; flex-direction: column;
+  flex-grow: 1;
+  text-align: center;
+}
+
+/* Fixed height for titles so buttons align across the row */
+.teams{
+  font-size: 14.5px; font-weight: 800; letter-spacing: 0.2px;
+  text-transform: uppercase; line-height: 1.3; color: #fff;
+  min-height: 38px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden; text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+.event{ font-size: 11.5px; color: var(--muted); font-weight: 500; margin-bottom: 12px; }
+
+.actions{
+  margin-top: auto;
+  display: flex; flex-direction: column; gap: 8px;
+  width: 100%;
+}
+
+.btn{
+  appearance: none; border: none; cursor: pointer; width: 100%;
+  font-weight: 800; font-size: 12.5px; letter-spacing: 0.5px; padding: 11px 14px;
+  border-radius: 8px; display: inline-flex; align-items: center; justify-content: center;
+  gap: 6px; transition: all 0.25s ease;
+}
+.btn-watch-now{
+  background: linear-gradient(135deg, var(--orange) 0%, var(--orange-deep) 100%);
+  color: #fff;
+  box-shadow: 0 4px 14px var(--orange-glow);
+}
+.btn-watch-now:hover{
+  filter: brightness(1.15);
+  box-shadow: 0 6px 18px rgba(255, 90, 31, 0.45);
+}
+
+.btn-ww{
+  background: transparent; color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-ww:hover, .btn-ww.open{ border-color: var(--orange); color: var(--orange); background: var(--orange-soft); }
+.btn-ww .chev{ margin-left: auto; transition: transform 0.3s ease; }
+.btn-ww.open .chev{ transform: rotate(180deg); }
+
+/* ACCORDION ALIGNMENT */
+.ww-panel-wrap{ display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows 0.35s ease, opacity 0.25s ease; }
+.ww-panel-wrap.open{ grid-template-rows: 1fr; opacity: 1; margin-top: 4px; }
+.ww-panel-inner{ overflow: hidden; display: flex; flex-direction: column; gap: 6px; }
+.ww-row{
+  display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+  background: var(--card-2); border: 1px solid var(--border); border-radius: 7px;
+  cursor: pointer; text-decoration: none; color: inherit; transition: all 0.2s ease;
+  font-size: 11.5px; font-weight: 700;
+}
+.ww-row:hover{ background: var(--orange-soft); border-color: var(--orange-soft-border); color: var(--orange); }
+
+footer{
+  margin-top: 50px; padding-top: 22px; border-top: 1px solid var(--border);
+  text-align: center; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+}
+
+@media (max-width: 640px) {
+  header { flex-direction: column; justify-content: center; text-align: center; }
+  .controls { justify-content: center; }
+  .search-wrap { max-width: 100%; }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="brand">
+      <div class="brand-logos">
+        <img id="tituLogoImg" src="" alt="TITU Logo">
+        <div class="brand-divider"></div>
+        <img id="evLogoImg" src="" alt="EV Logo">
+        <div class="brand-divider"></div>
+        <img id="fancodeLogoImg" src="" alt="FanCode Logo">
+      </div>
+    </div>
+
+    <div class="header-status">
+      <span class="header-pulse"></span>
+      <span id="lastUpdate">LIVE FEED</span>
+    </div>
+  </header>
+
+  <!-- SEARCH CONTROL -->
+  <div class="controls">
+    <div class="search-wrap">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input type="text" id="searchInput" oninput="handleSearch()" placeholder="SEARCH TEAM OR EVENT...">
+      <span id="searchClear" class="search-clear" onclick="clearSearch()">✕</span>
+    </div>
+  </div>
+
+  <!-- MATCHES GRID -->
+  <div id="matchesGrid" class="grid">
+    <div class="loading-state">FETCHING LIVE MATCHES...</div>
+  </div>
+
+  <footer>
+    CREDITS TO RISHI.EV & TITU | ALL RIGHTS RESERVED
+  </footer>
+
+</div>
+
+<script src="config.js"></script>
+
+<script>
+let globalMatches = [];
+
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("tituLogoImg").src = CONFIG.TITU_LOGO;
+  document.getElementById("evLogoImg").src = CONFIG.EV_LOGO;
+  document.getElementById("fancodeLogoImg").src = CONFIG.FANCODE_LOGO;
+
+  fetchMatches();
+});
+
+async function fetchMatches() {
+  const grid = document.getElementById("matchesGrid");
+  try {
+    const res = await fetch(CONFIG.JSON_URL, { cache: "no-store" });
+    if (!res.ok) throw new Error("Fetch Failed");
+    
+    const data = await res.json();
+    globalMatches = data.Matches || [];
+
+    if (data.last_updated) {
+      document.getElementById("lastUpdate").textContent = "UPDATED: " + data.last_updated.toUpperCase();
+    }
+
+    renderGrid(globalMatches);
+  } catch (err) {
+    console.error(err);
+    grid.innerHTML = `<div class="empty-state">COULD NOT LOAD STREAMS. PLEASE CHECK CONFIG.JS URL.</div>`;
+  }
+}
+
+function renderGrid(matches) {
+  const grid = document.getElementById("matchesGrid");
+  if (!matches || matches.length === 0) {
+    grid.innerHTML = `<div class="empty-state">NO LIVE MATCHES AVAILABLE RIGHT NOW</div>`;
+    return;
+  }
+
+  grid.innerHTML = matches.map(m => {
+    const id = m.id || "";
+    const name = m.event_name || "Live Event";
+    const img = m.image || CONFIG.FALLBACK_IMG;
+    const cnp = m.CnpTV || {};
+    
+    const hasMultiple = cnp.cloudfront_server || cnp.akamai_server;
+
+    const payload = btoa(unescape(encodeURIComponent(JSON.stringify({
+      id: id,
+      name: name,
+      drm: m.drm_key || "",
+      servers: cnp,
+      logo: img
+    }))));
+
+    return `
+      <article class="card card-item">
+        <div class="thumb-wrap">
+          <img src="${img}" alt="${name}" loading="lazy" onerror="this.src='${CONFIG.FALLBACK_IMG}'">
+          <span class="lang-badge">ENGLISH</span>
+          <span class="status-badge"><span class="header-pulse"></span>LIVE</span>
+        </div>
+        <div class="meta">
+          <div class="teams" title="${name}">${name}</div>
+          <div class="event">LIVE SPORTS EVENT</div>
+
+          <div class="actions">
+            <button onclick="launchPlayer('${payload}', 'amazon_server')" class="btn btn-watch-now">
+              WATCH NOW
+            </button>
+
+            ${hasMultiple ? `
+              <button type="button" class="btn btn-ww" onclick="toggleAccordion('ww-${id}', this)">
+                WORLD WIDE STREAM 
+                <svg class="chev" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+              <div class="ww-panel-wrap" id="ww-${id}">
+                <div class="ww-panel-inner">
+                  ${cnp.amazon_server ? `<div onclick="launchPlayer('${payload}', 'amazon_server')" class="ww-row"><span>🇺🇸</span><span style="flex:1;">Amazon Server (Primary)</span></div>` : ''}
+                  ${cnp.cloudfront_server ? `<div onclick="launchPlayer('${payload}', 'cloudfront_server')" class="ww-row"><span>⚡</span><span style="flex:1;">Cloudfront (Backup 1)</span></div>` : ''}
+                  ${cnp.akamai_server ? `<div onclick="launchPlayer('${payload}', 'akamai_server')" class="ww-row"><span>🛡️</span><span style="flex:1;">Akamai (Backup 2)</span></div>` : ''}
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      </article>
+    `;
+  }).join('');
+}
+
+function launchPlayer(payload, serverType) {
+  sessionStorage.setItem("__EV_TITU_STREAM__", payload);
+  sessionStorage.setItem("__EV_TITU_SERVER__", serverType);
+  window.location.href = `play.html`;
+}
+
+function toggleAccordion(panelId, btn) {
+  const panel = document.getElementById(panelId);
+  if(panel) {
+    panel.classList.toggle('open');
+    btn.classList.toggle('open');
+  }
+}
+
+function handleSearch() {
+  const input = document.getElementById("searchInput").value.toUpperCase();
+  const clearBtn = document.getElementById("searchClear");
+  clearBtn.style.display = input.length > 0 ? "block" : "none";
+
+  const cards = document.getElementsByClassName("card-item");
+  for (let i = 0; i < cards.length; i++) {
+    const title = cards[i].querySelector(".teams").innerText;
+    cards[i].style.display = title.toUpperCase().indexOf(input) > -1 ? "" : "none";
+  }
+}
+
+function clearSearch() {
+  document.getElementById("searchInput").value = "";
+  handleSearch();
+}
+
+// Security: Prevent View Source / DevTools
+document.addEventListener('contextmenu', e => e.preventDefault());
+document.onkeydown = function(e) {
+  if (e.keyCode == 123) return false;
+  if (e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
+  if (e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false;
+  if (e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
+};
+</script>
+
+</body>
+</html>
