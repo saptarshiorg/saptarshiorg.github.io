@@ -17,6 +17,6 @@ const CONFIG = {
 
     // 5. EV Channel Title, Badge & Subtitle Description
     EV_TITLE: "EV Official",
-    EV_BADGE_TEXT: "Cyberpunk Tech",
+    EV_BADGE_TEXT: "PREMIUM STREAM LINKS AND FAST SERVERS ",
     EV_DESC: "Entertainment Evolved • Fast & Exclusive Content"
 };
