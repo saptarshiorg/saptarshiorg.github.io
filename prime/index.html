@@ -1,5 +1,365 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Channels — Index & Embedded Player</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root{--bg:#071126;--card:#0f1724;--muted:#9fb0c6;--accent:#60a5fa}
+    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial;background:linear-gradient(180deg,#031224 0%, #071126 100%);color:#e6eef8}
+    .app{display:grid;grid-template-columns:380px 1fr;gap:16px;padding:16px;height:100vh;box-sizing:border-box}
+    .panel{background:rgba(255,255,255,0.02);border-radius:8px;padding:12px;overflow:auto}
+    .search{display:flex;gap:8px;margin-bottom:10px}
+    .search input{flex:1;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
+    .controls{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+    .controls button{padding:6px 10px;border-radius:6px;border:0;background:var(--accent);color:#04203a;cursor:pointer}
+    .controls button.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .card{display:flex;gap:8px;align-items:center;padding:8px;background:rgba(255,255,255,0.01);border-radius:6px;cursor:pointer;transition:transform .12s}
+    .card:hover{transform:translateY(-3px)}
+    .card img{width:64px;height:44px;object-fit:contain;border-radius:4px;background:#071022;padding:4px}
+    .card .meta{flex:1}
+    .card .meta .name{font-weight:700}
+    .card .meta .cat{color:var(--muted);font-size:13px}
+    /* player pane */
+    .player-wrap{display:flex;flex-direction:column;gap:10px}
+    .video-box{background:#000;border-radius:8px;overflow:hidden;position:relative;padding-top:56.25%}
+    video{position:absolute;top:0;left:0;width:100%;height:100%;background:#000}
+    .player-info{display:flex;justify-content:space-between;align-items:center;gap:8px}
+    .player-info .title{font-size:18px;font-weight:800}
+    .player-info .sub{color:var(--muted)}
+    .player-actions{display:flex;gap:8px;align-items:center}
+    .btn{padding:6px 10px;border-radius:6px;border:0;background:var(--accent);color:#04203a;cursor:pointer}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+    .track-list{max-height:160px;overflow:auto;background:rgba(255,255,255,0.02);padding:8px;border-radius:6px}
+    .small{font-size:13px;color:var(--muted)}
+    footer.small{opacity:.9;margin-top:6px}
+    @media (max-width:900px){.app{grid-template-columns:1fr;grid-auto-rows:auto;height:100%}.panel{order:2}}
+  </style>
+
+  <!-- Shaka Player -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.0/shaka-player.compiled.js"></script>
+</head>
+<body>
+  <div class="app">
+    <aside class="panel" aria-label="Channel list">
+      <div class="search">
+        <input id="q" placeholder="Search channels (name, category, id)..." />
+        <button id="reload" class="btn">Reload</button>
+      </div>
+      <div class="controls">
+        <div class="small">Channels</div>
+        <div style="flex:1"></div>
+        <button id="openPopup" class="btn ghost">Open Selected in Popup</button>
+      </div>
+      <div id="grid" class="grid" aria-live="polite"></div>
+    </aside>
+
+    <main class="panel player-wrap" aria-label="Player">
+      <div class="player-info">
+        <div>
+          <div class="title" id="title">Select a channel</div>
+          <div class="sub" id="subtitle">Channel metadata will appear here</div>
+        </div>
+        <div class="player-actions">
+          <button id="playPause" class="btn ghost">Play</button>
+          <button id="mute" class="btn ghost">Mute</button>
+          <button id="autoQuality" class="btn ghost">Auto</button>
+          <button id="highQuality" class="btn">HD</button>
+        </div>
+      </div>
+
+      <div class="video-box" id="videoBox">
+        <video id="video" controls playsinline></video>
+      </div>
+
+      <div>
+        <div class="small">Available variant tracks</div>
+        <div id="tracks" class="track-list small">No channel loaded</div>
+      </div>
+
+      <footer class="small">Source: jtv.json — ClearKey and Cookie injection are applied per JSON entry. If playback fails due to CORS/cookie restrictions, use a proxy.</footer>
+    </main>
+  </div>
+
 <script>
-<!--
-document.write(unescape("%3C%21DOCTYPE%20html%3E%0D%0A%3Chtml%20lang%3D%22en%22%3E%0D%0A%3Chead%3E%0D%0A%20%20%20%20%3Cmeta%20charset%3D%22UTF-8%22%3E%0D%0A%20%20%20%20%3Cmeta%20name%3D%22viewport%22%20content%3D%22width%3Ddevice-width%2C%20initial-scale%3D1.0%22%3E%0D%0A%20%20%20%20%3Cmeta%20name%3D%22theme-color%22%20content%3D%22%230b0f19%22%3E%0D%0A%20%20%20%20%3Ctitle%3EStreamGod%20%E2%80%94%20Live%20Dashboard%20%26%20Player%3C%2Ftitle%3E%0D%0A%0D%0A%20%20%20%20%3C%21--%20Favicons%20%26%20Manifest%20--%3E%0D%0A%20%20%20%20%3Clink%20rel%3D%22icon%22%20type%3D%22image%2Fsvg%2Bxml%22%20href%3D%22https%3A%2F%2Fassetstitu.vercel.app%2FStreamGod%2Ffavicon.svg%22%3E%0D%0A%20%20%20%20%3Clink%20rel%3D%22icon%22%20type%3D%22image%2Fpng%22%20sizes%3D%2296x96%22%20href%3D%22https%3A%2F%2Fassetstitu.vercel.app%2FStreamGod%2Ffavicon-96x96.png%22%3E%0D%0A%20%20%20%20%3Clink%20rel%3D%22shortcut%20icon%22%20href%3D%22https%3A%2F%2Fassetstitu.vercel.app%2FStreamGod%2Ffavicon.ico%22%3E%0D%0A%20%20%20%20%3Clink%20rel%3D%22apple-touch-icon%22%20sizes%3D%22180x180%22%20href%3D%22https%3A%2F%2Fassetstitu.vercel.app%2FStreamGod%2Fapple-touch-icon.png%22%3E%0D%0A%20%20%20%20%3Clink%20rel%3D%22manifest%22%20href%3D%22https%3A%2F%2Fassetstitu.vercel.app%2FStreamGod%2Fsite.webmanifest%22%3E%0D%0A%0D%0A%20%20%20%20%3C%21--%20Google%20Font%3A%20Plus%20Jakarta%20Sans%20--%3E%0D%0A%20%20%20%20%3Clink%20rel%3D%22preconnect%22%20href%3D%22https%3A%2F%2Ffonts.googleapis.com%22%3E%0D%0A%20%20%20%20%3Clink%20rel%3D%22preconnect%22%20href%3D%22https%3A%2F%2Ffonts.gstatic.com%22%20crossorigin%3E%0D%0A%20%20%20%20%3Clink%20href%3D%22https%3A%2F%2Ffonts.googleapis.com%2Fcss2%3Ffamily%3DPlus%2BJakarta%2BSans%3Awght%40200%3B300%3B400%3B500%3B600%26display%3Dswap%22%20rel%3D%22stylesheet%22%3E%0D%0A%20%20%20%20%0D%0A%20%20%20%20%3C%21--%20Tailwind%20CSS%20%26%20FontAwesome%20--%3E%0D%0A%20%20%20%20%3Cscript%20src%3D%22https%3A%2F%2Fcdn.tailwindcss.com%22%3E%3C%2Fscript%3E%0D%0A%20%20%20%20%3Clink%20rel%3D%22stylesheet%22%20href%3D%22https%3A%2F%2Fcdnjs.cloudflare.com%2Fajax%2Flibs%2Ffont-awesome%2F6.4.0%2Fcss%2Fall.min.css%22%3E%0D%0A%20%20%20%20%0D%0A%20%20%20%20%3C%21--%20Shaka%20Player%20CDN%20--%3E%0D%0A%20%20%20%20%3Cscript%20src%3D%22https%3A%2F%2Fcdnjs.cloudflare.com%2Fajax%2Flibs%2Fshaka-player%2F4.3.6%2Fshaka-player.ui.js%22%3E%3C%2Fscript%3E%0D%0A%20%20%20%20%3Clink%20rel%3D%22stylesheet%22%20href%3D%22https%3A%2F%2Fcdnjs.cloudflare.com%2Fajax%2Flibs%2Fshaka-player%2F4.3.6%2Fcontrols.css%22%3E%0D%0A%0D%0A%20%20%20%20%3C%21--%20Load%20Config%20JS%20File%20--%3E%0D%0A%20%20%20%20%3Cscript%20src%3D%22config.js%22%3E%3C%2Fscript%3E%0D%0A%0D%0A%20%20%20%20%3Cstyle%3E%0D%0A%20%20%20%20%20%20%20%20body%20%7B%20font-family%3A%20%27Plus%20Jakarta%20Sans%27%2C%20sans-serif%3B%20background-color%3A%20%230b0f19%3B%20%7D%0D%0A%20%20%20%20%20%20%20%20.glow-box%20%7B%20box-shadow%3A%200%200%2025px%20-5px%20rgba%2899%2C%20102%2C%20241%2C%200.12%29%3B%20%7D%0D%0A%20%20%20%20%20%20%20%20.glow-box-hover%3Ahover%20%7B%20box-shadow%3A%200%200%2035px%200px%20rgba%28139%2C%2092%2C%20246%2C%200.25%29%3B%20border-color%3A%20rgba%28167%2C%20139%2C%20250%2C%200.4%29%3B%20%7D%0D%0A%20%20%20%20%20%20%20%20.player-glow%20%7B%20box-shadow%3A%200%200%2050px%20-10px%20rgba%28124%2C%2058%2C%20237%2C%200.15%29%3B%20%7D%0D%0A%20%20%20%20%20%20%20%20.glow-blocked%20%7B%20box-shadow%3A%200%200%2050px%20rgba%28225%2C%2029%2C%2072%2C%200.25%29%3B%20%7D%0D%0A%0D%0A%20%20%20%20%20%20%20%20%2F%2A%20Shaka%20Controls%20Overlay%20%2A%2F%0D%0A%20%20%20%20%20%20%20%20.shaka-bottom-controls%20%7B%20%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20background%3A%20linear-gradient%28to%20top%2C%20rgba%288%2C%2011%2C%2017%2C%200.95%29%2C%20rgba%288%2C%2011%2C%2017%2C%200.4%29%2070%25%2C%20transparent%29%20%21important%3B%20%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20padding%3A%200%2016px%2012px%2016px%20%21important%3B%0D%0A%20%20%20%20%20%20%20%20%7D%0D%0A%20%20%20%20%20%20%20%20.shaka-current-time%2C%20.shaka-duration%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20font-family%3A%20%27Plus%20Jakarta%20Sans%27%2C%20sans-serif%20%21important%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20font-size%3A%2012px%20%21important%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20font-weight%3A%20300%20%21important%3B%0D%0A%20%20%20%20%20%20%20%20%7D%0D%0A%20%20%20%20%20%20%20%20.shaka-controls-button-panel%20button%20%7B%20transition%3A%20transform%200.2s%20ease%2C%20color%200.2s%20ease%3B%20%7D%0D%0A%20%20%20%20%20%20%20%20.shaka-controls-button-panel%20button%3Ahover%20%7B%20color%3A%20%23c084fc%20%21important%3B%20transform%3A%20scale%281.1%29%3B%20%7D%0D%0A%0D%0A%20%20%20%20%20%20%20%20%40keyframes%20softPop%20%7B%200%25%20%7B%20transform%3A%20scale%280.92%29%3B%20opacity%3A%200%3B%20%7D%20100%25%20%7B%20transform%3A%20scale%281%29%3B%20opacity%3A%201%3B%20%7D%20%7D%0D%0A%20%20%20%20%20%20%20%20.animate-soft-pop%20%7B%20animation%3A%20softPop%200.4s%20cubic-bezier%280.16%2C%201%2C%200.3%2C%201%29%20forwards%3B%20%7D%0D%0A%20%20%20%20%3C%2Fstyle%3E%0D%0A%3C%2Fhead%3E%0D%0A%3Cbody%20class%3D%22text-slate-300%20antialiased%20min-h-screen%20flex%20flex-col%20selection%3Abg-purple-500%2F30%20selection%3Atext-purple-200%22%3E%0D%0A%0D%0A%20%20%20%20%3C%21--%20%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%20--%3E%0D%0A%20%20%20%20%3C%21--%20BLOCKED%20UI%20%28Shown%20when%20License%20is%20Suspended%29%20--%3E%0D%0A%20%20%20%20%3C%21--%20%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%20--%3E%0D%0A%20%20%20%20%3Cdiv%20id%3D%22blockedView%22%20class%3D%22hidden%20fixed%20inset-0%20z-50%20bg-%5B%230b0f19%5D%20flex%20flex-col%20justify-between%20p-4%20selection%3Abg-rose-500%2F30%22%3E%0D%0A%20%20%20%20%20%20%20%20%3Cheader%20class%3D%22bg-%5B%230b0f19%5D%2F80%20backdrop-blur-xl%20border-b%20border-white%2F5%20py-4%20px-6%20flex%20justify-center%20items-center%20gap-3%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Cimg%20src%3D%22https%3A%2F%2Fassetstitu.vercel.app%2FStreamGod%2FStreamGod.svg%22%20alt%3D%22StreamGod%20Logo%22%20class%3D%22h-12%20sm%3Ah-14%20w-auto%20object-contain%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Cspan%20class%3D%22text-slate-600%20font-extralight%20text-xs%20sm%3Atext-sm%22%3E%E2%9C%95%3C%2Fspan%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Cimg%20id%3D%22blockedEvLogo%22%20src%3D%22%22%20alt%3D%22EV%20Logo%22%20class%3D%22h-10%20sm%3Ah-12%20w-auto%20object-contain%22%3E%0D%0A%20%20%20%20%20%20%20%20%3C%2Fheader%3E%0D%0A%0D%0A%20%20%20%20%20%20%20%20%3Cmain%20class%3D%22flex-grow%20flex%20items-center%20justify-center%20p-4%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class%3D%22bg-slate-900%2F80%20border%20border-rose-500%2F30%20w-full%20max-w-md%20rounded-3xl%20p-8%20text-center%20flex%20flex-col%20items-center%20gap-5%20glow-blocked%20backdrop-blur-xl%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class%3D%22w-16%20h-16%20rounded-2xl%20bg-rose-500%2F10%20border%20border-rose-500%2F30%20flex%20items-center%20justify-center%20text-rose-400%20text-3xl%20shadow-%5B0_0_25px_rgba%28225%2C29%2C72%2C0.3%29%5D%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ci%20class%3D%22fa-solid%20fa-shield-halved%22%3E%3C%2Fi%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fdiv%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ch1%20class%3D%22text-xl%20font-light%20text-white%20tracking-wide%22%3EAccess%20Suspended%3C%2Fh1%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cp%20id%3D%22blockedMessage%22%20class%3D%22text-xs%20text-slate-400%20font-extralight%20mt-2%20leading-relaxed%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20Access%20to%20this%20service%20has%20been%20suspended%20by%20the%20owner.%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fp%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fdiv%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ca%20id%3D%22blockedAdminLink%22%20href%3D%22https%3A%2F%2Ft.me%2FStreamGodLive%22%20target%3D%22_blank%22%20class%3D%22w-full%20py-3.5%20rounded-2xl%20bg-gradient-to-r%20from-rose-600%2F30%20to-purple-600%2F30%20hover%3Afrom-rose-600%2F50%20hover%3Ato-purple-600%2F50%20border%20border-rose-500%2F30%20text-rose-200%20text-xs%20font-light%20tracking-wider%20transition-all%20shadow-%5B0_0_20px_rgba%28225%2C29%2C72%2C0.2%29%5D%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ci%20class%3D%22fa-brands%20fa-telegram%20mr-1.5%22%3E%3C%2Fi%3E%20Contact%20Admin%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fa%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fdiv%3E%0D%0A%20%20%20%20%20%20%20%20%3C%2Fmain%3E%0D%0A%0D%0A%20%20%20%20%20%20%20%20%3Cfooter%20class%3D%22border-t%20border-white%2F5%20py-6%20text-center%20text-xs%20text-slate-600%20font-extralight%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%26copy%3B%20StreamGod%20Security%20Protocol%0D%0A%20%20%20%20%20%20%20%20%3C%2Ffooter%3E%0D%0A%20%20%20%20%3C%2Fdiv%3E%0D%0A%0D%0A%0D%0A%20%20%20%20%3C%21--%20%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%20--%3E%0D%0A%20%20%20%20%3C%21--%20MAIN%20APP%20CONTENT%20%28Dashboard%20%26%20Player%20Views%29%20--%3E%0D%0A%20%20%20%20%3C%21--%20%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%20--%3E%0D%0A%20%20%20%20%3Cdiv%20id%3D%22mainAppView%22%20class%3D%22flex%20flex-col%20min-h-screen%22%3E%0D%0A%20%20%20%20%20%20%20%20%0D%0A%20%20%20%20%20%20%20%20%3C%21--%20HEADER%20--%3E%0D%0A%20%20%20%20%20%20%20%20%3Cheader%20class%3D%22sticky%20top-0%20z-40%20bg-%5B%230b0f19%5D%2F80%20backdrop-blur-xl%20border-b%20border-white%2F5%20py-3.5%20px-4%20sm%3Apx-6%20transition-all%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class%3D%22max-w-7xl%20mx-auto%20flex%20items-center%20justify-between%20gap-2%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ca%20href%3D%22index.html%22%20class%3D%22flex%20items-center%20space-x-2%20sm%3Aspace-x-3%20group%20shrink-0%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%21--%20StreamGod%20Header%20Logo%20%28Hardcoded%29%20--%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cimg%20src%3D%22https%3A%2F%2Fassetstitu.vercel.app%2FStreamGod%2FStreamGod.svg%22%20alt%3D%22StreamGod%20Logo%22%20class%3D%22h-12%20sm%3Ah-14%20w-auto%20object-contain%20transition-transform%20duration-300%20group-hover%3Ascale-105%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cspan%20class%3D%22text-slate-600%20font-extralight%20text-sm%22%3E%E2%9C%95%3C%2Fspan%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%21--%20EV%20Header%20Logo%20%28Dynamic%20via%20Config%29%20--%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cimg%20id%3D%22headerEvLogo%22%20src%3D%22%22%20alt%3D%22EV%20Logo%22%20class%3D%22h-10%20sm%3Ah-12%20w-auto%20object-contain%20transition-transform%20duration-300%20group-hover%3Ascale-105%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fa%3E%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%21--%20Header%20Match%20Title%20%28Player%20View%20Only%29%20--%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20id%3D%22headerTitleContainer%22%20class%3D%22hidden%20md%3Aflex%20flex-1%20items-center%20justify-center%20px-4%20overflow-hidden%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ch1%20id%3D%22headerMatchTitle%22%20class%3D%22text-xs%20sm%3Atext-sm%20font-light%20text-slate-200%20truncate%20max-w-md%20text-center%20bg-white%2F5%20px-3.5%20py-1%20rounded-full%20border%20border-white%2F5%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cspan%20class%3D%22w-2%20h-2%20rounded-full%20bg-rose-500%20inline-block%20mr-2%20animate-pulse%22%3E%3C%2Fspan%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20Live%20Broadcast%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fh1%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fdiv%3E%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%21--%20Right%20Header%20Actions%20--%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class%3D%22flex%20items-center%20space-x-2%20shrink-0%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cbutton%20onclick%3D%22openTelegramModal%28%29%22%20class%3D%22px-4%20py-2%20rounded-xl%20bg-purple-500%2F10%20hover%3Abg-purple-500%2F20%20border%20border-purple-500%2F30%20text-purple-300%20text-xs%20font-light%20flex%20items-center%20gap-2%20transition%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ci%20class%3D%22fa-brands%20fa-telegram%20text-purple-400%22%3E%3C%2Fi%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cspan%20class%3D%22hidden%20sm%3Ainline%22%3EJoin%20Telegram%20Channels%3C%2Fspan%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fbutton%3E%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%21--%20Server%20Selector%20%28Player%20View%20Only%29%20--%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cselect%20id%3D%22serverSelect%22%20onchange%3D%22switchServer%28this.value%29%22%20class%3D%22hidden%20bg-slate-900%2F90%20text-slate-200%20text-xs%20font-light%20px-2.5%20py-1.5%20rounded-xl%20border%20border-white%2F10%20outline-none%20focus%3Aborder-purple-500%2F50%20transition%20cursor-pointer%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fselect%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fdiv%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fdiv%3E%0D%0A%20%20%20%20%20%20%20%20%3C%2Fheader%3E%0D%0A%0D%0A%20%20%20%20%20%20%20%20%3C%21--%20Mobile%20Title%20Strip%20%28Player%20View%20Only%29%20--%3E%0D%0A%20%20%20%20%20%20%20%20%3Cdiv%20id%3D%22mobileTitleStrip%22%20class%3D%22hidden%20md%3Ahidden%20bg-slate-900%2F60%20border-b%20border-white%2F5%20py-1.5%20px-4%20text-center%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Ch1%20id%3D%22mobileMatchTitle%22%20class%3D%22text-xs%20font-light%20text-slate-300%20truncate%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cspan%20class%3D%22w-1.5%20h-1.5%20rounded-full%20bg-rose-500%20inline-block%20mr-1.5%20animate-pulse%22%3E%3C%2Fspan%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20Live%20Broadcast%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fh1%3E%0D%0A%20%20%20%20%20%20%20%20%3C%2Fdiv%3E%0D%0A%0D%0A%20%20%20%20%20%20%20%20%3C%21--%20%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%20--%3E%0D%0A%20%20%20%20%20%20%20%20%3C%21--%20VIEW%201%3A%20DASHBOARD%20%28When%20no%20%3Fid%3D%20param%20is%20present%29%20--%3E%0D%0A%20%20%20%20%20%20%20%20%3C%21--%20%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%20--%3E%0D%0A%20%20%20%20%20%20%20%20%3Cmain%20id%3D%22dashboardView%22%20class%3D%22max-w-7xl%20mx-auto%20px-4%20sm%3Apx-6%20py-8%20flex-grow%20w-full%20relative%20z-10%20hidden%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class%3D%22flex%20items-center%20justify-between%20mb-8%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ch1%20class%3D%22text-xl%20sm%3Atext-2xl%20font-light%20text-white%20tracking-wide%22%3ELive%20Matches%3C%2Fh1%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cp%20class%3D%22text-xs%20text-slate-500%20font-extralight%20mt-1%22%3ESelect%20an%20event%20to%20start%20smooth%20streaming%3C%2Fp%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fdiv%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cspan%20id%3D%22matchCountBadge%22%20class%3D%22text-xs%20font-light%20text-slate-400%20bg-white%2F5%20px-3%20py-1.5%20rounded-full%20border%20border-white%2F5%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%200%20Available%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fspan%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fdiv%3E%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20id%3D%22matchesGrid%22%20class%3D%22grid%20grid-cols-1%20md%3Agrid-cols-2%20lg%3Agrid-cols-3%20gap-6%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%21--%20Matches%20Cards%20Rendered%20Dynamically%20Here%20--%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fdiv%3E%0D%0A%20%20%20%20%20%20%20%20%3C%2Fmain%3E%0D%0A%0D%0A%20%20%20%20%20%20%20%20%3C%21--%20%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%20--%3E%0D%0A%20%20%20%20%20%20%20%20%3C%21--%20VIEW%202%3A%20PLAYER%20%28When%20%3Fid%3D%20param%20is%20present%29%20--%3E%0D%0A%20%20%20%20%20%20%20%20%3C%21--%20%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%20--%3E%0D%0A%20%20%20%20%20%20%20%20%3Cmain%20id%3D%22playerView%22%20class%3D%22relative%20flex-grow%20bg-black%20flex%20items-center%20justify-center%20overflow-hidden%20p-0%20sm%3Ap-4%20hidden%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class%3D%22relative%20w-full%20h-full%20max-w-7xl%20max-h-%5B90vh%5D%20rounded-none%20sm%3Arounded-2xl%20overflow-hidden%20border%20border-white%2F5%20player-glow%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20data-shaka-player-container%20class%3D%22w-full%20h-full%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cvideo%20data-shaka-player%20id%3D%22video%22%20class%3D%22w-full%20h-full%20object-contain%22%20autoplay%3E%3C%2Fvideo%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fdiv%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fdiv%3E%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%3C%21--%20Floating%20Telegram%20Quick%20Button%20--%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Cbutton%20onclick%3D%22openTelegramModal%28%29%22%20class%3D%22fixed%20bottom-6%20right-6%20z-30%20p-3%20rounded-2xl%20bg-slate-900%2F80%20backdrop-blur-xl%20border%20border-purple-500%2F40%20text-purple-300%20hover%3Atext-white%20shadow-%5B0_10px_30px_rgba%280%2C0%2C0%2C0.5%29%5D%20flex%20items-center%20gap-2%20text-xs%20font-light%20transition-all%20hover%3Ascale-105%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ci%20class%3D%22fa-brands%20fa-telegram%20text-purple-400%20text-base%22%3E%3C%2Fi%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cspan%3EJoin%20Telegram%3C%2Fspan%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fbutton%3E%0D%0A%20%20%20%20%20%20%20%20%3C%2Fmain%3E%0D%0A%0D%0A%20%20%20%20%20%20%20%20%3Cfooter%20class%3D%22border-t%20border-white%2F5%20py-6%20text-center%20text-xs%20text-slate-600%20font-extralight%20mt-auto%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%26copy%3B%20StreamGod%20Engine%0D%0A%20%20%20%20%20%20%20%20%3C%2Ffooter%3E%0D%0A%20%20%20%20%3C%2Fdiv%3E%0D%0A%0D%0A%0D%0A%20%20%20%20%3C%21--%20%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%20--%3E%0D%0A%20%20%20%20%3C%21--%20DUAL%20TELEGRAM%20CARDS%20MODAL%20POPUP%20--%3E%0D%0A%20%20%20%20%3C%21--%20%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%20--%3E%0D%0A%20%20%20%20%3Cdiv%20id%3D%22telegramModal%22%20class%3D%22fixed%20inset-0%20z-50%20bg-black%2F85%20backdrop-blur-xl%20hidden%20items-center%20justify-center%20p-4%22%3E%0D%0A%20%20%20%20%20%20%20%20%3Cdiv%20class%3D%22relative%20w-full%20max-w-3xl%20flex%20flex-col%20items-center%20gap-5%20animate-soft-pop%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Cbutton%20onclick%3D%22closeTelegramModal%28%29%22%20class%3D%22absolute%20-top-10%20right-0%20sm%3A-right-2%20bg-slate-800%20text-slate-300%20border%20border-white%2F10%20rounded-full%20w-8%20h-8%20flex%20items-center%20justify-center%20text-xs%20hover%3Atext-white%20transition%20hover%3Ascale-110%20shadow-lg%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ci%20class%3D%22fa-solid%20fa-xmark%22%3E%3C%2Fi%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fbutton%3E%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%3C%21--%20CARD%201%3A%20StreamGod%20%28Hardcoded%20Assets%20-%20Right%20to%20Left%29%20--%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class%3D%22relative%20w-full%20rounded-2xl%20sm%3Arounded-3xl%20overflow-hidden%20border%20border-orange-500%2F40%20shadow-%5B0_0_40px_rgba%28249%2C115%2C22%2C0.25%29%5D%20bg-cover%20bg-center%20group%20transition-transform%20duration-300%20hover%3Ascale-%5B1.01%5D%22%20style%3D%22background-image%3A%20url%28%27https%3A%2F%2Fassetstitu.vercel.app%2FStreamGod%2FSgBG.png%27%29%3B%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class%3D%22bg-gradient-to-l%20from-black%2F85%20via-black%2F65%20to-black%2F40%20backdrop-blur-%5B2px%5D%20p-5%20sm%3Ap-7%20flex%20flex-col%20sm%3Aflex-row-reverse%20items-center%20justify-between%20gap-5%20w-full%20h-full%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class%3D%22flex%20items-center%20justify-center%20shrink-0%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%21--%20StreamGod%20Card%20Main%20Logo%20%28Hardcoded%29%20--%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cimg%20src%3D%22https%3A%2F%2Fassetstitu.vercel.app%2FStreamGod%2FMain.png%22%20alt%3D%22StreamGod%20Main%20Logo%22%20class%3D%22h-12%20sm%3Ah-16%20w-auto%20max-w-%5B140px%5D%20object-contain%20drop-shadow-%5B0_0_15px_rgba%28249%2C115%2C22%2C0.7%29%5D%20transition-transform%20duration-300%20group-hover%3Ascale-105%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fdiv%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class%3D%22text-center%20sm%3Atext-right%20flex-grow%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class%3D%22flex%20items-center%20justify-center%20sm%3Ajustify-end%20gap-2%20mb-1%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cspan%20class%3D%22text-%5B10px%5D%20font-medium%20tracking-widest%20text-orange-400%20uppercase%20bg-orange-500%2F10%20border%20border-orange-500%2F30%20px-2.5%20py-0.5%20rounded-full%20flex%20items-center%20gap-1%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ci%20class%3D%22fa-solid%20fa-fire%20text-orange-400%20text-%5B10px%5D%20animate-pulse%22%3E%3C%2Fi%3E%20Official%20Channel%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fspan%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fdiv%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ch3%20class%3D%22text-lg%20sm%3Atext-xl%20font-medium%20text-white%20tracking-wide%22%3EStream%20God%20Live%3C%2Fh3%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cp%20class%3D%22text-xs%20text-slate-300%20font-light%20mt-1%22%3EPremium%20Links%20%E2%80%A2%20100%25%20Safe%20%26%20Daily%20Updates%3C%2Fp%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fdiv%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ca%20href%3D%22https%3A%2F%2Ft.me%2FStreamGodLive%22%20target%3D%22_blank%22%20class%3D%22px-6%20py-3%20bg-gradient-to-r%20from-orange-600%20to-rose-600%20hover%3Afrom-orange-500%20hover%3Ato-rose-500%20text-white%20text-xs%20font-medium%20tracking-wider%20rounded-2xl%20transition-all%20shadow-%5B0_0_25px_rgba%28249%2C115%2C22%2C0.4%29%5D%20flex%20items-center%20gap-2%20shrink-0%20group-hover%3Ascale-105%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ci%20class%3D%22fa-brands%20fa-telegram%20text-sm%22%3E%3C%2Fi%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cspan%3EJOIN%20NOW%3C%2Fspan%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fa%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fdiv%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fdiv%3E%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%3C%21--%20CARD%202%3A%20EV%20%28Dynamic%20Assets%20via%20config.js%20-%20Left%20to%20Right%29%20--%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20id%3D%22evCardContainer%22%20class%3D%22relative%20w-full%20rounded-2xl%20sm%3Arounded-3xl%20overflow-hidden%20border%20border-fuchsia-500%2F40%20shadow-%5B0_0_40px_rgba%28217%2C70%2C239%2C0.25%29%5D%20bg-cover%20bg-center%20group%20transition-transform%20duration-300%20hover%3Ascale-%5B1.01%5D%22%20style%3D%22background-image%3A%20url%28%27https%3A%2F%2Fassetstitu.vercel.app%2FEv%2FEvBG.png%27%29%3B%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class%3D%22bg-gradient-to-r%20from-black%2F85%20via-black%2F65%20to-black%2F40%20backdrop-blur-%5B2px%5D%20p-5%20sm%3Ap-7%20flex%20flex-col%20sm%3Aflex-row%20items-center%20justify-between%20gap-5%20w-full%20h-full%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class%3D%22flex%20items-center%20justify-center%20shrink-0%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%21--%20EV%20Logo%20%28Dynamic%29%20--%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cimg%20id%3D%22cardEvLogo%22%20src%3D%22%22%20alt%3D%22EV%20Logo%22%20class%3D%22h-12%20sm%3Ah-16%20w-auto%20max-w-%5B140px%5D%20object-contain%20drop-shadow-%5B0_0_15px_rgba%28217%2C70%2C239%2C0.7%29%5D%20transition-transform%20duration-300%20group-hover%3Ascale-105%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fdiv%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class%3D%22text-center%20sm%3Atext-left%20flex-grow%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class%3D%22flex%20items-center%20justify-center%20sm%3Ajustify-start%20gap-2%20mb-1%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cspan%20id%3D%22cardEvBadge%22%20class%3D%22text-%5B10px%5D%20font-medium%20tracking-widest%20text-fuchsia-400%20uppercase%20bg-fuchsia-500%2F10%20border%20border-fuchsia-500%2F30%20px-2.5%20py-0.5%20rounded-full%20flex%20items-center%20gap-1%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ci%20class%3D%22fa-solid%20fa-bolt%20text-fuchsia-400%20text-%5B10px%5D%22%3E%3C%2Fi%3E%20Cyberpunk%20Tech%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fspan%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fdiv%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ch3%20id%3D%22cardEvTitle%22%20class%3D%22text-lg%20sm%3Atext-xl%20font-medium%20text-white%20tracking-wide%22%3EEV%20Official%3C%2Fh3%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cp%20id%3D%22cardEvDesc%22%20class%3D%22text-xs%20text-slate-300%20font-light%20mt-1%22%3EEntertainment%20Evolved%20%E2%80%A2%20Fast%20%26%20Exclusive%20Content%3C%2Fp%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fdiv%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ca%20id%3D%22cardEvBtnLink%22%20href%3D%22%23%22%20target%3D%22_blank%22%20class%3D%22px-6%20py-3%20bg-gradient-to-r%20from-fuchsia-600%20to-purple-600%20hover%3Afrom-fuchsia-500%20hover%3Ato-purple-500%20text-white%20text-xs%20font-medium%20tracking-wider%20rounded-2xl%20transition-all%20shadow-%5B0_0_25px_rgba%28217%2C70%2C239%2C0.4%29%5D%20flex%20items-center%20gap-2%20shrink-0%20group-hover%3Ascale-105%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ci%20class%3D%22fa-brands%20fa-telegram%20text-sm%22%3E%3C%2Fi%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cspan%3EJOIN%20NOW%3C%2Fspan%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fa%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fdiv%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fdiv%3E%0D%0A%0D%0A%20%20%20%20%20%20%20%20%3C%2Fdiv%3E%0D%0A%20%20%20%20%3C%2Fdiv%3E%0D%0A%0D%0A%0D%0A%20%20%20%20%3C%21--%20%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%20--%3E%0D%0A%20%20%20%20%3C%21--%20CLIENT-SIDE%20APPLICATION%20JAVASCRIPT%20--%3E%0D%0A%20%20%20%20%3C%21--%20%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%3D%20--%3E%0D%0A%20%20%20%20%3Cscript%3E%0D%0A%20%20%20%20%20%20%20%20%2F%2F%20HARDCODED%20STREAMGOD%20%26%20LICENSE%20CONSTANTS%0D%0A%20%20%20%20%20%20%20%20const%20LICENSE_URL%20%3D%20%22https%3A%2F%2Fassetstitu.vercel.app%2FLicence.json%22%3B%0D%0A%20%20%20%20%20%20%20%20const%20STREAMGOD_TELEGRAM_URL%20%3D%20%22https%3A%2F%2Ft.me%2FStreamGodLive%22%3B%0D%0A%0D%0A%20%20%20%20%20%20%20%20%2F%2F%20Read%20Config%20Object%20%28from%20config.js%29%20or%20Fallbacks%0D%0A%20%20%20%20%20%20%20%20const%20cfg%20%3D%20typeof%20CONFIG%20%21%3D%3D%20%27undefined%27%20%3F%20CONFIG%20%3A%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20STREAM_JSON_URL%3A%20%22https%3A%2F%2Fsonujson-devloper.vercel.app%2FData%2Fprime.json%22%2C%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20EV_TELEGRAM_URL%3A%20%22https%3A%2F%2Ft.me%2Frishievofficial%22%2C%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20EV_LOGO_URL%3A%20%22https%3A%2F%2Fraw.githubusercontent.com%2Fsaptarshiorg%2Fsaptarshiorg.github.io%2Frefs%2Fheads%2Fmain%2Fmagenta.png%22%2C%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20EV_BG_URL%3A%20%22https%3A%2F%2Fassetstitu.vercel.app%2FEv%2FEvBG.png%22%2C%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20EV_TITLE%3A%20%22EV%20Official%22%2C%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20EV_BADGE_TEXT%3A%20%22Cyberpunk%20Tech%22%2C%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20EV_DESC%3A%20%22Entertainment%20Evolved%20%E2%80%A2%20Fast%20%26%20Exclusive%20Content%22%0D%0A%20%20%20%20%20%20%20%20%7D%3B%0D%0A%0D%0A%20%20%20%20%20%20%20%20let%20playerInstance%20%3D%20null%3B%0D%0A%20%20%20%20%20%20%20%20let%20currentManifestUri%20%3D%20%22%22%3B%0D%0A%0D%0A%20%20%20%20%20%20%20%20%2F%2F%20Modal%20Handlers%0D%0A%20%20%20%20%20%20%20%20function%20openTelegramModal%28%29%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20const%20modal%20%3D%20document.getElementById%28%27telegramModal%27%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20modal.classList.remove%28%27hidden%27%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20modal.classList.add%28%27flex%27%29%3B%0D%0A%20%20%20%20%20%20%20%20%7D%0D%0A%20%20%20%20%20%20%20%20function%20closeTelegramModal%28%29%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20const%20modal%20%3D%20document.getElementById%28%27telegramModal%27%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20modal.classList.add%28%27hidden%27%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20modal.classList.remove%28%27flex%27%29%3B%0D%0A%20%20%20%20%20%20%20%20%7D%0D%0A%0D%0A%20%20%20%20%20%20%20%20%2F%2F%20Apply%20EV%20Config%20Settings%20to%20DOM%0D%0A%20%20%20%20%20%20%20%20function%20applyConfigSettings%28%29%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%2F%2F%20EV%20Header%20Logo%20%26%20Blocked%20Logo%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20const%20headerEvLogo%20%3D%20document.getElementById%28%27headerEvLogo%27%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20if%20%28headerEvLogo%29%20headerEvLogo.src%20%3D%20cfg.EV_LOGO_URL%3B%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20const%20blockedEvLogo%20%3D%20document.getElementById%28%27blockedEvLogo%27%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20if%20%28blockedEvLogo%29%20blockedEvLogo.src%20%3D%20cfg.EV_LOGO_URL%3B%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%2F%2F%20EV%20Card%20Details%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20const%20cardEvLogo%20%3D%20document.getElementById%28%27cardEvLogo%27%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20if%20%28cardEvLogo%29%20cardEvLogo.src%20%3D%20cfg.EV_LOGO_URL%3B%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20const%20evCardContainer%20%3D%20document.getElementById%28%27evCardContainer%27%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20if%20%28evCardContainer%20%26%26%20cfg.EV_BG_URL%29%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20evCardContainer.style.backgroundImage%20%3D%20%60url%28%27%24%7Bcfg.EV_BG_URL%7D%27%29%60%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20const%20cardEvTitle%20%3D%20document.getElementById%28%27cardEvTitle%27%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20if%20%28cardEvTitle%29%20cardEvTitle.innerText%20%3D%20cfg.EV_TITLE%3B%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20const%20cardEvDesc%20%3D%20document.getElementById%28%27cardEvDesc%27%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20if%20%28cardEvDesc%29%20cardEvDesc.innerText%20%3D%20cfg.EV_DESC%3B%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20const%20cardEvBadge%20%3D%20document.getElementById%28%27cardEvBadge%27%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20if%20%28cardEvBadge%29%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20cardEvBadge.innerHTML%20%3D%20%60%3Ci%20class%3D%22fa-solid%20fa-bolt%20text-fuchsia-400%20text-%5B10px%5D%22%3E%3C%2Fi%3E%20%24%7Bcfg.EV_BADGE_TEXT%7D%60%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20const%20cardEvBtnLink%20%3D%20document.getElementById%28%27cardEvBtnLink%27%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20if%20%28cardEvBtnLink%29%20cardEvBtnLink.href%20%3D%20cfg.EV_TELEGRAM_URL%3B%0D%0A%20%20%20%20%20%20%20%20%7D%0D%0A%0D%0A%20%20%20%20%20%20%20%20%2F%2F%201.%20License%20Check%0D%0A%20%20%20%20%20%20%20%20async%20function%20checkLicense%28%29%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20try%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20const%20res%20%3D%20await%20fetch%28LICENSE_URL%20%2B%20%22%3Fv%3D%22%20%2B%20Date.now%28%29%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20const%20data%20%3D%20await%20res.json%28%29%3B%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20if%20%28%21data%20%7C%7C%20%21data.status%20%7C%7C%20data.status.toLowerCase%28%29%20%21%3D%3D%20%27active%27%29%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20document.getElementById%28%27mainAppView%27%29.classList.add%28%27hidden%27%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20document.getElementById%28%27blockedView%27%29.classList.remove%28%27hidden%27%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20if%20%28data%20%26%26%20data.message%29%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20document.getElementById%28%27blockedMessage%27%29.innerText%20%3D%20data.message%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20return%20false%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20return%20true%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%20catch%20%28e%29%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20console.warn%28%27License%20check%20warning%2C%20continuing%3A%27%2C%20e%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20return%20true%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0D%0A%20%20%20%20%20%20%20%20%7D%0D%0A%0D%0A%20%20%20%20%20%20%20%20%2F%2F%202.%20Main%20App%20Router%20%26%20Initializer%0D%0A%20%20%20%20%20%20%20%20async%20function%20initApp%28%29%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20applyConfigSettings%28%29%3B%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20const%20isLicenseValid%20%3D%20await%20checkLicense%28%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20if%20%28%21isLicenseValid%29%20return%3B%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%2F%2F%20Check%20Query%20Params%20for%20Match%20ID%20%28%3Fid%3DXYZ%29%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20const%20urlParams%20%3D%20new%20URLSearchParams%28window.location.search%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20const%20matchId%20%3D%20urlParams.get%28%27id%27%29%3B%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20try%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20const%20res%20%3D%20await%20fetch%28cfg.STREAM_JSON_URL%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20const%20rawData%20%3D%20await%20res.json%28%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20const%20matches%20%3D%20%28rawData%20%26%26%20rawData.Matches%29%20%3F%20rawData.Matches%20%3A%20%28Array.isArray%28rawData%29%20%3F%20rawData%20%3A%20%5B%5D%29%3B%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20if%20%28matchId%29%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20showPlayerView%28matchId%2C%20matches%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%20else%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20showDashboardView%28matches%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%20catch%20%28err%29%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20console.error%28%27Error%20fetching%20matches%20JSON%3A%27%2C%20err%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0D%0A%20%20%20%20%20%20%20%20%7D%0D%0A%0D%0A%20%20%20%20%20%20%20%20%2F%2F%203.%20Render%20Dashboard%20View%0D%0A%20%20%20%20%20%20%20%20function%20showDashboardView%28matches%29%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20document.getElementById%28%27dashboardView%27%29.classList.remove%28%27hidden%27%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20document.getElementById%28%27matchCountBadge%27%29.innerText%20%3D%20%60%24%7Bmatches.length%7D%20Available%60%3B%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20const%20matchesGrid%20%3D%20document.getElementById%28%27matchesGrid%27%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20matchesGrid.innerHTML%20%3D%20%27%27%3B%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20if%20%28matches.length%20%3D%3D%3D%200%29%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20matchesGrid.innerHTML%20%3D%20%60%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class%3D%22col-span-full%20text-center%20py-20%20bg-slate-900%2F30%20rounded-3xl%20border%20border-white%2F5%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cp%20class%3D%22text-slate-500%20font-light%20text-sm%22%3ENo%20live%20streams%20found%20right%20now.%3C%2Fp%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fdiv%3E%60%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20return%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20matches.forEach%28m%20%3D%3E%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20const%20matchName%20%3D%20m.event_name%20%7C%7C%20m.name%20%7C%7C%20%27Live%20Broadcast%27%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20const%20matchImg%20%3D%20m.image%20%7C%7C%20%27https%3A%2F%2Fimages.unsplash.com%2Fphoto-1508098682722-e99c43a406b2%3Fq%3D80%26w%3D600%26auto%3Dformat%26fit%3Dcrop%27%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20const%20matchId%20%3D%20m.id%20%7C%7C%20%27%27%3B%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20const%20cardHtml%20%3D%20%60%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class%3D%22group%20bg-slate-900%2F40%20backdrop-blur-md%20rounded-2xl%20border%20border-white%2F5%20overflow-hidden%20transition-all%20duration-500%20glow-box%20glow-box-hover%20flex%20flex-col%20justify-between%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class%3D%22relative%20overflow-hidden%20aspect-video%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cimg%20src%3D%22%24%7BmatchImg%7D%22%20alt%3D%22Thumbnail%22%20class%3D%22w-full%20h-full%20object-cover%20transition-transform%20duration-700%20group-hover%3Ascale-105%20opacity-90%20group-hover%3Aopacity-100%22%20onerror%3D%22this.src%3D%27https%3A%2F%2Fimages.unsplash.com%2Fphoto-1508098682722-e99c43a406b2%3Fq%3D80%26w%3D600%26auto%3Dformat%26fit%3Dcrop%27%3B%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class%3D%22absolute%20top-3%20left-3%20flex%20items-center%20gap-1.5%20bg-black%2F40%20backdrop-blur-md%20border%20border-rose-500%2F30%20px-2.5%20py-1%20rounded-full%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cspan%20class%3D%22w-1.5%20h-1.5%20rounded-full%20bg-rose-400%20animate-pulse%22%3E%3C%2Fspan%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cspan%20class%3D%22text-%5B10px%5D%20font-light%20tracking-wider%20text-rose-300%20uppercase%22%3ELIVE%3C%2Fspan%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fdiv%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fdiv%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cdiv%20class%3D%22p-5%20flex-grow%20flex%20flex-col%20justify-between%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ch2%20class%3D%22text-sm%20font-light%20text-slate-200%20line-clamp-2%20leading-relaxed%20mb-6%20group-hover%3Atext-white%20transition-colors%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%24%7BmatchName%7D%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fh2%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ca%20href%3D%22index.html%3Fid%3D%24%7BencodeURIComponent%28matchId%29%7D%22%20class%3D%22w-full%20py-2.5%20rounded-xl%20bg-gradient-to-r%20from-purple-600%2F20%20to-indigo-600%2F20%20hover%3Afrom-purple-600%2F40%20hover%3Ato-indigo-600%2F40%20border%20border-purple-500%2F30%20text-purple-200%20text-xs%20font-light%20text-center%20tracking-wider%20transition-all%20duration-300%20flex%20items-center%20justify-center%20gap-2%20group-hover%3Ashadow-%5B0_0_20px_rgba%28168%2C85%2C247%2C0.3%29%5D%22%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ci%20class%3D%22fa-solid%20fa-play%20text-%5B10px%5D%22%3E%3C%2Fi%3E%20Watch%20Stream%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fa%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fdiv%3E%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fdiv%3E%60%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20matchesGrid.insertAdjacentHTML%28%27beforeend%27%2C%20cardHtml%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%29%3B%0D%0A%20%20%20%20%20%20%20%20%7D%0D%0A%0D%0A%20%20%20%20%20%20%20%20%2F%2F%204.%20Render%20Player%20View%20%26%20Setup%20Shaka%0D%0A%20%20%20%20%20%20%20%20function%20showPlayerView%28matchId%2C%20matches%29%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20document.getElementById%28%27playerView%27%29.classList.remove%28%27hidden%27%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20document.getElementById%28%27headerTitleContainer%27%29.classList.remove%28%27hidden%27%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20document.getElementById%28%27mobileTitleStrip%27%29.classList.remove%28%27hidden%27%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20document.getElementById%28%27serverSelect%27%29.classList.remove%28%27hidden%27%29%3B%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20let%20currentMatch%20%3D%20matches.find%28m%20%3D%3E%20m.id%20%3D%3D%3D%20matchId%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20if%20%28%21currentMatch%20%26%26%20matches.length%20%3E%200%29%20currentMatch%20%3D%20matches%5B0%5D%3B%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20const%20eventName%20%3D%20currentMatch%20%3F%20%28currentMatch.event_name%20%7C%7C%20%27Live%20Broadcast%27%29%20%3A%20%27Live%20Broadcast%27%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20document.getElementById%28%27headerMatchTitle%27%29.innerText%20%3D%20eventName%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20document.getElementById%28%27mobileMatchTitle%27%29.innerText%20%3D%20eventName%3B%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%2F%2F%20Extract%20DRM%20Key%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20const%20drmKey%20%3D%20currentMatch%20%3F%20%28currentMatch.drm_key%20%7C%7C%20%27%27%29%20%3A%20%27%27%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20const%20keyParts%20%3D%20drmKey.split%28%27%3A%27%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20const%20keyId%20%3D%20%28keyParts%5B0%5D%20%7C%7C%20%27%27%29.trim%28%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20const%20key%20%3D%20%28keyParts%5B1%5D%20%7C%7C%20%27%27%29.trim%28%29%3B%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%2F%2F%20Servers%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20const%20servers%20%3D%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%27Cloudfront%27%3A%20currentMatch%3F.CnpTV%3F.cloudfront_server%20%7C%7C%20%27%27%2C%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%27Fastly%27%3A%20currentMatch%3F.CnpTV%3F.fastly_server%20%7C%7C%20%27%27%2C%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%27Amazon%27%3A%20currentMatch%3F.CnpTV%3F.amazon_server%20%7C%7C%20%27%27%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%3B%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20const%20serverSelect%20%3D%20document.getElementById%28%27serverSelect%27%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20serverSelect.innerHTML%20%3D%20%27%27%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20for%20%28const%20%5BsName%2C%20sUrl%5D%20of%20Object.entries%28servers%29%29%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20if%20%28sUrl%29%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20const%20opt%20%3D%20document.createElement%28%27option%27%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20opt.value%20%3D%20sUrl%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20opt.innerText%20%3D%20sName%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20opt.className%20%3D%20%27bg-slate-900%20text-slate-300%27%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20serverSelect.appendChild%28opt%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20currentManifestUri%20%3D%20servers.Cloudfront%20%7C%7C%20servers.Fastly%20%7C%7C%20servers.Amazon%20%7C%7C%20%27%27%3B%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20if%20%28window.shaka%29%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20shaka.polyfill.installAll%28%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20if%20%28shaka.Player.isBrowserSupported%28%29%29%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20document.addEventListener%28%27shaka-ui-loaded%27%2C%20%28%29%20%3D%3E%20setupShakaPlayer%28keyId%2C%20key%29%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20if%20%28document.readyState%20%3D%3D%3D%20%27complete%27%20%7C%7C%20document.readyState%20%3D%3D%3D%20%27interactive%27%29%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20setupShakaPlayer%28keyId%2C%20key%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0D%0A%20%20%20%20%20%20%20%20%7D%0D%0A%0D%0A%20%20%20%20%20%20%20%20%2F%2F%205.%20Shaka%20Player%20ClearKey%20%26%20Anti-Buffering%20Configuration%0D%0A%20%20%20%20%20%20%20%20async%20function%20setupShakaPlayer%28keyId%2C%20key%29%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20const%20video%20%3D%20document.getElementById%28%27video%27%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20const%20ui%20%3D%20video%5B%27ui%27%5D%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20if%20%28%21ui%29%20return%3B%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20ui.configure%28%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20controlPanelElements%3A%20%5B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%27play_pause%27%2C%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%27mute%27%2C%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%27volume%27%2C%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%27live%27%2C%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%27spacer%27%2C%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%27quality%27%2C%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%27fullscreen%27%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5D%2C%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20fadeDelay%3A%203%2C%20%2F%2F%20Auto-hide%20controls%20in%203%20seconds%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20doubleClickForFullscreen%3A%20true%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%29%3B%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20const%20controls%20%3D%20ui.getControls%28%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20playerInstance%20%3D%20controls.getPlayer%28%29%3B%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20if%20%28keyId%20%26%26%20key%29%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20playerInstance.configure%28%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20drm%3A%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20clearKeys%3A%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%5BkeyId%5D%3A%20key%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20playerInstance.configure%28%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20streaming%3A%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20bufferingGoal%3A%208%2C%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20rebufferingGoal%3A%202%2C%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20bufferBehind%3A%2020%2C%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20jumpLargeGaps%3A%20true%2C%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20smallGapLimit%3A%202%2C%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20stallEnabled%3A%20true%2C%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20stallThreshold%3A%201%2C%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20stallSkip%3A%200.1%2C%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20retryParameters%3A%20%7B%20maxAttempts%3A%205%2C%20baseDelay%3A%201000%20%7D%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20manifest%3A%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20dash%3A%20%7B%20ignoreMinBufferTime%3A%20true%2C%20autoCorrectDrift%3A%20true%20%7D%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%29%3B%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20playerInstance.addEventListener%28%27error%27%2C%20%28e%29%20%3D%3E%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20if%20%28playerInstance%29%20playerInstance.retryStreaming%28%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%29%3B%0D%0A%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20if%20%28currentManifestUri%29%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20try%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20await%20playerInstance.load%28currentManifestUri%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%20catch%20%28e%29%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20console.error%28%27Shaka%20Stream%20Load%20Error%3A%27%2C%20e%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0D%0A%20%20%20%20%20%20%20%20%7D%0D%0A%0D%0A%20%20%20%20%20%20%20%20function%20switchServer%28url%29%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20if%20%28url%20%26%26%20playerInstance%29%20%7B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20currentManifestUri%20%3D%20url%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20playerInstance.load%28url%29%3B%0D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0D%0A%20%20%20%20%20%20%20%20%7D%0D%0A%0D%0A%20%20%20%20%20%20%20%20document.addEventListener%28%27DOMContentLoaded%27%2C%20initApp%29%3B%0D%0A%20%20%20%20%3C%2Fscript%3E%0D%0A%3C%2Fbody%3E%0D%0A%3C%2Fhtml%3E"));
-//-->
+(async function(){
+  // CONFIG: change this if your JSON location differs
+  const JSON_URL = 'https://raw.githubusercontent.com/SSK4570live/TV-/refs/heads/main/jtv.json';
+
+  // DOM
+  const grid = document.getElementById('grid');
+  const q = document.getElementById('q');
+  const reloadBtn = document.getElementById('reload');
+  const titleEl = document.getElementById('title');
+  const subtitleEl = document.getElementById('subtitle');
+  const video = document.getElementById('video');
+  const tracksEl = document.getElementById('tracks');
+  const playPause = document.getElementById('playPause');
+  const muteBtn = document.getElementById('mute');
+  const autoQualityBtn = document.getElementById('autoQuality');
+  const highQualityBtn = document.getElementById('highQuality');
+  const openPopupBtn = document.getElementById('openPopup');
+
+  // Shaka init
+  shaka.polyfill.installAll();
+  if (!shaka.Player.isBrowserSupported()) {
+    alert('Shaka Player not supported in this browser.');
+    return;
+  }
+  const player = new shaka.Player(video);
+  const netEngine = player.getNetworkingEngine();
+
+  // We'll inject Cookie header for requests when per-channel cookie is set.
+  let currentCookie = null;
+  netEngine.registerRequestFilter((type, request) => {
+    // Add cookie header for manifest/segment/license requests.
+    if (currentCookie && request.uris && request.uris.length) {
+      request.headers['Cookie'] = currentCookie;
+      // If your CDN expects Referer or other headers you can add them here too.
+    }
+  });
+
+  // Helper: hex -> base64url
+  function hexToBase64Url(hex) {
+    if (!hex) return '';
+    hex = String(hex).replace(/^0x/, '');
+    if (hex.length % 2) hex = '0' + hex;
+    const bytes = new Uint8Array(hex.length / 2);
+    for (let i = 0; i < bytes.length; i++) bytes[i] = parseInt(hex.substr(i*2,2), 16);
+    let binary = '';
+    for (let b of bytes) binary += String.fromCharCode(b);
+    const b64 = btoa(binary);
+    return b64.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  }
+
+  // Load JSON
+  let channels = [];
+  async function loadJson() {
+    grid.innerHTML = '<div class="small">Loading...</div>';
+    try {
+      const res = await fetch(JSON_URL);
+      if (!res.ok) throw new Error('Failed to fetch JSON: ' + res.status);
+      channels = await res.json();
+      renderGrid(channels);
+    } catch (err) {
+      grid.innerHTML = '<div class="small">Error loading channels: ' + err.message + '</div>';
+      console.error(err);
+    }
+  }
+
+  // Render
+  function renderGrid(list) {
+    grid.innerHTML = '';
+    if (!list || !list.length) {
+      grid.innerHTML = '<div class="small">No channels</div>';
+      return;
+    }
+    for (const ch of list) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.dataset.id = ch.id;
+      card.innerHTML = `
+        <img src="${ch.logo || ''}" alt="${escapeHtml(ch.name)} logo"
+             onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=200 height=110><rect width=100% height=100% fill=%23071a2b></rect><text x=10 y=55 font-size=12 fill=%23fff>${encodeURIComponent(ch.name ? ch.name.substr(0,18) : 'NoName')}</text></svg>'">
+        <div class="meta">
+          <div class="name">${escapeHtml(ch.name)}</div>
+          <div class="cat">${escapeHtml(ch.category || '')} • ID: ${escapeHtml(ch.id)}</div>
+        </div>
+      `;
+      card.addEventListener('click', () => {
+        // select in-page player
+        selectChannel(ch);
+        // mark selection visually
+        document.querySelectorAll('.card').forEach(c => c.style.outline = '');
+        card.style.outline = '2px solid rgba(96,165,250,0.25)';
+      });
+      card.addEventListener('dblclick', () => {
+        // double-click to open separate player window
+        openPlayerWindow(ch);
+      });
+      grid.appendChild(card);
+    }
+  }
+
+  // Simple html escape
+  function escapeHtml(s) {
+    if (s === null || s === undefined) return '';
+    return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  }
+
+  // Search
+  q.addEventListener('input', () => {
+    const term = q.value.trim().toLowerCase();
+    if (!term) return renderGrid(channels);
+    renderGrid(channels.filter(c =>
+      (c.name||'').toLowerCase().includes(term) ||
+      (c.category||'').toLowerCase().includes(term) ||
+      (String(c.id)||'').includes(term)
+    ));
+  });
+  reloadBtn.addEventListener('click', loadJson);
+
+  // State
+  let currentChannel = null;
+  let qualityMode = 'auto'; // 'auto' or 'high'
+
+  // Select and play in embedded player
+  async function selectChannel(ch) {
+    currentChannel = ch;
+    titleEl.textContent = ch.name || 'Unnamed channel';
+    subtitleEl.textContent = `${ch.category || 'Unknown'} • id: ${ch.id}`;
+    tracksEl.textContent = 'Loading manifest & tracks...';
+    currentCookie = (ch.cookie && ch.cookie !== 'null') ? ch.cookie : null;
+
+    // Clear any previous DRM config
+    player.configure({ drm: { clearKeys: {} } });
+
+    // Determine clearkey/keyId
+    let kidHex = null, keyHex = null;
+    if (ch.clearkey && ch.clearkey !== 'null:null') {
+      const parts = ch.clearkey.split(':');
+      if (parts.length >= 2) {
+        kidHex = parts[0] && parts[0] !== 'null' ? parts[0] : null;
+        keyHex = parts[1] && parts[1] !== 'null' ? parts[1] : null;
+      }
+    } else if (ch.keyId && ch.key && ch.keyId !== 'null' && ch.key !== 'null') {
+      kidHex = ch.keyId;
+      keyHex = ch.key;
+    }
+
+    // Configure ClearKey if present
+    if (kidHex && keyHex) {
+      try {
+        const kidB64url = hexToBase64Url(kidHex);
+        const keyB64url = hexToBase64Url(keyHex);
+        const clearKeys = {};
+        clearKeys[kidB64url] = keyB64url;
+        player.configure({ drm: { clearKeys } });
+        console.log('Configured ClearKey:', clearKeys);
+      } catch (e) {
+        console.warn('ClearKey conversion error', e);
+      }
+    }
+
+    // Load the manifest
+    try {
+      await player.load(ch.url);
+      subtitleEl.textContent = `${ch.category || 'Unknown'} • Playing: ${ch.url}`;
+      updateTrackList();
+      if (qualityMode === 'high') await enforceHighQuality();
+      try { await video.play(); } catch(e){ /* autoplay blocked */ }
+    } catch (err) {
+      console.error('Playback load error', err);
+      tracksEl.textContent = 'Playback failed: ' + (err.message || err);
+    }
+  }
+
+  // Update track listing UI
+  function updateTrackList() {
+    const tracks = player.getVariantTracks() || [];
+    if (!tracks.length) {
+      tracksEl.textContent = 'No variant tracks available';
+      return;
+    }
+    // sort by bandwidth desc
+    tracks.sort((a,b)=> (b.bandwidth||0)-(a.bandwidth||0));
+    tracksEl.innerHTML = tracks.map((t,idx)=> {
+      const res = t.height ? `${t.width || '?'}x${t.height}` : 'audio-only';
+      const bw = t.bandwidth ? Math.round(t.bandwidth/1000)+' kbps' : '';
+      const codecs = t.codecs || '';
+      return `<div style="display:flex;justify-content:space-between;padding:6px;border-bottom:1px solid rgba(255,255,255,0.02)">
+                <div><strong>#${idx+1}</strong> ${res} ${codecs ? ' • '+codecs : ''}</div>
+                <div style="color:var(--muted)">${bw}</div>
+              </div>`;
+    }).join('');
+  }
+
+  // Choose highest quality variant and lock it
+  async function enforceHighQuality(){
+    const tracks = player.getVariantTracks() || [];
+    if (!tracks.length) return;
+    const videoTracks = tracks.filter(t => t.height || t.videoId !== undefined);
+    let best = null;
+    if (videoTracks.length) {
+      best = videoTracks.reduce((a,b) => {
+        const ah = a.height || 0, bh = b.height || 0;
+        if (bh !== ah) return bh > ah ? b : a;
+        return (b.bandwidth || 0) > (a.bandwidth || 0) ? b : a;
+      });
+    } else {
+      best = tracks.reduce((a,b) => (b.bandwidth||0) > (a.bandwidth||0) ? b : a);
+    }
+    if (best) {
+      try {
+        player.configure('abr.enabled', false);
+        player.selectVariantTrack(best, /* clearBuffer */ true);
+        updateTrackList();
+      } catch (e) {
+        console.warn('Selecting high-quality failed', e);
+      }
+    }
+  }
+
+  // Quality buttons
+  autoQualityBtn.addEventListener('click', () => {
+    qualityMode = 'auto';
+    autoQualityBtn.classList.remove('ghost');
+    highQualityBtn.classList.add('ghost');
+    player.configure('abr.enabled', true);
+    if (currentChannel) subtitleEl.textContent = `${currentChannel.category || 'Unknown'} • Playing (Auto)`;
+  });
+  highQualityBtn.addEventListener('click', async () => {
+    qualityMode = 'high';
+    highQualityBtn.classList.remove('ghost');
+    autoQualityBtn.classList.add('ghost');
+    if (currentChannel) {
+      await enforceHighQuality();
+      subtitleEl.textContent = `${currentChannel.category || 'Unknown'} • Playing (HD)`;
+    }
+  });
+
+  // Play/pause & mute
+  playPause.addEventListener('click', ()=> {
+    if (video.paused) video.play();
+    else video.pause();
+    playPause.textContent = video.paused ? 'Play' : 'Pause';
+  });
+  video.addEventListener('play', ()=> playPause.textContent = 'Pause');
+  video.addEventListener('pause', ()=> playPause.textContent = 'Play');
+
+  muteBtn.addEventListener('click', ()=> {
+    video.muted = !video.muted;
+    muteBtn.textContent = video.muted ? 'Unmute' : 'Mute';
+  });
+
+  // Open separate player window (player.html) with channel id as query param
+  function openPlayerWindow(ch) {
+    // encode channel id (use id field)
+    const url = new URL(window.location.href);
+    const base = url.origin + url.pathname.replace(/\/[^/]*$/, '/player.html');
+    // player.html expects ?id=<channel id>&json=<json url> (json optional, defaults to same JSON_URL)
+    const target = `${base}?id=${encodeURIComponent(ch.id)}&json=${encodeURIComponent(JSON_URL)}`;
+    window.open(target, '_blank', 'width=1000,height=700');
+  }
+  openPopupBtn.addEventListener('click', () => {
+    if (!currentChannel) return alert('Select a channel first (click a card).');
+    openPlayerWindow(currentChannel);
+  });
+
+  // Auto load JSON and select first playable channel
+  await loadJson();
+  if (channels && channels.length) {
+    // pick first one that looks like an mpd or m3u8
+    const first = channels.find(c => c.url && (c.url.includes('.mpd') || c.url.includes('.m3u8'))) || channels[0];
+    if (first) {
+      // select but don't mark visually
+      selectChannel(first);
+    }
+  }
+
+  // Expose helper to open popup via double-click on card as well (already set above)
+})();
 </script>
+</body>
+</html>
