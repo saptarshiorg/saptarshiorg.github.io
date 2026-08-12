@@ -4030,6 +4030,11 @@ function renderNav(rows) {
   mHtml += `<a href="#" class="drawer-login" onclick="closeDrawer();openVipPlayer();return false;"><span class="drawer-login-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg></span>VIP Login</a>`;
   desktop.innerHTML = dHtml;
   drawerNav.innerHTML = mHtml;
+  // MOVIES — reuses the nav-movies-link / drawer-movies styling that was
+  // already defined for this (previously pointed offsite); now opens the
+  // in-site VidAPI-powered Movies overlay instead.
+  desktop.innerHTML += `<a href="#" class="nav-movies-link" onclick="openMoviesOverlay();return false;"><img class="movies-logo-icon" src="https://static.vecteezy.com/system/resources/thumbnails/050/699/896/small/movie-night-illustration-cinema-poster-concept-banner-design-for-movie-theater-png.png" alt="Movies">MOVIES</a>`;
+  drawerNav.innerHTML += `<a href="#" class="drawer-movies" onclick="closeDrawer();openMoviesOverlay();return false;"><img class="movies-logo-icon" src="https://static.vecteezy.com/system/resources/thumbnails/050/699/896/small/movie-night-illustration-cinema-poster-concept-banner-design-for-movie-theater-png.png" alt="Movies">MOVIES</a>`;
 }
 function renderNav_CMS_UNUSED(rows) {
   if (!rows) return;
@@ -5377,6 +5382,10 @@ document.addEventListener('DOMContentLoaded', () => {
     <img src="https://upload.wikimedia.org/wikipedia/en/1/17/2026_FIFA_World_Cup_emblem.svg" alt="FIFA 2026" style="width:22px;height:22px;object-fit:contain;display:block;margin:0 auto 1px;filter:drop-shadow(0 0 3px rgba(0,160,255,0.6));">
     FIFA
   </a>
+  <a class="mtab mtab-movies" data-sxtab="movies" href="#sxTabPanels" onclick="event.preventDefault();openMoviesOverlay();">
+    <img class="movies-logo-icon" src="https://static.vecteezy.com/system/resources/thumbnails/050/699/896/small/movie-night-illustration-cinema-poster-concept-banner-design-for-movie-theater-png.png" alt="Movies">
+    <span class="mtab-movies-label">Movies</span>
+  </a>
 </nav>
 <script>
 (function(){
@@ -6518,6 +6527,209 @@ function closeAdminChatDiscordPopup(){
 </div><!-- /livetv-overlay -->
 
 <!-- ══════════════════════════════════════════════════════════════════════
+     MOVIES — full in-site page (same treatment as Live TV): a separate
+     fixed full-screen overlay, own topbar w/ Back button, powered by
+     VidAPI's public listing + embed API (vidapi.ru / vaplayer.ru).
+     Every search bar carries a paste-an-ID fallback: typing/pasting an
+     IMDB (tt…) or TMDB (numeric) ID into the search box itself reveals
+     a ▶ Play button that opens it directly, for anything not in the
+     loaded lists. All playback is iframe-embed based via openStreamPlayer().
+═══════════════════════════════════════════════════════════════════════ -->
+<style>
+#movies-overlay{
+  display: none; position: fixed; inset: 0; z-index: 1250;
+  background: #000000; overflow-y: auto; -webkit-overflow-scrolling: touch;
+}
+#movies-overlay.open{ display: block; }
+
+#movies-topbar{
+  position: sticky; top: 0; z-index: 2;
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 20px; background: rgba(10,10,11,0.92);
+  backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+#movies-back{
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.06); border: none; color: #fff;
+  font-family: var(--cu-font,inherit); font-weight: 700; font-size: 12px;
+  padding: 8px 12px; cursor: pointer; border-radius: 8px; letter-spacing: 0.03em;
+}
+#movies-back:hover{ background: rgba(255,255,255,0.12); }
+#movies-back svg{ width: 14px; height: 14px; flex-shrink: 0; }
+#movies-topbar-title{
+  font-family: var(--cu-font,inherit); font-weight: 800; font-size: 13px;
+  color: rgba(255,255,255,0.75); letter-spacing: 0.04em; text-transform: uppercase;
+}
+#movies-page-inner{ padding: 0; }
+
+/* ── search bar Movie/TV toggle + genre chips ── */
+.va-type-toggle{ display:flex; gap:6px; }
+.va-type-btn{
+  font-family:var(--cu-font,inherit); font-weight:700; font-size:12px;
+  color:rgba(255,255,255,0.6); background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08);
+  padding:8px 16px; border-radius:8px; cursor:pointer;
+}
+.va-type-btn.active{ background:rgba(255,58,48,0.16); border-color:rgba(255,58,48,0.4); color:#fff; }
+
+.va-search-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.va-search-row .epg-search-box{ flex:1 1 320px; }
+.va-search-play-btn{
+  flex-shrink:0; display:none; align-items:center; gap:6px;
+  font-family:var(--cu-font,inherit); font-weight:800; font-size:12.5px;
+  color:#fff; padding:13px 18px; border-radius:8px; cursor:pointer;
+  background:linear-gradient(135deg,#FF7A18 0%,#FF3B30 100%); border:none;
+}
+.va-search-play-btn:hover{ filter:brightness(1.1); }
+.va-search-hint{
+  font-size:11.5px; color:rgba(255,255,255,0.4); margin-top:-6px;
+}
+.va-search-hint b{ color:#FF6A1A; }
+
+.va-sort-row, .va-genre-row{ display:flex; gap:8px; flex-wrap:wrap; }
+.va-sort-btn, .va-genre-chip{
+  font-family:var(--cu-font,inherit); font-weight:700; font-size:11.5px;
+  color:rgba(255,255,255,0.55); background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+  padding:7px 13px; border-radius:999px; cursor:pointer; white-space:nowrap;
+}
+.va-sort-btn.active, .va-genre-chip.active{ background:rgba(0,217,255,0.14); border-color:rgba(0,217,255,0.35); color:#fff; }
+
+/* ── result grid (reuses .epg-no-results for empty states) ── */
+.va-grid{
+  display:grid !important; grid-template-columns:repeat(6,1fr) !important; gap:14px !important;
+}
+@media(max-width:1100px){ .va-grid{ grid-template-columns:repeat(4,1fr) !important; } }
+@media(max-width:640px){ .va-grid{ grid-template-columns:repeat(3,1fr) !important; gap:8px !important; } }
+@media(max-width:420px){ .va-grid{ grid-template-columns:repeat(2,1fr) !important; } }
+
+.va-movie-card{
+  position:relative; cursor:pointer; overflow:hidden; border-radius:8px !important;
+  background:rgba(255,255,255,0.035) !important; border:1px solid rgba(255,255,255,0.07) !important;
+  transition:transform .18s ease, border-color .18s ease;
+}
+.va-movie-card:hover{ transform:translateY(-3px); border-color:rgba(255,106,26,0.5) !important; }
+.va-movie-poster{ position:relative; width:100%; aspect-ratio:2/3; background:#0a0a0a; overflow:hidden; }
+.va-movie-poster img{ width:100%; height:100%; object-fit:cover; display:block; }
+.va-movie-rating{
+  position:absolute; top:6px; right:6px; z-index:1;
+  display:inline-flex; align-items:center; gap:3px;
+  font-size:10px !important; font-weight:800 !important;
+  padding:3px 7px !important; border-radius:5px !important;
+  background:linear-gradient(135deg,#FF7A18,#FF3B30) !important; color:#fff !important;
+}
+.va-movie-meta{ padding:9px 10px 10px; }
+.va-movie-title{
+  font-family:var(--font-display) !important; font-weight:800 !important; font-size:12.5px !important; color:#fff !important;
+  overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; line-height:1.3;
+}
+.va-movie-year{ font-size:10.5px !important; color:rgba(255,255,255,0.45) !important; margin-top:3px; font-weight:600; }
+
+.va-sentinel{ height:1px; }
+.va-loading-more{ text-align:center; padding:16px; font-size:12px; color:rgba(255,255,255,0.4); }
+
+/* ── TV season/episode picker — VidAPI's listing embed_url for TV is
+   show-level only, so this asks which episode before playing ── */
+#va-tv-modal{
+  display:none; position:fixed; inset:0; z-index:1600;
+  background:rgba(0,0,0,0.7); align-items:center; justify-content:center; padding:20px;
+}
+#va-tv-modal.open{ display:flex; }
+.va-tv-modal-box{
+  width:100%; max-width:300px; background:#0b0b0d; border:1px solid rgba(255,255,255,0.1);
+  border-radius:10px; padding:20px;
+}
+.va-tv-modal-title{ font-weight:800; color:#fff; font-size:14px; margin-bottom:14px; }
+.va-tv-modal-row{ display:flex; gap:10px; margin-bottom:14px; }
+.va-tv-modal-row label{ flex:1; }
+.va-tv-modal-row span{ display:block; font-size:11px; color:rgba(255,255,255,0.5); margin-bottom:4px; }
+.va-tv-modal-row input{
+  width:100%; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
+  border-radius:6px; padding:8px 10px; color:#fff; font-size:13px; outline:none;
+}
+.va-tv-modal-actions{ display:flex; gap:8px; justify-content:flex-end; }
+.va-tv-modal-actions button{ font-family:var(--cu-font,inherit); font-weight:700; font-size:12px; padding:8px 14px; border-radius:6px; cursor:pointer; border:none; }
+.va-tv-modal-cancel{ background:rgba(255,255,255,0.08); color:#fff; }
+.va-tv-modal-play{ background:linear-gradient(135deg,#FF7A18,#FF3B30); color:#fff; font-weight:800; }
+</style>
+
+<div id="movies-overlay">
+  <div id="movies-topbar">
+    <button id="movies-back" onclick="closeMoviesOverlay()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      Back
+    </button>
+    <span id="movies-topbar-title">🎬 Movies</span>
+  </div>
+  <div id="movies-page-inner">
+    <section class="section" id="movies-section">
+      <div class="section-inner">
+        <div class="epg">
+          <div class="epg-topbar">
+            <div class="epg-title-row">
+              <span class="epg-title" id="vaViewTitle">🎬 Trending Movies</span>
+              <span class="epg-count" id="vaMovieCount"></span>
+            </div>
+            <div class="va-type-toggle">
+              <button type="button" class="va-type-btn active" data-type="movie" onclick="vaSetType('movie', this)">Movie</button>
+              <button type="button" class="va-type-btn" data-type="tv" onclick="vaSetType('tv', this)">TV Show</button>
+            </div>
+          </div>
+
+          <div class="va-search-row">
+            <div class="epg-search-box">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input id="vaMovieSearchInput" type="text" placeholder="Search titles, or paste an IMDB/TMDB ID…" autocomplete="off" oninput="vaFilterMovies()">
+              <button type="button" class="epg-search-clear" id="vaMovieSearchClear" onclick="vaClearMovieSearch()" aria-label="Clear search">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <button type="button" class="va-search-play-btn" id="vaSearchPlayBtn" onclick="vaPlayFromSearch()">▶ Play ID</button>
+          </div>
+          <div class="va-search-hint">Can't find your movie or show? Grab its <b>tt…</b> (IMDB) or numeric (TMDB) ID and paste it in the search box above — a ▶ Play button will appear.</div>
+
+          <div class="va-sort-row">
+            <button type="button" class="va-sort-btn active" data-sort="popularity" onclick="vaSetSort('popularity', this)">Trending</button>
+            <button type="button" class="va-sort-btn" data-sort="rating" onclick="vaSetSort('rating', this)">Top Rated</button>
+          </div>
+
+          <div class="va-genre-row" id="vaGenreRow">
+            <button type="button" class="va-genre-chip active" data-genre="" onclick="vaSetGenre('', this)">All</button>
+            <button type="button" class="va-genre-chip" data-genre="Action" onclick="vaSetGenre('Action', this)">Action</button>
+            <button type="button" class="va-genre-chip" data-genre="Comedy" onclick="vaSetGenre('Comedy', this)">Comedy</button>
+            <button type="button" class="va-genre-chip" data-genre="Horror" onclick="vaSetGenre('Horror', this)">Horror</button>
+            <button type="button" class="va-genre-chip" data-genre="Sci-Fi" onclick="vaSetGenre('Sci-Fi', this)">Sci-Fi</button>
+            <button type="button" class="va-genre-chip" data-genre="Thriller" onclick="vaSetGenre('Thriller', this)">Thriller</button>
+            <button type="button" class="va-genre-chip" data-genre="Drama" onclick="vaSetGenre('Drama', this)">Drama</button>
+            <button type="button" class="va-genre-chip" data-genre="Animation" onclick="vaSetGenre('Animation', this)">Anime</button>
+            <button type="button" class="va-genre-chip" data-genre="Documentary" onclick="vaSetGenre('Documentary', this)">Documentary</button>
+            <button type="button" class="va-genre-chip" data-genre="Fantasy" onclick="vaSetGenre('Fantasy', this)">Fantasy</button>
+          </div>
+
+          <div class="va-grid" id="vaMovieGrid"></div>
+          <div class="va-sentinel" id="vaSentinel"></div>
+          <div class="va-loading-more" id="vaLoadingMore" style="display:none;">Loading more…</div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- Season/Episode picker for TV items (listing API's embed_url is show-level only) -->
+<div id="va-tv-modal">
+  <div class="va-tv-modal-box">
+    <div class="va-tv-modal-title" id="vaTvModalTitle">Pick an episode</div>
+    <div class="va-tv-modal-row">
+      <label><span>Season</span><input id="vaTvSeasonInput" type="number" min="1" value="1"></label>
+      <label><span>Episode</span><input id="vaTvEpisodeInput" type="number" min="1" value="1"></label>
+    </div>
+    <div class="va-tv-modal-actions">
+      <button type="button" class="va-tv-modal-cancel" onclick="vaCloseTvModal()">Cancel</button>
+      <button type="button" class="va-tv-modal-play" onclick="vaPlayTvModal()">▶ Play</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════════════
      STREAM PLAYER — every Live TV channel opens here as a full-screen
      16:9 iframe embed on the same page, instead of redirecting/opening
      a new tab. Sits above #livetv-overlay so it layers cleanly on top.
@@ -7039,6 +7251,293 @@ function closeLiveTV(){
   document.getElementById('livetv-overlay').classList.remove('open');
   document.body.style.overflow = '';
 }
+
+// ══════════════════════════════════════════════════════════════════════
+// MOVIES — powered by VidAPI's public listing + embed API.
+// /movies/latest/page-{n}.json and /tvshows/latest/page-{n}.json each
+// return 24 titles/page (title, year, poster, rating, genre, popularity,
+// embed_url). VidAPI doesn't document real "trending"/"top rated"
+// endpoints, so those are the same paged pool re-sorted client-side by
+// popularity / rating. Genre chips filter by the item's own "genre"
+// string. Scrolling to the bottom auto-loads the next page (infinite
+// scroll) instead of a manual "Load More" button.
+// Every search bar carries a paste-an-ID fallback: typing/pasting an
+// IMDB (tt…) or TMDB (numeric) ID reveals a ▶ Play button that opens
+// it directly — for anything not in the loaded lists. All playback,
+// loaded or pasted, goes through openStreamPlayer() as an iframe embed.
+// ══════════════════════════════════════════════════════════════════════
+const VIDAPI_LIST_BASE = 'https://vidapi.ru';
+const VIDAPI_EMBED_BASE = 'https://vaplayer.ru';
+
+const vaPools = {
+  movie: { all: [], page: 1, totalPages: null, loading: false },
+  tv:    { all: [], page: 1, totalPages: null, loading: false }
+};
+let vaCurrentType = 'movie';      // 'movie' | 'tv'
+let vaCurrentSort = 'popularity'; // 'popularity' | 'rating'
+let vaCurrentGenre = '';
+let vaSentinelObserver = null;
+let vaPendingTvItem = null;       // { id, title } — for the season/episode modal
+
+function openMoviesOverlay(){
+  document.getElementById('movies-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  window.scrollTo(0,0);
+  document.querySelectorAll('[data-sxtab]').forEach(el => el.classList.toggle('active', el.dataset.sxtab === 'movies'));
+  if (typeof window.vaInit === 'function'){
+    window.vaInit();
+    window.vaInit = null;
+  }
+}
+function closeMoviesOverlay(){
+  document.getElementById('movies-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+async function vaFetchPage(type, page){
+  const path = type === 'tv' ? 'tvshows' : 'movies';
+  const r = await fetch(`${VIDAPI_LIST_BASE}/${path}/latest/page-${page}.json`);
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}
+
+async function vaLoadMoreCurrent(){
+  const pool = vaPools[vaCurrentType];
+  if (pool.loading) return;
+  if (pool.totalPages !== null && pool.page > pool.totalPages) return;
+  pool.loading = true;
+  const loadingEl = document.getElementById('vaLoadingMore');
+  if (loadingEl) loadingEl.style.display = '';
+  try {
+    const data = await vaFetchPage(vaCurrentType, pool.page);
+    pool.totalPages = data.total_pages;
+    pool.all.push(...(data.items || []));
+    pool.page++;
+    vaRenderMovies();
+  } catch (e) {
+    console.warn('VidAPI fetch failed:', e);
+  }
+  pool.loading = false;
+  if (loadingEl) loadingEl.style.display = 'none';
+}
+
+// ── Movie / TV toggle, Trending / Top Rated sort, genre chips ──
+function vaSetType(type, el){
+  vaCurrentType = type;
+  document.querySelectorAll('.va-type-btn').forEach(b => b.classList.toggle('active', b === el));
+  vaUpdateViewTitle();
+  if (vaPools[vaCurrentType].all.length === 0) vaLoadMoreCurrent();
+  else vaRenderMovies();
+}
+function vaSetSort(sort, el){
+  vaCurrentSort = sort;
+  document.querySelectorAll('.va-sort-btn').forEach(b => b.classList.toggle('active', b === el));
+  vaUpdateViewTitle();
+  vaRenderMovies();
+}
+function vaSetGenre(genre, el){
+  vaCurrentGenre = genre;
+  document.querySelectorAll('.va-genre-chip').forEach(b => b.classList.toggle('active', b === el));
+  vaRenderMovies();
+}
+function vaUpdateViewTitle(){
+  const el = document.getElementById('vaViewTitle');
+  if (!el) return;
+  const typeLabel = vaCurrentType === 'tv' ? 'TV Shows' : 'Movies';
+  const sortLabel = vaCurrentSort === 'rating' ? 'Top Rated' : 'Trending';
+  el.textContent = `🎬 ${sortLabel} ${typeLabel}`;
+}
+
+// ── Search bar + paste-an-ID fallback ──
+function vaDetectId(raw){
+  raw = (raw || '').trim();
+  const imdb = raw.match(/tt\d{5,}/i);
+  if (imdb) return { id: imdb[0], kind: 'imdb' };
+  if (/^\d{2,8}$/.test(raw)) return { id: raw, kind: 'tmdb' };
+  return null;
+}
+function vaFilterMovies(){
+  const input = document.getElementById('vaMovieSearchInput');
+  const raw = input ? input.value : '';
+  const clearBtn = document.getElementById('vaMovieSearchClear');
+  if (clearBtn) clearBtn.classList.toggle('show', !!raw.trim());
+  const idInfo = vaDetectId(raw);
+  const playBtn = document.getElementById('vaSearchPlayBtn');
+  if (playBtn) playBtn.style.display = idInfo ? 'flex' : 'none';
+  vaRenderMovies(idInfo ? '' : raw.toLowerCase().trim());
+}
+function vaClearMovieSearch(){
+  const input = document.getElementById('vaMovieSearchInput');
+  if (!input) return;
+  input.value = '';
+  vaFilterMovies();
+  input.focus();
+}
+function vaPlayFromSearch(){
+  const input = document.getElementById('vaMovieSearchInput');
+  const idInfo = vaDetectId(input ? input.value : '');
+  if (!idInfo) { vaToast('Enter a valid IMDB (tt…) or TMDB (numeric) ID.'); return; }
+  if (vaCurrentType === 'tv') {
+    vaPendingTvItem = { id: idInfo.id, title: idInfo.id };
+    vaOpenTvModal();
+  } else {
+    openStreamPlayer(vaBuildEmbedUrl(`${VIDAPI_EMBED_BASE}/embed/movie/${idInfo.id}`), idInfo.id);
+  }
+}
+
+// ── Render ──
+function vaRenderMovies(q){
+  if (q === undefined) {
+    const input = document.getElementById('vaMovieSearchInput');
+    const raw = input ? input.value : '';
+    q = vaDetectId(raw) ? '' : raw.toLowerCase().trim();
+  }
+  const grid = document.getElementById('vaMovieGrid');
+  const countEl = document.getElementById('vaMovieCount');
+  if (!grid) return;
+
+  const pool = vaPools[vaCurrentType];
+  let items = pool.all;
+  if (vaCurrentGenre) {
+    const g = vaCurrentGenre.toLowerCase();
+    items = items.filter(m => (m.genre || '').toLowerCase().includes(g));
+  }
+  if (q) items = items.filter(m => (m.title || '').toLowerCase().includes(q));
+  items = [...items].sort((a, b) => (parseFloat(b[vaCurrentSort]) || 0) - (parseFloat(a[vaCurrentSort]) || 0));
+
+  if (countEl) countEl.textContent = pool.all.length ? `${items.length} of ${pool.all.length} loaded` : '';
+
+  grid.innerHTML = '';
+  if (!items.length) {
+    grid.innerHTML = pool.all.length
+      ? '<div class="epg-no-results">No titles match that filter yet — keep scrolling to load more, or try a different search/genre.</div>'
+      : '<div class="epg-no-results">Loading…</div>';
+    return;
+  }
+
+  items.forEach(m => {
+    const card = document.createElement('div');
+    card.className = 'va-movie-card';
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    const label = m.title + (m.year ? ' (' + m.year + ')' : '');
+    card.onclick = () => {
+      if (vaCurrentType === 'tv') {
+        vaPendingTvItem = { id: m.tmdb_id || m.imdb_id, title: m.title };
+        vaOpenTvModal(label);
+      } else {
+        openStreamPlayer(vaBuildEmbedUrl(m.embed_url), label);
+      }
+    };
+    card.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.onclick(); } };
+    card.innerHTML = `
+      <div class="va-movie-poster">
+        <img src="${m.poster_url || ''}" alt="${m.title || ''}" loading="lazy" onerror="this.style.display='none'">
+        ${m.rating ? `<span class="va-movie-rating">★ ${m.rating}</span>` : ''}
+      </div>
+      <div class="va-movie-meta">
+        <div class="va-movie-title">${m.title || ''}</div>
+        <div class="va-movie-year">${m.year || ''}</div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+// ── TV season/episode picker — the listing API's embed_url for TV
+// items is show-level only, so this asks which episode before playing ──
+function vaOpenTvModal(label){
+  const titleEl = document.getElementById('vaTvModalTitle');
+  if (titleEl) titleEl.textContent = label || (vaPendingTvItem && vaPendingTvItem.title) || 'Pick an episode';
+  document.getElementById('vaTvSeasonInput').value = 1;
+  document.getElementById('vaTvEpisodeInput').value = 1;
+  document.getElementById('va-tv-modal').classList.add('open');
+}
+function vaCloseTvModal(){
+  document.getElementById('va-tv-modal').classList.remove('open');
+  vaPendingTvItem = null;
+}
+function vaPlayTvModal(){
+  if (!vaPendingTvItem) return;
+  const season = parseInt(document.getElementById('vaTvSeasonInput').value, 10) || 1;
+  const episode = parseInt(document.getElementById('vaTvEpisodeInput').value, 10) || 1;
+  const label = `${vaPendingTvItem.title} S${season}E${episode}`;
+  const url = `${VIDAPI_EMBED_BASE}/embed/tv/${vaPendingTvItem.id}/${season}/${episode}`;
+  vaCloseTvModal();
+  openStreamPlayer(vaBuildEmbedUrl(url), label);
+}
+
+// ── Player Settings — skin + colors + hide toggles, persisted in
+// localStorage, applied to every VidAPI embed URL this tab opens.
+// Only touches vaplayer.ru URLs, never other stream sources on the site. ──
+function vaGetSettings(){
+  try { return JSON.parse(localStorage.getItem('va_player_settings') || '{}'); }
+  catch (e) { return {}; }
+}
+function vaSaveSettings(){
+  const s = {
+    skin: document.getElementById('vaSkinSelect').value,
+    color: document.getElementById('vaColorAccent').value.replace('#',''),
+    secondaryColor: document.getElementById('vaColorSecondary').value.replace('#',''),
+    iconColor: document.getElementById('vaColorIcon').value.replace('#',''),
+    hideTitle: document.getElementById('vaHideTitle').checked,
+    hideControls: document.getElementById('vaHideControls').checked
+  };
+  try { localStorage.setItem('va_player_settings', JSON.stringify(s)); } catch (e) { /* ignore */ }
+}
+function vaResetSettings(){
+  try { localStorage.removeItem('va_player_settings'); } catch (e) { /* ignore */ }
+  vaApplySettingsToForm({});
+}
+function vaApplySettingsToForm(s){
+  document.getElementById('vaSkinSelect').value = s.skin || '';
+  document.getElementById('vaColorAccent').value = '#' + (s.color || 'ff6a1a');
+  document.getElementById('vaColorSecondary').value = '#' + (s.secondaryColor || '101010');
+  document.getElementById('vaColorIcon').value = '#' + (s.iconColor || 'ffffff');
+  document.getElementById('vaHideTitle').checked = !!s.hideTitle;
+  document.getElementById('vaHideControls').checked = !!s.hideControls;
+}
+function vaToggleSettings(){
+  document.getElementById('va-settings-panel').classList.toggle('open');
+}
+function vaBuildEmbedUrl(url){
+  if (!/vaplayer\.ru/i.test(url)) return url; // never touch non-VidAPI stream URLs
+  const s = vaGetSettings();
+  const params = new URLSearchParams();
+  if (s.skin) params.set('skin', s.skin);
+  if (s.color) params.set('color', s.color);
+  if (s.secondaryColor) params.set('secondaryColor', s.secondaryColor);
+  if (s.iconColor) params.set('iconColor', s.iconColor);
+  if (s.hideTitle) params.set('showTitle', '0');
+  if (s.hideControls) params.set('controls', 'false');
+  const qs = params.toString();
+  if (!qs) return url;
+  return url + (url.includes('?') ? '&' : '?') + qs;
+}
+
+// ── Small reusable toast (reuses #sx-cast-toast's floating-bubble look) ──
+function vaToast(message){
+  if (typeof sxCastToast === 'function') sxCastToast(message);
+}
+
+// ── Infinite scroll — loads the next page of whichever pool is active
+// once the user scrolls near the bottom, instead of a manual button ──
+function vaInitSentinel(){
+  const sentinel = document.getElementById('vaSentinel');
+  if (!sentinel || vaSentinelObserver) return;
+  vaSentinelObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => { if (entry.isIntersecting) vaLoadMoreCurrent(); });
+  }, { rootMargin: '400px' });
+  vaSentinelObserver.observe(sentinel);
+}
+
+// ── First-open init, wired from openMoviesOverlay() ──
+window.vaInit = function(){
+  vaApplySettingsToForm(vaGetSettings());
+  vaInitSentinel();
+  vaSetType('movie', document.querySelector('.va-type-btn[data-type="movie"]'));
+};
+
 // Sheet-supplied match/hero/live-tv links point at famcodexwebs.pages.dev
 // with a country path — /IN?...&q=1080 for India (1080p is India-only) or
 // /WW?id=... for worldwide. For visitors outside India, an /IN link is
