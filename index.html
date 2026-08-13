@@ -2368,10 +2368,6 @@ document.addEventListener('DOMContentLoaded', function(){
         <img class="btn-telegram-icon" src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Telegram_2019_Logo.svg/960px-Telegram_2019_Logo.svg.png" alt="Telegram">
         <span class="btn-telegram-label">Telegram</span>
       </a>
-      <button type="button" class="btn-login-nav" onclick="openVipPlayer()" aria-label="VIP Login" title="VIP Login">
-        <span class="btn-login-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg></span>
-        <span class="btn-login-label">VIP Login</span>
-      </button>
     </div>
     <div class="nav-device-info" id="nav-device-info" title="This device's name and ID">
       <span class="nav-device-name" id="nav-device-name"></span>
@@ -3724,8 +3720,8 @@ window.sxSwitchTab = sxSwitchTab;
     <div class="footer-vip">
       <div class="footer-vip-icon"><svg viewBox="0 0 24 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2 6.5a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm20 0a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm-10-2a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zM2 7.8l4.6 3.4L12 5l5.4 6.2L22 7.8 20 17H4L2 7.8z"/></svg></div>
       <div class="footer-vip-text">
-        <div class="footer-vip-title">Unlock VIP Access</div>
-        <p class="footer-vip-sub">Ad-free streams, priority support &amp; exclusive channels. Join our Discord and ask staff for your VIP role.</p>
+        <div class="footer-vip-title">VIP Discontinued</div>
+        <p class="footer-vip-sub">New VIP sign-ups are no longer available. Existing VIP members keep their access as normal.</p>
       </div>
       <div class="footer-vip-btns">
         <button type="button" class="btn-get-vip" onclick="openVip()">
@@ -4027,7 +4023,6 @@ function renderNav(rows) {
   });
   // VIP — hamburger drawer only (desktop already has the gold header button)
   mHtml += `<a href="#" class="drawer-vip" onclick="closeDrawer();openVip();return false;"><span class="drawer-vip-icon"><svg viewBox="0 0 24 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2 6.5a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm20 0a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm-10-2a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zM2 7.8l4.6 3.4L12 5l5.4 6.2L22 7.8 20 17H4L2 7.8z"/></svg></span>Get VIP</a>`;
-  mHtml += `<a href="#" class="drawer-login" onclick="closeDrawer();openVipPlayer();return false;"><span class="drawer-login-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg></span>VIP Login</a>`;
   desktop.innerHTML = dHtml;
   drawerNav.innerHTML = mHtml;
   // MOVIES — reuses the nav-movies-link / drawer-movies styling that was
@@ -6585,6 +6580,30 @@ function closeAdminChatDiscordPopup(){
 }
 .va-search-hint b{ color:#FF6A1A; }
 
+/* ── TT ID guide — always visible, no click needed, explains how to find
+   and use an IMDB (tt…) or TMDB (numeric) ID to play something that isn't
+   in the loaded Trending/Top Rated lists. ── */
+.va-id-guide{
+  background: rgba(255,106,26,0.06); border: 1px solid rgba(255,106,26,0.22);
+  border-radius: 10px; padding: 12px 14px; margin-top: -6px;
+}
+.va-id-guide-title{
+  font-family: var(--cu-font,inherit); font-weight: 800; font-size: 12px;
+  color: #FF6A1A; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;
+}
+.va-id-guide-steps{
+  margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 3px;
+}
+.va-id-guide-steps li{
+  font-family: var(--cu-font,inherit); font-size: 11.5px; line-height: 1.5;
+  color: rgba(255,255,255,0.55);
+}
+.va-id-guide-steps b{ color: #fff; }
+.va-id-guide-steps code{
+  background: rgba(255,255,255,0.08); color: #FF6A1A; padding: 1px 5px;
+  border-radius: 4px; font-family: monospace; font-size: 11px;
+}
+
 .va-sort-row, .va-genre-row{ display:flex; gap:8px; flex-wrap:wrap; }
 .va-sort-btn, .va-genre-chip{
   font-family:var(--cu-font,inherit); font-weight:700; font-size:11.5px;
@@ -6684,7 +6703,15 @@ function closeAdminChatDiscordPopup(){
             </div>
             <button type="button" class="va-search-play-btn" id="vaSearchPlayBtn" onclick="vaPlayFromSearch()">▶ Play ID</button>
           </div>
-          <div class="va-search-hint">Can't find your movie or show? Grab its <b>tt…</b> (IMDB) or numeric (TMDB) ID and paste it in the search box above — a ▶ Play button will appear.</div>
+          <div class="va-id-guide">
+            <div class="va-id-guide-title">📎 How to use an IMDB/TMDB ID</div>
+            <ol class="va-id-guide-steps">
+              <li>Search the title on IMDb or TMDB.</li>
+              <li>Copy the ID from its page URL — IMDb looks like <code>tt1234567</code>, TMDB is just numbers like <code>27205</code>.</li>
+              <li>Paste it into the search box above.</li>
+              <li>A <b>▶ Play ID</b> button appears — tap it to play instantly, even if the title isn't in the list below.</li>
+            </ol>
+          </div>
 
           <div class="va-sort-row">
             <button type="button" class="va-sort-btn active" data-sort="popularity" onclick="vaSetSort('popularity', this)">Trending</button>
@@ -7356,6 +7383,8 @@ function vaDetectId(raw){
   if (/^\d{2,8}$/.test(raw)) return { id: raw, kind: 'tmdb' };
   return null;
 }
+let vaDeepSearchToken = 0;
+
 function vaFilterMovies(){
   const input = document.getElementById('vaMovieSearchInput');
   const raw = input ? input.value : '';
@@ -7364,7 +7393,48 @@ function vaFilterMovies(){
   const idInfo = vaDetectId(raw);
   const playBtn = document.getElementById('vaSearchPlayBtn');
   if (playBtn) playBtn.style.display = idInfo ? 'flex' : 'none';
-  vaRenderMovies(idInfo ? '' : raw.toLowerCase().trim());
+  const q = idInfo ? '' : raw.toLowerCase().trim();
+  const myToken = ++vaDeepSearchToken; // cancels any deep search still running from a previous keystroke
+  vaRenderMovies(q);
+  // Typed a name (not an ID) and nothing in the pages already loaded matches
+  // it — auto-search further into the listing API in the background until
+  // a match turns up or a reasonable number of extra pages is exhausted, no
+  // extra click needed.
+  if (!idInfo && q.length >= 2) {
+    const pool = vaPools[vaCurrentType];
+    const alreadyHasMatch = pool.all.some(m => (m.title || '').toLowerCase().includes(q));
+    if (!alreadyHasMatch) vaDeepSearch(q, myToken);
+  }
+}
+async function vaDeepSearch(query, myToken){
+  const pool = vaPools[vaCurrentType];
+  const countEl = document.getElementById('vaMovieCount');
+  const grid = document.getElementById('vaMovieGrid');
+  const MAX_EXTRA_PAGES = 40; // ~960 more titles beyond whatever's already loaded
+  let fetched = 0;
+  while (fetched < MAX_EXTRA_PAGES) {
+    if (myToken !== vaDeepSearchToken) return; // superseded by a newer search
+    if (pool.totalPages !== null && pool.page > pool.totalPages) break; // reached the end of the library
+    if (countEl) countEl.textContent = `searching library for "${query}"…`;
+    try {
+      const data = await vaFetchPage(vaCurrentType, pool.page);
+      pool.totalPages = data.total_pages;
+      pool.all.push(...(data.items || []));
+      pool.page++;
+      fetched++;
+    } catch (e) {
+      console.warn('Deep search fetch failed:', e);
+      break;
+    }
+    if (myToken !== vaDeepSearchToken) return;
+    const found = pool.all.some(m => (m.title || '').toLowerCase().includes(query));
+    if (found) { vaRenderMovies(query); return; }
+  }
+  if (myToken !== vaDeepSearchToken) return;
+  vaRenderMovies(query);
+  if (grid && !grid.children.length) {
+    grid.innerHTML = `<div class="epg-no-results">No titles matching "${query}" found in the library. Try pasting its IMDB (tt…) or TMDB ID instead.</div>`;
+  }
 }
 function vaClearMovieSearch(){
   const input = document.getElementById('vaMovieSearchInput');
@@ -7537,6 +7607,20 @@ window.vaInit = function(){
   vaInitSentinel();
   vaSetType('movie', document.querySelector('.va-type-btn[data-type="movie"]'));
 };
+
+// ── Background preload — fetches the first page of movies as soon as the
+// site is idle after load, so by the time someone actually taps the
+// Movies tab the grid is already there; no fetch-on-click delay, no
+// extra clicks needed to trigger loading. TV shows still load on demand
+// when that toggle is used, same as before. ──
+(function(){
+  function preload(){ if (vaPools.movie.all.length === 0) vaLoadMoreCurrent(); }
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(preload, { timeout: 4000 });
+  } else {
+    setTimeout(preload, 1500);
+  }
+})();
 
 // Sheet-supplied match/hero/live-tv links point at famcodexwebs.pages.dev
 // with a country path — /IN?...&q=1080 for India (1080p is India-only) or
@@ -7842,50 +7926,17 @@ function closeFifa(){
     </button>
     <span id="vip-topbar-title">VIP Access</span>
     <div style="flex:1"></div>
-    <button type="button" id="vip-login-topbtn" onclick="closeVip();openVipPlayer();">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>
-      Already VIP? Login
-    </button>
   </div>
 
   <div id="vip-page-inner">
+    <div id="vip-discontinued-banner" style="display:flex;align-items:center;gap:10px;background:rgba(255,59,48,0.12);border:1px solid rgba(255,59,48,0.4);color:#FF6B60;font-family:var(--cu-font,inherit);font-weight:700;font-size:13.5px;line-height:1.5;padding:12px 16px;border-radius:10px;margin-bottom:24px;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span>VIP Discontinued — new VIP sign-ups are no longer available. Existing VIP members keep their access as normal.</span>
+    </div>
     <div id="vip-hero">
       <div id="vip-crown"><svg viewBox="0 0 24 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2 6.5a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm20 0a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm-10-2a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zM2 7.8l4.6 3.4L12 5l5.4 6.2L22 7.8 20 17H4L2 7.8z"/></svg></div>
       <div id="vip-title">Get VIP Access</div>
-      <div id="vip-sub">VIP unlocks the full SX Sports experience — see exactly how it compares below, what you get, and how to claim it.</div>
-    </div>
-
-    <div id="vip-pricing">
-      <div class="vip-section-label">Choose Your Plan</div>
-      <div class="vip-price-grid">
-        <div class="vip-price-card">
-          <div class="vip-price-name">Monthly</div>
-          <div class="vip-price-amount">₹199<span>/month</span></div>
-          <div class="vip-price-tier">VIP</div>
-        </div>
-        <div class="vip-price-card">
-          <div class="vip-price-name">3 Months</div>
-          <div class="vip-price-amount">₹299</div>
-          <div class="vip-price-tier">VIP</div>
-        </div>
-        <div class="vip-price-card">
-          <div class="vip-price-name">6 Months</div>
-          <div class="vip-price-amount">₹599</div>
-          <div class="vip-price-tier">VIP</div>
-        </div>
-        <div class="vip-price-card">
-          <div class="vip-price-name">Lifetime</div>
-          <div class="vip-price-amount">₹999</div>
-          <div class="vip-price-tier">VIP</div>
-        </div>
-        <div class="vip-price-card vip-price-card-gold">
-          <div class="vip-price-badge">BEST VALUE</div>
-          <div class="vip-price-name">Lifetime</div>
-          <div class="vip-price-amount">₹1199</div>
-          <div class="vip-price-tier vip-price-tier-gold">VIP 2.0</div>
-        </div>
-      </div>
-      <p style="font-family:var(--cu-font,inherit);font-size:11px;line-height:1.5;color:rgba(255,255,255,0.4);margin-top:10px;">All prices in INR. Lifetime VIP 2.0 is a one-time payment and includes exclusive delivery of the RISHi.EV IPTV Box.</p>
+      <div id="vip-sub">VIP sign-ups are discontinued — the comparison below is kept for reference only.</div>
     </div>
 
     <div id="vip-compare">
@@ -7948,19 +7999,6 @@ function closeFifa(){
       </ul>
     </div>
 
-    <div id="vip-steps">
-      <div class="vip-section-label">How to get it</div>
-      <ol>
-        <li><span class="vip-step-num">1</span> Join our Discord server</li>
-        <li><span class="vip-step-num">2</span> Open a ticket / post in the request channel</li>
-        <li><span class="vip-step-num">3</span> Ask a staff member to grant your VIP role</li>
-      </ol>
-    </div>
-
-    <a id="vip-discord-btn" href="https://discord.gg/w46C6mQgrY" target="_blank" rel="noopener" onclick="closeVip()">
-      <svg viewBox="0 0 24 18" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M20.317 1.492c-1.53-.703-3.17-1.222-4.885-1.49a.077.077 0 00-.079.036c-.21.375-.444.865-.608 1.25-1.844-.276-3.68-.276-5.487 0-.164-.394-.406-.875-.617-1.25a.08.08 0 00-.079-.037c-1.714.27-3.354.788-4.885 1.49a.07.07 0 00-.032.028C.533 6.09-.32 10.545.099 14.946a.08.08 0 00.031.056c1.998 1.468 3.936 2.361 5.837 2.95a.078.078 0 00.084-.028c.45-.615.85-1.263 1.194-1.945a.076.076 0 00-.041-.106c-.636-.24-1.24-.535-1.821-.87a.077.077 0 01-.008-.128c.123-.092.245-.188.362-.285a.075.075 0 01.078-.01c3.818 1.744 7.955 1.744 11.727 0a.075.075 0 01.079.01c.117.097.239.193.363.285a.077.077 0 01-.006.128c-.582.335-1.185.63-1.822.87a.076.076 0 00-.04.107c.35.68.749 1.328 1.192 1.943a.077.077 0 00.084.028c1.9-.588 3.837-1.481 5.837-2.949a.077.077 0 00.031-.055c.5-5.094-.838-9.51-3.548-13.427a.06.06 0 00-.031-.029zM8.02 12.278c-1.182 0-2.157-1.085-2.157-2.419 0-1.333.955-2.418 2.157-2.418 1.21 0 2.176 1.094 2.157 2.418 0 1.334-.955 2.419-2.157 2.419zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.418 2.157-2.418 1.21 0 2.176 1.094 2.157 2.418 0 1.334-.946 2.419-2.157 2.419z"/></svg>
-      Ask for VIP in Discord
-    </a>
   </div>
 </div>
 
