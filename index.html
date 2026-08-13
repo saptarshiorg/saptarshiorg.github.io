@@ -47,6 +47,10 @@
   ▸ Replace YOUR_SPREADSHEET_ID_HERE with your Google Sheets ID
   ▸ Then publish your sheet: File → Share → Publish to web → CSV
   ▸ LIVE CHANNELS tab now has a "group" column → Star Sports | Sony Sports | fox | FanCode | International | ZEE | News | sky | espn | tnt | willow | Other
+  ▸ LIVE CHANNELS tab also reads a "country" column — the flag shown on each
+    Live TV card comes from this column (full country name like "India" or
+    "United States", or a bare 2-letter code like "IN"/"US"). Leave it blank
+    to show no flag on that card.
   ▸ New tab "PANELS" controls extra panels (FIFA, WT20, future ones):
       columns: active_true_false | panel_id | tab_name | display_title
       Set active_true_false = FALSE on a row to hide that whole panel.
@@ -1344,33 +1348,33 @@ header.scrolled {
 .whatsapp-card {
   position: relative; overflow: hidden;
   display: flex; align-items: center; gap: 24px;
-  background: linear-gradient(135deg,rgba(37,211,102,0.12) 0%,rgba(8,8,9,0.85) 60%);
+  background: linear-gradient(135deg,rgba(224,21,140,0.12) 0%,rgba(8,8,9,0.85) 60%);
   backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
   border-radius: 8px; padding: 28px 32px;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.55), 0 0 50px rgba(37,211,102,0.08);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.55), 0 0 50px rgba(224,21,140,0.08);
 }
-.whatsapp-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 45% 90% at 0% 50%,rgba(37,211,102,0.20) 0%,transparent 60%); pointer-events: none; }
+.whatsapp-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 45% 90% at 0% 50%,rgba(224,21,140,0.20) 0%,transparent 60%); pointer-events: none; }
 .whatsapp-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg,rgba(255,255,255,0.05) 0%,transparent 40%); pointer-events: none; border-radius: inherit; }
-.whatsapp-icon-badge { position: relative; flex-shrink: 0; width: 62px; height: 62px; border-radius: 8px; background: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 24px rgba(37,211,102,0.5); }
+.whatsapp-icon-badge { position: relative; flex-shrink: 0; width: 62px; height: 62px; border-radius: 8px; background: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 24px rgba(224,21,140,0.5); }
 .whatsapp-icon-badge img { width: 40px; height: 40px; object-fit: contain; }
-.whatsapp-online-dot { position: absolute; bottom: -3px; right: -3px; width: 14px; height: 14px; border-radius: 50%; background: #25D366; border: 2px solid var(--s0); animation: pulseDot 1.8s infinite; }
+.whatsapp-online-dot { position: absolute; bottom: -3px; right: -3px; width: 14px; height: 14px; border-radius: 50%; background: #E0158C; border: 2px solid var(--s0); animation: pulseDot 1.8s infinite; }
 .whatsapp-body { flex: 1; min-width: 0; position: relative; z-index: 1; }
 .whatsapp-title { font-family: var(--font-display); font-weight: 800; font-size: 19px; color: var(--white); letter-spacing: 0.2px; margin-bottom: 5px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.whatsapp-title .live-pill { font-size: 9px; font-weight: 700; background: rgba(37,211,102,0.12); color: #25D366; border-radius: 8px; padding: 3px 9px; letter-spacing: 0.5px; }
+.whatsapp-title .live-pill { font-size: 9px; font-weight: 700; background: rgba(224,21,140,0.12); color: #E0158C; border-radius: 8px; padding: 3px 9px; letter-spacing: 0.5px; }
 .whatsapp-sub { font-size: 13px; color: var(--text-muted); line-height: 1.55; margin-bottom: 12px; max-width: 520px; }
 .whatsapp-tags { display: flex; gap: 7px; flex-wrap: wrap; }
 .whatsapp-tag { font-family: var(--font-display); font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.80); background: var(--s2); border-radius: 8px; padding: 5px 12px; display: flex; align-items: center; gap: 5px; }
 .whatsapp-join-btn {
   flex-shrink: 0; position: relative; z-index: 1;
   display: flex; align-items: center; gap: 8px;
-  background: #fff; color: #128C4F;
+  background: #fff; color: #C2178A;
   font-family: var(--font-display); font-weight: 800; font-size: 14px; letter-spacing: 0.4px;
   padding: 13px 24px; border-radius: 8px; text-decoration: none; white-space: nowrap;
-  box-shadow: 0 6px 20px rgba(37,211,102,0.45);
+  box-shadow: 0 6px 20px rgba(224,21,140,0.45);
   transition: transform 0.22s var(--spring), box-shadow 0.22s var(--ease);
 }
 .whatsapp-join-btn img { width: 22px; height: 22px; flex-shrink: 0; object-fit: contain; }
-.whatsapp-join-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(37,211,102,0.6); background: #eafaf0; }
+.whatsapp-join-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(224,21,140,0.6); background: #ffe6f5; }
 
 @media(max-width:900px) {
   .whatsapp-card { flex-direction: column; text-align: center; padding: 26px 20px; gap: 14px; }
@@ -1824,7 +1828,7 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
 @media(max-width:900px) {
   .mobile-tabbar {
     display: flex; align-items: stretch; justify-content: space-around;
-    position: fixed; left: 0; right: 0; bottom: 0; z-index: 350;
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 1220;
     height: 60px; padding-bottom: env(safe-area-inset-bottom, 0);
     background: rgba(7,9,15,0.88);
     backdrop-filter: blur(22px) saturate(1.6);
@@ -2661,7 +2665,7 @@ document.addEventListener('DOMContentLoaded', function(){
   box-shadow:
     0 1px 0 rgba(255,255,255,0.22) inset,
     0 -3px 6px rgba(0,0,0,0.45) inset,
-    0 6px 16px rgba(120,200,40,0.30) !important;
+    0 6px 16px rgba(240,79,176,0.30) !important;
 }
 </style>
 
@@ -2962,6 +2966,22 @@ window.addEventListener('resize', () => {
   sxResizeT = setTimeout(() => sxUpdateHeroOverride(window.__sxCurrentTab), 150);
 });
 
+// ── Cross-section nav bar: tapping any bottom-tab / quick-strip button now
+//    closes whichever full-screen section overlay is currently open before
+//    opening the new one, so switching sections never needs the old Back
+//    button first. Each open*() below calls this once, right at the start.
+//    FanCode / Prime / Willow stay outside this: they're plain embed pages,
+//    keep their own in-page Back button, and sit above the nav bar (so the
+//    nav bar isn't shown while inside them).
+function sxCloseAllOverlays(){
+  const ids = ['livetv-overlay','movies-overlay','fifa-overlay','fancode-overlay','prime-overlay','willow-overlay'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('open');
+  });
+}
+window.sxCloseAllOverlays = sxCloseAllOverlays;
+
 function sxSwitchTab(name){
   if (name === 'fancode') { openFanCode(); return; }
   if (name === 'prime') { openPrime(); return; }
@@ -2970,6 +2990,9 @@ function sxSwitchTab(name){
   const panelMap = { matches:'matches-panel' };
   const targetId = panelMap[name];
   if (!targetId) return;
+
+  sxCloseAllOverlays();
+  document.body.style.overflow = '';
 
   window.__sxCurrentTab = name;
   document.querySelectorAll('.sx-tab-panel').forEach(p => p.classList.toggle('active', p.id === targetId));
@@ -3028,6 +3051,9 @@ window.sxSwitchTab = sxSwitchTab;
   overflow-y: auto; -webkit-overflow-scrolling: touch;
 }
 #fifa-overlay.open{ display: block; }
+@media(max-width:900px){
+  #fifa-panel-wrap{ padding-bottom: calc(60px + env(safe-area-inset-bottom, 0)) !important; }
+}
 
 #fifa-topbar{
   position: sticky; top: 0; z-index: 3;
@@ -3050,10 +3076,6 @@ window.sxSwitchTab = sxSwitchTab;
 </style>
 <div id="fifa-overlay">
   <div id="fifa-topbar">
-    <button id="fifa-back" onclick="closeFifa()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-      Back
-    </button>
     <span id="fifa-topbar-title">⚽ FIFA World Cup</span>
   </div>
 <div id="fifa-panel-wrap">
@@ -3088,7 +3110,7 @@ window.sxSwitchTab = sxSwitchTab;
   #fifa-panel-live{
     display:flex;align-items:center;gap:5px;
     font-family:var(--font-display);font-size:10px;font-weight:800;letter-spacing:1.8px;
-    color:#ff4060;
+    color:#FF5FC4;
   }
   .fpx-dot{width:7px;height:7px;border-radius:50%;background:#E0158C;box-shadow:0 0 6px #E0158C;animation:fpxDot 1.2s ease-in-out infinite;flex-shrink:0;}
   @keyframes fpxDot{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(1.5);}}
@@ -3263,7 +3285,7 @@ window.sxSwitchTab = sxSwitchTab;
   }
 
   @media(max-width:600px){
-    #fifa-panel-wrap{padding:8px 0 4px;}
+  #fifa-panel-wrap{padding:8px 0 4px;}
     #fifa-panel{border-radius: 8px;}
     #fpx-iframe-box{padding-top:56.25%;}
     /* Small SQUARE cards — same shape as PC, just shrunk down (4-up grid) */
@@ -3524,7 +3546,7 @@ window.sxSwitchTab = sxSwitchTab;
 </style>
 <style>
 #fancode-overlay{
-  display: none; position: fixed; inset: 0; z-index: 1200;
+  display: none; position: fixed; inset: 0; z-index: 1230;
   background: #000;
 }
 #fancode-overlay.open{ display: block; }
@@ -3534,13 +3556,13 @@ window.sxSwitchTab = sxSwitchTab;
 }
 #fancode-back{
   display: flex; align-items: center; gap: 6px;
-  background: rgba(20,10,4,0.55); border: 1px solid rgba(255,80,0,0.35); color: #fff;
+  background: rgba(20,10,4,0.55); border: 1px solid rgba(240,79,176,0.35); color: #fff;
   font-family: var(--cu-font,inherit); font-weight: 700; font-size: 12px;
   padding: 8px 12px; cursor: pointer; border-radius: 8px; letter-spacing: 0.03em;
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
 }
-#fancode-back:hover{ background: rgba(255,80,0,0.28); border-color: #FF5000; }
-#fancode-back svg{ width: 14px; height: 14px; flex-shrink: 0; color: #FF5000; }
+#fancode-back:hover{ background: rgba(240,79,176,0.28); border-color: #F04FB0; }
+#fancode-back svg{ width: 14px; height: 14px; flex-shrink: 0; color: #F04FB0; }
 
 #fancode-panel-wrap{ position: absolute; inset: 0; }
 #fancode-iframe-wrap{ position: absolute; inset: 0; background: #000; }
@@ -3551,7 +3573,7 @@ window.sxSwitchTab = sxSwitchTab;
   font-family: var(--cu-font,inherit);
 }
 #fancode-embed-fallback a{
-  background: #FF5000; color: #fff; font-weight: 800; font-size: 13px;
+  background: #F04FB0; color: #fff; font-weight: 800; font-size: 13px;
   padding: 10px 20px; border-radius: 8px; text-decoration: none;
 }
 </style>
@@ -3578,7 +3600,7 @@ window.sxSwitchTab = sxSwitchTab;
      No geo-mirroring, just embed and don't worry about what's inside. ── -->
 <style>
 #prime-overlay{
-  display: none; position: fixed; inset: 0; z-index: 1200;
+  display: none; position: fixed; inset: 0; z-index: 1230;
   background: #000;
 }
 #prime-overlay.open{ display: block; }
@@ -3630,7 +3652,7 @@ window.sxSwitchTab = sxSwitchTab;
 <!-- ── WILLOW OTT panel: same simple pattern as FanCode/PRIME. ── -->
 <style>
 #willow-overlay{
-  display: none; position: fixed; inset: 0; z-index: 1200;
+  display: none; position: fixed; inset: 0; z-index: 1230;
   background: #000;
 }
 #willow-overlay.open{ display: block; }
@@ -3640,13 +3662,13 @@ window.sxSwitchTab = sxSwitchTab;
 }
 #willow-back{
   display: flex; align-items: center; gap: 6px;
-  background: rgba(10,16,4,0.55); border: 1px solid rgba(120,200,40,0.35); color: #fff;
+  background: rgba(10,16,4,0.55); border: 1px solid rgba(240,79,176,0.35); color: #fff;
   font-family: var(--cu-font,inherit); font-weight: 700; font-size: 12px;
   padding: 8px 12px; cursor: pointer; border-radius: 8px; letter-spacing: 0.03em;
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
 }
-#willow-back:hover{ background: rgba(120,200,40,0.28); border-color: #78C828; }
-#willow-back svg{ width: 14px; height: 14px; flex-shrink: 0; color: #78C828; }
+#willow-back:hover{ background: rgba(240,79,176,0.28); border-color: #F04FB0; }
+#willow-back svg{ width: 14px; height: 14px; flex-shrink: 0; color: #F04FB0; }
 
 #willow-panel-wrap{ position: absolute; inset: 0; }
 #willow-iframe-wrap{ position: absolute; inset: 0; background: #000; }
@@ -3657,7 +3679,7 @@ window.sxSwitchTab = sxSwitchTab;
   font-family: var(--cu-font,inherit);
 }
 #willow-embed-fallback a{
-  background: #78C828; color: #fff; font-weight: 800; font-size: 13px;
+  background: #F04FB0; color: #fff; font-weight: 800; font-size: 13px;
   padding: 10px 20px; border-radius: 8px; text-decoration: none;
 }
 </style>
@@ -5112,6 +5134,38 @@ function toggleQr() {
     });
 })();
 
+// ── Country name/code (from the sheet's "country" column) → ISO-3166 alpha-2
+//    → small flag image (flagcdn.com, same source already used by the FIFA
+//    bracket elsewhere on this page). Accepts full names, common
+//    abbreviations, or a bare 2-letter code straight from the CMS.
+const COUNTRY_TO_ISO2 = {
+  'usa':'us','us':'us','united states':'us','united states of america':'us','america':'us',
+  'uk':'gb','united kingdom':'gb','britain':'gb','great britain':'gb','england':'gb',
+  'india':'in','bharat':'in',
+  'canada':'ca','australia':'au','new zealand':'nz',
+  'pakistan':'pk','bangladesh':'bd','sri lanka':'lk','nepal':'np','bhutan':'bt','afghanistan':'af',
+  'uae':'ae','united arab emirates':'ae','saudi arabia':'sa','qatar':'qa','kuwait':'kw','bahrain':'bh','oman':'om',
+  'germany':'de','france':'fr','spain':'es','italy':'it','portugal':'pt','netherlands':'nl','belgium':'be',
+  'switzerland':'ch','austria':'at','sweden':'se','norway':'no','denmark':'dk','finland':'fi','poland':'pl',
+  'ireland':'ie','scotland':'gb-sct','wales':'gb-wls','russia':'ru','ukraine':'ua','greece':'gr','turkey':'tr',
+  'japan':'jp','south korea':'kr','korea':'kr','china':'cn','hong kong':'hk','taiwan':'tw','singapore':'sg',
+  'malaysia':'my','indonesia':'id','philippines':'ph','thailand':'th','vietnam':'vn','myanmar':'mm',
+  'brazil':'br','mexico':'mx','argentina':'ar','colombia':'co','chile':'cl','peru':'pe',
+  'south africa':'za','nigeria':'ng','kenya':'ke','egypt':'eg','morocco':'ma',
+  'israel':'il','iran':'ir','iraq':'iq','jordan':'jo','lebanon':'lb',
+  'international':'', 'global':'', 'world':''
+};
+function countryFlagHTML(rawCountry){
+  const raw = (rawCountry || '').trim();
+  if (!raw) return '';
+  let iso = raw.toLowerCase();
+  if (COUNTRY_TO_ISO2.hasOwnProperty(iso)) iso = COUNTRY_TO_ISO2[iso];
+  else if (/^[a-z]{2}$/.test(iso)) { /* already a bare ISO-2 code from the sheet */ }
+  else iso = '';
+  if (!iso) return '';
+  return `<img class="epg-flag" src="https://flagcdn.com/w40/${iso}.png" alt="${raw}" title="${raw}" loading="lazy">`;
+}
+
 // ── CMS-DRIVEN CHANNELS BROWSER (reads LIVE CHANNELS sheet) — EPG list UI ──
 (function(){
   const OTHERS_LOGO = 'https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/main/logo.png';
@@ -5250,7 +5304,7 @@ function toggleQr() {
       const indiaAlert = (isStarSports || isSony || isZee) ? '<div class="epg-india-alert">Outside India/Sri Lanka? Use VPN</div>' : '';
       a.innerHTML = `
         <div class="epg-thumb">
-          <span class="epg-flag">IN</span>
+          ${countryFlagHTML(c.country)}
           ${chLogoHTML(c)}
         </div>
         <div class="epg-meta">
@@ -5915,14 +5969,14 @@ footer{
 .btn-vip-icon-inline svg{ width: 15px; height: 13px; display: block; }
 .btn-join-discord-footer{
   display: flex; align-items: center; gap: 8px;
-  background: #5865F2; color: #fff; text-decoration: none;
+  background: #F04FB0; color: #fff; text-decoration: none;
   padding: 11px 18px; white-space: nowrap;
   font-family: var(--cu-font,var(--font-display)) !important;
   font-weight: 800; font-size: 12.5px; letter-spacing: 0.03em;
   text-transform: uppercase;
 }
 .btn-join-discord-footer svg{ width: 16px; height: 13px; flex-shrink: 0; }
-.btn-join-discord-footer:hover{ background: #4752C4; }
+.btn-join-discord-footer:hover{ background: #C41E96; }
 
 @media(max-width:640px){
   .footer-vip{ flex-direction: column; align-items: flex-start; padding: 18px; }
@@ -6034,17 +6088,17 @@ footer{
   font-family: var(--cu-font,inherit); font-weight: 800; font-size: 14px;
   color: #fff; margin-bottom: 4px; padding-right: 20px;
 }
-#adminchat-discord-popup-title svg{ width: 18px; height: 18px; flex-shrink: 0; color: #5865F2; }
+#adminchat-discord-popup-title svg{ width: 18px; height: 18px; flex-shrink: 0; color: #F04FB0; }
 #adminchat-discord-popup-msg{
   font-size: 12px; color: rgba(255,255,255,0.6); line-height: 1.45; margin-bottom: 12px;
 }
 #adminchat-discord-popup-btn{
   display: flex; align-items: center; justify-content: center; gap: 8px;
-  background: #5865F2; color: #fff; text-decoration: none; border-radius: 8px;
+  background: #F04FB0; color: #fff; text-decoration: none; border-radius: 8px;
   font-family: var(--cu-font,inherit); font-weight: 800; font-size: 12.5px;
   padding: 11px 0; letter-spacing: 0.03em;
 }
-#adminchat-discord-popup-btn:hover{ background: #4752C4; }
+#adminchat-discord-popup-btn:hover{ background: #C41E96; }
 </style>
 
 <div id="adminchat-overlay">
@@ -6142,14 +6196,13 @@ function closeAdminChatDiscordPopup(){
 #livetv-adfree-btn:hover{ background: rgba(240,79,176,0.24); }
 #livetv-adfree-btn svg{ width: 14px; height: 14px; flex-shrink: 0; color: #F04FB0; }
 #livetv-page-inner{ padding: 0; }
+@media(max-width:900px){
+  #livetv-page-inner{ padding-bottom: calc(60px + env(safe-area-inset-bottom, 0)); }
+}
 </style>
 
 <div id="livetv-overlay">
   <div id="livetv-topbar">
-    <button id="livetv-back" onclick="closeLiveTV()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-      Back
-    </button>
     <span id="livetv-topbar-title">📡 Live TV</span>
   </div>
   <div id="livetv-page-inner">
@@ -6319,10 +6372,10 @@ function closeAdminChatDiscordPopup(){
 
 .epg-flag{
   position:absolute; top:8px; left:8px; z-index:1;
-  font-size:9px !important; font-weight:800 !important; letter-spacing:.05em;
-  color:#fff !important; background:rgba(0,0,0,0.55) !important;
-  padding:2px 6px !important; border-radius:4px !important;
-  display:none;
+  width:22px; height:16px; object-fit:cover;
+  border-radius:3px !important;
+  box-shadow:0 0 0 1px rgba(255,255,255,0.25), 0 2px 6px rgba(0,0,0,0.45);
+  display:block;
 }
 .epg-free-badge{
   font-size:9px !important; font-weight:800 !important; letter-spacing:.05em;
@@ -6523,57 +6576,6 @@ function closeAdminChatDiscordPopup(){
   </div>
 </section>
 
-<!-- COMMUNITY (compact) — moved inside Live TV, shrunk, pinned to the very bottom -->
-<section class="section sx-compact-wrap">
-  <div class="section-inner">
-    <div class="sx-compact-row">
-      <a class="sx-compact-card sx-compact-discord" href="https://discord.gg/w46C6mQgrY" target="_blank" rel="noopener">
-        <svg viewBox="0 0 127.14 96.36" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"/></svg>
-        <div class="sx-compact-card-text">
-          <div class="sx-compact-card-title">Join SX Sports Discord</div>
-          <div class="sx-compact-card-sub">Match requests, bug reports &amp; instant support</div>
-        </div>
-        <span class="sx-compact-card-arrow">›</span>
-      </a>
-      <a class="sx-compact-card sx-compact-whatsapp" href="https://whatsapp.com/channel/0029VbD7I5a2975FbLIcgX2W" target="_blank" rel="noopener">
-        <svg viewBox="0 0 24 24" fill="#25D366" xmlns="http://www.w3.org/2000/svg"><path d="M12.004 2.003c-5.514 0-9.997 4.483-9.997 9.997 0 1.762.464 3.484 1.346 4.997L2 22l5.176-1.323a9.965 9.965 0 0 0 4.822 1.226h.005c5.514 0 9.997-4.483 9.997-9.997 0-2.669-1.04-5.176-2.929-7.065A9.935 9.935 0 0 0 12.004 2.003zm0 18.174h-.004a8.34 8.34 0 0 1-4.253-1.164l-.305-.181-3.15.805.842-3.075-.199-.316a8.318 8.318 0 0 1-1.284-4.462c0-4.61 3.75-8.36 8.363-8.36 2.233 0 4.332.87 5.911 2.449a8.302 8.302 0 0 1 2.447 5.913c0 4.61-3.75 8.36-8.363 8.36z"/><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/></svg>
-        <div class="sx-compact-card-text">
-          <div class="sx-compact-card-title">Follow on WhatsApp</div>
-          <div class="sx-compact-card-sub">Instant alerts &amp; new channel drops</div>
-        </div>
-        <span class="sx-compact-card-arrow">›</span>
-      </a>
-    </div>
-  </div>
-</section>
-
-<style>
-.sx-compact-wrap{ padding-top:8px; padding-bottom:8px; }
-
-.sx-compact-row{ display:flex; gap:12px; flex-wrap:wrap; }
-.sx-compact-card{
-  flex:1 1 260px;
-  display:flex; align-items:center; gap:12px;
-  background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08);
-  border-radius:14px; padding:12px 14px; text-decoration:none;
-  transition:transform .18s ease, border-color .18s ease;
-}
-.sx-compact-card:hover{ transform:translateY(-2px); border-color:rgba(255,255,255,0.22); }
-.sx-compact-card svg{ width:24px; height:24px; flex-shrink:0; }
-.sx-compact-card img{ width:24px; height:24px; flex-shrink:0; object-fit:contain; }
-.sx-compact-discord{ background:rgba(88,101,242,0.08); }
-.sx-compact-discord svg path{ fill:#8C9EFF; }
-.sx-compact-whatsapp{ background:rgba(37,211,102,0.08); }
-.sx-compact-card-text{ flex:1; min-width:0; }
-.sx-compact-card-title{ font-family:var(--font-display); font-weight:700; font-size:13px; color:#fff; }
-.sx-compact-card-sub{ font-size:11px; color:rgba(255,255,255,0.5); margin-top:1px; }
-.sx-compact-card-arrow{ font-size:18px; color:rgba(255,255,255,0.4); flex-shrink:0; }
-
-@media(max-width:900px){
-  .sx-compact-row{ flex-direction:column; }
-}
-</style>
-
   </div><!-- /livetv-page-inner -->
 </div><!-- /livetv-overlay -->
 
@@ -6588,7 +6590,7 @@ function closeAdminChatDiscordPopup(){
 ═══════════════════════════════════════════════════════════════════════ -->
 <style>
 #movies-overlay{
-  display: none; position: fixed; inset: 0; z-index: 1250;
+  display: none; position: fixed; inset: 0; z-index: 1200;
   background: #000000; overflow-y: auto; -webkit-overflow-scrolling: touch;
 }
 #movies-overlay.open{ display: block; }
@@ -6612,6 +6614,9 @@ function closeAdminChatDiscordPopup(){
   color: rgba(255,255,255,0.75); letter-spacing: 0.04em; text-transform: uppercase;
 }
 #movies-page-inner{ padding: 0; }
+@media(max-width:900px){
+  #movies-page-inner{ padding-bottom: calc(60px + env(safe-area-inset-bottom, 0)); }
+}
 
 /* ── search bar Movie/TV toggle + genre chips ── */
 .va-type-toggle{ display:flex; gap:6px; }
@@ -6728,10 +6733,6 @@ function closeAdminChatDiscordPopup(){
 
 <div id="movies-overlay">
   <div id="movies-topbar">
-    <button id="movies-back" onclick="closeMoviesOverlay()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-      Back
-    </button>
     <span id="movies-topbar-title">🎬 Movies</span>
   </div>
   <div id="movies-page-inner">
@@ -7341,6 +7342,7 @@ function sxPlayPanelIntro(){
 }
 
 function openLiveTV(){
+  sxCloseAllOverlays();
   sxPlayPanelIntro();
   document.getElementById('livetv-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -7385,6 +7387,7 @@ let vaPendingTvItem = null;       // { id, title } — for the season/episode mo
 let vaRenderLimit = 60;
 
 function openMoviesOverlay(){
+  sxCloseAllOverlays();
   document.getElementById('movies-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   window.scrollTo(0,0);
@@ -7814,6 +7817,7 @@ function sxApplyFanCodeUrl(){
   if (fallbackLink) fallbackLink.href = url;
 }
 function openFanCode(){
+  sxCloseAllOverlays();
   sxPlayPanelIntro();
   sxApplyFanCodeUrl();
   document.getElementById('fancode-overlay').classList.add('open');
@@ -7826,6 +7830,7 @@ function closeFanCode(){
   document.body.style.overflow = '';
 }
 function openPrime(){
+  sxCloseAllOverlays();
   sxPlayPanelIntro();
   document.getElementById('prime-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -7837,6 +7842,7 @@ function closePrime(){
   document.body.style.overflow = '';
 }
 function openWillow(){
+  sxCloseAllOverlays();
   sxPlayPanelIntro();
   document.getElementById('willow-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -7849,6 +7855,7 @@ function closeWillow(){
 }
 function openFifa(){
   if (!window.SX_FIFA_ENABLED) return;
+  sxCloseAllOverlays();
   sxPlayPanelIntro();
   document.getElementById('fifa-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -8042,12 +8049,12 @@ function closeFifa(){
 
 #vip-discord-btn{
   display: flex; align-items: center; justify-content: center; gap: 8px;
-  background: #5865F2; color: #fff; text-decoration: none; border-radius: 8px;
+  background: #F04FB0; color: #fff; text-decoration: none; border-radius: 8px;
   font-family: var(--cu-font,inherit); font-weight: 800; font-size: 14px;
   padding: 15px 0; letter-spacing: 0.03em; max-width: 420px; margin: 0 auto;
 }
 #vip-discord-btn svg{ width: 18px; height: 14px; flex-shrink: 0; }
-#vip-discord-btn:hover{ background: #4752C4; }
+#vip-discord-btn:hover{ background: #C41E96; }
 
 @media (max-width: 640px){
   #vip-perks{ grid-template-columns: 1fr; }
