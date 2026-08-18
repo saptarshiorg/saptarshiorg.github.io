@@ -2393,6 +2393,7 @@ document.addEventListener('DOMContentLoaded', function(){
     </button>
   </div>
 </header>
+<div id="sx-header-anchor" style="display:none" aria-hidden="true"></div>
 <script>
 // Header scroll transparency effect
 (function(){
@@ -2981,8 +2982,48 @@ function sxCloseAllOverlays(){
     const el = document.getElementById(id);
     if (el) el.classList.remove('open');
   });
+  sxHeaderHome();
 }
 window.sxCloseAllOverlays = sxCloseAllOverlays;
+
+// ══════════════════════════════════════════════════════════════════════
+// GLOBAL NAV BAR — relocated (not cloned) into whichever in-site "page"
+// overlay is currently open, so the same header (logo/nav/VIP/login)
+// always sits pinned at the very top of Live TV, Movies, FIFA and the
+// VIP page. Deliberately NOT used for the stream player, FanCode,
+// Prime Video or Willow OTT overlays — those stay full-bleed/immersive.
+// ══════════════════════════════════════════════════════════════════════
+const SX_HEADER_TOPBARS = ['livetv-topbar','movies-topbar','fifa-topbar','vip-topbar'];
+function sxHeaderHome(){
+  const header = document.querySelector('header');
+  const anchor = document.getElementById('sx-header-anchor');
+  if (!header || !anchor) return;
+  if (header.nextSibling !== anchor) anchor.parentNode.insertBefore(header, anchor);
+  SX_HEADER_TOPBARS.forEach(id => {
+    const tb = document.getElementById(id);
+    if (tb) tb.style.top = '';
+  });
+}
+function sxHeaderInto(containerId, topbarId){
+  sxHeaderHome();
+  const header = document.querySelector('header');
+  const container = document.getElementById(containerId);
+  if (!header || !container) return;
+  container.insertBefore(header, container.firstChild);
+  const topbar = topbarId ? document.getElementById(topbarId) : null;
+  function sync(){ if (topbar) topbar.style.top = header.offsetHeight + 'px'; }
+  sync();
+  requestAnimationFrame(sync);
+  setTimeout(sync, 300);
+}
+window.addEventListener('resize', function(){
+  const header = document.querySelector('header');
+  if (!header) return;
+  SX_HEADER_TOPBARS.forEach(id => {
+    const tb = document.getElementById(id);
+    if (tb && tb.style.top) tb.style.top = header.offsetHeight + 'px';
+  });
+});
 
 function sxSwitchTab(name){
   if (name === 'fancode') { openFanCode(); return; }
@@ -6229,7 +6270,13 @@ function closeAdminChatDiscordPopup(){
 }
 .epg-hero-sub{ font-size:13.5px !important; color:rgba(255,255,255,0.55) !important; font-weight:500; }
 
-.epg-search-box-top{ max-width:340px !important; margin-left:auto; }
+.epg-search-box-top{ max-width:340px !important; }
+.epg-topbar .epg-select-wrap{ margin-left:auto; }
+@media(max-width:560px){
+  .epg-topbar .epg-select-wrap{ margin-left:0; }
+  .epg-select-wrap select{ min-width:0; }
+  .epg-search-box-top{ flex:1 1 100%; max-width:none !important; }
+}
 
 .epg-pill-row{ display:flex; flex-wrap:wrap; gap:8px; flex:1; }
 .epg-pill{
@@ -6538,6 +6585,12 @@ function closeAdminChatDiscordPopup(){
         <div class="epg-title-row">
           <span class="epg-count" id="epgCount"></span>
         </div>
+        <div class="epg-select-wrap">
+          <select id="chCategorySelect" onchange="chOnCategoryChange()">
+            <option value="All">All Channels</option>
+          </select>
+          <svg class="epg-select-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
         <div class="epg-search-box epg-search-box-top">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           <input id="chSearchInput" type="text" placeholder="Search channels..." autocomplete="off" oninput="chFilter()">
@@ -6549,13 +6602,6 @@ function closeAdminChatDiscordPopup(){
 
       <div class="epg-controls">
         <div class="epg-pill-row" id="epgPillRow"></div>
-
-        <div class="epg-select-wrap epg-select-hidden">
-          <select id="chCategorySelect" onchange="chOnCategoryChange()">
-            <option value="All">All Channels</option>
-          </select>
-          <svg class="epg-select-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m6 9 6 6 6-6"/></svg>
-        </div>
 
         <button type="button" class="epg-dmca-btn-inline" onclick="openDmca()" title="EV SPORTS, formerly SX SPORTS (Owned by Rishi Entertainment Verse Limited) — DMCA / Copyright">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z"/><path d="M12 8v5M12 16h.01"/></svg>
@@ -7350,10 +7396,12 @@ function openLiveTV(){
   document.body.style.overflow = 'hidden';
   window.scrollTo(0,0);
   document.querySelectorAll('[data-sxtab]').forEach(el => el.classList.toggle('active', el.dataset.sxtab === 'livetv'));
+  sxHeaderInto('livetv-overlay', 'livetv-topbar');
 }
 function closeLiveTV(){
   document.getElementById('livetv-overlay').classList.remove('open');
   document.body.style.overflow = '';
+  sxHeaderHome();
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -7398,10 +7446,12 @@ function openMoviesOverlay(){
     window.vaInit();
     window.vaInit = null;
   }
+  sxHeaderInto('movies-overlay', 'movies-topbar');
 }
 function closeMoviesOverlay(){
   document.getElementById('movies-overlay').classList.remove('open');
   document.body.style.overflow = '';
+  sxHeaderHome();
 }
 
 async function vaFetchPage(type, page){
@@ -7864,10 +7914,12 @@ function openFifa(){
   window.scrollTo(0,0);
   window.__sxCurrentTab = 'fifa';
   document.querySelectorAll('[data-sxtab]').forEach(el => el.classList.toggle('active', el.dataset.sxtab === 'fifa'));
+  sxHeaderInto('fifa-overlay', 'fifa-topbar');
 }
 function closeFifa(){
   document.getElementById('fifa-overlay').classList.remove('open');
   document.body.style.overflow = '';
+  sxHeaderHome();
 }
 </script>
 
@@ -8217,10 +8269,12 @@ function openVip(){
   document.getElementById('vip-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   window.scrollTo(0,0);
+  sxHeaderInto('vip-overlay', 'vip-topbar');
 }
 function closeVip(){
   document.getElementById('vip-overlay').classList.remove('open');
   document.body.style.overflow = '';
+  sxHeaderHome();
 }
 </script>
 
