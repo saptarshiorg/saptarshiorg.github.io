@@ -585,9 +585,10 @@ header.scrolled {
 
 .hamburger {
   display: none; flex-direction: column; gap: 5px;
-  cursor: pointer; padding: 6px; background: none; z-index: 201;
+  cursor: pointer; padding: 6px; background: none; border: none; box-shadow: none;
+  z-index: 201;
 }
-.hamburger span { display: block; width: 24px; height: 2px; background: #FF8FD4; border-radius: 8px; transition: all 0.28s var(--ease); }
+.hamburger span { display: block; width: 22px; height: 2px; background: #FF8FD4; border-radius: 1px; box-shadow: none; transition: all 0.28s var(--ease); }
 .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
 .hamburger.open span:nth-child(2) { opacity: 0; }
 .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
@@ -1688,8 +1689,8 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
     color: #F04FB0; box-shadow: none;
   }
   .nav-qr-btn:hover, .nav-qr-btn.active { background: transparent; }
-  .hamburger { background: transparent; box-shadow: none; }
-  .hamburger span { background: #F04FB0; }
+  .hamburger { background: transparent; box-shadow: none; border: none; }
+  .hamburger span { background: #F04FB0; border-radius: 1px; box-shadow: none; }
 
   .hero-cards-section { display: none !important; }
   .slides-container { display: block !important; }
@@ -1908,6 +1909,20 @@ header{
   background:transparent !important;
 }
 .nav-links-desktop a.active{ position:relative; }
+.nav-links-desktop a.active::after{
+  content:'';
+  position:absolute;
+  left:10px; right:10px; bottom:-2px;
+  height:2px;
+  border-radius:2px;
+  background:#FF8FD4;
+}
+.drawer-nav a.active{
+  color:#fff !important;
+  text-decoration:underline;
+  text-underline-offset:4px;
+  text-decoration-color:#FF8FD4;
+}
 #pc-quicknav{ display:none !important; } /* reference nav is short & clean — quicknav pills clutter it */
 .nav-watch-btn{
   background:#fff !important; color:#000000 !important;
@@ -2380,7 +2395,20 @@ document.addEventListener('DOMContentLoaded', function(){
       <span class="nav-device-id" id="nav-device-id"></span>
     </div>
     <div class="nav-qr-wrap" id="nav-qr-wrap">
-      <button class="nav-qr-btn" id="nav-qr-btn" onclick="toggleQr()" aria-label="Scan QR"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/QR_Code_Example.svg/500px-QR_Code_Example.svg.png" alt="QR" class="nav-qr-btn-img"></button>
+      <button class="nav-qr-btn" id="nav-qr-btn" onclick="toggleQr()" aria-label="Scan QR">
+        <svg class="nav-qr-btn-img" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="3" y="3" width="7" height="7" rx="1.2" stroke="#fff" stroke-width="2"/>
+          <rect x="14" y="3" width="7" height="7" rx="1.2" stroke="#fff" stroke-width="2"/>
+          <rect x="3" y="14" width="7" height="7" rx="1.2" stroke="#fff" stroke-width="2"/>
+          <rect x="6" y="6" width="1" height="1" fill="#fff"/>
+          <rect x="17" y="6" width="1" height="1" fill="#fff"/>
+          <rect x="6" y="17" width="1" height="1" fill="#fff"/>
+          <rect x="14" y="14" width="3" height="3" fill="#fff"/>
+          <rect x="18" y="14" width="3" height="3" fill="#fff"/>
+          <rect x="14" y="18" width="3" height="3" fill="#fff"/>
+          <rect x="18" y="18" width="3" height="3" fill="#fff"/>
+        </svg>
+      </button>
       <div class="qr-float-panel" id="qr-panel">
         <div class="qr-float-title" id="qr-title">Scan to Watch</div>
         <div class="qr-float-sub" id="qr-sub">Open on any device</div>
@@ -2977,7 +3005,7 @@ window.addEventListener('resize', () => {
 //    keep their own in-page Back button, and sit above the nav bar (so the
 //    nav bar isn't shown while inside them).
 function sxCloseAllOverlays(){
-  const ids = ['livetv-overlay','movies-overlay','fifa-overlay','fancode-overlay','prime-overlay','willow-overlay'];
+  const ids = ['livetv-overlay','movies-overlay','fifa-overlay','fancode-overlay','prime-overlay','willow-overlay','adminchat-overlay'];
   ids.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.remove('open');
@@ -2985,6 +3013,32 @@ function sxCloseAllOverlays(){
   sxHeaderHome();
 }
 window.sxCloseAllOverlays = sxCloseAllOverlays;
+
+// ── Every full-screen overlay in the site (section pages + modals), all of
+//    which show/hide purely via the .open class. Home uses this full list
+//    (sxCloseAllOverlays above only covers the "section" pages) so that no
+//    matter which page or popup is on screen, tapping Home tears every one
+//    of them down — nothing is left stacked above the home page's z-index.
+const SX_ALL_OVERLAY_IDS = [
+  'livetv-overlay','movies-overlay','fifa-overlay','fancode-overlay',
+  'prime-overlay','willow-overlay','vip-overlay','vip-player-overlay',
+  'stream-player-overlay','adminchat-overlay','adminchat-discord-popup',
+  'va-tv-modal','sx-cast-help-overlay','dmca-overlay'
+];
+function goHome(){
+  SX_ALL_OVERLAY_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('open');
+  });
+  sxHeaderHome();
+  document.body.style.overflow = '';
+  window.__sxCurrentTab = null;
+  document.querySelectorAll('.sx-tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('[data-sxtab]').forEach(el => el.classList.toggle('active', el.dataset.sxtab === 'home'));
+  if (window.__mtabSetActive) window.__mtabSetActive(null);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+window.goHome = goHome;
 
 // ══════════════════════════════════════════════════════════════════════
 // GLOBAL NAV BAR — relocated (not cloned) into whichever in-site "page"
@@ -3597,15 +3651,6 @@ window.sxSwitchTab = sxSwitchTab;
   position: absolute; top: 0; left: 0; z-index: 2;
   padding: 14px;
 }
-#fancode-back{
-  display: flex; align-items: center; gap: 6px;
-  background: rgba(20,10,4,0.55); border: 1px solid rgba(240,79,176,0.35); color: #fff;
-  font-family: var(--cu-font,inherit); font-weight: 700; font-size: 12px;
-  padding: 8px 12px; cursor: pointer; border-radius: 8px; letter-spacing: 0.03em;
-  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-}
-#fancode-back:hover{ background: rgba(240,79,176,0.28); border-color: #F04FB0; }
-#fancode-back svg{ width: 14px; height: 14px; flex-shrink: 0; color: #F04FB0; }
 
 #fancode-panel-wrap{ position: absolute; inset: 0; }
 #fancode-iframe-wrap{ position: absolute; inset: 0; background: #000; }
@@ -3621,12 +3666,7 @@ window.sxSwitchTab = sxSwitchTab;
 }
 </style>
 <div id="fancode-overlay">
-  <div id="fancode-topbar">
-    <button id="fancode-back" onclick="closeFanCode()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-      Back
-    </button>
-  </div>
+  <div id="fancode-topbar"></div>
 <div id="fancode-panel-wrap">
   <div id="fancode-iframe-wrap">
     <iframe id="fancode-iframe" src="https://saptarshiorg.github.io/Fancode/" title="FanCode" loading="lazy" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer-when-downgrade" onerror="document.getElementById('fancode-embed-fallback').style.display='flex'"></iframe>
@@ -3651,16 +3691,6 @@ window.sxSwitchTab = sxSwitchTab;
   position: absolute; top: 0; left: 0; z-index: 2;
   padding: 14px;
 }
-#prime-back{
-  display: flex; align-items: center; gap: 6px;
-  background: rgba(4,14,20,0.55); border: 1px solid rgba(0,168,225,0.35); color: #fff;
-  font-family: var(--cu-font,inherit); font-weight: 700; font-size: 12px;
-  padding: 8px 12px; cursor: pointer; border-radius: 8px; letter-spacing: 0.03em;
-  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-}
-#prime-back:hover{ background: rgba(0,168,225,0.28); border-color: #00A8E1; }
-#prime-back svg{ width: 14px; height: 14px; flex-shrink: 0; color: #00A8E1; }
-
 #prime-panel-wrap{ position: absolute; inset: 0; }
 #prime-iframe-wrap{ position: absolute; inset: 0; background: #000; }
 #prime-iframe-wrap iframe{ position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
@@ -3675,12 +3705,7 @@ window.sxSwitchTab = sxSwitchTab;
 }
 </style>
 <div id="prime-overlay">
-  <div id="prime-topbar">
-    <button id="prime-back" onclick="closePrime()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-      Back
-    </button>
-  </div>
+  <div id="prime-topbar"></div>
 <div id="prime-panel-wrap">
   <div id="prime-iframe-wrap">
     <iframe id="prime-iframe" src="https://evxrishi.site.je/PRIME" title="Prime Video" loading="lazy" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer-when-downgrade" onerror="document.getElementById('prime-embed-fallback').style.display='flex'"></iframe>
@@ -3703,15 +3728,6 @@ window.sxSwitchTab = sxSwitchTab;
   position: absolute; top: 0; left: 0; z-index: 2;
   padding: 14px;
 }
-#willow-back{
-  display: flex; align-items: center; gap: 6px;
-  background: rgba(10,16,4,0.55); border: 1px solid rgba(240,79,176,0.35); color: #fff;
-  font-family: var(--cu-font,inherit); font-weight: 700; font-size: 12px;
-  padding: 8px 12px; cursor: pointer; border-radius: 8px; letter-spacing: 0.03em;
-  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-}
-#willow-back:hover{ background: rgba(240,79,176,0.28); border-color: #F04FB0; }
-#willow-back svg{ width: 14px; height: 14px; flex-shrink: 0; color: #F04FB0; }
 
 #willow-panel-wrap{ position: absolute; inset: 0; }
 #willow-iframe-wrap{ position: absolute; inset: 0; background: #000; }
@@ -3727,12 +3743,7 @@ window.sxSwitchTab = sxSwitchTab;
 }
 </style>
 <div id="willow-overlay">
-  <div id="willow-topbar">
-    <button id="willow-back" onclick="closeWillow()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-      Back
-    </button>
-  </div>
+  <div id="willow-topbar"></div>
 <div id="willow-panel-wrap">
   <div id="willow-iframe-wrap">
     <iframe id="willow-iframe" src="https://evxrishi.site.je/WILLOW" title="Willow OTT" loading="lazy" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer-when-downgrade" onerror="document.getElementById('willow-embed-fallback').style.display='flex'"></iframe>
@@ -4072,19 +4083,21 @@ function renderNav(rows) {
   const desktop = document.getElementById('nav-desktop');
   const drawerNav = document.getElementById('drawer-nav');
   const NAV_ITEMS = [
-    { label:'Home',    href:'#' },
-    { label:'Live TV', href:'#sxTabPanels', onclick:"openLiveTV();return false;" },
-    { label:'Matches', href:'#sxTabPanels', onclick:"sxSwitchTab('matches');return false;" },
-    { label:'News',    href:'#sxTabPanels', onclick:"openLiveTV();setTimeout(()=>{if(window.chSelectCategory)chSelectCategory('News');},80);return false;" },
-    { label:'Feedback', href:'#', onclick:"openAdminChat();return false;" },
+    { label:'Home',     href:'#', sxtab:'home', onclick:"goHome();return false;" },
+    { label:'Live TV',  href:'#sxTabPanels', sxtab:'livetv', onclick:"openLiveTV();return false;" },
+    { label:'Matches',  href:'#sxTabPanels', sxtab:'matches', onclick:"sxSwitchTab('matches');return false;" },
+    { label:'News',     href:'#sxTabPanels', onclick:"openLiveTV();setTimeout(()=>{if(window.chSelectCategory)chSelectCategory('News');},80);return false;" },
+    { label:'FanCode',  href:'#sxTabPanels', sxtab:'fancode', onclick:"openFanCode();return false;" },
+    { label:'Feedback', href:'#', sxtab:'feedback', onclick:"openAdminChat();return false;" },
   ];
   let dHtml = '', mHtml = '';
   NAV_ITEMS.forEach((r, i) => {
     const activeCls = i===0 ? ' class="active"' : '';
     const target = r.blank ? ' target="_blank" rel="noopener"' : '';
     const click = r.onclick ? ` onclick="${r.onclick}"` : '';
-    dHtml += `<a href="${r.href}"${activeCls}${target}${click}>${r.label}</a>`;
-    mHtml += `<a href="${r.href}"${target}${click ? click : ' onclick="closeDrawer()"'}>${r.label}</a>`;
+    const sxtab = r.sxtab ? ` data-sxtab="${r.sxtab}"` : '';
+    dHtml += `<a href="${r.href}"${activeCls}${sxtab}${target}${click}>${r.label}</a>`;
+    mHtml += `<a href="${r.href}"${sxtab}${target}${click ? click : ' onclick="closeDrawer()"'}>${r.label}</a>`;
   });
   // VIP — hamburger drawer only (desktop already has the gold header button)
   mHtml += `<a href="#" class="drawer-vip" onclick="closeDrawer();openVip();return false;"><span class="drawer-vip-icon"><svg viewBox="0 0 24 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2 6.5a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm20 0a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm-10-2a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zM2 7.8l4.6 3.4L12 5l5.4 6.2L22 7.8 20 17H4L2 7.8z"/></svg></span>Get VIP</a>`;
@@ -4093,8 +4106,8 @@ function renderNav(rows) {
   // MOVIES — reuses the nav-movies-link / drawer-movies styling that was
   // already defined for this (previously pointed offsite); now opens the
   // in-site VidAPI-powered Movies overlay instead.
-  desktop.innerHTML += `<a href="#" class="nav-movies-link" onclick="openMoviesOverlay();return false;"><img class="movies-logo-icon" src="https://static.vecteezy.com/system/resources/thumbnails/050/699/896/small/movie-night-illustration-cinema-poster-concept-banner-design-for-movie-theater-png.png" alt="Movies">MOVIES</a>`;
-  drawerNav.innerHTML += `<a href="#" class="drawer-movies" onclick="closeDrawer();openMoviesOverlay();return false;"><img class="movies-logo-icon" src="https://static.vecteezy.com/system/resources/thumbnails/050/699/896/small/movie-night-illustration-cinema-poster-concept-banner-design-for-movie-theater-png.png" alt="Movies">MOVIES</a>`;
+  desktop.innerHTML += `<a href="#" class="nav-movies-link" data-sxtab="movies" onclick="openMoviesOverlay();return false;"><img class="movies-logo-icon" src="https://static.vecteezy.com/system/resources/thumbnails/050/699/896/small/movie-night-illustration-cinema-poster-concept-banner-design-for-movie-theater-png.png" alt="Movies">MOVIES</a>`;
+  drawerNav.innerHTML += `<a href="#" class="drawer-movies" data-sxtab="movies" onclick="closeDrawer();openMoviesOverlay();return false;"><img class="movies-logo-icon" src="https://static.vecteezy.com/system/resources/thumbnails/050/699/896/small/movie-night-illustration-cinema-poster-concept-banner-design-for-movie-theater-png.png" alt="Movies">MOVIES</a>`;
 }
 function renderNav_CMS_UNUSED(rows) {
   if (!rows) return;
@@ -6070,14 +6083,6 @@ footer{
   padding: 14px 20px; background: rgba(10,10,11,0.92);
   backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.08);
 }
-#adminchat-back{
-  display: flex; align-items: center; gap: 6px;
-  background: rgba(255,255,255,0.06); border: none; color: #fff;
-  font-family: var(--cu-font,inherit); font-weight: 700; font-size: 12px;
-  padding: 8px 12px; cursor: pointer; border-radius: 8px; letter-spacing: 0.03em;
-}
-#adminchat-back:hover{ background: rgba(255,255,255,0.12); }
-#adminchat-back svg{ width: 14px; height: 14px; flex-shrink: 0; }
 #adminchat-topbar-title{
   font-family: var(--cu-font,inherit); font-weight: 800; font-size: 13px;
   color: rgba(255,255,255,0.75); letter-spacing: 0.04em; text-transform: uppercase;
@@ -6146,10 +6151,6 @@ footer{
 
 <div id="adminchat-overlay">
   <div id="adminchat-topbar">
-    <button id="adminchat-back" onclick="closeAdminChat()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-      Back
-    </button>
     <span id="adminchat-topbar-title"><span class="pulse"></span>Admin Chat</span>
   </div>
   <div id="adminchat-stage">
@@ -6178,9 +6179,12 @@ footer{
 
 <script>
 function openAdminChat(){
+  sxCloseAllOverlays();
   document.getElementById('adminchat-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   window.scrollTo(0,0);
+  document.querySelectorAll('[data-sxtab]').forEach(el => el.classList.toggle('active', el.dataset.sxtab === 'feedback'));
+  sxHeaderInto('adminchat-overlay', null);
   clearTimeout(window.__adminchatPopupTimer);
   window.__adminchatPopupTimer = setTimeout(function(){
     document.getElementById('adminchat-discord-popup').classList.add('open');
@@ -6189,6 +6193,7 @@ function openAdminChat(){
 function closeAdminChat(){
   document.getElementById('adminchat-overlay').classList.remove('open');
   document.body.style.overflow = '';
+  sxHeaderHome();
   closeAdminChatDiscordPopup();
 }
 function closeAdminChatDiscordPopup(){
@@ -6212,10 +6217,7 @@ function closeAdminChatDiscordPopup(){
 #livetv-overlay.open{ display: block; }
 
 #livetv-topbar{
-  position: sticky; top: 0; z-index: 2;
-  display: flex; align-items: center; gap: 12px;
-  padding: 14px 20px; background: rgba(10,10,11,0.92);
-  backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.08);
+  display: none;
 }
 #livetv-back{
   display: flex; align-items: center; gap: 6px;
@@ -6723,11 +6725,11 @@ function closeAdminChatDiscordPopup(){
 
 /* ── result grid (reuses .epg-no-results for empty states) ── */
 .va-grid{
-  display:grid !important; grid-template-columns:repeat(6,1fr) !important; gap:14px !important;
+  display:grid !important; grid-template-columns:repeat(5,1fr) !important; gap:16px !important;
 }
-@media(max-width:1100px){ .va-grid{ grid-template-columns:repeat(4,1fr) !important; } }
-@media(max-width:640px){ .va-grid{ grid-template-columns:repeat(3,1fr) !important; gap:8px !important; } }
-@media(max-width:420px){ .va-grid{ grid-template-columns:repeat(2,1fr) !important; } }
+@media(max-width:1100px){ .va-grid{ grid-template-columns:repeat(3,1fr) !important; gap:14px !important; } }
+@media(max-width:640px){ .va-grid{ grid-template-columns:repeat(2,1fr) !important; gap:10px !important; } }
+@media(max-width:420px){ .va-grid{ grid-template-columns:repeat(2,1fr) !important; gap:8px !important; } }
 
 .va-movie-card{
   position:relative; cursor:pointer; overflow:hidden; border-radius:8px !important;
@@ -6746,10 +6748,10 @@ function closeAdminChatDiscordPopup(){
 }
 .va-movie-meta{ padding:9px 10px 10px; }
 .va-movie-title{
-  font-family:var(--font-display) !important; font-weight:800 !important; font-size:12.5px !important; color:#fff !important;
+  font-family:var(--font-display) !important; font-weight:800 !important; font-size:14px !important; color:#fff !important;
   overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; line-height:1.3;
 }
-.va-movie-year{ font-size:10.5px !important; color:rgba(255,255,255,0.45) !important; margin-top:3px; font-weight:600; }
+.va-movie-year{ font-size:11.5px !important; color:rgba(255,255,255,0.45) !important; margin-top:3px; font-weight:600; }
 
 .va-sentinel{ height:1px; }
 .va-loading-more{ text-align:center; padding:16px; font-size:12px; color:rgba(255,255,255,0.4); }
@@ -7366,27 +7368,9 @@ function closeDmca(){
 // SETTINGS sheet's logo_url is set to) so it always matches the live logo
 // instead of a second hardcoded image. One shared element, created lazily.
 function sxPlayPanelIntro(){
-  var el = document.getElementById('sx-panel-intro');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'sx-panel-intro';
-    el.innerHTML = '<img id="sx-panel-intro-img" alt="">';
-    document.body.appendChild(el);
-  }
-  var img = document.getElementById('sx-panel-intro-img');
-  var navLogo = document.getElementById('nav-logo-img');
-  img.src = (navLogo && navLogo.src) ? navLogo.src : 'https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/magenta.png';
-  el.classList.remove('fading');
-  el.style.display = 'flex';
-  // restart the pop-in animation even if the intro is triggered again quickly
-  img.style.animation = 'none';
-  void img.offsetWidth;
-  img.style.animation = '';
-  clearTimeout(el._sxTimer);
-  el._sxTimer = setTimeout(function(){
-    el.classList.add('fading');
-    setTimeout(function(){ el.style.display = 'none'; }, 400);
-  }, 750);
+  // Disabled site-wide: Live TV / FanCode / FIFA now open instantly —
+  // no logo splash / loading screen in between anymore.
+  return;
 }
 
 function openLiveTV(){
@@ -7876,34 +7860,28 @@ function openFanCode(){
   document.body.style.overflow = 'hidden';
   window.scrollTo(0,0);
   document.querySelectorAll('[data-sxtab]').forEach(el => el.classList.toggle('active', el.dataset.sxtab === 'fancode'));
+  sxHeaderInto('fancode-overlay', 'fancode-topbar');
 }
 function closeFanCode(){
   document.getElementById('fancode-overlay').classList.remove('open');
   document.body.style.overflow = '';
+  sxHeaderHome();
 }
 function openPrime(){
-  sxCloseAllOverlays();
-  sxPlayPanelIntro();
-  document.getElementById('prime-overlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
-  window.scrollTo(0,0);
-  document.querySelectorAll('[data-sxtab]').forEach(el => el.classList.toggle('active', el.dataset.sxtab === 'prime'));
+  sxShowComingSoon('Prime Video');
 }
 function closePrime(){
   document.getElementById('prime-overlay').classList.remove('open');
   document.body.style.overflow = '';
+  sxHeaderHome();
 }
 function openWillow(){
-  sxCloseAllOverlays();
-  sxPlayPanelIntro();
-  document.getElementById('willow-overlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
-  window.scrollTo(0,0);
-  document.querySelectorAll('[data-sxtab]').forEach(el => el.classList.toggle('active', el.dataset.sxtab === 'willow'));
+  sxShowComingSoon('Willow OTT');
 }
 function closeWillow(){
   document.getElementById('willow-overlay').classList.remove('open');
   document.body.style.overflow = '';
+  sxHeaderHome();
 }
 function openFifa(){
   if (!window.SX_FIFA_ENABLED) return;
@@ -7941,14 +7919,6 @@ function closeFifa(){
   padding: 14px 20px; background: rgba(10,10,11,0.92);
   backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.08);
 }
-#vip-back{
-  display: flex; align-items: center; gap: 6px;
-  background: rgba(255,255,255,0.06); border: none; color: #fff;
-  font-family: var(--cu-font,inherit); font-weight: 700; font-size: 12px;
-  padding: 8px 12px; cursor: pointer; border-radius: 8px; letter-spacing: 0.03em;
-}
-#vip-back:hover{ background: rgba(255,255,255,0.12); }
-#vip-back svg{ width: 14px; height: 14px; flex-shrink: 0; }
 #vip-topbar-title{
   font-family: var(--cu-font,inherit); font-weight: 800; font-size: 13px;
   color: rgba(255,255,255,0.75); letter-spacing: 0.04em; text-transform: uppercase;
@@ -8122,10 +8092,6 @@ function closeFifa(){
 
 <div id="vip-overlay">
   <div id="vip-topbar">
-    <button id="vip-back" onclick="closeVip()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-      Back
-    </button>
     <span id="vip-topbar-title">VIP Access</span>
     <div style="flex:1"></div>
   </div>
@@ -8567,5 +8533,52 @@ header{
   .header-inner{ padding-left: 16px !important; padding-right: 10px !important; }
 }
 </style>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     "COMING SOON" popup — shown instead of actually opening Prime Video
+     or Willow OTT. Simple centered modal, closable via the button or by
+     clicking the dark backdrop.
+═══════════════════════════════════════════════════════════════════════ -->
+<style>
+#sx-comingsoon-overlay{
+  display: none; position: fixed; inset: 0; z-index: 9000;
+  background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  align-items: center; justify-content: center; padding: 20px;
+}
+#sx-comingsoon-overlay.open{ display: flex; }
+.sx-comingsoon-box{
+  width: 100%; max-width: 340px; background: #0b0b0d; border: 1px solid rgba(240,79,176,0.30);
+  border-radius: 14px; padding: 28px 24px; text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.55);
+}
+.sx-comingsoon-icon{ font-size: 34px; margin-bottom: 10px; }
+.sx-comingsoon-title{ font-family: var(--cu-font,inherit); font-weight: 800; font-size: 17px; color: #fff; margin-bottom: 8px; }
+.sx-comingsoon-msg{ font-family: var(--cu-font,inherit); font-size: 13px; color: rgba(255,255,255,0.65); line-height: 1.5; margin-bottom: 20px; }
+.sx-comingsoon-close{
+  background: linear-gradient(135deg,#F04FB0,#C2178A); color: #fff; border: none;
+  font-family: var(--cu-font,inherit); font-weight: 700; font-size: 13px;
+  padding: 10px 24px; border-radius: 8px; cursor: pointer; letter-spacing: 0.02em;
+}
+.sx-comingsoon-close:hover{ opacity: 0.9; }
+</style>
+<div id="sx-comingsoon-overlay" onclick="if(event.target===this) closeComingSoon();">
+  <div class="sx-comingsoon-box">
+    <div class="sx-comingsoon-icon">🚧</div>
+    <div class="sx-comingsoon-title" id="sx-comingsoon-title">Coming Soon</div>
+    <div class="sx-comingsoon-msg">This section isn't live yet — we're working on it. Check back soon!</div>
+    <button class="sx-comingsoon-close" onclick="closeComingSoon()">Got it</button>
+  </div>
+</div>
+<script>
+function sxShowComingSoon(label){
+  document.getElementById('sx-comingsoon-title').textContent = label + ' — Coming Soon';
+  document.getElementById('sx-comingsoon-overlay').classList.add('open');
+}
+function closeComingSoon(){
+  document.getElementById('sx-comingsoon-overlay').classList.remove('open');
+}
+window.sxShowComingSoon = sxShowComingSoon;
+window.closeComingSoon = closeComingSoon;
+</script>
 </body>
 </html>
