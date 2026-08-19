@@ -72,88 +72,57 @@
             line-height: 1.6;
         }
 
-        /* Player Section */
-        .player-section {
-            background: rgba(0, 0, 0, 0.4);
-            border-radius: 16px;
-            overflow: hidden;
-            margin-bottom: 40px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(10px);
-            animation: slideUp 0.6s ease-out;
-        }
-
-        #video-container {
-            width: 100%;
-            height: 0;
-            padding-bottom: 56.25%;
-            position: relative;
-            background: #000;
-        }
-
-        #shaka-video {
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
-
-        .player-controls {
+        /* Error Banner */
+        .error-banner {
+            background: rgba(255, 107, 107, 0.2);
+            border: 2px solid #ff6b6b;
+            color: #ff6b6b;
             padding: 20px;
-            background: rgba(0, 0, 0, 0.6);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 15px;
-            flex-wrap: wrap;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            animation: shake 0.5s;
+            display: none;
         }
 
-        .player-info {
-            flex: 1;
-            min-width: 200px;
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
         }
 
-        .player-info h3 {
-            color: #fff;
-            margin-bottom: 5px;
-            font-size: 1.3em;
-        }
-
-        .player-info p {
-            color: #aaa;
-            font-size: 0.9em;
-        }
-
-        .server-selector {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .server-btn {
-            padding: 10px 20px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
+        /* Loading State */
+        .loading {
+            text-align: center;
             color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.95em;
-            font-weight: 600;
+            padding: 40px;
+            display: none;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Cards Section (Initial View) */
+        .cards-section {
+            display: block;
             transition: all 0.3s ease;
         }
 
-        .server-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        .cards-section.hidden {
+            display: none;
         }
 
-        .server-btn.active {
-            background: linear-gradient(135deg, #ff6b6b, #ffa500);
-            box-shadow: 0 8px 20px rgba(255, 107, 107, 0.4);
-        }
-
-        /* Matches Grid */
         .matches-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -248,43 +217,121 @@
             margin-top: 10px;
         }
 
-        /* Loading State */
-        .loading {
-            text-align: center;
-            color: white;
-            padding: 40px;
+        /* Player Section (Hidden Initially) */
+        .player-section {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            animation: slideUp 0.6s ease-out;
+            display: none;
         }
 
-        .spinner {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid white;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
+        .player-section.visible {
+            display: block;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        #video-container {
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%;
+            position: relative;
+            background: #000;
         }
 
-        /* Error State */
-        .error-banner {
-            background: rgba(255, 107, 107, 0.2);
-            border: 2px solid #ff6b6b;
-            color: #ff6b6b;
+        #shaka-video {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .player-header {
             padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            animation: shake 0.5s;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
+        .player-header h2 {
+            color: white;
+            font-size: 1.5em;
+        }
+
+        .close-btn {
+            background: rgba(255, 107, 107, 0.8);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: #ff6b6b;
+            transform: scale(1.05);
+        }
+
+        .player-controls {
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .player-info {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .player-info h3 {
+            color: #fff;
+            margin-bottom: 5px;
+            font-size: 1.3em;
+        }
+
+        .player-info p {
+            color: #aaa;
+            font-size: 0.9em;
+        }
+
+        .server-selector {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .server-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .server-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .server-btn.active {
+            background: linear-gradient(135deg, #ff6b6b, #ffa500);
+            box-shadow: 0 8px 20px rgba(255, 107, 107, 0.4);
         }
 
         /* Animations */
@@ -372,35 +419,12 @@
                 flex: 1;
                 min-width: 100px;
             }
-        }
 
-        /* Tooltip */
-        .tooltip {
-            position: relative;
-            display: inline-block;
-        }
-
-        .tooltip .tooltiptext {
-            visibility: hidden;
-            width: 200px;
-            background-color: rgba(0, 0, 0, 0.8);
-            color: #fff;
-            text-align: center;
-            padding: 8px;
-            border-radius: 6px;
-            position: absolute;
-            z-index: 1;
-            bottom: 125%;
-            left: 50%;
-            margin-left: -100px;
-            opacity: 0;
-            transition: opacity 0.3s;
-            font-size: 0.85em;
-        }
-
-        .tooltip:hover .tooltiptext {
-            visibility: visible;
-            opacity: 1;
+            .player-header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
         }
     </style>
 </head>
@@ -419,34 +443,40 @@
         </div>
 
         <!-- Error Banner -->
-        <div id="errorBanner" class="error-banner" style="display: none;"></div>
+        <div id="errorBanner" class="error-banner"></div>
 
-        <!-- Player Section -->
-        <div class="player-section">
+        <!-- Loading State -->
+        <div id="loadingContainer" class="loading">
+            <div class="spinner"></div>
+            <p>Loading matches...</p>
+        </div>
+
+        <!-- Cards Section (Initially Visible) -->
+        <div id="cardsSection" class="cards-section">
+            <div id="matchesContainer" class="matches-grid"></div>
+        </div>
+
+        <!-- Player Section (Initially Hidden) -->
+        <div id="playerSection" class="player-section">
+            <div class="player-header">
+                <h2 id="playerEventName">Loading...</h2>
+                <button class="close-btn" id="closePlayerBtn">← Back to Matches</button>
+            </div>
             <div id="video-container">
                 <video id="shaka-video"></video>
             </div>
             <div class="player-controls">
                 <div class="player-info">
-                    <h3 id="currentEventName">Select a match to play</h3>
-                    <p id="currentEventId">No match selected</p>
+                    <h3 id="currentEventName">Selected Match</h3>
+                    <p id="currentEventId">Match ID</p>
                 </div>
-                <div class="server-selector">
+                <div class="server-selector" id="serverSelector">
                     <button class="server-btn active" data-server="amazon_server">Amazon</button>
                     <button class="server-btn" data-server="fastly_server">Fastly</button>
                     <button class="server-btn" data-server="cloudfront_server">CloudFront</button>
                 </div>
             </div>
         </div>
-
-        <!-- Loading State -->
-        <div id="loadingContainer" class="loading" style="display: none;">
-            <div class="spinner"></div>
-            <p>Loading matches...</p>
-        </div>
-
-        <!-- Matches Grid -->
-        <div id="matchesContainer" class="matches-grid"></div>
 
         <!-- Footer -->
         <div class="footer">
@@ -459,6 +489,7 @@
         let player;
         let currentData;
         let selectedServer = 'amazon_server';
+        let currentMatch = null;
 
         // Initialize Shaka Player
         async function initShakaPlayer() {
@@ -498,7 +529,6 @@
                 currentData = await response.json();
                 displayAnnouncement();
                 displayMatches();
-                setupServerButtons();
             } catch (error) {
                 console.error('Fetch error:', error);
                 showError('Failed to load matches: ' + error.message);
@@ -517,7 +547,7 @@
             }
         }
 
-        // Display matches
+        // Display matches as cards
         function displayMatches() {
             const container = document.getElementById('matchesContainer');
             container.innerHTML = '';
@@ -548,27 +578,75 @@
                 </div>
             `;
 
-            card.addEventListener('click', () => playMatch(match));
+            card.addEventListener('click', () => showPlayer(match));
             return card;
         }
 
+        // Show player section and hide cards
+        function showPlayer(match) {
+            currentMatch = match;
+            
+            // Hide cards, show player
+            document.getElementById('cardsSection').classList.add('hidden');
+            document.getElementById('playerSection').classList.add('visible');
+
+            // Update player info
+            document.getElementById('playerEventName').textContent = match.event_name;
+            document.getElementById('currentEventName').textContent = match.event_name;
+            document.getElementById('currentEventId').textContent = `ID: ${match.id}`;
+
+            // Reset server selector
+            document.querySelectorAll('.server-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector('[data-server="amazon_server"]').classList.add('active');
+            selectedServer = 'amazon_server';
+
+            // Setup server buttons for player
+            setupServerButtons();
+
+            // Auto-play with default server
+            playMatch(match, 'amazon_server');
+
+            // Scroll to player
+            setTimeout(() => {
+                document.getElementById('playerSection').scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+        }
+
+        // Close player and return to cards
+        function closePlayer() {
+            document.getElementById('cardsSection').classList.remove('hidden');
+            document.getElementById('playerSection').classList.remove('visible');
+
+            // Pause video
+            const video = document.getElementById('shaka-video');
+            if (video) {
+                video.pause();
+            }
+
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
         // Play selected match
-        async function playMatch(match) {
+        async function playMatch(match, server = null) {
+            if (!match) return;
+
             try {
-                const url = match.CnpTV[selectedServer];
+                const serverToUse = server || selectedServer;
+                const url = match.CnpTV[serverToUse];
+
                 if (!url) {
                     showError('Selected server not available for this match');
                     return;
                 }
 
-                document.getElementById('currentEventName').textContent = match.event_name;
-                document.getElementById('currentEventId').textContent = `ID: ${match.id}`;
-
                 // Load the stream
                 await player.load(url);
                 document.getElementById('shaka-video').play();
 
-                // Store DRM key (for future DRM implementation)
+                console.log('Playing stream from:', serverToUse);
                 console.log('DRM Key available:', match.drm_key);
             } catch (error) {
                 console.error('Playback error:', error);
@@ -579,10 +657,15 @@
         // Setup server button listeners
         function setupServerButtons() {
             document.querySelectorAll('.server-btn').forEach(btn => {
+                btn.onclick = null; // Remove previous listeners
                 btn.addEventListener('click', (e) => {
                     document.querySelectorAll('.server-btn').forEach(b => b.classList.remove('active'));
                     e.target.classList.add('active');
                     selectedServer = e.target.dataset.server;
+                    
+                    if (currentMatch) {
+                        playMatch(currentMatch, selectedServer);
+                    }
                 });
             });
         }
@@ -596,6 +679,9 @@
                 errorBanner.style.display = 'none';
             }, 5000);
         }
+
+        // Close button listener
+        document.getElementById('closePlayerBtn').addEventListener('click', closePlayer);
 
         // Initialize on page load
         window.addEventListener('load', () => {
