@@ -1121,7 +1121,70 @@ header.scrolled {
 /* ────────────────────────────────────────────
    FIXTURES
 ──────────────────────────────────────────── */
-.fixtures-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(280px,1fr)); gap: 14px; }
+.fixtures-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(280px,1fr)); gap: 16px; }
+
+/* ── New "TimStreams-style" homepage match preview cards ── */
+.sx-matches-hdr{ display:flex; align-items:center; gap:12px; margin-bottom:20px; }
+.sx-matches-hdr-bar{ width:4px; height:26px; background:linear-gradient(180deg,#F5A623,#E0158C); border-radius:4px; flex-shrink:0; }
+.sx-matches-hdr-text{
+  font-family: var(--cu-font,var(--font-display)); font-weight:900;
+  font-size: clamp(20px,3vw,28px); letter-spacing:0.02em; color:#fff; text-transform:uppercase;
+}
+.fx2-card{
+  display:flex; flex-direction:column; text-decoration:none;
+  background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08);
+  border-radius: 10px; overflow:hidden; transition: transform 0.18s var(--ease), border-color 0.18s var(--ease);
+}
+.fx2-card:hover{ transform: translateY(-4px); border-color: rgba(255,255,255,0.2); }
+.fx2-thumb{ position:relative; width:100%; aspect-ratio:16/9; background:#0a0a0a; overflow:hidden; }
+.fx2-thumb-img{ width:100%; height:100%; object-fit:cover; display:block; }
+.fx2-thumb-teams{
+  width:100%; height:100%; display:flex; align-items:center; justify-content:center; gap:14px;
+  background: radial-gradient(circle at 50% 40%, rgba(224,21,140,0.18), rgba(0,0,0,0.9));
+}
+.fx2-thumb-team img{ width:46px; height:46px; object-fit:contain; }
+.fx2-thumb-vs{ font-family:var(--font-display); font-weight:900; font-size:14px; color:rgba(255,255,255,0.55); }
+.fx2-badge{
+  position:absolute; top:10px; left:10px; display:inline-flex; align-items:center; gap:5px;
+  background: rgba(0,0,0,0.75); border-radius:6px; padding:4px 9px;
+  font-family: var(--cu-font,var(--font-display)); font-weight:800; font-size:10px; letter-spacing:0.05em; color:#fff;
+}
+.fx2-badge-live .fx2-live-dot{
+  width:6px; height:6px; border-radius:50%; background:var(--live-red,#E0158C); display:inline-block;
+  animation: liveDotPulse 1.4s ease-in-out infinite;
+}
+@keyframes liveDotPulse{ 0%,100%{opacity:1;} 50%{opacity:0.35;} }
+.fx2-body{ padding:14px 16px 16px; display:flex; flex-direction:column; gap:8px; }
+.fx2-title-row{ display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+.fx2-title{ font-family:var(--font-display); font-weight:700; font-size:14px; color:#fff; line-height:1.3; }
+.fx2-free{
+  flex-shrink:0; background: rgba(255,255,255,0.1); color:#fff;
+  font-family: var(--cu-font,var(--font-display)); font-weight:800; font-size:9px; letter-spacing:0.04em;
+  padding:3px 8px; border-radius:5px;
+}
+.fx2-meta{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.fx2-tag{
+  background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.65);
+  font-family: var(--cu-font,var(--font-display)); font-size:10.5px; font-weight:600;
+  padding:3px 8px; border-radius:5px;
+}
+.fx2-date{ font-family: var(--cu-font,var(--font-display)); font-size:11px; color: rgba(255,255,255,0.45); }
+
+.fx2-viewall{
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;
+  background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.08); border-radius:10px;
+  min-height:180px; text-decoration:none; transition: background 0.18s var(--ease), border-color 0.18s var(--ease);
+}
+.fx2-viewall:hover{ background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); }
+.fx2-viewall-arrow{
+  width:52px; height:52px; border-radius:50%; background: rgba(255,255,255,0.08);
+  display:flex; align-items:center; justify-content:center; font-size:22px; color:#fff;
+}
+.fx2-viewall-text{
+  font-family: var(--cu-font,var(--font-display)); font-weight:800; font-size:12px;
+  letter-spacing:0.08em; color: rgba(255,255,255,0.75); text-transform:uppercase;
+}
+
 .fixture-card {
   background: var(--glass); backdrop-filter: var(--blur-sm);
   border-radius: 8px; overflow: hidden; position: relative;
@@ -2924,6 +2987,14 @@ async function renderPanelsFromRegistry(panelRows) {
   .sx-tab-panel{ display:none !important; }
   .sx-tab-panel.active{ display:block !important; animation:sxFadeIn 0.25s var(--ease,ease); }
   @keyframes sxFadeIn{ from{opacity:0;transform:translateY(6px);} to{opacity:1;transform:translateY(0);} }
+  /* Small, consistent open transition for every nav-triggered full-page
+     section (Live TV, Movies, FIFA, Matches, FanCode, Prime, Willow OTT,
+     VIP) — matches switching feels less abrupt. */
+  #livetv-overlay.open, #movies-overlay.open, #fifa-overlay.open,
+  #fancode-overlay.open, #prime-overlay.open, #willow-overlay.open,
+  #vip-overlay.open{
+    animation: sxFadeIn 0.28s var(--ease,ease);
+  }
   .wcs-btn.active{ color:var(--gold,#FF8FD4); background:rgba(240,79,176,0.16); }
 
   /* Tab-specific hero banner — reuses the exact .slide markup/format, swapped in
@@ -3010,6 +3081,8 @@ function sxCloseAllOverlays(){
     const el = document.getElementById(id);
     if (el) el.classList.remove('open');
   });
+  const mp = document.getElementById('matches-panel');
+  if (mp) mp.classList.remove('active');
   sxHeaderHome();
 }
 window.sxCloseAllOverlays = sxCloseAllOverlays;
@@ -3080,51 +3153,32 @@ window.addEventListener('resize', function(){
 });
 
 function sxSwitchTab(name){
+  if (name === 'matches') { openMatches(); return; }
   if (name === 'fancode') { openFanCode(); return; }
   if (name === 'prime') { openPrime(); return; }
   if (name === 'willow') { openWillow(); return; }
   if (name === 'fifa') { openFifa(); return; }
-  const panelMap = { matches:'matches-panel' };
-  const targetId = panelMap[name];
-  if (!targetId) return;
-
-  sxCloseAllOverlays();
-  document.body.style.overflow = '';
-
-  window.__sxCurrentTab = name;
-  document.querySelectorAll('.sx-tab-panel').forEach(p => p.classList.toggle('active', p.id === targetId));
-
-  // Sync active state across all nav groups pointing at tabs (quick strip, drawer, bottom bar)
-  document.querySelectorAll('[data-sxtab]').forEach(el => el.classList.toggle('active', el.dataset.sxtab === name));
-
-  // Swap the PC hero-slide for this tab (no scroll, no extra banner).
-  sxUpdateHeroOverride(name);
-
-  if (window.__mtabSetActive) {
-    const mt = document.querySelector(`.mtab[data-sxtab="${name}"]`);
-    if (mt) window.__mtabSetActive(mt);
-  }
-
-  // Smooth-scroll the tab panels into view, just below the sticky header —
-  // matches the behaviour of the channel-tab browser (chSetTab).
-  requestAnimationFrame(() => {
-    const panels = document.getElementById('sxTabPanels');
-    if (!panels) return;
-    const headerH = (document.querySelector('header') || {offsetHeight:0}).offsetHeight || 0;
-    const top = panels.getBoundingClientRect().top + window.scrollY - headerH - 12;
-    // Only scroll if the panel isn't already comfortably in view (avoids
-    // yanking the page down when the user is already looking at it).
-    if (top < window.scrollY - 4 || top > window.scrollY + 4) {
-      window.scrollTo({ top: Math.max(top, 0), behavior: 'smooth' });
-    }
-  });
 }
 window.sxSwitchTab = sxSwitchTab;
 </script>
 
 <div id="sxTabPanels">
 
-<div class="sx-tab-panel active" id="matches-panel">
+<style>
+#matches-panel{
+  position: fixed; inset: 0; z-index: 1200;
+  background: #000000; padding: 14px 20px 40px;
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
+}
+@media(max-width:900px){
+  #matches-panel{ padding: 14px 14px calc(60px + env(safe-area-inset-bottom, 0)); }
+}
+</style>
+<div class="sx-tab-panel" id="matches-panel">
+<div class="epg-hero" style="padding:6px 2px 2px;">
+  <div class="epg-hero-title">MATCHES</div>
+  <div class="epg-hero-sub">Live scores and upcoming fixtures across every sport.</div>
+</div>
 <div class="smo-toolbar" id="smo-toolbar" style="display:none;">
   <div class="smo-game-tabs" id="smo-game-tabs"></div>
   <select class="smo-game-select" id="smo-game-select" aria-label="Select event"></select>
@@ -3760,11 +3814,11 @@ window.sxSwitchTab = sxSwitchTab;
 </div><!-- /sxTabPanels -->
 
 <!-- LIVE FIXTURES -->
-<section class="section" style="display:none;background:linear-gradient(180deg,#000000,#000000);padding:40px 0;" id="fixtures-section">
+<section class="section" style="background:linear-gradient(180deg,#000000,#000000);padding:40px 0;" id="fixtures-section">
   <div class="section-inner">
-    <div class="section-hdr">
-      <h2 class="section-title">🔴 Live &amp; Upcoming Matches</h2>
-      <a class="view-all" href="#sxTabPanels" onclick="event.preventDefault();openLiveTV();">View All ›</a>
+    <div class="sx-matches-hdr">
+      <span class="sx-matches-hdr-bar"></span>
+      <span class="sx-matches-hdr-text">LIVE &amp; UPCOMING</span>
     </div>
     <div class="fixtures-grid" id="fixtures-grid"></div>
   </div>
@@ -4951,39 +5005,41 @@ function renderChannels(rows) {
 
 function renderFixtures(rows) {
   if (!rows) return;
-  const fx = active(rows);
+  // Homepage preview only — kept short on purpose ("View All" opens the
+  // full Matches page). The full list lives in the Matches overlay.
+  const fx = active(rows).slice(0, 5);
   const grid = document.getElementById('fixtures-grid');
   grid.innerHTML = fx.map(f => {
     const isLive = (f.status||'').toLowerCase() === 'live';
-    const shimmer = isLive ? '<div class="live-shimmer"></div>' : '';
-    const badgeCls = isLive ? 'fixture-badge fixture-badge-live' : 'fixture-badge';
-    const badgeTxt = isLive ? '🔴 LIVE' : '⏰ UPCOMING';
+    const thumb = f.banner_image_url
+      ? `<img src="${f.banner_image_url}" alt="" class="fx2-thumb-img">`
+      : `<div class="fx2-thumb-teams">
+           <div class="fx2-thumb-team">${img(f.team1_logo_url,f.team1_name,'')}</div>
+           <div class="fx2-thumb-vs">VS</div>
+           <div class="fx2-thumb-team">${img(f.team2_logo_url,f.team2_name,'')}</div>
+         </div>`;
     return `
-    <div class="fixture-card">
-      ${shimmer}
-      <div class="fixture-top">
-        <div><div class="fixture-date">${f.date_label||''}</div><div class="fixture-venue-sm">${f.venue||''}</div></div>
-        <span class="${badgeCls}">${badgeTxt}</span>
+    <a class="fx2-card" href="${f.watch_url||'#'}" onclick="return sxWatchLinkClick(event, this);">
+      <div class="fx2-thumb">
+        ${thumb}
+        ${isLive ? '<span class="fx2-badge fx2-badge-live"><span class="fx2-live-dot"></span>LIVE</span>' : ''}
       </div>
-      <div class="fixture-body">
-        <div class="fixture-teams">
-          <div class="fixture-team">
-            <div class="team-logo-wrap">${img(f.team1_logo_url,f.team1_name,'')}</div>
-            <div class="fixture-team-name">${f.team1_name||''}</div>
-          </div>
-          <div class="fixture-vs">VS</div>
-          <div class="fixture-team">
-            <div class="team-logo-wrap">${img(f.team2_logo_url,f.team2_name,'')}</div>
-            <div class="fixture-team-name">${f.team2_name||''}</div>
-          </div>
+      <div class="fx2-body">
+        <div class="fx2-title-row">
+          <div class="fx2-title">${f.team1_name||''} vs ${f.team2_name||''}</div>
+          <span class="fx2-free">${f.price_badge||'FREE'}</span>
+        </div>
+        <div class="fx2-meta">
+          <span class="fx2-tag">${f.venue||'Live Sports'}</span>
+          <span class="fx2-date">${f.date_label||''}</span>
         </div>
       </div>
-      <div class="fixture-footer">
-        <span class="fixture-venue-label">${f.venue||''}</span>
-        <a class="btn-watch-sm" href="${f.watch_url||'#'}" onclick="return sxWatchLinkClick(event, this);">▶ WATCH</a>
-      </div>
-    </div>`;
-  }).join('');
+    </a>`;
+  }).join('') + `
+    <a class="fx2-viewall" href="#sxTabPanels" onclick="event.preventDefault();openMatches();">
+      <span class="fx2-viewall-arrow">→</span>
+      <span class="fx2-viewall-text">VIEW ALL</span>
+    </a>`;
 }
 
 function renderCategories(rows) {
@@ -6646,10 +6702,7 @@ function closeAdminChatDiscordPopup(){
 #movies-overlay.open{ display: block; }
 
 #movies-topbar{
-  position: sticky; top: 0; z-index: 2;
-  display: flex; align-items: center; gap: 12px;
-  padding: 14px 20px; background: rgba(10,10,11,0.92);
-  backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.08);
+  display: none;
 }
 #movies-back{
   display: flex; align-items: center; gap: 6px;
@@ -6789,6 +6842,11 @@ function closeAdminChatDiscordPopup(){
     <section class="section" id="movies-section">
       <div class="section-inner">
         <div class="epg">
+          <div class="epg-hero">
+            <div class="epg-hero-title">MOVIES</div>
+            <div class="epg-hero-sub">Endless movies and TV shows, ready to stream anytime.</div>
+          </div>
+
           <div class="epg-topbar">
             <div class="epg-title-row">
               <span class="epg-title" id="vaViewTitle">🎬 Trending Movies</span>
@@ -7387,6 +7445,31 @@ function closeLiveTV(){
   document.body.style.overflow = '';
   sxHeaderHome();
 }
+
+// Matches — moved off the homepage into its own full-page section, same
+// treatment as Live TV / Movies (fixed overlay, own z-index, nav bar
+// pinned at top). The homepage itself now only shows a condensed
+// "Live & Upcoming Matches" preview (#fixtures-section) with a button
+// through to this full page.
+function openMatches(){
+  sxCloseAllOverlays();
+  document.getElementById('matches-panel').classList.add('active');
+  document.body.style.overflow = 'hidden';
+  window.scrollTo(0,0);
+  document.querySelectorAll('[data-sxtab]').forEach(el => el.classList.toggle('active', el.dataset.sxtab === 'matches'));
+  if (window.__mtabSetActive) {
+    const mt = document.querySelector('.mtab[data-sxtab="matches"]');
+    if (mt) window.__mtabSetActive(mt);
+  }
+  sxHeaderInto('matches-panel', null);
+}
+function closeMatches(){
+  document.getElementById('matches-panel').classList.remove('active');
+  document.body.style.overflow = '';
+  sxHeaderHome();
+}
+window.openMatches = openMatches;
+window.closeMatches = closeMatches;
 
 // ══════════════════════════════════════════════════════════════════════
 // MOVIES — powered by VidAPI's public listing + embed API.
@@ -8503,34 +8586,65 @@ function closeVip(){
 </script>
 
 <!-- ══════════════════════════════════════════════════════════════════════
-     NAV BAR — floating rounded "pill" capsule instead of a flat edge-to-
-     edge bar: inset from the top/sides, fully rounded ends, glass blur.
-     header itself stays transparent/sticky (so the pill still sticks to
-     the top on scroll); .header-inner is the actual visible capsule.
+     NAV BAR — slim, flat, edge-to-edge bar (not a floating pill): sits
+     flush at the very top with a tight height, dark bar background and
+     a thin bottom border, like a standard streaming-site nav.
 ═══════════════════════════════════════════════════════════════════════ -->
 <style>
 header{
+  background: rgba(10,9,12,0.88) !important;
+  backdrop-filter: blur(14px) saturate(1.4) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(1.4) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+  box-shadow: 0 2px 14px rgba(0,0,0,0.35) !important;
+  padding: 0 !important;
+}
+.header-inner{
+  max-width: 1400px;
+  height: 56px !important;
+  border-radius: 0 !important;
   background: transparent !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
-  border-bottom: none !important;
+  border: none !important;
   box-shadow: none !important;
-  padding: 14px 16px 0 !important;
+  padding-left: 20px !important;
+  padding-right: 16px !important;
 }
-.header-inner{
-  max-width: 1320px;
-  border-radius: 999px !important;
-  background: rgba(14,12,18,0.62) !important;
-  backdrop-filter: blur(22px) saturate(1.7) !important;
-  -webkit-backdrop-filter: blur(22px) saturate(1.7) !important;
-  border: 1px solid rgba(255,255,255,0.10) !important;
-  box-shadow: 0 10px 34px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.06) inset !important;
-  padding-left: 22px !important;
-  padding-right: 14px !important;
-}
+.logo-img{ height: 34px !important; }
+.nav-links-desktop a{ padding: 5px 10px !important; font-size: 13px !important; }
 @media(max-width:900px){
-  header{ padding: 10px 12px 0 !important; }
-  .header-inner{ padding-left: 16px !important; padding-right: 10px !important; }
+  header{ padding: 0 !important; }
+  .header-inner{ height: 52px !important; padding-left: 14px !important; padding-right: 10px !important; }
+  .logo-img{ height: 30px !important; }
+}
+</style>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     HERO SLIDE "WATCH LIVE" BUTTON — dark glass pill with a play icon,
+     matching the slim outlined CTA style (not the solid white/gold pill).
+═══════════════════════════════════════════════════════════════════════ -->
+<style>
+.btn-slide-watch{
+  background: rgba(0,0,0,0.55) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,0.28) !important;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  font-weight: 800 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase;
+  border-radius: 7px !important;
+  box-shadow: none !important;
+  display: inline-flex !important; align-items: center !important; gap: 8px !important;
+}
+.btn-slide-watch::before{
+  content: "▶";
+  font-size: 0.85em;
+}
+.btn-slide-watch:hover{
+  background: rgba(0,0,0,0.72) !important;
+  border-color: rgba(255,255,255,0.4) !important;
 }
 </style>
 
