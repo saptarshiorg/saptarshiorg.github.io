@@ -4890,7 +4890,8 @@ function renderMatchCards(rows) {
   // Drop anything already 15h+ past its scheduled start (countdown_to_iso_datetime)
   // so old matches disappear from the site on their own.
   const cards = allActiveCards.filter(c => !smoIsExpired(c));
-  window._matchCardsData = cards; // store globally for hero card injection
+  window._matchCardsData = cards; // store globally for hero card injection + home preview
+  if (typeof renderFixtures === 'function') renderFixtures(); // home "Matches" preview now sources from this same data
   const el = document.getElementById('match-overlay');
 
   // ── Group cards by GAME (sport name column) ──────────────
@@ -4916,12 +4917,15 @@ function renderMatchCards(rows) {
       const uid = Math.random().toString(36).slice(2);
       const cardId = 'smo-card-' + uid;
       const badgeId = 'smo-badge-' + uid;
-      const liveBadgeHtml = `<div class="smo-live-badge" id="${badgeId}"><div class="live-dot-r"></div>LIVE</div>`;
+      // Card style now matches the home-screen preview cards (fx2-card):
+      // team-logo thumb with a badge pinned top-left, then a body with
+      // title/FREE row, game+date meta row, countdown, and Watch Now.
+      const liveBadgeHtml = `<span class="fx2-badge fx2-badge-live" id="${badgeId}"><span class="fx2-live-dot"></span>LIVE</span>`;
       const badge = isLive
         ? liveBadgeHtml
         : isFinished
-        ? `<div class="smo-upcoming-badge" id="${badgeId}">FINISHED</div>`
-        : `<div class="smo-upcoming-badge" id="${badgeId}">⏰ UPCOMING</div>`;
+        ? `<span class="fx2-badge" id="${badgeId}">FINISHED</span>`
+        : `<span class="fx2-badge" id="${badgeId}">⏰ UPCOMING</span>`;
       const countdown = (isLive || isFinished) ? '' : (c.countdown_to_iso_datetime || c.countdown_to || '');
       const timerId = 'timer-' + uid;
       const timerWrapId = 'timerwrap-' + uid;
@@ -4932,24 +4936,31 @@ function renderMatchCards(rows) {
       const timerBlock = `<div class="smo-timer" id="${timerWrapId}" style="visibility:${countdown ? 'visible' : 'hidden'}"><div class="timer-label">STARTS IN</div><div class="timer-display" id="${timerId}">--:--:--</div></div>`;
 
       const detailsHtml = c.details ? `<div class="smo-details">${c.details}</div>` : '';
+      const teamsLine = `${c.team1_full_name||c.team1_code||''} vs ${c.team2_full_name||c.team2_code||''}`;
 
       sectionHtml += `
-      <div class="smo-card" id="${cardId}"${hideAt !== null ? ` data-expire-at="${hideAt}"` : ''}>
-        <div class="smo-header">${badge}<span class="smo-date">${dateLabel}</span></div>
-        ${detailsHtml}
-        <div class="smo-teams">
-          <div class="smo-team">
-            ${img(c.team1_logo_url,'',`smo-logo`)}
-            <div><div class="smo-name">${c.team1_code||''}</div><div class="smo-full">${c.team1_full_name||''}</div></div>
+      <div class="smo-card fx2-card" id="${cardId}"${hideAt !== null ? ` data-expire-at="${hideAt}"` : ''}>
+        <div class="fx2-thumb">
+          <div class="fx2-thumb-teams">
+            <div class="fx2-thumb-team">${img(c.team1_logo_url,c.team1_code||'','')}</div>
+            <div class="fx2-thumb-vs">VS</div>
+            <div class="fx2-thumb-team">${img(c.team2_logo_url,c.team2_code||'','')}</div>
           </div>
-          <div class="smo-vs">VS</div>
-          <div class="smo-team">
-            ${img(c.team2_logo_url,'',`smo-logo`)}
-            <div><div class="smo-name">${c.team2_code||''}</div><div class="smo-full">${c.team2_full_name||''}</div></div>
-          </div>
+          ${badge}
         </div>
-        ${timerBlock}
-        <a class="smo-btn" href="${matchWatchHref(c.btn_url)}" onclick="return sxHandleMatchWatch(event,'${sxServersEnc(c)}','${escJs(c.btn_url)}','${escJs((c.team1_code||'')+' vs '+(c.team2_code||''))}','${sxMatchInfoEnc(c,(c.team1_code||'')+' vs '+(c.team2_code||''))}')">Watch Now</a>
+        <div class="fx2-body">
+          <div class="fx2-title-row">
+            <div class="fx2-title">${teamsLine}</div>
+            <span class="fx2-free">FREE</span>
+          </div>
+          ${detailsHtml}
+          <div class="fx2-meta">
+            <span class="fx2-tag">${gameName}</span>
+            <span class="fx2-date">${dateLabel}</span>
+          </div>
+          ${timerBlock}
+          <a class="smo-btn" href="${matchWatchHref(c.btn_url)}" onclick="return sxHandleMatchWatch(event,'${sxServersEnc(c)}','${escJs(c.btn_url)}','${escJs((c.team1_code||'')+' vs '+(c.team2_code||''))}','${sxMatchInfoEnc(c,(c.team1_code||'')+' vs '+(c.team2_code||''))}')">▶ Watch Now</a>
+        </div>
       </div>`;
 
       if (!isLive && countdown) timers.push({ timerDisplayId: timerId, timerWrapId, badgeId, liveBadgeHtml, target: countdown });
@@ -5004,34 +5015,37 @@ function renderChannels(rows) {
 }
 
 function renderFixtures(rows) {
-  if (!rows) return;
-  // Homepage preview only — kept short on purpose ("View All" opens the
-  // full Matches page). The full list lives in the Matches overlay.
-  const fx = active(rows).slice(0, 5);
+  // Homepage "Matches" preview now pulls from the same MATCH CARDS data
+  // as the full Matches page / hero cards, instead of the old FIXTURES
+  // sheet — kept short on purpose ("View All" opens the full Matches
+  // page). The full list lives in the Matches overlay.
+  const source = (window._matchCardsData || []).filter(c => !isMatchFinished(c));
+  const fx = source.slice(0, 5);
   const grid = document.getElementById('fixtures-grid');
-  grid.innerHTML = fx.map(f => {
-    const isLive = (f.status||'').toLowerCase() === 'live';
-    const thumb = f.banner_image_url
-      ? `<img src="${f.banner_image_url}" alt="" class="fx2-thumb-img">`
+  if (!grid) return;
+  grid.innerHTML = fx.map(c => {
+    const isLive = matchStatusText(c).toLowerCase() === 'live';
+    const thumb = c.banner_image_url
+      ? `<img src="${c.banner_image_url}" alt="" class="fx2-thumb-img">`
       : `<div class="fx2-thumb-teams">
-           <div class="fx2-thumb-team">${img(f.team1_logo_url,f.team1_name,'')}</div>
+           <div class="fx2-thumb-team">${img(c.team1_logo_url,c.team1_code||'','')}</div>
            <div class="fx2-thumb-vs">VS</div>
-           <div class="fx2-thumb-team">${img(f.team2_logo_url,f.team2_name,'')}</div>
+           <div class="fx2-thumb-team">${img(c.team2_logo_url,c.team2_code||'','')}</div>
          </div>`;
     return `
-    <a class="fx2-card" href="${f.watch_url||'#'}" onclick="return sxWatchLinkClick(event, this);">
+    <a class="fx2-card" href="${matchWatchHref(c.btn_url)}" onclick="return sxHandleMatchWatch(event,'${sxServersEnc(c)}','${escJs(c.btn_url)}','${escJs((c.team1_code||'')+' vs '+(c.team2_code||''))}','${sxMatchInfoEnc(c,(c.team1_code||'')+' vs '+(c.team2_code||''))}')">
       <div class="fx2-thumb">
         ${thumb}
         ${isLive ? '<span class="fx2-badge fx2-badge-live"><span class="fx2-live-dot"></span>LIVE</span>' : ''}
       </div>
       <div class="fx2-body">
         <div class="fx2-title-row">
-          <div class="fx2-title">${f.team1_name||''} vs ${f.team2_name||''}</div>
-          <span class="fx2-free">${f.price_badge||'FREE'}</span>
+          <div class="fx2-title">${c.team1_full_name||c.team1_code||''} vs ${c.team2_full_name||c.team2_code||''}</div>
+          <span class="fx2-free">FREE</span>
         </div>
         <div class="fx2-meta">
-          <span class="fx2-tag">${f.venue||'Live Sports'}</span>
-          <span class="fx2-date">${f.date_label||''}</span>
+          <span class="fx2-tag">${c.game||'Live Sports'}</span>
+          <span class="fx2-date">${c.date_label||''}</span>
         </div>
       </div>
     </a>`;
@@ -5144,7 +5158,6 @@ async function init() {
     ['HERO SLIDES',  renderSlides,     38, 'Loading featured slides…'],
     ['MATCH CARDS',  renderMatchCards, 46, 'Loading match cards…'],
     ['LIVE CHANNELS',renderChannels,   54, 'Loading live channels…'],
-    ['FIXTURES',     renderFixtures,   62, 'Loading tournaments…'],
     ['CATEGORIES',   renderCategories, 68, 'Loading categories…'],
     ['BROADCAST',    renderBroadcast,  74, 'Loading broadcast partners…'],
     ['SCHEDULE',     renderSchedule,   80, 'Loading schedule…'],
@@ -5880,6 +5893,12 @@ header{
   box-shadow: 0 14px 30px rgba(0,0,0,0.45) !important;
   border-color: rgba(255,255,255,0.18) !important;
 }
+/* Matches-section cards now reuse the home-screen fx2-card shell (thumb +
+   badge + body), so line the leftover smo-specific bits up with it. */
+.smo-card.fx2-card:hover{ transform: translateY(-4px) !important; }
+.smo-card.fx2-card .fx2-body{ gap: 10px; }
+.smo-card.fx2-card .smo-timer{ margin: 0 !important; }
+.smo-card.fx2-card .smo-btn{ width: 100%; justify-content: center; margin: 0 !important; }
 .smo-header{
   padding: 12px 16px !important;
   margin-bottom: 0 !important;
@@ -8621,20 +8640,83 @@ header{
 </style>
 
 <!-- ══════════════════════════════════════════════════════════════════════
-     HERO SLIDE "WATCH LIVE" BUTTON — dark glass pill with a play icon,
-     matching the slim outlined CTA style (not the solid white/gold pill).
+     FLOATING PILL NAV — the bar above was a full-width edge-to-edge strip
+     that sat in normal document flow (position:sticky), which reserved its
+     own height and pushed the hero / Movies grid down beneath it — so it
+     never actually appeared "over" that content, just above it.
+
+     This turns it into a small, centered, fully-rounded capsule that
+     floats (position:fixed) above everything, so it now genuinely overlaps
+     the hero / Movies section instead of shoving it down. Because it's
+     fixed rather than in-flow, this also automatically fixes it for the
+     Live TV / Movies / FIFA / VIP overlay pages the header gets relocated
+     into (sxHeaderInto) — those overlays no longer reserve empty space for
+     it either.
+═══════════════════════════════════════════════════════════════════════ -->
+<style>
+header{
+  position: fixed !important;
+  top: 14px !important;
+  left: 50% !important;
+  right: auto !important;
+  transform: translateX(-50%) !important;
+  width: max-content !important;
+  max-width: calc(100% - 24px) !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  background: rgba(10,9,12,0.72) !important;
+  backdrop-filter: blur(18px) saturate(1.5) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.5) !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.45) !important;
+}
+.header-inner{
+  height: 46px !important;
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+  gap: 8px !important;
+}
+.logo-img{ height: 26px !important; }
+.nav-links-desktop{ gap: 0 !important; }
+.nav-links-desktop a{ padding: 5px 9px !important; font-size: 12.5px !important; }
+#sx-header-anchor{ display:none !important; }
+@media(max-width:900px){
+  header{ top: 10px !important; max-width: calc(100% - 16px) !important; }
+  .header-inner{ height: 42px !important; padding-left: 8px !important; padding-right: 8px !important; }
+  .logo-img{ height: 22px !important; }
+}
+</style>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     CONTENT STARTS UNDER THE NAV BAR, NOT BEHIND IT — the floating pill
+     header above is position:fixed and doesn't reserve any layout space,
+     so every full-screen page (home hero, Matches, Live TV, Movies) needs
+     its own top clearance sized to the pill's actual height, the same way
+     the FIFA / VIP pages already push their sticky topbar down by
+     header.offsetHeight. This applies that same safe top-offset everywhere.
+═══════════════════════════════════════════════════════════════════════ -->
+<style>
+:root{ --sx-nav-safe: 80px; }
+@media(max-width:900px){ :root{ --sx-nav-safe: 68px; } }
+.hero{ margin-top: var(--sx-nav-safe) !important; }
+#matches-panel{ padding-top: var(--sx-nav-safe) !important; }
+#livetv-page-inner{ padding-top: var(--sx-nav-safe) !important; }
+#movies-page-inner{ padding-top: var(--sx-nav-safe) !important; }
+</style>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     HERO SLIDE "WATCH NOW" BUTTON — solid white pill, fully rounded.
 ═══════════════════════════════════════════════════════════════════════ -->
 <style>
 .btn-slide-watch{
-  background: rgba(0,0,0,0.55) !important;
-  color: #fff !important;
-  border: 1px solid rgba(255,255,255,0.28) !important;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   font-weight: 800 !important;
   letter-spacing: 0.06em !important;
   text-transform: uppercase;
-  border-radius: 7px !important;
+  border-radius: 999px !important;
   box-shadow: none !important;
   display: inline-flex !important; align-items: center !important; gap: 8px !important;
 }
@@ -8643,8 +8725,7 @@ header{
   font-size: 0.85em;
 }
 .btn-slide-watch:hover{
-  background: rgba(0,0,0,0.72) !important;
-  border-color: rgba(255,255,255,0.4) !important;
+  background: #eeeeee !important;
 }
 </style>
 
