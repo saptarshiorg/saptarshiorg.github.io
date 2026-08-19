@@ -1362,23 +1362,15 @@ header.scrolled {
 .cat-f1 { background: linear-gradient(135deg,#4A0A3A,#2A0620); }
 
 /* ────────────────────────────────────────────
-   OTT PLATFORMS (FanCode, Prime, Willow)
+   OTT PLATFORMS (FanCode, Prime, Willow) - FLAT STYLE
 ──────────────────────────────────────────── */
 #ott-section {
-  background: linear-gradient(180deg, rgba(240,79,176,0.08) 0%, rgba(200,20,140,0.04) 50%, #000000 100%) !important;
-  border-top: 1px solid rgba(240,79,176,0.15);
+  background: linear-gradient(180deg,#000000,#000000) !important;
+  border-top: 1px solid rgba(255,255,255,0.06);
   position: relative;
 }
 #ott-section::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(240,79,176,0.08) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
+  display: none;
 }
 #ott-section .section-inner {
   position: relative;
@@ -1387,60 +1379,58 @@ header.scrolled {
 
 .ott-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
 .ott-card {
-  border-radius: 12px; padding: 28px 24px;
-  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  border-radius: 8px; padding: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 0;
   text-align: center; position: relative; overflow: hidden;
-  background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
-  backdrop-filter: var(--blur-sm); -webkit-backdrop-filter: var(--blur-sm);
-  box-shadow: 0 8px 36px rgba(0,0,0,0.55), 0 0 1px rgba(255,255,255,0.10);
+  background: var(--glass); backdrop-filter: var(--blur-sm);
+  box-shadow: 0 8px 36px rgba(0,0,0,0.60), 0 1px 0 rgba(255,255,255,0.04);
   transition: all 0.28s var(--spring);
   text-decoration: none; cursor: pointer;
-  border: 1.5px solid rgba(240,79,176,0.20);
+  border: 1px solid rgba(255,255,255,0.06);
 }
-.ott-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg,rgba(255,255,255,0.06) 0%,transparent 50%); border-radius: inherit; pointer-events: none; z-index: 1; }
-.ott-card::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity 0.28s var(--ease); z-index: 1; }
+.ott-card::before { display: none; }
+.ott-card::after { display: none; }
 .ott-card:hover { 
-  transform: translateY(-8px) scale(1.02); 
-  box-shadow: 0 24px 60px rgba(0,0,0,0.75), 0 0 50px rgba(240,79,176,0.25); 
-  border-color: rgba(240,79,176,0.50);
-  background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
-}
-.ott-card:hover::after {
-  background: radial-gradient(circle at center, rgba(240,79,176,0.1) 0%, transparent 70%);
-  opacity: 1;
+  transform: translateY(-4px); 
+  box-shadow: 0 20px 60px rgba(0,0,0,0.80);
+  border-color: rgba(255,255,255,0.12);
 }
 
 .ott-logo-wrap { 
-  width: 88px; height: 88px; border-radius: 12px; 
+  width: 100%; padding: 20px 16px 16px;
   display: flex; align-items: center; justify-content: center; 
   overflow: hidden; 
-  background: linear-gradient(135deg, rgba(240,79,176,0.15), rgba(200,20,140,0.08));
-  border: 1px solid rgba(240,79,176,0.20);
-  position: relative; z-index: 2;
-  box-shadow: 0 8px 24px rgba(240,79,176,0.15);
+  background: rgba(255,255,255,0.025);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
 }
-.ott-logo-wrap img { width: 100%; height: 100%; object-fit: contain; }
+.ott-logo-wrap img { width: 70px; height: 70px; object-fit: contain; }
 .ott-name { 
-  font-family: var(--font-display); font-weight: 800; font-size: 18px; 
-  letter-spacing: 0.05em; color: var(--white); position: relative; z-index: 2;
-  text-transform: uppercase;
+  font-family: var(--font-display); font-weight: 800; font-size: 15px; 
+  letter-spacing: 0.03em; color: var(--white); position: relative; z-index: 2;
+  text-transform: uppercase; padding: 12px 12px 0;
 }
 .ott-desc { 
-  font-size: 13px; color: rgba(255,255,255,0.70); line-height: 1.5; 
-  position: relative; z-index: 2;
+  font-size: 11px; color: rgba(255,255,255,0.65); line-height: 1.4; 
+  position: relative; z-index: 2; padding: 0 12px 12px;
 }
 .ott-btn {
-  display: inline-flex; align-items: center; gap: 8px;
+  display: inline-flex; align-items: center; gap: 6px;
   background: var(--grad-gold); color: #FFFFFF; border: none;
-  font-family: var(--font-display); font-weight: 800; font-size: 13px;
-  padding: 11px 24px; border-radius: 8px; text-decoration: none;
+  font-family: var(--font-display); font-weight: 800; font-size: 11px;
+  padding: 8px 16px; border-radius: 6px; text-decoration: none;
   transition: all 0.22s var(--spring);
   box-shadow: 0 1px 0 rgba(255,255,255,0.55) inset, 0 -2px 0 rgba(122,10,87,0.4) inset, 0 5px 0 -1px rgba(122,10,87,0.5), 0 8px 24px rgba(240,79,176,0.35);
   position: relative; z-index: 2;
+  cursor: pointer; margin: 0 12px 12px;
+  width: calc(100% - 24px);
 }
-.ott-btn:hover { 
+.ott-btn:hover:not(:disabled) { 
   transform: translateY(-2px) scale(1.02); 
   box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 -2px 0 rgba(122,10,87,0.4) inset, 0 7px 0 -1px rgba(122,10,87,0.5), 0 14px 36px rgba(240,79,176,0.50);
+}
+.ott-btn:disabled {
+  opacity: 0.8;
+  cursor: not-allowed;
 }
 
 /* ────────────────────────────────────────────
@@ -3873,32 +3863,31 @@ window.sxSwitchTab = sxSwitchTab;
 
 .ott-grid-full { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; padding: 0 16px; }
 .ott-card-full {
-  border-radius: 12px; padding: 20px 16px;
-  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  border-radius: 8px; padding: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 0;
   text-align: center; position: relative; overflow: hidden;
-  background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
-  backdrop-filter: var(--blur-sm); -webkit-backdrop-filter: var(--blur-sm);
-  box-shadow: 0 8px 36px rgba(0,0,0,0.55), 0 0 1px rgba(255,255,255,0.10);
+  background: var(--glass); backdrop-filter: var(--blur-sm);
+  box-shadow: 0 8px 36px rgba(0,0,0,0.60), 0 1px 0 rgba(255,255,255,0.04);
   transition: all 0.28s var(--spring);
   text-decoration: none; cursor: pointer;
-  border: 1.5px solid rgba(240,79,176,0.20);
+  border: 1px solid rgba(255,255,255,0.06);
 }
-.ott-card-full::before { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg,rgba(255,255,255,0.06) 0%,transparent 50%); border-radius: inherit; pointer-events: none; z-index: 1; }
+.ott-card-full::before { display: none; }
 .ott-card-full:not(.ott-coming-soon):hover { 
-  transform: translateY(-8px) scale(1.02); 
-  box-shadow: 0 24px 60px rgba(0,0,0,0.75), 0 0 50px rgba(240,79,176,0.25); 
-  border-color: rgba(240,79,176,0.50);
-  background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+  transform: translateY(-4px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.80);
+  border-color: rgba(255,255,255,0.12);
 }
-.ott-card-full.ott-coming-soon { opacity: 0.65; }
+.ott-card-full.ott-coming-soon { opacity: 0.60; }
 .ott-soon-badge {
-  position: absolute; top: 10px; right: 10px;
-  background: rgba(240,79,176,0.20); 
-  color: #FF8FD4;
-  font-family: var(--font-display); font-weight: 700; font-size: 10px;
-  padding: 4px 10px; border-radius: 6px;
-  letter-spacing: 0.05em; z-index: 3;
-  border: 1px solid rgba(240,79,176,0.30);
+  position: absolute; top: 8px; right: 8px;
+  background: rgba(0,0,0,0.70); 
+  color: rgba(255,255,255,0.80);
+  font-family: var(--font-display); font-weight: 700; font-size: 9px;
+  padding: 3px 8px; border-radius: 4px;
+  letter-spacing: 0.05em; z-index: 10;
+  border: 1px solid rgba(255,255,255,0.15);
+  text-transform: uppercase;
 }
 .ott-logo-wrap { 
   width: 76px; height: 76px; border-radius: 12px; 
@@ -7704,6 +7693,11 @@ function openStreamPlayer(url, name, type){
   clearTimeout(window._spLoadingTimer);
   document.getElementById('stream-player-frame').src = src;
   document.getElementById('stream-player-overlay').classList.add('open');
+  // Hide navbar when player opens
+  const navbar = document.querySelector('.sx-topbar, [data-navbar]');
+  if (navbar) navbar.style.display = 'none';
+  const mobileTabbar = document.getElementById('mobile-tabbar');
+  if (mobileTabbar) mobileTabbar.style.display = 'none';
   spShowTopbar();
   window._spLoadingTimer = setTimeout(() => {
     if (loadingEl) loadingEl.classList.add('sp-loading-hide');
@@ -7722,6 +7716,11 @@ function closeStreamPlayer(){
   }
   const loadingBarEl = document.getElementById('sp-loading-bar');
   if (loadingBarEl) { loadingBarEl.style.transition = 'none'; loadingBarEl.style.width = '0%'; }
+  // Restore navbar when player closes
+  const navbar = document.querySelector('.sx-topbar, [data-navbar]');
+  if (navbar) navbar.style.display = '';
+  const mobileTabbar = document.getElementById('mobile-tabbar');
+  if (mobileTabbar) mobileTabbar.style.display = '';
 }
 // ── Floating back button / title overlay: shown briefly, then goes idle
 // so it doesn't sit on top of the video permanently. In the idle state the
