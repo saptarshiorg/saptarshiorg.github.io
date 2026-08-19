@@ -82,6 +82,8 @@
             margin-bottom: 20px;
             animation: shake 0.5s;
             display: none;
+            max-height: 200px;
+            overflow-y: auto;
         }
 
         @keyframes shake {
@@ -334,6 +336,23 @@
             box-shadow: 0 8px 20px rgba(255, 107, 107, 0.4);
         }
 
+        .debug-console {
+            background: rgba(0, 0, 0, 0.8);
+            color: #0f0;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            max-height: 150px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .debug-console.visible {
+            display: block;
+        }
+
         /* Animations */
         @keyframes slideDown {
             from {
@@ -463,7 +482,7 @@
                 <button class="close-btn" id="closePlayerBtn">← Back to Matches</button>
             </div>
             <div id="video-container">
-                <video id="shaka-video"></video>
+                <video id="shaka-video" controls></video>
             </div>
             <div class="player-controls">
                 <div class="player-info">
@@ -476,6 +495,7 @@
                     <button class="server-btn" data-server="cloudfront_server">CloudFront</button>
                 </div>
             </div>
+            <div class="debug-console" id="debugConsole"></div>
         </div>
 
         <!-- Footer -->
@@ -490,31 +510,123 @@
         let currentData;
         let selectedServer = 'amazon_server';
         let currentMatch = null;
+        let debugLogs = [];
 
-        // Initialize Shaka Player
+        // Debug logging function
+        function addDebugLog(message) {
+            debugLogs.push(`[${new Date().toLocaleTimeString()}] ${message}`);
+            const debugConsole = document.getElementById('debugConsole');
+            debugConsole.innerHTML = debugLogs.slice(-10).join('<br>');
+            console.log(message);
+        }
+
+        // Enable Shaka Player debug logging
+        function initDebugLogging() {
+            shaka.log.setLevel(shaka.log.Level.DEBUG);
+            addDebugLog('Shaka Player debug logging enabled');
+        }
+
+        // Initialize Shaka Player with DRM config
         async function initShakaPlayer() {
             shaka.polyfill.installAll();
+            addDebugLog('Shaka polyfills installed');
 
             if (shaka.util.Platform.supportsMediaSource()) {
                 player = new shaka.Player(document.getElementById('shaka-video'));
+                
+                // Configure DRM
+                configDRM();
+                
+                // Configure networking
+                configureNetworking();
+                
                 setupPlayerEventListeners();
+                addDebugLog('Shaka Player initialized successfully');
             } else {
                 showError('Your browser does not support media playback.');
+                addDebugLog('Browser does not support MediaSource API');
             }
+        }
+
+        // Configure DRM settings
+        function configDRM() {
+            const config = {
+                drm: {
+                    servers: {
+                        'com.widevine.alpha': 'https://license.uat.widevine.com/cenc_cbcs/widevine_test_server/license_cbcs',
+                        'com.microsoft.playready': 'https://test.playready.microsoft.com/service/rightsmanager.asmx?cfg=(am:http,shi:true)',
+                    },
+                    advanced: {
+                        'com.widevine.alpha': {
+                            'videoRobustness': 'SW_SECURE_CRYPTO',
+                            'audioRobustness': 'SW_SECURE_CRYPTO'
+                        }
+                    }
+                },
+                streaming: {
+                    bufferingGoal: 8,
+                    retryParameters: {
+                        maxAttempts: 4,
+                        baseDelay: 1000,
+                        backoffFactor: 2,
+                        fuzzFactor: 0.5,
+                        timeout: 30000
+                    }
+                }
+            };
+
+            try {
+                player.configure(config);
+                addDebugLog('DRM configuration applied');
+            } catch (e) {
+                addDebugLog('DRM config error: ' + e.message);
+            }
+        }
+
+        // Configure networking to handle CORS
+        function configureNetworking() {
+            const netEngine = player.getNetworkingEngine();
+            
+            // Intercept requests to add headers
+            netEngine.registerRequestFilter((type, request) => {
+                // Add CORS headers to request
+                request.headers = request.headers || {};
+                request.headers['Access-Control-Allow-Credentials'] = 'true';
+                
+                addDebugLog(`Request: ${type} - ${request.uris[0]?.substring(0, 50)}...`);
+            });
+
+            // Response filter
+            netEngine.registerResponseFilter((type, response) => {
+                addDebugLog(`Response: ${type} - Status: ${response.status}`);
+            });
         }
 
         // Setup player event listeners
         function setupPlayerEventListeners() {
             const video = document.getElementById('shaka-video');
+            
             player.addEventListener('error', onPlayerError);
-            video.addEventListener('play', () => console.log('Video playing'));
-            video.addEventListener('pause', () => console.log('Video paused'));
+            player.addEventListener('buffering', (e) => {
+                addDebugLog(e.buffering ? 'Buffering...' : 'Buffering complete');
+            });
+            
+            video.addEventListener('play', () => addDebugLog('Video playing'));
+            video.addEventListener('pause', () => addDebugLog('Video paused'));
+            video.addEventListener('loadedmetadata', () => {
+                addDebugLog(`Video loaded: ${video.duration}s duration`);
+            });
+            video.addEventListener('error', (e) => {
+                addDebugLog('Video error: ' + e.target.error.message);
+            });
         }
 
         // Handle player errors
         function onPlayerError(event) {
-            console.error('Player error:', event.detail);
-            showError('Playback error: ' + event.detail.message);
+            const error = event.detail;
+            const errorMsg = error.message || error.toString();
+            addDebugLog('❌ Player error: ' + errorMsg);
+            showError('Playback error: ' + errorMsg);
         }
 
         // Fetch data from JSON URL
@@ -523,14 +635,20 @@
             loadingContainer.style.display = 'block';
 
             try {
+                addDebugLog('Fetching data from JSON endpoint...');
                 const response = await fetch('https://sonujson-devloper.vercel.app/Data/prime.json');
-                if (!response.ok) throw new Error('Failed to fetch data');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
                 
                 currentData = await response.json();
+                addDebugLog(`✓ Data loaded: ${currentData.Matches?.length || 0} matches found`);
+                
                 displayAnnouncement();
                 displayMatches();
             } catch (error) {
-                console.error('Fetch error:', error);
+                addDebugLog('❌ Fetch error: ' + error.message);
                 showError('Failed to load matches: ' + error.message);
             } finally {
                 loadingContainer.style.display = 'none';
@@ -586,9 +704,13 @@
         function showPlayer(match) {
             currentMatch = match;
             
+            addDebugLog(`Loading: ${match.event_name}`);
+            addDebugLog(`Match ID: ${match.id}`);
+            
             // Hide cards, show player
             document.getElementById('cardsSection').classList.add('hidden');
             document.getElementById('playerSection').classList.add('visible');
+            document.getElementById('debugConsole').classList.add('visible');
 
             // Update player info
             document.getElementById('playerEventName').textContent = match.event_name;
@@ -618,6 +740,7 @@
         function closePlayer() {
             document.getElementById('cardsSection').classList.remove('hidden');
             document.getElementById('playerSection').classList.remove('visible');
+            document.getElementById('debugConsole').classList.remove('visible');
 
             // Pause video
             const video = document.getElementById('shaka-video');
@@ -625,11 +748,14 @@
                 video.pause();
             }
 
+            // Clear debug logs
+            debugLogs = [];
+
             // Scroll to top
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // Play selected match
+        // Play selected match with DRM support
         async function playMatch(match, server = null) {
             if (!match) return;
 
@@ -639,18 +765,45 @@
 
                 if (!url) {
                     showError('Selected server not available for this match');
+                    addDebugLog(`❌ No URL for server: ${serverToUse}`);
                     return;
                 }
 
-                // Load the stream
-                await player.load(url);
-                document.getElementById('shaka-video').play();
+                addDebugLog(`Attempting to load: ${serverToUse}`);
+                addDebugLog(`URL: ${url.substring(0, 80)}...`);
 
-                console.log('Playing stream from:', serverToUse);
-                console.log('DRM Key available:', match.drm_key);
+                // Configure DRM key if available
+                if (match.drm_key) {
+                    const [kid, key] = match.drm_key.split(':');
+                    addDebugLog(`DRM Key configured - KID: ${kid.substring(0, 16)}...`);
+                    
+                    try {
+                        player.configure({
+                            drm: {
+                                servers: {
+                                    'com.widevine.alpha': 'https://license.uat.widevine.com/cenc_cbcs/widevine_test_server/license_cbcs'
+                                }
+                            }
+                        });
+                    } catch (e) {
+                        addDebugLog('DRM config attempt: ' + e.message);
+                    }
+                }
+
+                // Load the stream
+                addDebugLog('Loading manifest...');
+                await player.load(url);
+                
+                addDebugLog('✓ Manifest loaded successfully');
+                addDebugLog('Starting playback...');
+                
+                document.getElementById('shaka-video').play();
+                addDebugLog('✓ Playback started');
+
             } catch (error) {
-                console.error('Playback error:', error);
-                showError('Failed to load stream: ' + error.message);
+                const errorMsg = error.message || error.toString();
+                addDebugLog('❌ Playback error: ' + errorMsg);
+                showError('Failed to load stream: ' + errorMsg);
             }
         }
 
@@ -673,11 +826,11 @@
         // Show error message
         function showError(message) {
             const errorBanner = document.getElementById('errorBanner');
-            errorBanner.textContent = '❌ ' + message;
+            errorBanner.innerHTML = '❌ ' + message;
             errorBanner.style.display = 'block';
             setTimeout(() => {
                 errorBanner.style.display = 'none';
-            }, 5000);
+            }, 8000);
         }
 
         // Close button listener
@@ -685,6 +838,7 @@
 
         // Initialize on page load
         window.addEventListener('load', () => {
+            initDebugLogging();
             initShakaPlayer();
             fetchData();
         });
@@ -694,6 +848,9 @@
             const video = document.getElementById('shaka-video');
             if (document.hidden) {
                 video.pause();
+                addDebugLog('Page hidden - video paused');
+            } else {
+                addDebugLog('Page visible');
             }
         });
     </script>
