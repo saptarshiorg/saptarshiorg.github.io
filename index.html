@@ -1188,8 +1188,76 @@ header.scrolled {
   letter-spacing:0.08em; color: rgba(255,255,255,0.75); text-transform:uppercase;
 }
 
-/* ── Live TV home preview: one channel per category + View All ── */
+/* ── Live TV home preview: categories list + View All Channels ── */
 .chp-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; }
+
+/* Category card (new layout) */
+.cat-card-preview{
+  background: linear-gradient(135deg, rgba(240,79,176,0.12), rgba(240,79,176,0.05));
+  border:1.5px solid rgba(240,79,176,0.25); border-radius:12px;
+  overflow:hidden; cursor:pointer; display:flex; flex-direction:column;
+  justify-content:center; align-items:center; padding:28px 20px;
+  min-height:140px;
+  transition: all 0.22s var(--spring);
+  position:relative;
+}
+.cat-card-preview::before{
+  content:''; position:absolute; inset:0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, transparent 100%);
+  pointer-events:none; border-radius:inherit;
+}
+.cat-card-preview:hover{
+  transform: translateY(-6px) scale(1.02);
+  border-color: rgba(240,79,176,0.45);
+  box-shadow: 0 12px 40px rgba(240,79,176,0.25);
+  background: linear-gradient(135deg, rgba(240,79,176,0.18), rgba(240,79,176,0.08));
+}
+.cat-card-content{
+  display:flex; flex-direction:column; gap:8px; align-items:center; text-align:center; position:relative; z-index:1;
+}
+.cat-card-name{
+  font-family:var(--font-display); font-weight:800; font-size:18px;
+  color:#fff; letter-spacing:0.02em; text-transform:uppercase;
+}
+.cat-card-count{
+  font-family:var(--font-display); font-weight:600; font-size:12px;
+  color:rgba(255,143,212,0.8); letter-spacing:0.03em;
+}
+
+/* View All Channels button (match card style) */
+.cat-viewall-card{
+  background: linear-gradient(135deg, rgba(255,143,212,0.18), rgba(240,79,176,0.12));
+  border:1.5px solid rgba(240,79,176,0.30); border-radius:12px;
+  overflow:hidden; cursor:pointer; display:flex; flex-direction:column;
+  justify-content:center; align-items:center; padding:28px 20px;
+  min-height:140px; text-decoration:none;
+  transition: all 0.22s var(--spring);
+  position:relative;
+}
+.cat-viewall-card::before{
+  content:''; position:absolute; inset:0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, transparent 100%);
+  pointer-events:none; border-radius:inherit;
+}
+.cat-viewall-card:hover{
+  transform: translateY(-6px) scale(1.02);
+  border-color: rgba(240,79,176,0.60);
+  box-shadow: 0 16px 50px rgba(240,79,176,0.35);
+  background: linear-gradient(135deg, rgba(255,143,212,0.25), rgba(240,79,176,0.18));
+}
+.cat-viewall-content{
+  display:flex; flex-direction:column; gap:10px; align-items:center; text-align:center; position:relative; z-index:1;
+}
+.cat-viewall-icon{
+  font-family:var(--font-display); font-weight:900; font-size:28px;
+  color:#FF8FD4; letter-spacing:0.02em;
+}
+.cat-viewall-text{
+  font-family:var(--font-display); font-weight:800; font-size:15px;
+  color:#fff; letter-spacing:0.03em; line-height:1.3;
+}
+
+/* Old styles kept for backward compatibility */
 .chp-card{
   background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px;
   overflow:hidden; cursor:pointer; display:flex; flex-direction:column;
@@ -1221,11 +1289,21 @@ header.scrolled {
   transition: background 0.18s var(--ease);
 }
 .chp-viewall-btn:hover{ background: rgba(240,79,176,0.22); }
+
 @media(max-width:900px){
   .chp-grid{ grid-template-columns: 1fr 1fr; gap:10px; }
+  .cat-card-preview, .cat-viewall-card{ padding:20px 16px; min-height:120px; }
+  .cat-card-name{ font-size:16px; }
+  .cat-viewall-icon{ font-size:24px; }
+  .cat-viewall-text{ font-size:13px; }
 }
 @media(max-width:480px){
-  .chp-grid{ grid-template-columns: 1fr; }
+  .chp-grid{ grid-template-columns: 1fr; gap:8px; }
+  .cat-card-preview, .cat-viewall-card{ padding:18px 14px; min-height:110px; }
+  .cat-card-name{ font-size:14px; }
+  .cat-card-count{ font-size:11px; }
+  .cat-viewall-icon{ font-size:22px; }
+  .cat-viewall-text{ font-size:12px; }
 }
 
 .fixture-card {
@@ -1282,6 +1360,37 @@ header.scrolled {
 .cat-football { background: linear-gradient(135deg,#C2178A,#2A0620); }
 .cat-tennis { background: linear-gradient(135deg,#FF5FC4,#7A0A57); }
 .cat-f1 { background: linear-gradient(135deg,#4A0A3A,#2A0620); }
+
+/* ────────────────────────────────────────────
+   OTT PLATFORMS (FanCode, Prime, Willow)
+──────────────────────────────────────────── */
+.ott-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.ott-card {
+  border-radius: 12px; padding: 28px 24px;
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  text-align: center; position: relative; overflow: hidden;
+  background: var(--glass); backdrop-filter: var(--blur-sm);
+  box-shadow: 0 8px 36px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.04);
+  transition: transform 0.28s var(--spring), box-shadow 0.28s var(--ease);
+  text-decoration: none; cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.10);
+}
+.ott-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg,rgba(255,255,255,0.05) 0%,transparent 45%); border-radius: inherit; pointer-events: none; }
+.ott-card:hover { transform: translateY(-6px); box-shadow: 0 20px 60px rgba(0,0,0,0.75), 0 0 40px rgba(240,79,176,0.20); border-color: rgba(240,79,176,0.35); }
+.ott-logo-wrap { width: 80px; height: 80px; border-radius: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: rgba(255,255,255,0.08); position: relative; z-index: 1; }
+.ott-logo-wrap img { width: 100%; height: 100%; object-fit: contain; }
+.ott-name { font-family: var(--font-display); font-weight: 800; font-size: 18px; letter-spacing: 0.05em; color: var(--white); position: relative; z-index: 1; }
+.ott-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; position: relative; z-index: 1; }
+.ott-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--grad-gold); color: #FFFFFF; border: none;
+  font-family: var(--font-display); font-weight: 800; font-size: 13px;
+  padding: 11px 24px; border-radius: 8px; text-decoration: none;
+  transition: transform 0.22s var(--spring), box-shadow 0.22s var(--ease);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.55) inset, 0 -2px 0 rgba(122,10,87,0.4) inset, 0 5px 0 -1px rgba(122,10,87,0.5), 0 8px 24px rgba(240,79,176,0.35);
+  position: relative; z-index: 1;
+}
+.ott-btn:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 -2px 0 rgba(122,10,87,0.4) inset, 0 7px 0 -1px rgba(122,10,87,0.5), 0 14px 36px rgba(240,79,176,0.50); }
 
 /* ────────────────────────────────────────────
    BROADCAST
@@ -1818,6 +1927,7 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
   .channels-grid { grid-template-columns: repeat(3,1fr); }
   .fixtures-grid { grid-template-columns: 1fr 1fr; }
   .categories-grid { grid-template-columns: repeat(2,1fr); }
+  .ott-grid { grid-template-columns: 1fr 1fr; }
   .broadcast-grid { grid-template-columns: 1fr; }
   .match-row { grid-template-columns: 80px 1fr auto 1fr 100px; gap: 8px; font-size: 12px; }
   .schedule-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -1865,7 +1975,11 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
   .categories-grid { grid-template-columns: repeat(2,1fr); gap: 10px; }
   .cat-card { height: 108px; padding: 14px; }
   .cat-name { font-size: 19px; }
+  .ott-grid { grid-template-columns: 1fr; }
   .broadcast-grid { grid-template-columns: 1fr; }
+  .ott-card { padding: 20px 16px; }
+  .ott-name { font-size: 16px; }
+  .ott-desc { font-size: 12px; }
   .partner-logos-row { grid-template-columns: repeat(4,1fr); }
 
   .match-row { display: flex; flex-direction: column; gap: 5px; padding: 10px 0; }
@@ -3813,16 +3927,66 @@ window.sxSwitchTab = sxSwitchTab;
   </div>
 </section>
 
-<!-- LIVE TV — HOME PREVIEW (one channel per category + View All) -->
-<section class="section" style="background:linear-gradient(180deg,#000000,#000000);padding:0 0 40px;" id="channels-preview-section">
+<!-- LIVE TV — HOME PREVIEW (categories list + View All Channels) -->
+<section class="section" style="background:linear-gradient(180deg,#000000,#000000);padding:40px 0;" id="channels-preview-section">
   <div class="section-inner">
+    <div style="margin-bottom:28px;">
+      <h2 style="font-family:var(--font-display);font-weight:900;font-size:clamp(24px,5vw,36px);color:#fff;letter-spacing:0.02em;margin:0;">Browse by Category</h2>
+      <p style="font-size:14px;color:rgba(255,255,255,0.65);margin:8px 0 0 0;">Select a category to explore all available channels</p>
+    </div>
     <div class="chp-grid" id="channelsPreviewGrid"></div>
   </div>
 </section>
-    
-  </a>
-</div>
 
+<!-- LIVE TV OTT — FanCode, Prime Video, Willow -->
+<section class="section" style="background:linear-gradient(180deg,#000000,#000000);padding:40px 0;" id="ott-section">
+  <div class="section-inner">
+    <div style="margin-bottom:28px;">
+      <h2 style="font-family:var(--font-display);font-weight:900;font-size:clamp(24px,5vw,36px);color:#fff;letter-spacing:0.02em;margin:0;">OTT Platforms</h2>
+      <p style="font-size:14px;color:rgba(255,255,255,0.65);margin:8px 0 0 0;">Stream exclusive content from top OTT platforms</p>
+    </div>
+    <div class="ott-grid">
+      <!-- FanCode -->
+      <a class="ott-card" href="#sxTabPanels" onclick="event.preventDefault();openFanCode();">
+        <div class="ott-logo-wrap">
+          <img src="https://static.vecteezy.com/system/resources/previews/069/146/538/non_2x/fancode-app-icon-on-transparent-background-free-png.png" alt="FanCode">
+        </div>
+        <div class="ott-name">FanCode</div>
+        <div class="ott-desc">Live sports and exclusive cricket content</div>
+        <button class="ott-btn" onclick="event.preventDefault();openFanCode();">
+          <span>Open</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+      </a>
+
+      <!-- Prime Video -->
+      <a class="ott-card" href="#sxTabPanels" onclick="event.preventDefault();openPrime();">
+        <div class="ott-logo-wrap">
+          <img src="https://static.vecteezy.com/system/resources/thumbnails/046/437/251/small_2x/amazon-prime-logo-free-png.png" alt="Prime Video">
+        </div>
+        <div class="ott-name">Prime Video</div>
+        <div class="ott-desc">Sports and entertainment streaming</div>
+        <button class="ott-btn" onclick="event.preventDefault();openPrime();">
+          <span>Open</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+      </a>
+
+      <!-- Willow OTT -->
+      <a class="ott-card" href="#sxTabPanels" onclick="event.preventDefault();openWillow();">
+        <div class="ott-logo-wrap">
+          <img src="https://bobgoldpr.com/wp-content/uploads/2024/05/logo-transparent-cb-1.png" alt="Willow">
+        </div>
+        <div class="ott-name">Willow OTT</div>
+        <div class="ott-desc">Premium cricket streaming and analysis</div>
+        <button class="ott-btn" onclick="event.preventDefault();openWillow();">
+          <span>Open</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+      </a>
+    </div>
+  </div>
+</section>
 
 <div class="social-bar">
   <div class="social-inner">
@@ -4136,8 +4300,6 @@ function renderNav(rows) {
     { label:'Home',     href:'#', sxtab:'home', onclick:"goHome();return false;" },
     { label:'Live TV',  href:'#sxTabPanels', sxtab:'livetv', onclick:"openLiveTV();return false;" },
     { label:'Matches',  href:'#sxTabPanels', sxtab:'matches', onclick:"sxSwitchTab('matches');return false;" },
-    { label:'FanCode',  href:'#sxTabPanels', sxtab:'fancode', onclick:"openFanCode();return false;" },
-    { label:'Feedback', href:'#', sxtab:'feedback', onclick:"openAdminChat();return false;" },
   ];
   let dHtml = '', mHtml = '';
   NAV_ITEMS.forEach((r, i) => {
@@ -5010,9 +5172,8 @@ function renderChannels(rows) {
   renderChannelsPreview();
 }
 
-// Home screen preview: one channel per category (prefers a currently-LIVE
-// one) plus a "View All" button that opens the full Live TV browser
-// pre-filtered to that category via chSelectCategory().
+// Home screen preview: show all categories as cards with "View All Channels" button
+// Clicking any category opens the full Live TV browser filtered to that category
 function renderChannelsPreview() {
   const grid = document.getElementById('channelsPreviewGrid');
   if (!grid) return;
@@ -5028,31 +5189,31 @@ function renderChannelsPreview() {
     buckets[grp].push(c);
   });
 
-  grid.innerHTML = order.map(grp => {
-    const list = buckets[grp];
-    const chosen = list.find(c => (c.status_live_off || '').toUpperCase() === 'LIVE') || list[0];
-    const isLive = (chosen.status_live_off || '').toUpperCase() === 'LIVE';
-    const logo = chosen.icon_url || 'https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/main/logo.png';
-    const streamUrl = chosen.watch_url || '#';
+  // Create category cards
+  const categoryCards = order.map(grp => {
+    const channelCount = buckets[grp].length;
     return `
-    <div class="chp-card" role="button" tabindex="0"
-      onclick="openStreamPlayer('${escJs(streamUrl)}','${escJs(chosen.channel_name || grp)}','channel')"
+    <div class="cat-card-preview" role="button" tabindex="0"
+      onclick="openLiveTV();setTimeout(()=>{if(window.chSelectCategory)chSelectCategory('${escJs(grp)}');},80);"
       onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">
-      <div class="chp-thumb">
-        ${isLive ? '<span class="chp-live-badge"><span class="chp-live-dot"></span>LIVE</span>' : ''}
-        <img src="${logo}" alt="${escJs(chosen.channel_name || '')}" loading="lazy" onerror="this.style.display='none'">
-      </div>
-      <div class="chp-body">
-        <div class="chp-group">${grp}</div>
-        <div class="chp-name">${chosen.channel_name || ''}</div>
-        <a href="#sxTabPanels" class="chp-viewall-btn"
-          onclick="event.preventDefault();event.stopPropagation();openLiveTV();setTimeout(()=>{if(window.chSelectCategory)chSelectCategory('${escJs(grp)}');},80);">
-          View All
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 18 6-6-6-6"/></svg>
-        </a>
+      <div class="cat-card-content">
+        <div class="cat-card-name">${grp}</div>
+        <div class="cat-card-count">${channelCount} channel${channelCount !== 1 ? 's' : ''}</div>
       </div>
     </div>`;
   }).join('');
+
+  // Add "View All Channels" button at the end
+  const viewAllButton = `
+    <a href="#sxTabPanels" class="cat-viewall-card" 
+      onclick="event.preventDefault();openLiveTV();">
+      <div class="cat-viewall-content">
+        <div class="cat-viewall-icon">→</div>
+        <div class="cat-viewall-text">View All<br>Channels</div>
+      </div>
+    </a>`;
+
+  grid.innerHTML = categoryCards + viewAllButton;
 }
 
 function renderFixtures(rows) {
