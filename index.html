@@ -1364,33 +1364,84 @@ header.scrolled {
 /* ────────────────────────────────────────────
    OTT PLATFORMS (FanCode, Prime, Willow)
 ──────────────────────────────────────────── */
+#ott-section {
+  background: linear-gradient(180deg, rgba(240,79,176,0.08) 0%, rgba(200,20,140,0.04) 50%, #000000 100%) !important;
+  border-top: 1px solid rgba(240,79,176,0.15);
+  position: relative;
+}
+#ott-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(240,79,176,0.08) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+#ott-section .section-inner {
+  position: relative;
+  z-index: 1;
+}
+
 .ott-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
 .ott-card {
   border-radius: 12px; padding: 28px 24px;
   display: flex; flex-direction: column; align-items: center; gap: 16px;
   text-align: center; position: relative; overflow: hidden;
-  background: var(--glass); backdrop-filter: var(--blur-sm);
-  box-shadow: 0 8px 36px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.04);
-  transition: transform 0.28s var(--spring), box-shadow 0.28s var(--ease);
+  background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+  backdrop-filter: var(--blur-sm); -webkit-backdrop-filter: var(--blur-sm);
+  box-shadow: 0 8px 36px rgba(0,0,0,0.55), 0 0 1px rgba(255,255,255,0.10);
+  transition: all 0.28s var(--spring);
   text-decoration: none; cursor: pointer;
-  border: 1px solid rgba(255,255,255,0.10);
+  border: 1.5px solid rgba(240,79,176,0.20);
 }
-.ott-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg,rgba(255,255,255,0.05) 0%,transparent 45%); border-radius: inherit; pointer-events: none; }
-.ott-card:hover { transform: translateY(-6px); box-shadow: 0 20px 60px rgba(0,0,0,0.75), 0 0 40px rgba(240,79,176,0.20); border-color: rgba(240,79,176,0.35); }
-.ott-logo-wrap { width: 80px; height: 80px; border-radius: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: rgba(255,255,255,0.08); position: relative; z-index: 1; }
+.ott-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg,rgba(255,255,255,0.06) 0%,transparent 50%); border-radius: inherit; pointer-events: none; z-index: 1; }
+.ott-card::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity 0.28s var(--ease); z-index: 1; }
+.ott-card:hover { 
+  transform: translateY(-8px) scale(1.02); 
+  box-shadow: 0 24px 60px rgba(0,0,0,0.75), 0 0 50px rgba(240,79,176,0.25); 
+  border-color: rgba(240,79,176,0.50);
+  background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+}
+.ott-card:hover::after {
+  background: radial-gradient(circle at center, rgba(240,79,176,0.1) 0%, transparent 70%);
+  opacity: 1;
+}
+
+.ott-logo-wrap { 
+  width: 88px; height: 88px; border-radius: 12px; 
+  display: flex; align-items: center; justify-content: center; 
+  overflow: hidden; 
+  background: linear-gradient(135deg, rgba(240,79,176,0.15), rgba(200,20,140,0.08));
+  border: 1px solid rgba(240,79,176,0.20);
+  position: relative; z-index: 2;
+  box-shadow: 0 8px 24px rgba(240,79,176,0.15);
+}
 .ott-logo-wrap img { width: 100%; height: 100%; object-fit: contain; }
-.ott-name { font-family: var(--font-display); font-weight: 800; font-size: 18px; letter-spacing: 0.05em; color: var(--white); position: relative; z-index: 1; }
-.ott-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; position: relative; z-index: 1; }
+.ott-name { 
+  font-family: var(--font-display); font-weight: 800; font-size: 18px; 
+  letter-spacing: 0.05em; color: var(--white); position: relative; z-index: 2;
+  text-transform: uppercase;
+}
+.ott-desc { 
+  font-size: 13px; color: rgba(255,255,255,0.70); line-height: 1.5; 
+  position: relative; z-index: 2;
+}
 .ott-btn {
   display: inline-flex; align-items: center; gap: 8px;
   background: var(--grad-gold); color: #FFFFFF; border: none;
   font-family: var(--font-display); font-weight: 800; font-size: 13px;
   padding: 11px 24px; border-radius: 8px; text-decoration: none;
-  transition: transform 0.22s var(--spring), box-shadow 0.22s var(--ease);
+  transition: all 0.22s var(--spring);
   box-shadow: 0 1px 0 rgba(255,255,255,0.55) inset, 0 -2px 0 rgba(122,10,87,0.4) inset, 0 5px 0 -1px rgba(122,10,87,0.5), 0 8px 24px rgba(240,79,176,0.35);
-  position: relative; z-index: 1;
+  position: relative; z-index: 2;
 }
-.ott-btn:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 -2px 0 rgba(122,10,87,0.4) inset, 0 7px 0 -1px rgba(122,10,87,0.5), 0 14px 36px rgba(240,79,176,0.50); }
+.ott-btn:hover { 
+  transform: translateY(-2px) scale(1.02); 
+  box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 -2px 0 rgba(122,10,87,0.4) inset, 0 7px 0 -1px rgba(122,10,87,0.5), 0 14px 36px rgba(240,79,176,0.50);
+}
 
 /* ────────────────────────────────────────────
    BROADCAST
@@ -3183,7 +3234,7 @@ window.addEventListener('resize', () => {
 //    keep their own in-page Back button, and sit above the nav bar (so the
 //    nav bar isn't shown while inside them).
 function sxCloseAllOverlays(){
-  const ids = ['livetv-overlay','movies-overlay','fifa-overlay','fancode-overlay','prime-overlay','willow-overlay','adminchat-overlay'];
+  const ids = ['livetv-overlay','movies-overlay','fifa-overlay','ott-overlay','fancode-overlay','prime-overlay','willow-overlay','adminchat-overlay'];
   ids.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.remove('open');
@@ -3200,7 +3251,7 @@ window.sxCloseAllOverlays = sxCloseAllOverlays;
 //    matter which page or popup is on screen, tapping Home tears every one
 //    of them down — nothing is left stacked above the home page's z-index.
 const SX_ALL_OVERLAY_IDS = [
-  'livetv-overlay','movies-overlay','fifa-overlay','fancode-overlay',
+  'livetv-overlay','movies-overlay','fifa-overlay','ott-overlay','fancode-overlay',
   'prime-overlay','willow-overlay','vip-overlay','vip-player-overlay',
   'stream-player-overlay','adminchat-overlay','adminchat-discord-popup',
   'va-tv-modal','sx-cast-help-overlay','dmca-overlay'
@@ -3261,6 +3312,7 @@ window.addEventListener('resize', function(){
 
 function sxSwitchTab(name){
   if (name === 'matches') { openMatches(); return; }
+  if (name === 'ott') { openOTT(); return; }
   if (name === 'fancode') { openFanCode(); return; }
   if (name === 'prime') { openPrime(); return; }
   if (name === 'willow') { openWillow(); return; }
@@ -3802,11 +3854,180 @@ window.sxSwitchTab = sxSwitchTab;
     .fpx-body{ padding:3px 4px 4px !important; }
   }
 </style>
+
+<!-- ── OTT PLATFORMS panel: grid view of all OTT services ── -->
+<style>
+#ott-overlay{
+  display: none; position: fixed; inset: 0; z-index: 1220;
+  background: #000000; overflow-y: auto; -webkit-overflow-scrolling: touch;
+}
+#ott-overlay.open{ display: block; }
+
+#ott-topbar{
+  display: none;
+}
+#ott-page-inner{ padding: 0; }
+@media(max-width:900px){
+  #ott-page-inner{ padding-bottom: calc(60px + env(safe-area-inset-bottom, 0)); }
+}
+
+.ott-grid-full { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; padding: 0 16px; }
+.ott-card-full {
+  border-radius: 12px; padding: 20px 16px;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  text-align: center; position: relative; overflow: hidden;
+  background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+  backdrop-filter: var(--blur-sm); -webkit-backdrop-filter: var(--blur-sm);
+  box-shadow: 0 8px 36px rgba(0,0,0,0.55), 0 0 1px rgba(255,255,255,0.10);
+  transition: all 0.28s var(--spring);
+  text-decoration: none; cursor: pointer;
+  border: 1.5px solid rgba(240,79,176,0.20);
+}
+.ott-card-full::before { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg,rgba(255,255,255,0.06) 0%,transparent 50%); border-radius: inherit; pointer-events: none; z-index: 1; }
+.ott-card-full:not(.ott-coming-soon):hover { 
+  transform: translateY(-8px) scale(1.02); 
+  box-shadow: 0 24px 60px rgba(0,0,0,0.75), 0 0 50px rgba(240,79,176,0.25); 
+  border-color: rgba(240,79,176,0.50);
+  background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+}
+.ott-card-full.ott-coming-soon { opacity: 0.65; }
+.ott-soon-badge {
+  position: absolute; top: 10px; right: 10px;
+  background: rgba(240,79,176,0.20); 
+  color: #FF8FD4;
+  font-family: var(--font-display); font-weight: 700; font-size: 10px;
+  padding: 4px 10px; border-radius: 6px;
+  letter-spacing: 0.05em; z-index: 3;
+  border: 1px solid rgba(240,79,176,0.30);
+}
+.ott-logo-wrap { 
+  width: 76px; height: 76px; border-radius: 12px; 
+  display: flex; align-items: center; justify-content: center; 
+  overflow: hidden; 
+  background: linear-gradient(135deg, rgba(240,79,176,0.15), rgba(200,20,140,0.08));
+  border: 1px solid rgba(240,79,176,0.20);
+  position: relative; z-index: 2;
+  box-shadow: 0 8px 24px rgba(240,79,176,0.15);
+}
+.ott-logo-wrap img { width: 100%; height: 100%; object-fit: contain; }
+.ott-name { 
+  font-family: var(--font-display); font-weight: 800; font-size: 15px; 
+  letter-spacing: 0.03em; color: var(--white); position: relative; z-index: 2;
+  text-transform: uppercase;
+}
+.ott-desc { 
+  font-size: 11px; color: rgba(255,255,255,0.70); line-height: 1.4; 
+  position: relative; z-index: 2;
+}
+.ott-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--grad-gold); color: #FFFFFF; border: none;
+  font-family: var(--font-display); font-weight: 800; font-size: 11px;
+  padding: 8px 18px; border-radius: 6px; text-decoration: none;
+  transition: all 0.22s var(--spring);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.55) inset, 0 -2px 0 rgba(122,10,87,0.4) inset, 0 5px 0 -1px rgba(122,10,87,0.5), 0 8px 24px rgba(240,79,176,0.35);
+  position: relative; z-index: 2;
+  cursor: pointer;
+}
+.ott-btn:hover:not(:disabled) { 
+  transform: translateY(-2px) scale(1.02); 
+  box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 -2px 0 rgba(122,10,87,0.4) inset, 0 7px 0 -1px rgba(122,10,87,0.5), 0 14px 36px rgba(240,79,176,0.50);
+}
+.ott-btn:disabled {
+  opacity: 0.8;
+  cursor: not-allowed;
+}
+</style>
+
+<div id="ott-overlay">
+  <div id="ott-topbar">
+    <span id="ott-topbar-title">🎬 OTT Platforms</span>
+  </div>
+  <div id="ott-page-inner">
+    <!-- OTT PLATFORMS GRID -->
+    <section class="section" id="ott-section-full" style="background:linear-gradient(180deg,#000000,#000000);padding:40px 0;">
+      <div class="section-inner">
+        <div style="margin-bottom:28px;">
+          <h2 style="font-family:var(--font-display);font-weight:900;font-size:clamp(24px,5vw,36px);color:#fff;letter-spacing:0.02em;margin:0;">OTT Platforms</h2>
+          <p style="font-size:14px;color:rgba(255,255,255,0.65);margin:8px 0 0 0;">Stream exclusive content from premium OTT services</p>
+        </div>
+        <div class="ott-grid-full">
+          <!-- FanCode -->
+          <div class="ott-card-full" role="button" onclick="openFanCode();">
+            <div class="ott-logo-wrap">
+              <img src="https://static.vecteezy.com/system/resources/previews/069/146/538/non_2x/fancode-app-icon-on-transparent-background-free-png.png" alt="FanCode">
+            </div>
+            <div class="ott-name">FanCode</div>
+            <div class="ott-desc">Sports & Cricket</div>
+            <button class="ott-btn" onclick="event.stopPropagation();openFanCode();">Open</button>
+          </div>
+
+          <!-- Prime Video -->
+          <div class="ott-card-full ott-coming-soon" role="button">
+            <div class="ott-soon-badge">COMING SOON</div>
+            <div class="ott-logo-wrap">
+              <img src="https://static.vecteezy.com/system/resources/thumbnails/046/437/251/small_2x/amazon-prime-logo-free-png.png" alt="Prime Video">
+            </div>
+            <div class="ott-name">Prime Video</div>
+            <div class="ott-desc">Entertainment</div>
+            <button class="ott-btn" disabled>Coming Soon</button>
+          </div>
+
+          <!-- Willow OTT -->
+          <div class="ott-card-full ott-coming-soon" role="button">
+            <div class="ott-soon-badge">COMING SOON</div>
+            <div class="ott-logo-wrap">
+              <img src="https://bobgoldpr.com/wp-content/uploads/2024/05/logo-transparent-cb-1.png" alt="Willow">
+            </div>
+            <div class="ott-name">Willow OTT</div>
+            <div class="ott-desc">Premium Cricket</div>
+            <button class="ott-btn" disabled>Coming Soon</button>
+          </div>
+
+          <!-- Jio Hotstar -->
+          <div class="ott-card-full ott-coming-soon" role="button">
+            <div class="ott-soon-badge">COMING SOON</div>
+            <div class="ott-logo-wrap">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Hotstar_logo.svg/1200px-Hotstar_logo.svg.png" alt="Jio Hotstar">
+            </div>
+            <div class="ott-name">Jio Hotstar</div>
+            <div class="ott-desc">Movies & Sports</div>
+            <button class="ott-btn" disabled>Coming Soon</button>
+          </div>
+
+          <!-- Sony Liv -->
+          <div class="ott-card-full ott-coming-soon" role="button">
+            <div class="ott-soon-badge">COMING SOON</div>
+            <div class="ott-logo-wrap">
+              <img src="https://www.sonyliv.com/_next/image?url=%2Fimages%2Flogo.png&w=256&q=75" alt="Sony Liv">
+            </div>
+            <div class="ott-name">Sony Liv</div>
+            <div class="ott-desc">TV & Cricket</div>
+            <button class="ott-btn" disabled>Coming Soon</button>
+          </div>
+
+          <!-- Netflix -->
+          <div class="ott-card-full ott-coming-soon" role="button">
+            <div class="ott-soon-badge">COMING SOON</div>
+            <div class="ott-logo-wrap">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Netflix_logo.svg/1024px-Netflix_logo.svg.png" alt="Netflix">
+            </div>
+            <div class="ott-name">Netflix</div>
+            <div class="ott-desc">Entertainment</div>
+            <button class="ott-btn" disabled>Coming Soon</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div><!-- /ott-overlay -->
+
 <style>
 #fancode-overlay{
   display: none; position: fixed; inset: 0; z-index: 1230;
   background: #000;
 }
+
 #fancode-overlay.open{ display: block; }
 #fancode-topbar{
   position: absolute; top: 0; left: 0; z-index: 2;
@@ -4292,7 +4513,7 @@ function renderTicker(rows) {
 
 function renderNav(rows) {
   // NOTE: nav is now hardcoded to match the requested bar
-  // (Home / Live TV / Matches / FanCode / Feedback) instead of reading
+  // (Home / Live TV / Matches / OTT) instead of reading
   // labels from the NAVBAR sheet. Sheet rows are ignored here on purpose.
   const desktop = document.getElementById('nav-desktop');
   const drawerNav = document.getElementById('drawer-nav');
@@ -4300,6 +4521,7 @@ function renderNav(rows) {
     { label:'Home',     href:'#', sxtab:'home', onclick:"goHome();return false;" },
     { label:'Live TV',  href:'#sxTabPanels', sxtab:'livetv', onclick:"openLiveTV();return false;" },
     { label:'Matches',  href:'#sxTabPanels', sxtab:'matches', onclick:"sxSwitchTab('matches');return false;" },
+    { label:'OTT',      href:'#sxTabPanels', sxtab:'ott', onclick:"openOTT();return false;" },
   ];
   let dHtml = '', mHtml = '';
   NAV_ITEMS.forEach((r, i) => {
@@ -4349,6 +4571,7 @@ function sxHeroWatch(url, location, title) {
   const u = (url || '').trim();
   if (u === '#') {
     const loc = (location || '').trim().toLowerCase();
+    if (loc === 'ott')      { openOTT(); return; }
     if (loc === 'fancode') { openFanCode(); return; }
     if (loc === 'prime') { openPrime(); return; }
     if (loc === 'willow') { openWillow(); return; }
@@ -5747,17 +5970,9 @@ document.addEventListener('DOMContentLoaded', () => {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
     Live Sports
   </a>
-  <a class="mtab" data-sxtab="fancode" href="#sxTabPanels" onclick="event.preventDefault();openFanCode();">
-    <img src="https://static.vecteezy.com/system/resources/previews/069/146/538/non_2x/fancode-app-icon-on-transparent-background-free-png.png" alt="FanCode" style="width:22px;height:22px;object-fit:contain;display:block;margin:0 auto 1px;border-radius: 8px;">
-    FanCode
-  </a>
-  <a class="mtab" data-sxtab="prime" href="#sxTabPanels" onclick="event.preventDefault();openPrime();">
-    <img src="https://static.vecteezy.com/system/resources/thumbnails/046/437/251/small_2x/amazon-prime-logo-free-png.png" alt="Prime Video" style="width:22px;height:22px;object-fit:contain;display:block;margin:0 auto 1px;border-radius: 8px;">
-    Prime
-  </a>
-  <a class="mtab" data-sxtab="willow" href="#sxTabPanels" onclick="event.preventDefault();openWillow();">
-    <img src="https://bobgoldpr.com/wp-content/uploads/2024/05/logo-transparent-cb-1.png" alt="Willow OTT" style="width:22px;height:22px;object-fit:contain;display:block;margin:0 auto 1px;border-radius: 8px;">
-    Willow
+  <a class="mtab" data-sxtab="ott" href="#sxTabPanels" onclick="event.preventDefault();openOTT();">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="10" rx="2"/><path d="M12 12v2M8 12v2M16 12v2"/></svg>
+    OTT
   </a>
   <a class="mtab" data-sxtab="fifa" href="#sxTabPanels" onclick="event.preventDefault();openFifa();">
     <img src="https://upload.wikimedia.org/wikipedia/en/1/17/2026_FIFA_World_Cup_emblem.svg" alt="FIFA 2026" style="width:22px;height:22px;object-fit:contain;display:block;margin:0 auto 1px;filter:drop-shadow(0 0 3px rgba(0,160,255,0.6));">
@@ -8156,6 +8371,21 @@ function sxApplyFanCodeUrl(){
   if (iframe && iframe.src !== url) iframe.src = url;
   if (fallbackLink) fallbackLink.href = url;
 }
+function openOTT(){
+  sxCloseAllOverlays();
+  sxPlayPanelIntro();
+  document.getElementById('ott-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  window.scrollTo(0,0);
+  document.querySelectorAll('[data-sxtab]').forEach(el => el.classList.toggle('active', el.dataset.sxtab === 'ott'));
+  sxHeaderInto('ott-overlay', 'ott-topbar');
+}
+function closeOTT(){
+  document.getElementById('ott-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  sxHeaderHome();
+}
+
 function openFanCode(){
   sxCloseAllOverlays();
   sxPlayPanelIntro();
