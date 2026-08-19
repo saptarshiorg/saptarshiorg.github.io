@@ -510,6 +510,7 @@
 
     <script>
         let player;
+        let playerReady = false;
         let currentData;
         let selectedServer = 'amazon_server';
         let currentMatch = null;
@@ -536,19 +537,57 @@
             console.log(logMessage);
         }
 
-        // Initialize Shaka Player with DRM config
+        // Initialize Shaka Player - WAIT for completion
         async function initShakaPlayer() {
-            shaka.polyfill.installAll();
-            addDebugLog('Shaka polyfills installed', 'success');
+            return new Promise((resolve, reject) => {
+                try {
+                    addDebugLog('Installing Shaka polyfills...');
+                    shaka.polyfill.installAll();
+                    addDebugLog('Shaka polyfills installed', 'success');
 
-            if (shaka.util.Platform.supportsMediaSource()) {
-                player = new shaka.Player(document.getElementById('shaka-video'));
-                setupPlayerEventListeners();
-                addDebugLog('Shaka Player initialized', 'success');
-            } else {
-                showError('Your browser does not support media playback.');
-                addDebugLog('Browser does not support MediaSource API', 'error');
-            }
+                    if (!shaka.util.Platform.supportsMediaSource()) {
+                        addDebugLog('Browser does not support MediaSource API', 'error');
+                        showError('Your browser does not support media playback.');
+                        reject(new Error('MediaSource not supported'));
+                        return;
+                    }
+
+                    addDebugLog('Creating Shaka Player instance...');
+                    const videoElement = document.getElementById('shaka-video');
+                    
+                    if (!videoElement) {
+                        addDebugLog('Video element not found!', 'error');
+                        reject(new Error('Video element not found'));
+                        return;
+                    }
+
+                    player = new shaka.Player(videoElement);
+                    addDebugLog('Shaka Player instance created', 'success');
+
+                    // Configure player
+                    player.configure({
+                        streaming: {
+                            bufferingGoal: 8,
+                            retryParameters: {
+                                maxAttempts: 3,
+                                baseDelay: 1000,
+                                backoffFactor: 2,
+                                timeout: 30000
+                            }
+                        }
+                    });
+
+                    setupPlayerEventListeners();
+                    playerReady = true;
+                    addDebugLog('Shaka Player ready for playback', 'success');
+                    resolve();
+
+                } catch (error) {
+                    const errorMsg = error.message || error.toString();
+                    addDebugLog(`Player initialization error: ${errorMsg}`, 'error');
+                    reject(error);
+                }
+            });
         }
 
         // Setup player event listeners
@@ -556,13 +595,18 @@
             const video = document.getElementById('shaka-video');
             
             player.addEventListener('error', onPlayerError);
+            player.addEventListener('buffering', (e) => {
+                addDebugLog(e.buffering ? '⏳ Buffering...' : '✓ Buffering complete');
+            });
+            
             video.addEventListener('play', () => addDebugLog('▶ Video playing'));
             video.addEventListener('pause', () => addDebugLog('⏸ Video paused'));
             video.addEventListener('loadedmetadata', () => {
-                addDebugLog(`Video loaded: ${Math.floor(video.duration)}s duration`, 'success');
+                addDebugLog(`✓ Video ready: ${Math.floor(video.duration)}s`, 'success');
             });
             video.addEventListener('error', (e) => {
-                addDebugLog('Video error: ' + e.target.error?.message, 'error');
+                const msg = e.target.error?.message || 'Unknown video error';
+                addDebugLog('Video error: ' + msg, 'error');
             });
         }
 
@@ -582,7 +626,7 @@
             for (let i = 0; i < JSON_URLS.length; i++) {
                 try {
                     const url = JSON_URLS[i];
-                    addDebugLog(`Attempting fetch (${i + 1}/${JSON_URLS.length}): ${url.substring(0, 60)}...`);
+                    addDebugLog(`Fetching (${i + 1}/${JSON_URLS.length}): ${url.substring(0, 60)}...`);
                     
                     const response = await fetch(url, {
                         method: 'GET',
@@ -594,16 +638,16 @@
                     });
                     
                     if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        throw new Error(`HTTP ${response.status}`);
                     }
                     
                     currentData = await response.json();
                     
                     if (!currentData.Matches || currentData.Matches.length === 0) {
-                        throw new Error('No matches found in data');
+                        throw new Error('No matches in data');
                     }
                     
-                    addDebugLog(`✓ Data loaded: ${currentData.Matches.length} matches found`, 'success');
+                    addDebugLog(`✓ Data loaded: ${currentData.Matches.length} matches`, 'success');
                     displayAnnouncement();
                     displayMatches();
                     loadingContainer.style.display = 'none';
@@ -613,12 +657,8 @@
                     addDebugLog(`Attempt ${i + 1} failed: ${error.message}`, 'error');
                     
                     if (i === JSON_URLS.length - 1) {
-                        // All attempts failed
-                        showError(`Failed to load data after ${JSON_URLS.length} attempts. Check console for details.`);
-                        loadingContainer.style.display = 'none';
-                        
-                        // Show sample data option
                         showSampleDataOption();
+                        loadingContainer.style.display = 'none';
                     }
                 }
             }
@@ -629,8 +669,8 @@
             const container = document.getElementById('matchesContainer');
             container.innerHTML = `
                 <div style="grid-column: 1/-1; text-align: center; color: white; padding: 40px;">
-                    <h3>📡 Data Loading Issue</h3>
-                    <p>The JSON endpoint is blocked by CORS restrictions.</p>
+                    <h3>📡 Using Sample Data (Demo)</h3>
+                    <p>JSON endpoint is blocked by CORS. Using demo data below.</p>
                     <button id="loadSampleBtn" style="
                         margin-top: 20px;
                         padding: 12px 30px;
@@ -641,18 +681,19 @@
                         cursor: pointer;
                         font-size: 1em;
                         font-weight: 600;
-                    ">Load Sample Data (Demo)</button>
+                    ">Load Sample Data</button>
                 </div>
             `;
             
             document.getElementById('loadSampleBtn').addEventListener('click', loadSampleData);
+            loadSampleData();
         }
 
         // Load sample/demo data
         function loadSampleData() {
             currentData = {
                 "last_updated": "19/8/2026, 7:02:58 pm",
-                "announcement": "🎬 CnpTV Premium Streaming - Demo Mode (Sample Data)",
+                "announcement": "🎬 CnpTV Premium Streaming - Using Sample Data",
                 "Matches": [
                     {
                         "id": "B0H74QJJXT",
@@ -668,7 +709,7 @@
                 ]
             };
             
-            addDebugLog('Sample data loaded (Demo mode)', 'success');
+            addDebugLog('Sample data loaded', 'success');
             displayAnnouncement();
             displayMatches();
         }
@@ -720,6 +761,13 @@
 
         // Show player section and hide cards
         function showPlayer(match) {
+            // Check if player is ready
+            if (!playerReady || !player) {
+                addDebugLog('Player not ready yet! Reinitializing...', 'error');
+                showError('Player initializing... Please try again.');
+                return;
+            }
+
             currentMatch = match;
             
             addDebugLog(`Loading: ${match.event_name}`, 'success');
@@ -772,7 +820,17 @@
 
         // Play selected match
         async function playMatch(match, server = null) {
-            if (!match) return;
+            if (!match) {
+                addDebugLog('No match selected', 'error');
+                return;
+            }
+
+            // Verify player is ready
+            if (!playerReady || !player) {
+                addDebugLog('Player not initialized! Please wait...', 'error');
+                showError('Player is initializing. Please wait a moment and try again.');
+                return;
+            }
 
             try {
                 const serverToUse = server || selectedServer;
@@ -780,18 +838,28 @@
 
                 if (!url) {
                     showError('Selected server not available for this match');
-                    addDebugLog(`No URL for server: ${serverToUse}`, 'error');
+                    addDebugLog(`❌ No URL for server: ${serverToUse}`, 'error');
                     return;
                 }
 
                 addDebugLog(`Loading from ${serverToUse}...`);
                 addDebugLog(`URL: ${url.substring(0, 80)}...`);
 
+                // Stop current playback if any
+                try {
+                    await player.unload();
+                } catch (e) {
+                    // ignore
+                }
+
                 // Load the stream
                 await player.load(url);
-                addDebugLog('Manifest loaded successfully', 'success');
+                addDebugLog('✓ Manifest loaded successfully', 'success');
                 
-                document.getElementById('shaka-video').play();
+                const video = document.getElementById('shaka-video');
+                video.play().catch(e => {
+                    addDebugLog('Play error: ' + e.message, 'error');
+                });
                 addDebugLog('Playback started', 'success');
 
             } catch (error) {
@@ -831,9 +899,15 @@
         document.getElementById('closePlayerBtn').addEventListener('click', closePlayer);
 
         // Initialize on page load
-        window.addEventListener('load', () => {
-            initShakaPlayer();
-            fetchData();
+        window.addEventListener('load', async () => {
+            try {
+                addDebugLog('Page loaded, initializing...');
+                await initShakaPlayer();
+                await fetchData();
+            } catch (error) {
+                addDebugLog('Initialization error: ' + error.message, 'error');
+                showError('Failed to initialize player');
+            }
         });
 
         // Handle visibility change
