@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CnpTV - Premium Streaming Player</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.0/shaka-player.compiled.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            animation: slideDown 0.6s ease-out;
+        }
+
+        .header h1 {
+            font-size: 3.5em;
+            font-weight: 700;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #ff6b6b, #ffa500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        /* Announcement Banner */
+        .announcement-banner {
+            background: rgba(255, 107, 107, 0.2);
+            border: 2px solid #ff6b6b;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            color: #fff;
+            animation: slideDown 0.8s ease-out 0.1s both;
+            backdrop-filter: blur(10px);
+        }
+
+        .announcement-banner h3 {
+            color: #ff6b6b;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .announcement-banner p {
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+
+        /* Player Section */
+        .player-section {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            animation: slideUp 0.6s ease-out;
+        }
+
+        #video-container {
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%;
+            position: relative;
+            background: #000;
+        }
+
+        #shaka-video {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .player-controls {
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .player-info {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .player-info h3 {
+            color: #fff;
+            margin-bottom: 5px;
+            font-size: 1.3em;
+        }
+
+        .player-info p {
+            color: #aaa;
+            font-size: 0.9em;
+        }
+
+        .server-selector {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .server-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .server-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .server-btn.active {
+            background: linear-gradient(135deg, #ff6b6b, #ffa500);
+            box-shadow: 0 8px 20px rgba(255, 107, 107, 0.4);
+        }
+
+        /* Matches Grid */
+        .matches-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+            animation: fadeIn 0.8s ease-out 0.2s both;
+        }
+
+        .match-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            animation: scaleIn 0.5s ease-out;
+        }
+
+        .match-card:hover {
+            transform: translateY(-15px) scale(1.02);
+            border-color: rgba(255, 107, 107, 0.5);
+            box-shadow: 0 20px 50px rgba(255, 107, 107, 0.3);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .match-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .match-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .match-image::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(255, 107, 107, 0.3));
+        }
+
+        .match-play-icon {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .match-card:hover .match-play-icon {
+            transform: scale(1.2);
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .match-info {
+            padding: 20px;
+            color: white;
+        }
+
+        .match-info h3 {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .match-id {
+            display: inline-block;
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        /* Loading State */
+        .loading {
+            text-align: center;
+            color: white;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Error State */
+        .error-banner {
+            background: rgba(255, 107, 107, 0.2);
+            border: 2px solid #ff6b6b;
+            color: #ff6b6b;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        /* Animations */
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            padding: 40px 20px 20px;
+            margin-top: 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer p {
+            font-size: 0.95em;
+            margin-bottom: 10px;
+        }
+
+        .last-updated {
+            font-size: 0.85em;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.5em;
+            }
+
+            .matches-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .player-controls {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .server-selector {
+                width: 100%;
+            }
+
+            .server-btn {
+                flex: 1;
+                min-width: 100px;
+            }
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            text-align: center;
+            padding: 8px;
+            border-radius: 6px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.85em;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🎬 CnpTV</h1>
+            <p>Premium Streaming Experience</p>
+        </div>
+
+        <!-- Announcement Banner -->
+        <div class="announcement-banner" id="announcementBanner">
+            <h3>📢 Service Update</h3>
+            <p id="announcementText">Loading announcement...</p>
+        </div>
+
+        <!-- Error Banner -->
+        <div id="errorBanner" class="error-banner" style="display: none;"></div>
+
+        <!-- Player Section -->
+        <div class="player-section">
+            <div id="video-container">
+                <video id="shaka-video"></video>
+            </div>
+            <div class="player-controls">
+                <div class="player-info">
+                    <h3 id="currentEventName">Select a match to play</h3>
+                    <p id="currentEventId">No match selected</p>
+                </div>
+                <div class="server-selector">
+                    <button class="server-btn active" data-server="amazon_server">Amazon</button>
+                    <button class="server-btn" data-server="fastly_server">Fastly</button>
+                    <button class="server-btn" data-server="cloudfront_server">CloudFront</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingContainer" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Loading matches...</p>
+        </div>
+
+        <!-- Matches Grid -->
+        <div id="matchesContainer" class="matches-grid"></div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>© 2026 CnpTV. All rights reserved.</p>
+            <p class="last-updated" id="lastUpdated">Last updated: Loading...</p>
+        </div>
+    </div>
+
+    <script>
+        let player;
+        let currentData;
+        let selectedServer = 'amazon_server';
+
+        // Initialize Shaka Player
+        async function initShakaPlayer() {
+            shaka.polyfill.installAll();
+
+            if (shaka.util.Platform.supportsMediaSource()) {
+                player = new shaka.Player(document.getElementById('shaka-video'));
+                setupPlayerEventListeners();
+            } else {
+                showError('Your browser does not support media playback.');
+            }
+        }
+
+        // Setup player event listeners
+        function setupPlayerEventListeners() {
+            const video = document.getElementById('shaka-video');
+            player.addEventListener('error', onPlayerError);
+            video.addEventListener('play', () => console.log('Video playing'));
+            video.addEventListener('pause', () => console.log('Video paused'));
+        }
+
+        // Handle player errors
+        function onPlayerError(event) {
+            console.error('Player error:', event.detail);
+            showError('Playback error: ' + event.detail.message);
+        }
+
+        // Fetch data from JSON URL
+        async function fetchData() {
+            const loadingContainer = document.getElementById('loadingContainer');
+            loadingContainer.style.display = 'block';
+
+            try {
+                const response = await fetch('https://sonujson-devloper.vercel.app/Data/prime.json');
+                if (!response.ok) throw new Error('Failed to fetch data');
+                
+                currentData = await response.json();
+                displayAnnouncement();
+                displayMatches();
+                setupServerButtons();
+            } catch (error) {
+                console.error('Fetch error:', error);
+                showError('Failed to load matches: ' + error.message);
+            } finally {
+                loadingContainer.style.display = 'none';
+            }
+        }
+
+        // Display announcement
+        function displayAnnouncement() {
+            if (currentData.announcement) {
+                document.getElementById('announcementText').textContent = currentData.announcement;
+            }
+            if (currentData.last_updated) {
+                document.getElementById('lastUpdated').textContent = `Last updated: ${currentData.last_updated}`;
+            }
+        }
+
+        // Display matches
+        function displayMatches() {
+            const container = document.getElementById('matchesContainer');
+            container.innerHTML = '';
+
+            if (!currentData.Matches || currentData.Matches.length === 0) {
+                container.innerHTML = '<p style="color: white; grid-column: 1/-1; text-align: center;">No matches available</p>';
+                return;
+            }
+
+            currentData.Matches.forEach((match, index) => {
+                const card = createMatchCard(match, index);
+                container.appendChild(card);
+            });
+        }
+
+        // Create match card
+        function createMatchCard(match, index) {
+            const card = document.createElement('div');
+            card.className = 'match-card';
+            card.innerHTML = `
+                <div class="match-image">
+                    <img src="${match.image}" alt="${match.event_name}" onerror="this.style.display='none'">
+                    <div class="match-play-icon">▶</div>
+                </div>
+                <div class="match-info">
+                    <h3>${match.event_name}</h3>
+                    <span class="match-id">${match.id}</span>
+                </div>
+            `;
+
+            card.addEventListener('click', () => playMatch(match));
+            return card;
+        }
+
+        // Play selected match
+        async function playMatch(match) {
+            try {
+                const url = match.CnpTV[selectedServer];
+                if (!url) {
+                    showError('Selected server not available for this match');
+                    return;
+                }
+
+                document.getElementById('currentEventName').textContent = match.event_name;
+                document.getElementById('currentEventId').textContent = `ID: ${match.id}`;
+
+                // Load the stream
+                await player.load(url);
+                document.getElementById('shaka-video').play();
+
+                // Store DRM key (for future DRM implementation)
+                console.log('DRM Key available:', match.drm_key);
+            } catch (error) {
+                console.error('Playback error:', error);
+                showError('Failed to load stream: ' + error.message);
+            }
+        }
+
+        // Setup server button listeners
+        function setupServerButtons() {
+            document.querySelectorAll('.server-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.server-btn').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    selectedServer = e.target.dataset.server;
+                });
+            });
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorBanner = document.getElementById('errorBanner');
+            errorBanner.textContent = '❌ ' + message;
+            errorBanner.style.display = 'block';
+            setTimeout(() => {
+                errorBanner.style.display = 'none';
+            }, 5000);
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            initShakaPlayer();
+            fetchData();
+        });
+
+        // Handle visibility change to pause/resume
+        document.addEventListener('visibilitychange', () => {
+            const video = document.getElementById('shaka-video');
+            if (document.hidden) {
+                video.pause();
+            }
+        });
+    </script>
+</body>
+</html>
