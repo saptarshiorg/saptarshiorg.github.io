@@ -454,7 +454,7 @@ body::after {
 header {
   background: rgba(8,8,9,0);
   box-shadow: none;
-  position: sticky; top: 0; z-index: 200;
+  position: sticky; top: 0; z-index: 1500;
   backdrop-filter: blur(0px);
   -webkit-backdrop-filter: blur(0px);
   transition: all 0.3s var(--ease);
@@ -821,6 +821,9 @@ header.scrolled {
   display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;
   padding: 12px 16px 6px;
 }
+@media(min-width:901px) {
+  #watch-ch-strip { display: none !important; }
+}
 .wcs-btn {
   display: inline-flex; align-items: center; gap: 7px;
   background: rgba(var(--wcs-c),0.07);
@@ -1183,6 +1186,46 @@ header.scrolled {
 .fx2-viewall-text{
   font-family: var(--cu-font,var(--font-display)); font-weight:800; font-size:12px;
   letter-spacing:0.08em; color: rgba(255,255,255,0.75); text-transform:uppercase;
+}
+
+/* ── Live TV home preview: one channel per category + View All ── */
+.chp-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; }
+.chp-card{
+  background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px;
+  overflow:hidden; cursor:pointer; display:flex; flex-direction:column;
+  transition: transform 0.18s var(--ease), border-color 0.18s var(--ease);
+}
+.chp-card:hover{ transform: translateY(-4px); border-color: rgba(255,255,255,0.2); }
+.chp-thumb{
+  position:relative; width:100%; aspect-ratio:16/9; background:#0a0a0a;
+  display:flex; align-items:center; justify-content:center; overflow:hidden;
+}
+.chp-thumb img{ max-width:64%; max-height:64%; object-fit:contain; }
+.chp-live-badge{
+  position:absolute; top:8px; left:8px; z-index:1;
+  display:inline-flex; align-items:center; gap:4px;
+  background: rgba(224,21,140,0.92); color:#fff;
+  font-family:var(--font-display); font-weight:800; font-size:9px; letter-spacing:0.06em;
+  padding:3px 7px; border-radius:8px; text-transform:uppercase;
+}
+.chp-live-dot{ width:5px; height:5px; border-radius:50%; background:#fff; box-shadow:0 0 6px #fff; animation: livePulse 1.5s ease-in-out infinite; }
+.chp-body{ padding:12px 14px 14px; display:flex; flex-direction:column; gap:6px; }
+.chp-group{ font-family:var(--font-display); font-weight:800; font-size:10px; letter-spacing:0.08em; text-transform:uppercase; color:#F04FB0; }
+.chp-name{ font-family:var(--font-display); font-weight:700; font-size:13px; color:#fff; line-height:1.3; }
+.chp-viewall-btn{
+  align-self:flex-start; margin-top:4px;
+  display:inline-flex; align-items:center; gap:4px;
+  background: rgba(240,79,176,0.12); color:#F04FB0;
+  font-family:var(--font-display); font-weight:700; font-size:11px; letter-spacing:0.03em;
+  padding:6px 10px; border-radius:8px; text-decoration:none;
+  transition: background 0.18s var(--ease);
+}
+.chp-viewall-btn:hover{ background: rgba(240,79,176,0.22); }
+@media(max-width:900px){
+  .chp-grid{ grid-template-columns: 1fr 1fr; gap:10px; }
+}
+@media(max-width:480px){
+  .chp-grid{ grid-template-columns: 1fr; }
 }
 
 .fixture-card {
@@ -1719,7 +1762,7 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
 
 /* QR Panel */
 .nav-qr-wrap { position: relative; display: flex; align-items: center; }
-.nav-qr-btn { width: 38px; height: 38px; background: transparent; border: none; outline: none; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 17px; cursor: pointer; transition: all 0.18s; flex-shrink: 0; padding: 2px; box-shadow: none; }
+.nav-qr-btn { width: 38px; height: 38px; background: transparent; border: none; outline: none; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 17px; cursor: pointer; transition: all 0.18s; flex-shrink: 0; padding: 2px; box-shadow: none; color: #fff; }
 .nav-qr-btn:hover,.nav-qr-btn.active { background: transparent; opacity: 0.85; }
 .nav-qr-btn-img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .qr-float-panel { position: absolute; top: calc(100% + 14px); right: 0; z-index: 500; background: rgba(8,8,9,0.97); backdrop-filter: var(--blur); border-radius: 8px; padding: 18px; box-shadow: 0 0 44px rgba(240,79,176,0.15), 0 14px 44px rgba(0,0,0,0.75); text-align: center; transform: scale(0.88) translateY(-8px); opacity: 0; pointer-events: none; transform-origin: top right; transition: all 0.25s var(--spring); width: 196px; }
@@ -2354,54 +2397,6 @@ body::before{ display:none !important; }
 </div>
 
 <!-- WELCOME BACK BAR — sits above the header, not a popup. Dismissible, shown once per session. -->
-<style>
-#sx-back-bar{
-  display:flex; align-items:center; justify-content:center; position:relative;
-  background:#050506; border-bottom:1px solid rgba(240,79,176,0.25);
-  padding:9px 44px;
-}
-#sx-back-bar.hidden{ display:none; }
-#sx-back-bar-inner{
-  display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap;
-}
-#sx-back-bar-badge{
-  font-family:var(--font-display); font-weight:800; font-size:10px;
-  letter-spacing:0.1em; text-transform:uppercase; color:#000;
-  background:#F04FB0; padding:3px 9px; flex-shrink:0;
-}
-#sx-back-bar-text{
-  font-family:var(--font-body); font-size:12.5px; color:rgba(255,255,255,0.8);
-}
-#sx-back-bar-close{
-  position:absolute; right:12px; top:50%; transform:translateY(-50%);
-  width:22px; height:22px; display:flex; align-items:center; justify-content:center;
-  background:rgba(255,255,255,0.06); border:none; color:rgba(255,255,255,0.6);
-  cursor:pointer; font-size:12px; border-radius: 8px;
-}
-#sx-back-bar-close:hover{ background:rgba(255,255,255,0.14); color:#fff; }
-@media(max-width:600px){
-  #sx-back-bar-text{ font-size:11px; }
-  #sx-back-bar{ padding:9px 38px; }
-}
-</style>
-<div id="sx-back-bar">
-  <div id="sx-back-bar-inner">
-    <span id="sx-back-bar-badge">We're Back</span>
-    <span id="sx-back-bar-text">EV Sports is back — with a cooler, minimalist UI.</span>
-  </div>
-  <button id="sx-back-bar-close" onclick="closeSxBack()" aria-label="Dismiss">✕</button>
-</div>
-<script>
-function closeSxBack(){
-  var bar = document.getElementById('sx-back-bar');
-  if (bar) bar.classList.add('hidden');
-  sessionStorage.setItem('sxBackSeen', '1');
-}
-document.addEventListener('DOMContentLoaded', function(){
-  if (sessionStorage.getItem('sxBackSeen')) closeSxBack();
-});
-</script>
-
 <!-- HEADER -->
 <header>
   <div class="header-inner">
@@ -2459,17 +2454,19 @@ document.addEventListener('DOMContentLoaded', function(){
     </div>
     <div class="nav-qr-wrap" id="nav-qr-wrap">
       <button class="nav-qr-btn" id="nav-qr-btn" onclick="toggleQr()" aria-label="Scan QR">
-        <svg class="nav-qr-btn-img" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <rect x="3" y="3" width="7" height="7" rx="1.2" stroke="#fff" stroke-width="2"/>
-          <rect x="14" y="3" width="7" height="7" rx="1.2" stroke="#fff" stroke-width="2"/>
-          <rect x="3" y="14" width="7" height="7" rx="1.2" stroke="#fff" stroke-width="2"/>
-          <rect x="6" y="6" width="1" height="1" fill="#fff"/>
-          <rect x="17" y="6" width="1" height="1" fill="#fff"/>
-          <rect x="6" y="17" width="1" height="1" fill="#fff"/>
-          <rect x="14" y="14" width="3" height="3" fill="#fff"/>
-          <rect x="18" y="14" width="3" height="3" fill="#fff"/>
-          <rect x="14" y="18" width="3" height="3" fill="#fff"/>
-          <rect x="18" y="18" width="3" height="3" fill="#fff"/>
+        <svg class="nav-qr-btn-img" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="3" y="3" width="5" height="5" rx="1"/>
+          <rect x="16" y="3" width="5" height="5" rx="1"/>
+          <rect x="3" y="16" width="5" height="5" rx="1"/>
+          <path d="M21 16h-3a2 2 0 0 0-2 2v3"/>
+          <path d="M21 21v.01"/>
+          <path d="M12 7v3a2 2 0 0 1-2 2H7"/>
+          <path d="M3 12h.01"/>
+          <path d="M12 3h.01"/>
+          <path d="M12 16v.01"/>
+          <path d="M16 12h1"/>
+          <path d="M21 12v.01"/>
+          <path d="M12 21v-1"/>
         </svg>
       </button>
       <div class="qr-float-panel" id="qr-panel">
@@ -2628,10 +2625,6 @@ document.addEventListener('DOMContentLoaded', function(){
   <a class="wcs-btn" id="wcs-fifa" data-sxtab="fifa" href="#sxTabPanels" onclick="event.preventDefault();openFifa();">
     <img src="https://upload.wikimedia.org/wikipedia/en/1/17/2026_FIFA_World_Cup_emblem.svg" alt="FIFA" style="height:15px;width:15px;object-fit:contain;display:block;flex-shrink:0;">
     FIFA
-  </a>
-  <a class="wcs-btn" id="wcs-news" data-sxtab="livetv" href="#sxTabPanels" onclick="event.preventDefault();openLiveTV();setTimeout(()=>{if(window.chSelectCategory)chSelectCategory('News');},80);">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h8M6 12h12M6 16h8"/></svg>
-    News
   </a>
   <a class="wcs-btn" id="wcs-fancode" data-sxtab="fancode" href="#sxTabPanels" onclick="event.preventDefault();openFanCode();">
     <img src="https://static.vecteezy.com/system/resources/previews/069/146/538/non_2x/fancode-app-icon-on-transparent-background-free-png.png" alt="FanCode" style="height:15px;width:15px;object-fit:contain;display:block;flex-shrink:0;border-radius: 8px;">
@@ -3816,11 +3809,14 @@ window.sxSwitchTab = sxSwitchTab;
 <!-- LIVE FIXTURES -->
 <section class="section" style="background:linear-gradient(180deg,#000000,#000000);padding:40px 0;" id="fixtures-section">
   <div class="section-inner">
-    <div class="sx-matches-hdr">
-      <span class="sx-matches-hdr-bar"></span>
-      <span class="sx-matches-hdr-text">LIVE &amp; UPCOMING</span>
-    </div>
     <div class="fixtures-grid" id="fixtures-grid"></div>
+  </div>
+</section>
+
+<!-- LIVE TV — HOME PREVIEW (one channel per category + View All) -->
+<section class="section" style="background:linear-gradient(180deg,#000000,#000000);padding:0 0 40px;" id="channels-preview-section">
+  <div class="section-inner">
+    <div class="chp-grid" id="channelsPreviewGrid"></div>
   </div>
 </section>
     
@@ -4131,8 +4127,8 @@ function renderTicker(rows) {
 }
 
 function renderNav(rows) {
-  // NOTE: nav is now hardcoded to match the requested 4-item bar
-  // (Home / Live TV / Matches / News) instead of reading
+  // NOTE: nav is now hardcoded to match the requested bar
+  // (Home / Live TV / Matches / FanCode / Feedback) instead of reading
   // labels from the NAVBAR sheet. Sheet rows are ignored here on purpose.
   const desktop = document.getElementById('nav-desktop');
   const drawerNav = document.getElementById('drawer-nav');
@@ -4140,7 +4136,6 @@ function renderNav(rows) {
     { label:'Home',     href:'#', sxtab:'home', onclick:"goHome();return false;" },
     { label:'Live TV',  href:'#sxTabPanels', sxtab:'livetv', onclick:"openLiveTV();return false;" },
     { label:'Matches',  href:'#sxTabPanels', sxtab:'matches', onclick:"sxSwitchTab('matches');return false;" },
-    { label:'News',     href:'#sxTabPanels', onclick:"openLiveTV();setTimeout(()=>{if(window.chSelectCategory)chSelectCategory('News');},80);return false;" },
     { label:'FanCode',  href:'#sxTabPanels', sxtab:'fancode', onclick:"openFanCode();return false;" },
     { label:'Feedback', href:'#', sxtab:'feedback', onclick:"openAdminChat();return false;" },
   ];
@@ -4702,7 +4697,7 @@ function injectMatchInfoIntoSlides(matchCards) {
     const timerWrapId = 'slide-timerwrap-' + i;
     const timerBlock = `<div class="smo-timer" id="${timerWrapId}" style="margin:2px 0 10px;visibility:${(!isLive && countdown) ? 'visible' : 'hidden'}"><div class="timer-label">STARTS IN</div><div class="timer-display" id="${timerId}">--:--:--</div></div>`;
 
-    const watchBtn = `<a href="${matchWatchHref(m.btn_url)}" class="btn-slide-watch" onclick="event.preventDefault();return sxHandleMatchWatch(event,'${sxServersEnc(m)}','${escJs(m.btn_url)}','${escJs((m.team1_code||'')+' vs '+(m.team2_code||''))}','${sxMatchInfoEnc(m,(m.team1_code||'')+' vs '+(m.team2_code||''))}')">▶ Watch Now</a>`;
+    const watchBtn = `<a href="${matchWatchHref(m.btn_url)}" class="btn-slide-watch" onclick="event.preventDefault();return sxHandleMatchWatch(event,'${sxServersEnc(m)}','${escJs(m.btn_url)}','${escJs((m.team1_code||'')+' vs '+(m.team2_code||''))}','${sxMatchInfoEnc(m,(m.team1_code||'')+' vs '+(m.team2_code||''))}')">Watch Now</a>`;
 
     const contentEl = slide.querySelector('.slide-content');
     if (!contentEl) return;
@@ -5012,6 +5007,52 @@ function renderChannels(rows) {
   window._cmsChannels = active(rows);
   if (typeof window.chBuildCategories === 'function') window.chBuildCategories();
   if (typeof window.chFilter === 'function') window.chFilter();
+  renderChannelsPreview();
+}
+
+// Home screen preview: one channel per category (prefers a currently-LIVE
+// one) plus a "View All" button that opens the full Live TV browser
+// pre-filtered to that category via chSelectCategory().
+function renderChannelsPreview() {
+  const grid = document.getElementById('channelsPreviewGrid');
+  if (!grid) return;
+  const all = window._cmsChannels || [];
+  if (!all.length) { grid.innerHTML = ''; return; }
+
+  const order = [];
+  const buckets = {};
+  all.forEach(c => {
+    const grp = (c.group || '').trim() || 'Other';
+    if (grp === 'News') return; // News gets no dedicated preview card
+    if (!buckets[grp]) { buckets[grp] = []; order.push(grp); }
+    buckets[grp].push(c);
+  });
+
+  grid.innerHTML = order.map(grp => {
+    const list = buckets[grp];
+    const chosen = list.find(c => (c.status_live_off || '').toUpperCase() === 'LIVE') || list[0];
+    const isLive = (chosen.status_live_off || '').toUpperCase() === 'LIVE';
+    const logo = chosen.icon_url || 'https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/main/logo.png';
+    const streamUrl = chosen.watch_url || '#';
+    return `
+    <div class="chp-card" role="button" tabindex="0"
+      onclick="openStreamPlayer('${escJs(streamUrl)}','${escJs(chosen.channel_name || grp)}','channel')"
+      onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">
+      <div class="chp-thumb">
+        ${isLive ? '<span class="chp-live-badge"><span class="chp-live-dot"></span>LIVE</span>' : ''}
+        <img src="${logo}" alt="${escJs(chosen.channel_name || '')}" loading="lazy" onerror="this.style.display='none'">
+      </div>
+      <div class="chp-body">
+        <div class="chp-group">${grp}</div>
+        <div class="chp-name">${chosen.channel_name || ''}</div>
+        <a href="#sxTabPanels" class="chp-viewall-btn"
+          onclick="event.preventDefault();event.stopPropagation();openLiveTV();setTimeout(()=>{if(window.chSelectCategory)chSelectCategory('${escJs(grp)}');},80);">
+          View All
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 18 6-6-6-6"/></svg>
+        </a>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function renderFixtures(rows) {
@@ -5749,7 +5790,7 @@ header{
   .ch-name{
     display: inline-block !important;
     max-width: 100% !important;
-    font-size: 7.5px !important;
+    font-size: 11px !important;
     line-height: 1.2 !important;
     text-align: center !important;
     color: #fff !important;
@@ -8721,8 +8762,16 @@ header{
   display: inline-flex !important; align-items: center !important; gap: 8px !important;
 }
 .btn-slide-watch::before{
-  content: "▶";
-  font-size: 0.85em;
+  content: "";
+  display: inline-block;
+  width: 0.7em; height: 0.7em;
+  background-color: currentColor;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M8 5v14l11-7z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M8 5v14l11-7z'/%3E%3C/svg%3E");
+  -webkit-mask-size: contain; mask-size: contain;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-position: center; mask-position: center;
+  flex-shrink: 0;
 }
 .btn-slide-watch:hover{
   background: #eeeeee !important;
