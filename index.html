@@ -4141,10 +4141,10 @@ window.sxSwitchTab = sxSwitchTab;
 <section class="section" style="background:linear-gradient(180deg,#000000,#000000);padding:40px 0;" id="channels-preview-section">
   <div class="section-inner">
     <div style="margin-bottom:28px;">
-      <h2 style="font-family:var(--font-display);font-weight:900;font-size:clamp(24px,5vw,36px);color:#fff;letter-spacing:0.02em;margin:0;">Browse by Category</h2>
-      <p style="font-size:14px;color:rgba(255,255,255,0.65);margin:8px 0 0 0;">Select a category to explore all available channels</p>
+      <h2 style="font-family:var(--font-display);font-weight:900;font-size:clamp(24px,5vw,36px);color:#fff;letter-spacing:0.02em;margin:0;">Live Channels</h2>
+      <p style="font-size:14px;color:rgba(255,255,255,0.65);margin:8px 0 0 0;">A few channels to get you started — view all for the full guide</p>
     </div>
-    <div class="chp-grid" id="channelsPreviewGrid"></div>
+    <div class="fixtures-grid" id="channelsPreviewGrid"></div>
   </div>
 </section>
 
@@ -4155,44 +4155,53 @@ window.sxSwitchTab = sxSwitchTab;
       <h2 style="font-family:var(--font-display);font-weight:900;font-size:clamp(24px,5vw,36px);color:#fff;letter-spacing:0.02em;margin:0;">OTT Platforms</h2>
       <p style="font-size:14px;color:rgba(255,255,255,0.65);margin:8px 0 0 0;">Stream exclusive content from top OTT platforms</p>
     </div>
-    <div class="ott-grid">
+    <div class="fixtures-grid">
       <!-- FanCode -->
-      <a class="ott-card" href="#sxTabPanels" onclick="event.preventDefault();openFanCode();">
-        <div class="ott-logo-wrap">
-          <img src="https://static.vecteezy.com/system/resources/previews/069/146/538/non_2x/fancode-app-icon-on-transparent-background-free-png.png" alt="FanCode">
+      <a class="fx2-card" href="#sxTabPanels" onclick="event.preventDefault();openFanCode();">
+        <div class="fx2-thumb">
+          <img src="https://static.vecteezy.com/system/resources/previews/069/146/538/non_2x/fancode-app-icon-on-transparent-background-free-png.png" alt="FanCode" class="fx2-thumb-img" style="object-fit:contain;padding:22px;background:#0a0a0a;">
         </div>
-        <div class="ott-name">FanCode</div>
-        <div class="ott-desc">Live sports and exclusive cricket content</div>
-        <button class="ott-btn" onclick="event.preventDefault();openFanCode();">
-          <span>Open</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
-        </button>
+        <div class="fx2-body">
+          <div class="fx2-title-row">
+            <div class="fx2-title">FanCode</div>
+            <span class="fx2-free">OTT</span>
+          </div>
+          <div class="fx2-meta">
+            <span class="fx2-tag">Live sports and exclusive cricket content</span>
+          </div>
+        </div>
       </a>
 
       <!-- Prime Video -->
-      <a class="ott-card" href="#sxTabPanels" onclick="event.preventDefault();openPrime();">
-        <div class="ott-logo-wrap">
-          <img src="https://static.vecteezy.com/system/resources/thumbnails/046/437/251/small_2x/amazon-prime-logo-free-png.png" alt="Prime Video">
+      <a class="fx2-card" href="#sxTabPanels" onclick="event.preventDefault();openPrime();">
+        <div class="fx2-thumb">
+          <img src="https://static.vecteezy.com/system/resources/thumbnails/046/437/251/small_2x/amazon-prime-logo-free-png.png" alt="Prime Video" class="fx2-thumb-img" style="object-fit:contain;padding:22px;background:#0a0a0a;">
         </div>
-        <div class="ott-name">Prime Video</div>
-        <div class="ott-desc">Sports and entertainment streaming</div>
-        <button class="ott-btn" onclick="event.preventDefault();openPrime();">
-          <span>Open</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
-        </button>
+        <div class="fx2-body">
+          <div class="fx2-title-row">
+            <div class="fx2-title">Prime Video</div>
+            <span class="fx2-free">OTT</span>
+          </div>
+          <div class="fx2-meta">
+            <span class="fx2-tag">Sports and entertainment streaming</span>
+          </div>
+        </div>
       </a>
 
       <!-- Willow OTT -->
-      <a class="ott-card" href="#sxTabPanels" onclick="event.preventDefault();openWillow();">
-        <div class="ott-logo-wrap">
-          <img src="https://bobgoldpr.com/wp-content/uploads/2024/05/logo-transparent-cb-1.png" alt="Willow">
+      <a class="fx2-card" href="#sxTabPanels" onclick="event.preventDefault();openWillow();">
+        <div class="fx2-thumb">
+          <img src="https://bobgoldpr.com/wp-content/uploads/2024/05/logo-transparent-cb-1.png" alt="Willow" class="fx2-thumb-img" style="object-fit:contain;padding:22px;background:#0a0a0a;">
         </div>
-        <div class="ott-name">Willow OTT</div>
-        <div class="ott-desc">Premium cricket streaming and analysis</div>
-        <button class="ott-btn" onclick="event.preventDefault();openWillow();">
-          <span>Open</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
-        </button>
+        <div class="fx2-body">
+          <div class="fx2-title-row">
+            <div class="fx2-title">Willow OTT</div>
+            <span class="fx2-free">OTT</span>
+          </div>
+          <div class="fx2-meta">
+            <span class="fx2-tag">Premium cricket streaming and analysis</span>
+          </div>
+        </div>
       </a>
     </div>
   </div>
@@ -5389,43 +5398,48 @@ function renderChannels(rows) {
 function renderChannelsPreview() {
   const grid = document.getElementById('channelsPreviewGrid');
   if (!grid) return;
-  const all = window._cmsChannels || [];
+  const OTHERS_LOGO = 'https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/main/logo.png';
+  const all = (window._cmsChannels || []).filter(c => (c.group || '').trim() !== 'News');
   if (!all.length) { grid.innerHTML = ''; return; }
 
-  const order = [];
-  const buckets = {};
-  all.forEach(c => {
+  // Show live channels first, then a handful of others — like the
+  // homepage match cards, only a short preview here ("View All" opens
+  // the full Live TV channel guide).
+  const isLive = c => (c.status_live_off || '').toUpperCase() === 'LIVE';
+  const sorted = [...all].sort((a, b) => (isLive(b) ? 1 : 0) - (isLive(a) ? 1 : 0));
+  const preview = sorted.slice(0, 6);
+
+  const channelCards = preview.map(c => {
     const grp = (c.group || '').trim() || 'Other';
-    if (grp === 'News') return; // News gets no dedicated preview card
-    if (!buckets[grp]) { buckets[grp] = []; order.push(grp); }
-    buckets[grp].push(c);
-  });
-
-  // Create category cards
-  const categoryCards = order.map(grp => {
-    const channelCount = buckets[grp].length;
+    const live = isLive(c);
+    const streamUrl = c.watch_url || '#';
     return `
-    <div class="cat-card-preview" role="button" tabindex="0"
-      onclick="openLiveTV();setTimeout(()=>{if(window.chSelectCategory)chSelectCategory('${escJs(grp)}');},80);"
-      onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">
-      <div class="cat-card-content">
-        <div class="cat-card-name">${grp}</div>
-        <div class="cat-card-count">${channelCount} channel${channelCount !== 1 ? 's' : ''}</div>
+    <a class="fx2-card" href="#sxTabPanels"
+      onclick="event.preventDefault();openStreamPlayer('${escJs(streamUrl)}','${escJs(c.channel_name || 'Live Stream')}','channel');">
+      <div class="fx2-thumb">
+        <img src="${c.icon_url || OTHERS_LOGO}" alt="" class="fx2-thumb-img" style="object-fit:contain;padding:22px;background:#0a0a0a;" onerror="this.src='${OTHERS_LOGO}'">
+        ${live ? '<span class="fx2-badge fx2-badge-live"><span class="fx2-live-dot"></span>LIVE</span>' : ''}
       </div>
-    </div>`;
-  }).join('');
-
-  // Add "View All Channels" button at the end
-  const viewAllButton = `
-    <a href="#sxTabPanels" class="cat-viewall-card" 
-      onclick="event.preventDefault();openLiveTV();">
-      <div class="cat-viewall-content">
-        <div class="cat-viewall-icon">→</div>
-        <div class="cat-viewall-text">View All<br>Channels</div>
+      <div class="fx2-body">
+        <div class="fx2-title-row">
+          <div class="fx2-title">${c.channel_name || ''}</div>
+          <span class="fx2-free">FREE</span>
+        </div>
+        <div class="fx2-meta">
+          <span class="fx2-tag">${grp}</span>
+          <span class="fx2-date">24/7 Channel</span>
+        </div>
       </div>
     </a>`;
+  }).join('');
 
-  grid.innerHTML = categoryCards + viewAllButton;
+  const viewAllCard = `
+    <a class="fx2-viewall" href="#sxTabPanels" onclick="event.preventDefault();openLiveTV();">
+      <span class="fx2-viewall-arrow">→</span>
+      <span class="fx2-viewall-text">VIEW ALL</span>
+    </a>`;
+
+  grid.innerHTML = channelCards + viewAllCard;
 }
 
 function renderFixtures(rows) {
@@ -5612,7 +5626,15 @@ async function init() {
 }
 
 // ── UI HELPERS ───────────────────────────────────────────────
+function isStreamPlayerActive() {
+  const el = document.getElementById('stream-player-overlay');
+  return !!(el && el.classList.contains('open'));
+}
 function toggleDrawer() {
+  // Strictly block the nav drawer from opening while the stream player
+  // is active — the player takes over the whole screen and the nav
+  // should not be reachable behind/through it.
+  if (isStreamPlayerActive()) return;
   document.getElementById('sideDrawer').classList.toggle('open');
   document.getElementById('drawerOverlay').classList.toggle('open');
   document.getElementById('hamburger').classList.toggle('open');
