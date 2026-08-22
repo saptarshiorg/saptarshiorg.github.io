@@ -7379,6 +7379,98 @@ function closeAdminChatDiscordPopup(){
   background: #000;
 }
 #stream-player-overlay.open{ display: flex; flex-direction: column; }
+@media (min-width: 901px){
+  #stream-player-overlay.open{ flex-direction: row; }
+}
+
+#stream-player-main{
+  position: relative;
+  flex: 1 1 auto; min-width: 0; min-height: 0;
+  display: flex; flex-direction: column;
+  background: #000;
+}
+
+/* ── Bottom info bar (channel/match name, tag, fullscreen) ── */
+#stream-player-infobar{
+  position: relative; z-index: 4; flex-shrink: 0;
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 14px; background: #0a0a0c;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+#sp-info-logo{
+  width: 32px; height: 32px; border-radius: 6px; flex-shrink: 0; overflow: hidden;
+  background: rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center;
+}
+#sp-info-logo img{ width: 100%; height: 100%; object-fit: contain; }
+#sp-info-text{ min-width: 0; flex: 1; }
+#sp-info-name{
+  font-family: var(--cu-font,inherit); font-weight: 800; font-size: 13px; color: #fff;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+#sp-info-meta{
+  font-family: var(--cu-font,inherit); font-weight: 700; font-size: 10px; letter-spacing: .03em;
+  color: rgba(255,255,255,0.5); display: flex; align-items: center; gap: 6px; margin-top: 2px;
+  text-transform: uppercase;
+}
+.sp-info-live{ display: inline-flex; align-items: center; gap: 4px; color: #E0158C; font-weight: 800; }
+.sp-info-live::before{ content: ''; width: 6px; height: 6px; border-radius: 50%; background: #E0158C; box-shadow: 0 0 6px #E0158C; }
+#sp-info-fullscreen{
+  flex-shrink: 0; width: 32px; height: 32px; border-radius: 8px; border: none;
+  background: rgba(255,255,255,0.08); color: #fff; display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+#sp-info-fullscreen:hover{ background: rgba(255,255,255,0.16); }
+#sp-info-fullscreen svg{ width: 15px; height: 15px; }
+
+/* ── Rail sidebar: "MORE CHANNELS" / "MORE MATCHES" (replaces live chat) ── */
+#stream-player-rail{
+  flex-shrink: 0; min-height: 0;
+  background: #0d0d10; display: flex; flex-direction: column;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+@media (min-width: 901px){
+  #stream-player-rail{
+    width: 300px; max-width: 30vw;
+    border-top: none; border-left: 1px solid rgba(255,255,255,0.08);
+  }
+}
+#sp-rail-header{ display: flex; align-items: center; gap: 8px; padding: 14px 16px 10px; flex-shrink: 0; }
+#sp-rail-header-bar{ width: 3px; height: 15px; border-radius: 3px; background: linear-gradient(180deg,#F5A623,#E0158C); flex-shrink: 0; }
+#stream-player-rail-title{
+  font-family: var(--cu-font,inherit); font-weight: 800; font-size: 11px; letter-spacing: .08em;
+  color: #fff; text-transform: uppercase;
+}
+#stream-player-rail-list{
+  flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden;
+  padding: 0 10px 14px; display: flex; flex-direction: column; gap: 6px;
+  -webkit-overflow-scrolling: touch;
+}
+@media (max-width: 900px){
+  #stream-player-rail-list{
+    flex-direction: row; overflow-x: auto; overflow-y: hidden;
+    padding: 0 12px 14px;
+  }
+}
+.sp-rail-item{
+  display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+  background: rgba(255,255,255,0.04); border: 1px solid transparent; border-radius: 10px;
+  padding: 8px 10px; cursor: pointer; text-align: left; color: #fff;
+  font-family: var(--cu-font,inherit); width: 100%;
+}
+.sp-rail-item:hover{ background: rgba(255,255,255,0.09); }
+.sp-rail-item.active{ border-color: rgba(224,21,140,0.5); background: rgba(224,21,140,0.13); }
+@media (max-width: 900px){ .sp-rail-item{ width: 188px; } }
+.sp-rail-thumb{
+  width: 36px; height: 36px; border-radius: 7px; flex-shrink: 0; overflow: hidden;
+  background: rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center;
+}
+.sp-rail-thumb img{ max-width: 100%; max-height: 100%; object-fit: contain; }
+.sp-rail-vs{ font-size: 8px; color: rgba(255,255,255,0.4); margin: 0 1px; flex-shrink: 0; }
+.sp-rail-info{ min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.sp-rail-name{ font-size: 12px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sp-rail-meta{ font-size: 10px; color: rgba(255,255,255,0.45); display: flex; align-items: center; gap: 5px; }
+.sp-rail-live{ color: #E0158C; font-weight: 800; }
+.sp-rail-empty{ padding: 24px 10px; font-size: 12px; color: rgba(255,255,255,0.4); font-family: var(--cu-font,inherit); text-align: center; }
 
 #stream-player-topbar{
   position: absolute; top: 0; left: 0; right: 0; z-index: 5;
@@ -7487,20 +7579,14 @@ function closeAdminChatDiscordPopup(){
   padding: 28px;
 }
 #stream-player-loading.sp-loading-hide{ opacity: 0; }
-#sp-disclaimer{ max-width: 460px; text-align: center; }
-#sp-disclaimer-title{
-  font-size: 12.5px; font-weight: 800; letter-spacing: .14em;
-  color: #E0158C; margin-bottom: 16px;
+#sp-loading-spinner{
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.12); border-top-color: #E0158C;
+  animation: spLoadingSpin 0.85s linear infinite;
+  margin-bottom: 18px;
 }
-#sp-disclaimer p{
-  font-size: 12px; line-height: 1.65; color: #FFFFFF;
-  margin: 0 0 10px;
-}
-#sp-disclaimer-tag{
-  font-size: 11px; font-weight: 700; letter-spacing: .04em;
-  color: rgba(255,255,255,0.55); margin-top: 16px;
-}
-#sp-loading-status{ width: 240px; max-width: 70vw; margin-top: 24px; }
+@keyframes spLoadingSpin{ to{ transform: rotate(360deg); } }
+#sp-loading-status{ width: 240px; max-width: 70vw; margin-top: 4px; }
 #sp-loading-label{
   font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
   color: rgba(255,255,255,0.8); text-align: center; margin-bottom: 9px;
@@ -7517,33 +7603,44 @@ function closeAdminChatDiscordPopup(){
 </style>
 
 <div id="stream-player-overlay">
-  <div id="stream-player-topbar">
-    <div id="stream-player-backdrop"></div>
-    <button id="stream-player-back" onclick="closeStreamPlayer()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-      Back
-    </button>
-    <span id="stream-player-title">Live Stream</span>
-  </div>
-  <div id="stream-player-body">
-    <div id="stream-player-frame-wrap">
-      <iframe id="stream-player-frame" src="" title="Live Stream" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
-      <div id="stream-player-loading">
-        <div id="sp-disclaimer">
-          <div id="sp-disclaimer-title">DISCLAIMER</div>
-          <p>EV SPORTS, formerly known as SX SPORTS, is operated by Rishi Entertainment Verse Limited.</p>
-          <p>EV SPORTS functions solely as a browser and content-discovery platform. Sports, movies, television channels, and other media displayed or accessible through the platform may originate from independent third-party sources.</p>
-          <p>EV SPORTS does not itself host, upload, store, transmit, or broadcast such third-party content on its own servers, nor does it claim ownership of any third-party material.</p>
-          <p>All copyrights, trademarks, broadcasting rights, streaming rights, and other intellectual-property rights remain with their respective owners.</p>
-          <p>EV SPORTS is not responsible for the content, availability, legality, or operation of external third-party sources.</p>
-          <div id="sp-disclaimer-tag">Watch responsibly. Respect copyright.</div>
-        </div>
-        <div id="sp-loading-status">
-          <div id="sp-loading-label">Loading Stream</div>
-          <div id="sp-loading-barwrap"><div id="sp-loading-bar"></div></div>
+  <div id="stream-player-main">
+    <div id="stream-player-topbar">
+      <div id="stream-player-backdrop"></div>
+      <button id="stream-player-back" onclick="closeStreamPlayer()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        Back
+      </button>
+      <span id="stream-player-title">Live Stream</span>
+    </div>
+    <div id="stream-player-body">
+      <div id="stream-player-frame-wrap">
+        <iframe id="stream-player-frame" src="" title="Live Stream" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
+        <div id="stream-player-loading">
+          <div id="sp-loading-spinner"></div>
+          <div id="sp-loading-status">
+            <div id="sp-loading-label">Loading Stream</div>
+            <div id="sp-loading-barwrap"><div id="sp-loading-bar"></div></div>
+          </div>
         </div>
       </div>
     </div>
+    <div id="stream-player-infobar">
+      <div id="sp-info-logo"><img id="sp-info-logo-img" src="" alt="" onerror="this.parentElement.style.display='none'"></div>
+      <div id="sp-info-text">
+        <div id="sp-info-name">Live Stream</div>
+        <div id="sp-info-meta"></div>
+      </div>
+      <button id="sp-info-fullscreen" onclick="spToggleFullscreen()" title="Fullscreen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+      </button>
+    </div>
+  </div>
+  <div id="stream-player-rail">
+    <div id="sp-rail-header">
+      <span id="sp-rail-header-bar"></span>
+      <span id="stream-player-rail-title">MORE CHANNELS</span>
+    </div>
+    <div id="stream-player-rail-list"></div>
   </div>
 </div>
 
@@ -7668,7 +7765,7 @@ function sxCastCurrentStream(){
   }
 }
 
-const SP_LOADING_DURATION_MS = 5000;
+const SP_LOADING_DURATION_MS = 1400;
 const SP_LOADING_LABELS = {
   stream:  'Loading Stream',
   channel: 'Loading Channel',
@@ -7692,11 +7789,12 @@ function openStreamPlayer(url, name, type){
   document.getElementById('stream-player-title').textContent = label;
   sxCurrentStreamRawUrl = url; // used by sxCastCurrentStream() below
   const src = url.includes('#') ? url : url + '#' + encodeURIComponent(label);
-  // Loading overlay (now the DISCLAIMER) shows for a flat 5s to give it
-  // time to actually be read — the stream itself starts loading
-  // immediately underneath, not after the 5s. Setting the iframe src here,
-  // before the overlay timer, means the stream is already fetching in the
-  // background while the disclaimer is up.
+  spUpdateInfobar(type, label);
+  populateStreamPlayerRail(type, label);
+  // Loading overlay shows briefly while the stream spins up — the stream
+  // itself starts loading immediately underneath, not after the delay.
+  // Setting the iframe src here, before the overlay timer, means the
+  // stream is already fetching in the background while the spinner is up.
   const loadingEl = document.getElementById('stream-player-loading');
   if (loadingEl){
     loadingEl.classList.remove('sp-loading-hide');
@@ -7725,6 +7823,86 @@ function openStreamPlayer(url, name, type){
     if (loadingEl) loadingEl.classList.add('sp-loading-hide');
   }, SP_LOADING_DURATION_MS);
 }
+
+// ── Bottom info bar: logo + name + tag/LIVE, matched against whichever
+// dataset (channels or match cards) this stream came from. ──────────────
+const SX_OTHER_LOGO = 'https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/main/logo.png';
+function spUpdateInfobar(type, label){
+  const nameEl = document.getElementById('sp-info-name');
+  const metaEl = document.getElementById('sp-info-meta');
+  const logoWrap = document.getElementById('sp-info-logo');
+  const logoImg = document.getElementById('sp-info-logo-img');
+  if (nameEl) nameEl.textContent = label;
+  if (!metaEl || !logoImg || !logoWrap) return;
+  logoWrap.style.display = 'flex';
+
+  if (type === 'match') {
+    const m = (window._matchCardsData || []).find(c => ((c.team1_code||'') + ' vs ' + (c.team2_code||'')) === label);
+    const live = m && matchStatusText(m).toLowerCase() === 'live';
+    logoImg.src = (m && (m.team1_logo_url || m.team2_logo_url)) || '';
+    metaEl.innerHTML = (live ? '<span class="sp-info-live">LIVE</span>' : '') + (m && m.game ? `<span>${m.game}</span>` : '');
+    if (!logoImg.src) logoWrap.style.display = 'none';
+  } else {
+    const c = (window._cmsChannels || []).find(ch => (ch.channel_name || '') === label);
+    const live = c && (c.status_live_off || '').toUpperCase() === 'LIVE';
+    logoImg.src = (c && c.icon_url) || SX_OTHER_LOGO;
+    logoImg.style.display = '';
+    metaEl.innerHTML = (live ? '<span class="sp-info-live">LIVE</span>' : '') + (c && c.group ? `<span>${c.group}</span>` : '');
+  }
+}
+
+// ── Rail sidebar (replaces a live-chat panel): "MORE CHANNELS" while
+// watching a Live TV channel, "MORE MATCHES" while watching a match. ────
+function populateStreamPlayerRail(type, currentLabel){
+  const rail = document.getElementById('stream-player-rail-list');
+  const titleEl = document.getElementById('stream-player-rail-title');
+  if (!rail) return;
+  const isMatch = type === 'match';
+  if (titleEl) titleEl.textContent = isMatch ? 'MORE MATCHES' : 'MORE CHANNELS';
+
+  if (isMatch) {
+    const list = (window._matchCardsData || []).filter(c => !isMatchFinished(c));
+    rail.innerHTML = list.length ? list.map(c => {
+      const label = (c.team1_code||'') + ' vs ' + (c.team2_code||'');
+      const live = matchStatusText(c).toLowerCase() === 'live';
+      return `
+      <button type="button" class="sp-rail-item${label===currentLabel?' active':''}" onclick="sxHandleMatchWatch(null,'${sxServersEnc(c)}','${escJs(c.btn_url)}','${escJs(label)}','${sxMatchInfoEnc(c,label)}')">
+        <span class="sp-rail-thumb">${img(c.team1_logo_url||c.team2_logo_url,'','')}</span>
+        <span class="sp-rail-info">
+          <span class="sp-rail-name">${label}</span>
+          <span class="sp-rail-meta">${live ? '<span class="sp-rail-live">LIVE</span>' : ''}${c.game||''}</span>
+        </span>
+      </button>`;
+    }).join('') : `<div class="sp-rail-empty">No other live matches right now</div>`;
+  } else {
+    const list = (window._cmsChannels || []);
+    rail.innerHTML = list.length ? list.map(c => {
+      const live = (c.status_live_off||'').toUpperCase() === 'LIVE';
+      const name = c.channel_name || '';
+      return `
+      <button type="button" class="sp-rail-item${name===currentLabel?' active':''}" onclick="openStreamPlayer('${escJs(c.watch_url||'#')}','${escJs(name||'Live Stream')}','channel')">
+        <span class="sp-rail-thumb"><img src="${c.icon_url||SX_OTHER_LOGO}" alt="" onerror="this.src='${SX_OTHER_LOGO}'"></span>
+        <span class="sp-rail-info">
+          <span class="sp-rail-name">${name}</span>
+          <span class="sp-rail-meta">${live ? '<span class="sp-rail-live">LIVE</span>' : ''}${c.group||''}</span>
+        </span>
+      </button>`;
+    }).join('') : `<div class="sp-rail-empty">No other channels right now</div>`;
+  }
+}
+window.populateStreamPlayerRail = populateStreamPlayerRail;
+
+function spToggleFullscreen(){
+  const wrap = document.getElementById('stream-player-frame-wrap');
+  if (!wrap) return;
+  if (!document.fullscreenElement) {
+    (wrap.requestFullscreen || wrap.webkitRequestFullscreen || wrap.mozRequestFullScreen || function(){}).call(wrap);
+  } else {
+    (document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || function(){}).call(document);
+  }
+}
+window.spToggleFullscreen = spToggleFullscreen;
+
 function closeStreamPlayer(){
   document.getElementById('stream-player-overlay').classList.remove('open');
   document.getElementById('stream-player-frame').src = '';
