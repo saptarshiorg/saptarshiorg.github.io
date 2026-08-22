@@ -4013,7 +4013,7 @@ window.sxSwitchTab = sxSwitchTab;
 
 <style>
 #fancode-overlay{
-  display: none; position: fixed; inset: 0; z-index: 1230;
+  display: none; position: fixed; inset: 0; z-index: 1600;
   background: #000;
 }
 
@@ -4054,7 +4054,7 @@ window.sxSwitchTab = sxSwitchTab;
      No geo-mirroring, just embed and don't worry about what's inside. ── -->
 <style>
 #prime-overlay{
-  display: none; position: fixed; inset: 0; z-index: 1230;
+  display: none; position: fixed; inset: 0; z-index: 1600;
   background: #000;
 }
 #prime-overlay.open{ display: block; }
@@ -4091,7 +4091,7 @@ window.sxSwitchTab = sxSwitchTab;
 <!-- ── WILLOW OTT panel: same simple pattern as FanCode/PRIME. ── -->
 <style>
 #willow-overlay{
-  display: none; position: fixed; inset: 0; z-index: 1230;
+  display: none; position: fixed; inset: 0; z-index: 1600;
   background: #000;
 }
 #willow-overlay.open{ display: block; }
@@ -5417,7 +5417,7 @@ function renderChannelsPreview() {
     <a class="fx2-card" href="#sxTabPanels"
       onclick="event.preventDefault();openStreamPlayer('${escJs(streamUrl)}','${escJs(c.channel_name || 'Live Stream')}','channel');">
       <div class="fx2-thumb">
-        <img src="${c.icon_url || OTHERS_LOGO}" alt="" class="fx2-thumb-img" style="object-fit:contain;padding:22px;background:#0a0a0a;" onerror="this.src='${OTHERS_LOGO}'">
+        <img src="${c.icon_url || OTHERS_LOGO}" alt="" class="fx2-thumb-img" onerror="this.src='${OTHERS_LOGO}'">
         ${live ? '<span class="fx2-badge fx2-badge-live"><span class="fx2-live-dot"></span>LIVE</span>' : ''}
       </div>
       <div class="fx2-body">
@@ -7375,7 +7375,7 @@ function closeAdminChatDiscordPopup(){
 ═══════════════════════════════════════════════════════════════════════ -->
 <style>
 #stream-player-overlay{
-  display: none; position: fixed; inset: 0; z-index: 1400;
+  display: none; position: fixed; inset: 0; z-index: 1600;
   background: #000;
 }
 #stream-player-overlay.open{ display: flex; flex-direction: column; }
