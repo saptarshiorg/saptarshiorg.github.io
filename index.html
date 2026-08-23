@@ -944,26 +944,46 @@ header.scrolled {
    side-by-side pill tabs (game1) (game2) ... for one-tap switching.
 ──────────────────────────────────────────── */
 .smo-toolbar {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 10px; flex-wrap: wrap;
+  display: flex; flex-direction: column; gap: 10px;
   max-width: 1280px; margin: 0 auto; padding: 10px 20px 0;
 }
-.smo-game-tabs { display: none; align-items: center; gap: 8px; flex-wrap: wrap; }
+/* 4-per-row grid on every screen size — categories wrap to a new line
+   once there are more than 4 (ALL + LIVE NOW always occupy the first
+   two slots of row 1, see smoBuildToolbar). */
+.smo-game-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: 8px;
+  width: 100%;
+}
 .smo-game-tab {
-  display: inline-flex; align-items: center;
+  display: inline-flex; align-items: center; justify-content: center;
   background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
   border: 1px solid rgba(255,255,255,0.10);
   color: var(--text-muted);
   font-family: var(--font-display); font-weight: 700; font-size: 11px; letter-spacing: 0.6px; text-transform: uppercase;
-  padding: 7px 14px; border-radius: 8px; cursor: pointer;
+  padding: 9px 8px; border-radius: 8px; cursor: pointer;
   transition: all 0.18s var(--ease);
-  white-space: nowrap;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .smo-game-tab:hover { color: var(--white); border-color: rgba(255,255,255,0.22); }
 .smo-game-tab.active {
   color: #FFFFFF; background: var(--grad-gold); border-color: transparent;
   box-shadow: 0 4px 14px rgba(240,79,176,0.30);
 }
+/* "ALL" + "LIVE NOW" — bigger, bolder, always the first two tiles */
+.smo-game-tab-big { font-size: 12.5px; font-weight: 800; padding: 11px 8px; }
+.smo-game-tab-live { gap: 6px; }
+.smo-game-tab-live.active {
+  background: linear-gradient(135deg,#ff3b3b,#c2172c); border-color: transparent;
+  box-shadow: 0 4px 14px rgba(255,59,59,0.35);
+}
+.smo-tab-live-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: currentColor;
+  display: inline-block; flex-shrink: 0;
+  animation: smoTabPulse 1.4s infinite;
+}
+@keyframes smoTabPulse { 0%,100%{opacity:1;} 50%{opacity:0.35;} }
 .smo-game-select {
   background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
   border: 1px solid rgba(255,255,255,0.14);
@@ -973,15 +993,11 @@ header.scrolled {
   -webkit-appearance: none; -moz-appearance: none; appearance: none;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M0 0L5 6L10 0Z' fill='%23FFB347'/></svg>");
   background-repeat: no-repeat; background-position: right 12px center;
+  width: 100%;
 }
 .smo-game-select option { background: #1A0A18; color: var(--white); }
-@media(min-width:901px) {
-  .smo-game-tabs { display: flex; }
-  .smo-game-select { margin-left: auto; }
-}
 @media(max-width:900px) {
-  .smo-toolbar { justify-content: stretch; padding: 8px 14px 0; }
-  .smo-game-select { width: 100%; }
+  .smo-toolbar { padding: 8px 14px 0; }
 }
 
 /* ────────────────────────────────────────────
@@ -5159,20 +5175,23 @@ function smoBuildToolbar(gameNames) {
   const selectEl = document.getElementById('smo-game-select');
   if (!wrap || !tabsEl || !selectEl) return;
 
-  // Only one event listed → nothing to switch between, hide the toolbar.
-  if (!gameNames || gameNames.length < 2) {
+  // No events at all → nothing to switch between, hide the toolbar.
+  // (With just one game category, the toolbar still shows — ALL vs
+  // LIVE NOW is a useful distinction even for a single sport.)
+  if (!gameNames || gameNames.length < 1) {
     wrap.style.display = 'none';
     window._smoActiveGame = 'ALL';
     return;
   }
   wrap.style.display = '';
 
-  // Keep the current selection if it's still a valid event, otherwise reset.
-  if (window._smoActiveGame !== 'ALL' && gameNames.indexOf(window._smoActiveGame) === -1) {
+  // Keep the current selection if it's still a valid choice, otherwise reset.
+  const validSelections = ['ALL', 'LIVE_NOW'].concat(gameNames);
+  if (validSelections.indexOf(window._smoActiveGame) === -1) {
     window._smoActiveGame = 'ALL';
   }
 
-  selectEl.innerHTML = '<option value="ALL">All Events</option>';
+  selectEl.innerHTML = '<option value="ALL">All Events</option><option value="LIVE_NOW">Live Now</option>';
   gameNames.forEach(g => {
     const opt = document.createElement('option');
     opt.value = g;
@@ -5182,14 +5201,25 @@ function smoBuildToolbar(gameNames) {
   selectEl.value = window._smoActiveGame;
   selectEl.onchange = () => smoSelectGame(selectEl.value);
 
+  // "ALL" and "LIVE NOW" are always the first two tiles — with a 4-column
+  // grid that puts them side by side at the very start of row 1, followed
+  // by the game categories (already live-first ordered by renderMatchCards).
   tabsEl.innerHTML = '';
   const allBtn = document.createElement('button');
   allBtn.type = 'button';
-  allBtn.className = 'smo-game-tab' + (window._smoActiveGame === 'ALL' ? ' active' : '');
+  allBtn.className = 'smo-game-tab smo-game-tab-big' + (window._smoActiveGame === 'ALL' ? ' active' : '');
   allBtn.dataset.game = 'ALL';
   allBtn.textContent = 'All';
   allBtn.addEventListener('click', () => smoSelectGame('ALL'));
   tabsEl.appendChild(allBtn);
+
+  const liveBtn = document.createElement('button');
+  liveBtn.type = 'button';
+  liveBtn.className = 'smo-game-tab smo-game-tab-big smo-game-tab-live' + (window._smoActiveGame === 'LIVE_NOW' ? ' active' : '');
+  liveBtn.dataset.game = 'LIVE_NOW';
+  liveBtn.innerHTML = '<span class="smo-tab-live-dot"></span>Live Now';
+  liveBtn.addEventListener('click', () => smoSelectGame('LIVE_NOW'));
+  tabsEl.appendChild(liveBtn);
 
   gameNames.forEach(g => {
     const btn = document.createElement('button');
@@ -5218,11 +5248,20 @@ function smoApplyFilter() {
   if (!el) return;
   const sections = el.querySelectorAll('.smo-section');
   let anyVisible = false;
+  const now = Date.now();
   sections.forEach(sec => {
-    const matchesGame = (name === 'ALL') || (sec.dataset.game === name);
-    // A section can also be empty because every card in it has auto-hidden
-    // (see smoSweepExpiredCards) — collapse it too in that case.
-    const hasVisibleCard = Array.from(sec.querySelectorAll('.smo-card')).some(c => c.style.display !== 'none');
+    // "ALL" and "LIVE NOW" aren't tied to a single game — every section
+    // is a candidate; a specific game name only matches its own section.
+    const matchesGame = (name === 'ALL' || name === 'LIVE_NOW') || (sec.dataset.game === name);
+    let hasVisibleCard = false;
+    sec.querySelectorAll('.smo-card').forEach(card => {
+      const expireAt = card.dataset.expireAt ? parseInt(card.dataset.expireAt, 10) : null;
+      const isExpired = expireAt !== null && now >= expireAt;
+      const passesLiveFilter = (name !== 'LIVE_NOW') || card.dataset.live === '1';
+      const show = matchesGame && passesLiveFilter && !isExpired;
+      card.style.display = show ? '' : 'none';
+      if (show) hasVisibleCard = true;
+    });
     const show = matchesGame && hasVisibleCard;
     if (show) sec.style.removeProperty('display');
     else sec.style.setProperty('display', 'none', 'important');
@@ -5237,9 +5276,9 @@ function smoApplyFilter() {
     if (!filterEmptyBox) {
       filterEmptyBox = document.createElement('div');
       filterEmptyBox.className = 'smo-empty-box smo-filter-empty-box';
-      filterEmptyBox.textContent = 'NO MATCHES FOR THIS EVENT';
       el.appendChild(filterEmptyBox);
     }
+    filterEmptyBox.textContent = (name === 'LIVE_NOW') ? 'NO MATCHES LIVE RIGHT NOW' : 'NO MATCHES FOR THIS EVENT';
     filterEmptyBox.style.display = '';
   } else if (filterEmptyBox) {
     filterEmptyBox.style.display = 'none';
@@ -5289,7 +5328,30 @@ function renderMatchCards(rows) {
   const timers = [];
   const gameOrder = [];
 
-  groups.forEach((groupCards, gameName) => {
+  // ── Live-first ordering ──────────────────────────────────────────
+  // 1) Within each game group, live matches sort before upcoming,
+  //    and finished matches sort last.
+  // 2) Groups (game categories) that contain at least one live match
+  //    are moved ahead of groups that don't — so the category tabs
+  //    and the sections on the page both show "what's live" first.
+  //    Ties keep their original sheet order (stable sort).
+  const cardRank = c => {
+    const s = matchStatusText(c).toLowerCase();
+    if (s === 'live') return 0;
+    if (isMatchFinished(c)) return 2;
+    return 1;
+  };
+  const groupEntries = Array.from(groups.entries());
+  groupEntries.forEach(([, groupCards]) => {
+    groupCards.sort((a, b) => cardRank(a) - cardRank(b));
+  });
+  groupEntries.sort((a, b) => {
+    const aHasLive = a[1].some(c => matchStatusText(c).toLowerCase() === 'live') ? 0 : 1;
+    const bHasLive = b[1].some(c => matchStatusText(c).toLowerCase() === 'live') ? 0 : 1;
+    return aHasLive - bHasLive;
+  });
+
+  groupEntries.forEach(([gameName, groupCards]) => {
     let sectionHtml = '';
 
     groupCards.forEach(c => {
@@ -5322,7 +5384,7 @@ function renderMatchCards(rows) {
       const teamsLine = `${c.team1_full_name||c.team1_code||''} vs ${c.team2_full_name||c.team2_code||''}`;
 
       sectionHtml += `
-      <div class="smo-card fx2-card" id="${cardId}"${hideAt !== null ? ` data-expire-at="${hideAt}"` : ''}>
+      <div class="smo-card fx2-card" id="${cardId}" data-live="${isLive ? '1' : '0'}"${hideAt !== null ? ` data-expire-at="${hideAt}"` : ''}>
         <div class="fx2-thumb">
           <div class="fx2-thumb-teams">
             <div class="fx2-thumb-team">${img(c.team1_logo_url,c.team1_code||'','')}</div>
@@ -5452,8 +5514,23 @@ function renderFixtures(rows) {
   // as the full Matches page / hero cards, instead of the old FIXTURES
   // sheet — kept short on purpose ("View All" opens the full Matches
   // page). The full list lives in the Matches overlay.
-  const source = (window._matchCardsData || []).filter(c => !isMatchFinished(c));
-  const fx = source.slice(0, 5);
+  //
+  // Ordering priority for the home preview:
+  //   1) Any category branded "WORLD CUP" (e.g. "FIFA World Cup 2026")
+  //      always shows first, regardless of live/upcoming status.
+  //   2) Among the rest, live matches show next.
+  //   3) Everything else keeps its original order.
+  const isWorldCup = c => /world\s*cup/i.test(c.game || '');
+  const isLiveCard = c => matchStatusText(c).toLowerCase() === 'live';
+  const fixtureRank = c => {
+    if (isWorldCup(c)) return isLiveCard(c) ? 0 : 1;
+    return isLiveCard(c) ? 2 : 3;
+  };
+  const source = (window._matchCardsData || [])
+    .filter(c => !isMatchFinished(c))
+    .slice()
+    .sort((a, b) => fixtureRank(a) - fixtureRank(b));
+  const fx = source.slice(0, 11);
   const grid = document.getElementById('fixtures-grid');
   if (!grid) return;
   grid.innerHTML = fx.map(c => {
