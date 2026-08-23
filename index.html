@@ -594,14 +594,14 @@ header.scrolled {
 .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
 /* Drawer */
-.drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 299; backdrop-filter: blur(6px); }
+.drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 8000; backdrop-filter: blur(6px); }
 .drawer-overlay.open { display: block; }
 .side-drawer {
   position: fixed; top: 0; left: -300px; bottom: 0; width: 280px;
   background: rgba(8,8,9,0.95);
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
-  z-index: 300;
+  z-index: 8010;
   transition: left 0.30s var(--ease);
   padding: 0; display: flex; flex-direction: column; overflow-y: auto;
 }
@@ -4797,7 +4797,7 @@ function sxMatchInfoEnc(m, name) {
     team2_code: m.team2_code || '', team2_full_name: m.team2_full_name || '', team2_logo_url: m.team2_logo_url || '',
     date_label: m.date_label || '', details: m.details || '',
     countdown: m.countdown_to_iso_datetime || m.countdown_to || '',
-    status: (m.status_live_upcoming || m.status || '').toLowerCase()
+    status: matchStatusText(m).toLowerCase()
   };
   return encodeURIComponent(JSON.stringify(info));
 }
@@ -4912,7 +4912,7 @@ function sxFindHeroTitleMatch(rawTitle, matchCards) {
     return (a === code1 && b === code2) || (a === code2 && b === code1);
   });
   if (!candidates.length) return null;
-  const byStatus = s => candidates.find(mc => (mc.status_live_upcoming || mc.status || '').trim().toLowerCase() === s);
+  const byStatus = s => candidates.find(mc => matchStatusText(mc).trim().toLowerCase() === s);
   return byStatus('upcoming') || byStatus('live') || candidates[0];
 }
 
@@ -4949,7 +4949,7 @@ function injectMatchInfoIntoHeroCards(matchCards) {
     if (!m) return;
     usedMatchCards.push(m);
 
-    const isLive = (m.status_live_upcoming || m.status || '').toLowerCase() === 'live';
+    const isLive = matchStatusText(m).toLowerCase() === 'live';
     const badgeId = 'hsc-badge-' + i;
     const liveBadgeHtml = `<div class="smo-live-badge" id="${badgeId}" style="margin-bottom:5px;font-size:9px;padding:2px 7px"><div class="live-dot-r" style="width:5px;height:5px"></div>LIVE</div>`;
     const badge = isLive
@@ -5005,7 +5005,7 @@ function injectMatchInfoIntoHeroCards(matchCards) {
 
   extra.forEach((m, j) => {
     const i = heroCards.length + j; // global index for timer IDs
-    const isLive = (m.status_live_upcoming || m.status || '').toLowerCase() === 'live';
+    const isLive = matchStatusText(m).toLowerCase() === 'live';
     const badgeId = 'hsc-badge-' + i;
     const liveBadgeHtml = `<div class="smo-live-badge" id="${badgeId}" style="margin-bottom:5px;font-size:9px;padding:2px 7px"><div class="live-dot-r" style="width:5px;height:5px"></div>LIVE</div>`;
     const badge = isLive
@@ -5089,7 +5089,7 @@ function injectMatchInfoIntoSlides(matchCards) {
     const m = sxFindHeroTitleMatch(rawTitle, matchCards);
     if (!m) return;
 
-    const isLive = (m.status_live_upcoming || m.status || '').toLowerCase() === 'live';
+    const isLive = matchStatusText(m).toLowerCase() === 'live';
     const badgeId = 'slide-badge-' + i;
     const liveBadgeHtml = `<div class="smo-live-badge" id="${badgeId}"><div class="live-dot-r"></div>LIVE</div>`;
     const badge = isLive
@@ -5138,13 +5138,33 @@ function injectMatchInfoIntoSlides(matchCards) {
 // until match cards are available via a second-pass update function.
 window._matchCardsData = [];
 
-// ── Match status helpers (live/finished badge only — no date-based hiding) ──
+// ── Match status helpers ──────────────────────────────────────────
+// A match counts as "live" if either the sheet's status column already
+// says so, OR its countdown_to_iso_datetime has passed — so matches that
+// are only ever scheduled with a start time (no manual sheet edit)
+// automatically flip to live everywhere status is checked: match-card
+// sorting/filtering, the LIVE NOW toolbar tab, and the home screen
+// preview — not just the cosmetic per-card countdown badge.
 const MATCH_FINISHED_RE = /finished|ended|\bover\b|complete|full[\s-]?time|\bft\b/i;
-function matchStatusText(c) {
+function rawMatchStatusText(c) {
   return (c.status_live_upcoming || c.status || '').trim();
 }
 function isMatchFinished(c) {
-  return MATCH_FINISHED_RE.test(matchStatusText(c));
+  return MATCH_FINISHED_RE.test(rawMatchStatusText(c));
+}
+function matchIsAutoLive(c) {
+  if (isMatchFinished(c)) return false; // a finished match never auto-flips live
+  const iso = (c.countdown_to_iso_datetime || c.countdown_to || '').trim();
+  if (!iso) return false;
+  const t = new Date(iso).getTime();
+  if (isNaN(t)) return false;
+  return Date.now() >= t;
+}
+function matchStatusText(c) {
+  const raw = rawMatchStatusText(c);
+  if (raw.toLowerCase() === 'live') return raw;
+  if (matchIsAutoLive(c)) return 'Live';
+  return raw;
 }
 
 // ── Auto-hide cards 15 hours after their scheduled start ──────────────
@@ -5303,8 +5323,19 @@ function smoSweepExpiredCards() {
 }
 setInterval(smoSweepExpiredCards, 60000);
 
+// Re-runs the full MATCH CARDS render (sorting, category tabs, LIVE NOW
+// filter eligibility, and the home-screen preview all rebuild from this)
+// so matches that reach their scheduled kickoff time — auto-flipping to
+// "live" via matchIsAutoLive() purely from the ISO datetime, with no
+// manual sheet edit — actually move to the front and count as live
+// everywhere, not just in the cosmetic per-card countdown badge.
+setInterval(() => {
+  if (window._matchCardsRawRows) renderMatchCards(window._matchCardsRawRows);
+}, 30000);
+
 function renderMatchCards(rows) {
   if (!rows) { console.warn('[MATCH CARDS] fetchSheet returned null — check the tab name is exactly "MATCH CARDS" and the sheet is shared ("Anyone with the link can view").'); return; }
+  window._matchCardsRawRows = rows; // cached so smoRefreshAutoLive() can re-render without refetching
   console.log('[MATCH CARDS] raw rows from sheet:', rows.length, rows);
   console.log('[MATCH CARDS] active-flag per row:', rows.map(r => ({ game: r.game, flag_used: activeFlagRaw(r), kept: isRowActive(r) })));
   const allActiveCards = active(rows);
