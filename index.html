@@ -860,7 +860,10 @@ header.scrolled {
   scrollbar-width: none;
 }
 .slider-match-overlay::-webkit-scrollbar { display: none; }
-.smo-section { display: flex; flex-direction: column; gap: 8px; }
+.smo-section {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+}
+.smo-section-label { grid-column: 1 / -1; }
 .smo-section + .smo-section { border-top: 1px solid rgba(255,255,255,0.05); padding-top: 4px; }
 .smo-section-label { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--lavender); padding: 2px 0; }
 .smo-card {
@@ -1974,8 +1977,8 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
   .match-overlay-section { display: block !important; padding: 6px 0 0; }
   .slider-match-overlay { flex-direction: column; overflow-x: visible; padding: 0 14px; gap: 8px; }
   .smo-card { min-width: 0 !important; max-width: 100% !important; flex-shrink: unset; width: 100%; }
-  .smo-section { display: flex !important; flex-direction: column; gap: 8px; }
-  .smo-section-label { display: flex !important; }
+  .smo-section { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .smo-section-label { display: flex !important; grid-column: 1 / -1; }
   .smo-name { font-size: 16px; }
   .smo-logo { width: 36px; height: 36px; }
 
@@ -2004,9 +2007,9 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
   .slides-container { display: block !important; }
   .match-overlay-section { display: block !important; padding: 6px 0 4px; }
   .slider-match-overlay { padding: 0 12px; gap: 8px; }
-  .smo-card { width: 100% !important; min-width: 0 !important; padding: 12px 12px 10px; }
-  .smo-section { display: flex !important; flex-direction: column; gap: 8px; }
-  .smo-section-label { display: flex !important; align-items: center; gap: 8px; font-family: var(--font-display); font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--lavender); padding: 2px 0; }
+  .smo-card { width: 100% !important; min-width: 0 !important; padding: 10px 10px 9px; }
+  .smo-section { display: grid !important; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .smo-section-label { display: flex !important; grid-column: 1 / -1; align-items: center; gap: 8px; font-family: var(--font-display); font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--lavender); padding: 2px 0; }
   .smo-section + .smo-section { border-top: 1px solid rgba(255,255,255,0.05); padding-top: 4px; }
   .smo-name { font-size: 14px; }
   .smo-logo { width: 32px; height: 32px; }
@@ -5547,18 +5550,20 @@ function renderFixtures(rows) {
   // page). The full list lives in the Matches overlay.
   //
   // Ordering priority for the home preview:
-  //   1) Any category branded "WORLD CUP" (e.g. "FIFA World Cup 2026")
-  //      always shows first, regardless of live/upcoming status.
+  //   1) Any category branded "WORLD CUP" (or just "WORL") — e.g. "FIFA
+  //      World Cup 2026" — always shows first, regardless of live status.
   //   2) Among the rest, live matches show next.
-  //   3) Everything else keeps its original order.
-  const isWorldCup = c => /world\s*cup/i.test(c.game || '');
+  // Only these two kinds of matches appear on the home screen at all —
+  // ordinary upcoming matches outside a World Cup category are left out
+  // here (they're still visible on the full Matches page).
+  const isWorldCup = c => /worl/i.test(c.game || '');
   const isLiveCard = c => matchStatusText(c).toLowerCase() === 'live';
   const fixtureRank = c => {
     if (isWorldCup(c)) return isLiveCard(c) ? 0 : 1;
     return isLiveCard(c) ? 2 : 3;
   };
   const source = (window._matchCardsData || [])
-    .filter(c => !isMatchFinished(c))
+    .filter(c => !isMatchFinished(c) && (isLiveCard(c) || isWorldCup(c)))
     .slice()
     .sort((a, b) => fixtureRank(a) - fixtureRank(b));
   const fx = source.slice(0, 11);
