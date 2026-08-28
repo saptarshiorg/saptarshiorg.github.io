@@ -1023,23 +1023,31 @@ header.scrolled {
 ──────────────────────────────────────────── */
 .smo-sport-toolbar {
   display: flex; flex-direction: column; gap: 10px;
-  max-width: 1280px; margin: 0 auto; padding: 14px 20px 0;
+  max-width: 1280px; margin: 0 auto; padding: 10px 20px 0;
 }
+/* Mini horizontal nav-bar strip — single row, scrolls sideways on overflow —
+   deliberately NOT the 4-col grid the game toolbar below uses, so the two
+   tiers read as visually distinct (parent "nav" vs. child "list"). */
 .smo-sport-tabs {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0,1fr));
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none; -ms-overflow-style: none;
   gap: 8px;
   width: 100%;
+  padding-bottom: 2px;
 }
+.smo-sport-tabs::-webkit-scrollbar { display: none; }
 .smo-sport-tab {
   display: inline-flex; align-items: center; justify-content: center;
+  flex: 0 0 auto;
   background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
   border: 1px solid rgba(63,198,255,0.22);
   color: var(--text-muted);
-  font-family: var(--font-display); font-weight: 800; font-size: 12px; letter-spacing: 0.8px; text-transform: uppercase;
-  padding: 11px 8px; border-radius: 8px; cursor: pointer;
+  font-family: var(--font-display); font-weight: 800; font-size: 11px; letter-spacing: 0.8px; text-transform: uppercase;
+  padding: 8px 16px; border-radius: 999px; cursor: pointer;
   transition: all 0.18s var(--ease);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .smo-sport-tab:hover { color: var(--white); border-color: rgba(63,198,255,0.45); }
 .smo-sport-tab.active {
@@ -3415,6 +3423,7 @@ window.sxSwitchTab = sxSwitchTab;
   <div class="smo-game-tabs" id="smo-game-tabs"></div>
   <select class="smo-game-select" id="smo-game-select" aria-label="Select event"></select>
 </div>
+<div class="smo-empty-box" id="smo-sport-prompt" style="display:none;margin:14px 20px 0;">SELECT A SPORT ABOVE TO VIEW MATCHES</div>
 <div class="match-overlay-section" id="match-overlay-section">
   <div class="slider-match-overlay" id="match-overlay"></div>
 </div>
@@ -5283,6 +5292,12 @@ window._smoActiveGame = window._smoActiveGame || 'ALL';
 // 'ALL' shows every sport's games stacked (original behaviour).
 window._smoActiveSport = window._smoActiveSport || 'ALL';
 
+// Sequential-selection gate: when there's a real sport tier (2+ sports),
+// the game/event toolbar and match cards stay hidden — replaced by a
+// "select a sport above" prompt — until the visitor taps a sport tab.
+// Persisted on window so it survives the 30s auto re-render.
+window._smoSportChosen = window._smoSportChosen || false;
+
 function smoBuildToolbar(gameNames) {
   const wrap = document.getElementById('smo-toolbar');
   const tabsEl = document.getElementById('smo-game-tabs');
@@ -5370,6 +5385,7 @@ function smoBuildSportToolbar(sportNames) {
   if (!sportNames || sportNames.length < 2) {
     wrap.style.display = 'none';
     window._smoActiveSport = 'ALL';
+    window._smoSportChosen = true; // nothing to pick, so don't gate the games below
     return;
   }
   wrap.style.display = '';
@@ -5407,12 +5423,19 @@ function smoBuildSportToolbar(sportNames) {
 function smoSelectSport(name) {
   window._smoActiveSport = name;
   window._smoActiveGame = 'ALL';
+  window._smoSportChosen = true; // sport picked — game selector + matches unlock below
   document.querySelectorAll('.smo-sport-tab').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.sport === name);
   });
   const allGames = window._smoAllGameOrder || [];
   const gameToSport = window._smoGameToSport || {};
   const gameNames = (name === 'ALL') ? allGames : allGames.filter(g => gameToSport[g] === name);
+
+  const promptEl = document.getElementById('smo-sport-prompt');
+  const overlaySection = document.getElementById('match-overlay-section');
+  if (promptEl) promptEl.style.display = 'none';
+  if (overlaySection) overlaySection.style.display = '';
+
   smoBuildToolbar(gameNames);
   smoApplyFilter();
 }
@@ -5637,22 +5660,41 @@ function renderMatchCards(rows) {
   // ── Build/refresh the sport-selector toolbar (parent tier) ──
   smoBuildSportToolbar(sportOrder);
 
-  // ── Build/refresh the event-selector toolbar (dropdown + PC tabs) ──
-  // Scoped to the currently-selected sport, if any, so switching sports
-  // narrows this list down to just that sport's games/events.
-  const gameNamesForToolbar = (window._smoActiveSport && window._smoActiveSport !== 'ALL')
-    ? gameOrder.filter(g => window._smoGameToSport[g] === window._smoActiveSport)
-    : gameOrder;
-  smoBuildToolbar(gameNamesForToolbar);
+  // ── Sequential gate: with a real sport tier (2+ sports) and no pick
+  // made yet, hide the game toolbar + match cards and show the "select a
+  // sport above" prompt instead. Once smoSelectSport() runs, the flag
+  // flips and this branch is skipped on every render after (incl. the
+  // 30s auto-refresh) until the page reloads.
+  const promptEl = document.getElementById('smo-sport-prompt');
+  const smoToolbarWrap = document.getElementById('smo-toolbar');
+  const overlaySection = document.getElementById('match-overlay-section');
+  const needsSportPick = sportOrder.length >= 2 && !window._smoSportChosen;
+
+  if (needsSportPick) {
+    if (smoToolbarWrap) smoToolbarWrap.style.display = 'none';
+    if (overlaySection) overlaySection.style.display = 'none';
+    if (promptEl) promptEl.style.display = '';
+  } else {
+    if (promptEl) promptEl.style.display = 'none';
+    // ── Build/refresh the event-selector toolbar (dropdown + PC tabs) ──
+    // Scoped to the currently-selected sport, if any, so switching sports
+    // narrows this list down to just that sport's games/events.
+    const gameNamesForToolbar = (window._smoActiveSport && window._smoActiveSport !== 'ALL')
+      ? gameOrder.filter(g => window._smoGameToSport[g] === window._smoActiveSport)
+      : gameOrder;
+    smoBuildToolbar(gameNamesForToolbar);
+  }
 
   // ── Inject match card data into desktop hero slide cards ──────
   injectMatchInfoIntoHeroCards(cards);
   injectMatchInfoIntoSlides(cards);
 
   // Match overlay section stays visible either way — showing real cards,
-  // or the "NO MATCHES LISTED" box above when there aren't any.
+  // or the "NO MATCHES LISTED" box above when there aren't any — unless
+  // the sport-pick gate above is still active, in which case it stays
+  // hidden behind the "select a sport" prompt.
   const mSection = document.getElementById('match-overlay-section');
-  if (mSection) mSection.style.display = '';
+  if (mSection && !needsSportPick) mSection.style.display = '';
 
   timers.forEach(({ timerDisplayId, timerWrapId, badgeId, liveBadgeHtml, target }) => {
     setTimeout(() => {
