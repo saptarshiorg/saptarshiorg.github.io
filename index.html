@@ -1014,6 +1014,46 @@ header.scrolled {
 }
 
 /* ────────────────────────────────────────────
+   SPORT SELECTOR TOOLBAR — sits above the event/game toolbar.
+   Reads the "sport"/"sports" column from the MATCH CARDS sheet
+   (e.g. CRICKET, FOOTBALL) and groups the existing game/event
+   sections one level up: pick a sport first, then the games/events
+   inside it render exactly as before. Uses the Diamond Blue accent
+   so it reads as the parent tier above the gold event tabs.
+──────────────────────────────────────────── */
+.smo-sport-toolbar {
+  display: flex; flex-direction: column; gap: 10px;
+  max-width: 1280px; margin: 0 auto; padding: 14px 20px 0;
+}
+.smo-sport-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: 8px;
+  width: 100%;
+}
+.smo-sport-tab {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+  border: 1px solid rgba(63,198,255,0.22);
+  color: var(--text-muted);
+  font-family: var(--font-display); font-weight: 800; font-size: 12px; letter-spacing: 0.8px; text-transform: uppercase;
+  padding: 11px 8px; border-radius: 8px; cursor: pointer;
+  transition: all 0.18s var(--ease);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.smo-sport-tab:hover { color: var(--white); border-color: rgba(63,198,255,0.45); }
+.smo-sport-tab.active {
+  color: #06222E; background: linear-gradient(135deg,#3FC6FF,#4FC3F7); border-color: transparent;
+  box-shadow: 0 4px 14px rgba(63,198,255,0.35);
+}
+.smo-sport-tab-all.active {
+  color: #FFFFFF; background: linear-gradient(135deg,#8a8f98,#5c6068); border-color: transparent;
+}
+@media(max-width:900px) {
+  .smo-sport-toolbar { padding: 10px 14px 0; }
+}
+
+/* ────────────────────────────────────────────
    SECTIONS
 ──────────────────────────────────────────── */
 .section { padding: 36px 0; position: relative; z-index: 1; }
@@ -3368,6 +3408,9 @@ window.sxSwitchTab = sxSwitchTab;
   <div class="epg-hero-title">MATCHES</div>
   <div class="epg-hero-sub">Live scores and upcoming fixtures across every sport.</div>
 </div>
+<div class="smo-sport-toolbar" id="smo-sport-toolbar" style="display:none;">
+  <div class="smo-sport-tabs" id="smo-sport-tabs"></div>
+</div>
 <div class="smo-toolbar" id="smo-toolbar" style="display:none;">
   <div class="smo-game-tabs" id="smo-game-tabs"></div>
   <select class="smo-game-select" id="smo-game-select" aria-label="Select event"></select>
@@ -5233,6 +5276,13 @@ function smoIsExpired(c) {
 // match-overlay down to just that one game/event.
 window._smoActiveGame = window._smoActiveGame || 'ALL';
 
+// Currently-selected SPORT (from the MATCH CARDS sheet's "sport"/"sports"
+// column, e.g. CRICKET, FOOTBALL). This is one tier above the game/event
+// toolbar above: pick a sport first, and the event toolbar + sections below
+// narrow down to just that sport's games, rendered exactly as before.
+// 'ALL' shows every sport's games stacked (original behaviour).
+window._smoActiveSport = window._smoActiveSport || 'ALL';
+
 function smoBuildToolbar(gameNames) {
   const wrap = document.getElementById('smo-toolbar');
   const tabsEl = document.getElementById('smo-game-tabs');
@@ -5306,8 +5356,71 @@ function smoSelectGame(name) {
   smoApplyFilter();
 }
 
+// ── Sport selector toolbar (parent tier above the event/game toolbar) ──
+// sportNames is the live-first-ordered list of distinct sport values
+// found in the MATCH CARDS sheet's "sport"/"sports" column this render.
+function smoBuildSportToolbar(sportNames) {
+  const wrap = document.getElementById('smo-sport-toolbar');
+  const tabsEl = document.getElementById('smo-sport-tabs');
+  if (!wrap || !tabsEl) return;
+
+  // Fewer than 2 sports (e.g. the sheet has no sport column filled in yet,
+  // or every row is the same sport) — nothing meaningful to switch
+  // between, so hide the tier entirely and just show every game as before.
+  if (!sportNames || sportNames.length < 2) {
+    wrap.style.display = 'none';
+    window._smoActiveSport = 'ALL';
+    return;
+  }
+  wrap.style.display = '';
+
+  const validSelections = ['ALL'].concat(sportNames);
+  if (validSelections.indexOf(window._smoActiveSport) === -1) {
+    window._smoActiveSport = 'ALL';
+  }
+
+  tabsEl.innerHTML = '';
+  const allBtn = document.createElement('button');
+  allBtn.type = 'button';
+  allBtn.className = 'smo-sport-tab smo-sport-tab-all' + (window._smoActiveSport === 'ALL' ? ' active' : '');
+  allBtn.dataset.sport = 'ALL';
+  allBtn.textContent = 'All Sports';
+  allBtn.addEventListener('click', () => smoSelectSport('ALL'));
+  tabsEl.appendChild(allBtn);
+
+  sportNames.forEach(s => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'smo-sport-tab' + (window._smoActiveSport === s ? ' active' : '');
+    btn.dataset.sport = s;
+    btn.textContent = s;
+    btn.addEventListener('click', () => smoSelectSport(s));
+    tabsEl.appendChild(btn);
+  });
+}
+
+// Selecting a sport narrows the event/game toolbar below it down to just
+// that sport's games (event selection resets to "All Events" for the newly
+// chosen sport, since the previous pick may not exist inside it), then
+// re-applies the visibility filter — the game sections themselves are
+// untouched, just shown/hidden exactly like the existing event filter.
+function smoSelectSport(name) {
+  window._smoActiveSport = name;
+  window._smoActiveGame = 'ALL';
+  document.querySelectorAll('.smo-sport-tab').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.sport === name);
+  });
+  const allGames = window._smoAllGameOrder || [];
+  const gameToSport = window._smoGameToSport || {};
+  const gameNames = (name === 'ALL') ? allGames : allGames.filter(g => gameToSport[g] === name);
+  smoBuildToolbar(gameNames);
+  smoApplyFilter();
+}
+window.smoSelectSport = smoSelectSport;
+
 function smoApplyFilter() {
   const name = window._smoActiveGame || 'ALL';
+  const sportName = window._smoActiveSport || 'ALL';
   const el = document.getElementById('match-overlay');
   if (!el) return;
   const sections = el.querySelectorAll('.smo-section');
@@ -5317,16 +5430,19 @@ function smoApplyFilter() {
     // "ALL" and "LIVE NOW" aren't tied to a single game — every section
     // is a candidate; a specific game name only matches its own section.
     const matchesGame = (name === 'ALL' || name === 'LIVE_NOW') || (sec.dataset.game === name);
+    // Sport tier sits above the game tier — a section only shows when it
+    // also belongs to the currently-selected sport (or "ALL" is selected).
+    const matchesSport = (sportName === 'ALL') || (sec.dataset.sport === sportName);
     let hasVisibleCard = false;
     sec.querySelectorAll('.smo-card').forEach(card => {
       const expireAt = card.dataset.expireAt ? parseInt(card.dataset.expireAt, 10) : null;
       const isExpired = expireAt !== null && now >= expireAt;
       const passesLiveFilter = (name !== 'LIVE_NOW') || card.dataset.live === '1';
-      const show = matchesGame && passesLiveFilter && !isExpired;
+      const show = matchesGame && matchesSport && passesLiveFilter && !isExpired;
       card.style.display = show ? '' : 'none';
       if (show) hasVisibleCard = true;
     });
-    const show = matchesGame && hasVisibleCard;
+    const show = matchesGame && matchesSport && hasVisibleCard;
     if (show) sec.style.removeProperty('display');
     else sec.style.setProperty('display', 'none', 'important');
     if (show) anyVisible = true;
@@ -5402,6 +5518,11 @@ function renderMatchCards(rows) {
   let html = '';
   const timers = [];
   const gameOrder = [];
+  // Sport (from the sheet's "sport"/"sports" column) belonging to each
+  // rendered game/event section — parallel array to gameOrder, one entry
+  // per section, filled in below as sections are built.
+  const sportPerSection = [];
+  const sportOf = c => (c.sport || c.sports || '').trim() || 'Other';
 
   // ── Live-first ordering ──────────────────────────────────────────
   // 1) Within each game group, live matches sort before upcoming,
@@ -5488,6 +5609,7 @@ function renderMatchCards(rows) {
 
     if (sectionHtml) {
       gameOrder.push(gameName);
+      sportPerSection.push(sportOf(groupCards[0]));
       html += `<div class="smo-section">`;
       html += `<div class="smo-section-label">${gameName}</div>`;
       html += sectionHtml;
@@ -5497,14 +5619,31 @@ function renderMatchCards(rows) {
 
   el.innerHTML = html.trim() ? html : `<div class="smo-empty-box">NO MATCHES LISTED</div>`;
 
-  // Tag each rendered section with its game name (via the DOM property,
-  // not an HTML attribute string, so no escaping worries even if a game
-  // name from the sheet contains quotes) so the toolbar can filter by it.
+  // Tag each rendered section with its game name and sport (via the DOM
+  // property, not an HTML attribute string, so no escaping worries even if
+  // a game/sport name from the sheet contains quotes) so the toolbars can
+  // filter by them.
   const renderedSections = el.querySelectorAll(':scope > .smo-section');
-  renderedSections.forEach((sec, i) => { sec.dataset.game = gameOrder[i]; });
+  renderedSections.forEach((sec, i) => { sec.dataset.game = gameOrder[i]; sec.dataset.sport = sportPerSection[i]; });
+
+  // Sports (parent tier), in first-appearance order — since groupEntries
+  // above are already sorted live-first, this naturally puts a sport with
+  // an early live match first too.
+  const sportOrder = [...new Set(sportPerSection)];
+  window._smoAllGameOrder = gameOrder;
+  window._smoGameToSport = {};
+  gameOrder.forEach((g, i) => { window._smoGameToSport[g] = sportPerSection[i]; });
+
+  // ── Build/refresh the sport-selector toolbar (parent tier) ──
+  smoBuildSportToolbar(sportOrder);
 
   // ── Build/refresh the event-selector toolbar (dropdown + PC tabs) ──
-  smoBuildToolbar(gameOrder);
+  // Scoped to the currently-selected sport, if any, so switching sports
+  // narrows this list down to just that sport's games/events.
+  const gameNamesForToolbar = (window._smoActiveSport && window._smoActiveSport !== 'ALL')
+    ? gameOrder.filter(g => window._smoGameToSport[g] === window._smoActiveSport)
+    : gameOrder;
+  smoBuildToolbar(gameNamesForToolbar);
 
   // ── Inject match card data into desktop hero slide cards ──────
   injectMatchInfoIntoHeroCards(cards);
