@@ -2,363 +2,480 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SX Sports – Live TV</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>INDIA MATCHES — by EV</title>
+<link rel="icon" href="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/magenta.png" type="image/png">
+<meta name="description" content="Live and upcoming India matches — Cricket, Football & more. INDIA MATCHES, powered by EV.">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- ═══════════════════════════════════════════════════════
+  ▸ Same CMS as the main site — replace with your Google Sheets ID.
+  ▸ Reads the "MATCH CARDS" tab. Rows are kept only if EITHER team
+    (code or full name) mentions India — "INDIA", "IND", "India",
+    "india" — or the match/game/details text does.
+  ▸ Publish your sheet: File → Share → Publish to web → CSV
+════════════════════════════════════════════════════════════ -->
+<script>
+  const SHEET_ID = '1UcPVLGxSTJmAdtfPHsA_f5VCtbABwVdwef-va512HQU';
+  // ↑↑↑ PASTE YOUR GOOGLE SHEETS ID ABOVE ↑↑↑
+</script>
+
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{min-height:100%;background:#020c06;font-family:-apple-system,'Google Sans','Helvetica Neue',sans-serif;color:#e4f0ea;}
+:root{
+  --bg:#0a0a0d; --bg2:#101014; --card:#16161b; --card-hi:#1e1e25;
+  --brd:rgba(255,255,255,0.08);
+  --pink:#F04F8C; --pink-dk:#C21764; --saffron:#FF9933; --live-red:#ff2d55;
+  --txt:#fff; --txt-dim:rgba(255,255,255,0.55); --txt-dim2:rgba(255,255,255,0.38);
+  --font-display:'Bebas Neue',sans-serif; --font-body:'Poppins','Inter',sans-serif;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html{ scroll-behavior:smooth; }
+body{
+  background:
+    radial-gradient(ellipse 900px 500px at 15% -8%, rgba(240,79,140,0.16), transparent 60%),
+    radial-gradient(ellipse 700px 500px at 100% 10%, rgba(255,153,51,0.08), transparent 55%),
+    var(--bg);
+  color:var(--txt); font-family:var(--font-body); min-height:100vh; padding-bottom:70px;
+  -webkit-font-smoothing:antialiased;
+}
+::-webkit-scrollbar{ height:0; width:6px; }
+::-webkit-scrollbar-thumb{ background:rgba(255,255,255,0.15); border-radius:99px; }
 
-/* HEADER */
+/* ── Top nav ── */
 header{
-  display:flex;align-items:center;gap:10px;
-  padding:0 16px;height:52px;
-  background:rgba(6,20,16,0.97);
-  border-bottom:1px solid rgba(34,197,94,0.18);
-  position:sticky;top:0;z-index:100;
-  backdrop-filter:blur(20px);
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 26px; position:sticky; top:0; z-index:60;
+  backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+  background:rgba(10,10,13,0.72); border-bottom:1px solid var(--brd);
 }
-header::after{
-  content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
-  background:linear-gradient(90deg,transparent,#22c55e 40%,#84cc16 60%,transparent);
-  opacity:.4;
+.brand{ display:flex; align-items:center; gap:10px; }
+.brand-logo{ width:30px; height:30px; border-radius:8px; object-fit:cover; box-shadow:0 0 0 1px var(--brd); }
+.brand-x{ font-family:var(--font-display); font-size:16px; color:var(--txt-dim2); letter-spacing:0.02em; }
+.brand-flag{ width:26px; height:19px; object-fit:cover; border-radius:3px; box-shadow:0 0 0 1px var(--brd); }
+.brand-title{
+  font-family:var(--font-display); font-size:26px; letter-spacing:0.03em; line-height:1;
+  background:linear-gradient(90deg,#fff,#ffd7e6); -webkit-background-clip:text; background-clip:text; color:transparent;
 }
-.brand{display:flex;align-items:center;gap:8px;}
-.brand img{height:26px;object-fit:contain;}
-.brand-text{
-  font-size:1.05rem;font-weight:800;letter-spacing:.6px;
-  background:linear-gradient(120deg,#22c55e,#84cc16);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-}
-.tagline{font-size:.7rem;color:#4a7a5a;margin-left:auto;letter-spacing:.04em;}
-
-/* SEARCH */
-.search-wrap{
-  padding:14px 16px 10px;
-  position:sticky;top:52px;z-index:99;
-  background:rgba(2,12,6,0.95);
-  backdrop-filter:blur(12px);
-}
-.search-box{
-  display:flex;align-items:center;gap:8px;
-  background:rgba(34,197,94,0.07);
-  border:1px solid rgba(34,197,94,0.2);
-  border-radius:12px;padding:9px 14px;
-}
-.search-box svg{flex-shrink:0;opacity:.45;}
-.search-box input{
-  background:none;border:none;outline:none;
-  font-size:.88rem;color:#e4f0ea;width:100%;
-  font-family:inherit;
-}
-.search-box input::placeholder{color:#3a6a4a;}
-
-/* FILTER TABS */
-.tabs{
-  display:flex;gap:6px;padding:0 16px 12px;
-  overflow-x:auto;scrollbar-width:none;
-}
-.tabs::-webkit-scrollbar{display:none;}
-.tab{
-  flex-shrink:0;padding:5px 14px;border-radius:100px;
-  font-size:.72rem;font-weight:600;letter-spacing:.04em;
-  border:1px solid rgba(34,197,94,0.2);
-  background:rgba(34,197,94,0.05);
-  color:#4a9a6a;cursor:pointer;
-  transition:all .15s;white-space:nowrap;
-}
-.tab.active,.tab:hover{
-  background:rgba(34,197,94,0.15);
-  border-color:rgba(34,197,94,0.45);
-  color:#86efac;
+.brand-title b{
+  background:linear-gradient(90deg,var(--pink),var(--saffron)); -webkit-background-clip:text; background-clip:text; color:transparent;
 }
 
-/* CHANNEL GRID */
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
-  gap:10px;padding:0 16px 24px;
+/* ── EV × INDIA splash screen ── */
+#splash{
+  position:fixed; inset:0; z-index:9999; background:var(--bg);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px;
+  transition:opacity .5s ease, visibility .5s ease;
 }
-@media(max-width:400px){
-  .grid{grid-template-columns:repeat(2,1fr);}
+#splash.hide{ opacity:0; visibility:hidden; pointer-events:none; }
+.splash-lockup{ display:flex; align-items:center; gap:18px; }
+.splash-logo{ width:64px; height:64px; border-radius:16px; object-fit:cover; box-shadow:0 0 30px rgba(240,79,140,0.35); }
+.splash-x{ font-family:var(--font-display); font-size:26px; color:var(--txt-dim2); }
+.splash-flag{ width:64px; height:46px; object-fit:cover; border-radius:8px; box-shadow:0 0 30px rgba(255,153,51,0.3); }
+.splash-word{
+  font-family:var(--font-display); font-size:34px; letter-spacing:0.06em;
+  background:linear-gradient(90deg,var(--pink),var(--saffron)); -webkit-background-clip:text; background-clip:text; color:transparent;
 }
+.splash-sub{ font-size:12px; letter-spacing:0.12em; color:var(--txt-dim); font-weight:600; text-transform:uppercase; }
+.splash-bar{ width:160px; height:3px; border-radius:99px; background:rgba(255,255,255,0.08); overflow:hidden; }
+.splash-bar-fill{ height:100%; width:40%; background:linear-gradient(90deg,var(--pink),var(--saffron)); border-radius:99px; animation:splashLoad 1.1s ease-in-out infinite; }
+@keyframes splashLoad{ 0%{ transform:translateX(-100%); } 100%{ transform:translateX(350%); } }
+.live-pill{
+  display:flex; align-items:center; gap:6px; font-family:var(--font-body); font-weight:700; font-size:11px;
+  letter-spacing:0.04em; color:var(--txt-dim); background:rgba(255,255,255,0.05);
+  padding:6px 12px; border-radius:99px; border:1px solid var(--brd);
+}
+.live-pill .dot{ width:7px; height:7px; border-radius:50%; background:var(--live-red); animation:pulse 1.2s infinite; }
+@keyframes pulse{ 0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(255,45,85,0.5);} 50%{opacity:0.4;box-shadow:0 0 0 4px rgba(255,45,85,0);} }
 
-/* CHANNEL CARD */
-.card{
-  display:flex;flex-direction:column;align-items:center;
-  gap:8px;padding:14px 10px;
-  background:rgba(10,30,20,0.7);
-  border:1px solid rgba(34,197,94,0.1);
-  border-radius:14px;cursor:pointer;
-  text-decoration:none;color:inherit;
-  transition:all .18s;
-  position:relative;
-  overflow:hidden;
+/* ── Hero (featured live/next match) ── */
+.hero{ position:relative; margin:18px 22px 8px; border-radius:22px; overflow:hidden; min-height:340px;
+  display:none; border:1px solid var(--brd); }
+.hero.show{ display:block; }
+.hero-bg{ position:absolute; inset:0; background-size:cover; background-position:center; filter:saturate(1.15) brightness(0.55) blur(0px); transform:scale(1.03); }
+.hero-scrim{ position:absolute; inset:0;
+  background:linear-gradient(180deg, rgba(10,10,13,0.15) 0%, rgba(10,10,13,0.55) 55%, var(--bg) 100%),
+             linear-gradient(90deg, rgba(10,10,13,0.75) 0%, rgba(10,10,13,0.1) 55%); }
+.hero-content{ position:relative; padding:34px 30px 26px; display:flex; flex-direction:column; justify-content:flex-end; min-height:340px; }
+.hero-badge{
+  display:inline-flex; align-items:center; gap:6px; align-self:flex-start; font-family:var(--font-body); font-weight:700;
+  font-size:11px; letter-spacing:0.06em; padding:6px 12px; border-radius:99px; margin-bottom:14px;
 }
-.card::before{
-  content:'';position:absolute;inset:0;
-  background:radial-gradient(ellipse at top,rgba(34,197,94,0.06),transparent 70%);
-  opacity:0;transition:opacity .2s;
+.hero-badge.live{ background:var(--live-red); color:#fff; }
+.hero-badge.upcoming{ background:rgba(255,255,255,0.12); color:#fff; backdrop-filter:blur(6px); }
+.hero-teams{ display:flex; align-items:center; gap:20px; margin-bottom:10px; }
+.hero-team{ display:flex; align-items:center; gap:10px; }
+.hero-team img{ width:52px; height:52px; object-fit:contain; border-radius:10px; background:rgba(255,255,255,0.08); padding:4px; }
+.hero-team-name{ font-family:var(--font-display); font-size:26px; letter-spacing:0.02em; }
+.hero-vs{ font-family:var(--font-display); font-size:20px; color:var(--saffron); }
+.hero-meta{ font-size:13px; color:var(--txt-dim); font-weight:500; margin-bottom:18px; display:flex; gap:14px; flex-wrap:wrap; }
+.hero-meta span{ display:flex; align-items:center; gap:6px; }
+.hero-cta{
+  display:inline-flex; align-items:center; gap:10px; width:fit-content; padding:13px 26px; border-radius:12px; border:none;
+  background:linear-gradient(135deg,var(--pink),var(--pink-dk)); color:#fff; font-family:var(--font-body); font-weight:700;
+  font-size:14.5px; letter-spacing:0.01em; cursor:pointer; box-shadow:0 8px 24px rgba(240,79,140,0.35);
 }
-.card:hover::before,.card:active::before{opacity:1;}
-.card:hover,.card:active{
-  border-color:rgba(34,197,94,0.35);
-  transform:translateY(-2px);
-  box-shadow:0 6px 20px rgba(0,0,0,0.4);
-}
+.hero-cta:hover{ filter:brightness(1.08); }
 
-/* Logo containers */
-.card-logo-wrap{
-  width:64px;height:64px;
-  border-radius:14px;
-  overflow:hidden;
-  display:flex;align-items:center;justify-content:center;
-  flex-shrink:0;
-}
-/* No-bg: transparent, just the logo image clipped to rounded rect */
-.card-logo-wrap.nobg{
-  background:transparent;
-}
-/* White square curved */
-.card-logo-wrap.white-sq{
-  background:#ffffff;
-}
-/* Black square curved */
-.card-logo-wrap.black-sq{
-  background:#000000;
-}
-.card-logo-wrap img{
-  width:100%;height:100%;object-fit:contain;
-  padding:6px;
-}
-/* For nobg logos give more room */
-.card-logo-wrap.nobg img{
-  padding:2px;
-  object-fit:contain;
-}
+/* ── Rails ── */
+.rail{ margin:30px 0 4px; }
+.rail-head{ display:flex; align-items:center; gap:10px; padding:0 22px; margin-bottom:14px; }
+.rail-title{ font-family:var(--font-display); font-size:21px; letter-spacing:0.02em; }
+.rail-title.live{ color:var(--live-red); }
+.rail-title.upcoming{ color:var(--saffron); }
+.rail-title.finished{ color:var(--txt-dim); }
+.rail-count{ font-size:12px; color:var(--txt-dim2); font-weight:600; background:rgba(255,255,255,0.05); padding:3px 9px; border-radius:99px; }
+.rail-track{ display:flex; gap:14px; overflow-x:auto; padding:2px 22px 14px; scroll-snap-type:x proximity; }
 
-.card-logo-placeholder{
-  width:64px;height:64px;border-radius:14px;
-  background:rgba(34,197,94,0.1);
-  display:flex;align-items:center;justify-content:center;
-  font-size:.6rem;font-weight:700;color:#22c55e;letter-spacing:.05em;
+/* ── Match card (poster style) ── */
+.mcard{
+  flex:0 0 260px; scroll-snap-align:start; background:var(--card); border:1px solid var(--brd); border-radius:16px;
+  overflow:hidden; cursor:pointer; transition:transform .2s ease, border-color .2s ease;
 }
-.card-name{
-  font-size:.72rem;font-weight:600;color:#c4dece;
-  text-align:center;line-height:1.3;
+.mcard:hover{ transform:translateY(-4px); border-color:rgba(240,79,140,0.35); }
+.mcard-top{
+  position:relative; height:126px;
+  background:linear-gradient(135deg, #1c1c24, #101014);
+  display:flex; align-items:center; justify-content:center; gap:0;
 }
-.hd-badge{
-  position:absolute;top:7px;right:7px;
-  font-size:.55rem;font-weight:800;
-  background:rgba(34,197,94,0.2);border:1px solid rgba(34,197,94,0.4);
-  color:#4ade80;border-radius:4px;padding:1px 4px;letter-spacing:.06em;
+.mcard-badge{
+  position:absolute; top:10px; left:10px; font-family:var(--font-body); font-weight:800; font-size:10px;
+  letter-spacing:0.05em; padding:4px 9px; border-radius:99px; z-index:2;
 }
-.live-dot{
-  position:absolute;top:8px;left:8px;
-  width:6px;height:6px;background:#ef4444;
-  border-radius:50%;animation:blink 1.4s infinite;
-}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.mcard-badge.live{ background:var(--live-red); color:#fff; display:flex; align-items:center; gap:5px; }
+.mcard-badge.live .dot{ width:5px; height:5px; border-radius:50%; background:#fff; animation:pulse 1.2s infinite; }
+.mcard-badge.upcoming{ background:rgba(255,255,255,0.12); color:#fff; }
+.mcard-badge.finished{ background:rgba(255,255,255,0.08); color:var(--txt-dim); }
+.mcard-teams{ display:flex; align-items:center; gap:14px; }
+.mcard-team{ display:flex; flex-direction:column; align-items:center; gap:6px; width:70px; }
+.mcard-team img{ width:38px; height:38px; object-fit:contain; border-radius:8px; background:rgba(255,255,255,0.06); padding:3px; }
+.mcard-code{ font-family:var(--font-display); font-size:16px; letter-spacing:0.02em; }
+.mcard-vs{ font-family:var(--font-display); font-size:13px; color:var(--saffron); opacity:0.85; }
 
-/* NO RESULTS */
-.no-results{
-  text-align:center;padding:40px 20px;
-  color:#3a6a4a;font-size:.88rem;
+.mcard-body{ padding:12px 14px 14px; }
+.mcard-names{ font-size:11px; color:var(--txt-dim); text-align:center; margin-bottom:8px; line-height:1.3;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.mcard-meta{ display:flex; align-items:center; justify-content:space-between; font-size:10.5px; color:var(--txt-dim2); margin-bottom:10px; }
+.mcard-tag{ background:rgba(255,255,255,0.05); padding:3px 8px; border-radius:6px; font-weight:600; color:var(--txt-dim); }
+.mcard-cd{ font-family:var(--font-display); font-size:14px; text-align:center; margin-bottom:10px; letter-spacing:0.02em; color:#fff; }
+.mcard-cd .lbl{ display:block; font-family:var(--font-body); font-size:9px; font-weight:700; color:var(--txt-dim2); letter-spacing:0.06em; margin-bottom:1px; }
+.mcard-watch{
+  display:block; width:100%; text-align:center; padding:9px; border-radius:9px; border:none;
+  background:rgba(240,79,140,0.14); color:var(--pink); font-family:var(--font-body); font-weight:700; font-size:12.5px;
+  letter-spacing:0.01em; cursor:pointer;
 }
+.mcard-watch:hover{ background:linear-gradient(135deg,var(--pink),var(--pink-dk)); color:#fff; }
 
-/* GROUP LABEL */
-.grp-label{
-  grid-column:1/-1;
-  font-size:.68rem;font-weight:700;letter-spacing:.1em;
-  color:#2a5a3a;text-transform:uppercase;
-  padding:4px 2px 2px;
-  border-bottom:1px solid rgba(34,197,94,0.08);
-  margin-bottom:-2px;
-}
+.status-msg{ text-align:center; padding:80px 20px; color:var(--txt-dim); font-size:15px; font-weight:600; font-family:var(--font-body); }
+.status-msg .spin{ width:30px; height:30px; margin:0 auto 16px; border-radius:50%;
+  border:3px solid rgba(240,79,140,0.25); border-top-color:var(--pink); animation:spin 0.8s linear infinite; }
+@keyframes spin{ to{ transform:rotate(360deg); } }
+.empty-box{ text-align:center; padding:90px 20px; color:var(--txt-dim); font-weight:600; margin:0 22px;
+  border:1px dashed var(--brd); border-radius:18px; font-family:var(--font-body); }
+.empty-box .big{ font-family:var(--font-display); font-size:28px; color:#fff; display:block; margin-bottom:8px; letter-spacing:0.02em; }
 
-/* SUB-GROUP LABEL (Regional under Star Sports etc.) */
-.subgrp-label{
-  grid-column:1/-1;
-  font-size:.62rem;font-weight:600;letter-spacing:.08em;
-  color:#1f4a2a;text-transform:uppercase;
-  padding:6px 2px 2px;
-  margin-top:4px;
-  border-bottom:1px solid rgba(34,197,94,0.05);
-  margin-bottom:-2px;
+/* ── Player overlay ── */
+#playerOverlay{ display:none; position:fixed; inset:0; z-index:2000; background:#000; }
+#playerOverlay.open{ display:flex; flex-direction:column; }
+.player-top{ display:flex; align-items:center; justify-content:space-between; padding:14px 20px;
+  border-bottom:1px solid var(--brd); background:rgba(10,10,13,0.9); }
+.player-title{ font-family:var(--font-display); font-weight:400; font-size:19px; letter-spacing:0.02em; }
+.player-close{ background:rgba(255,255,255,0.1); border:none; color:#fff; width:36px; height:36px; border-radius:50%;
+  font-size:18px; cursor:pointer; }
+.player-close:hover{ background:rgba(255,255,255,0.2); }
+.player-body{ flex:1; display:flex; }
+.player-frame-wrap{ flex:1; position:relative; background:#000; }
+.player-frame-wrap iframe{ width:100%; height:100%; border:0; }
+.server-list{ width:230px; border-left:1px solid var(--brd); padding:16px; overflow-y:auto; background:rgba(255,255,255,0.02); }
+.server-list-title{ font-family:var(--font-display); font-size:13px; color:var(--txt-dim); letter-spacing:0.06em; margin-bottom:12px; }
+.server-btn{ display:block; width:100%; text-align:left; padding:11px 13px; margin-bottom:8px; border-radius:10px;
+  background:rgba(255,255,255,0.05); border:1px solid transparent; color:#fff; font-family:var(--font-body);
+  font-weight:600; font-size:13px; cursor:pointer; }
+.server-btn.active{ border-color:var(--pink); background:rgba(240,79,140,0.15); }
+@media(max-width:700px){
+  .server-list{ width:150px; }
+  .hero{ margin:14px; min-height:280px; }
+  .hero-content{ min-height:280px; padding:24px 18px 20px; }
+  .hero-team-name{ font-size:20px; }
+  .hero-team img{ width:40px; height:40px; }
+  .mcard{ flex-basis:220px; }
 }
 </style>
 </head>
 <body>
 
+<div id="splash">
+  <div class="splash-lockup">
+    <img class="splash-logo" src="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/magenta.png" alt="EV">
+    <span class="splash-x">×</span>
+    <img class="splash-flag" src="https://flagcdn.com/w160/in.png" alt="India">
+  </div>
+  <div class="splash-word">EV <span style="color:#fff;-webkit-text-fill-color:#fff;">×</span> INDIA</div>
+  <div class="splash-sub">Loading Live Matches</div>
+  <div class="splash-bar"><div class="splash-bar-fill"></div></div>
+</div>
+
 <header>
   <div class="brand">
-    <img src="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/main/logo.png" alt="SX" onerror="this.style.display='none'">
-    <span class="brand-text">SX SPORTS</span>
+    <img class="brand-logo" src="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/magenta.png" alt="EV">
+    <span class="brand-x">×</span>
+    <img class="brand-flag" src="https://flagcdn.com/w80/in.png" alt="India">
+    <span class="brand-title">INDIA <b>MATCHES</b></span>
   </div>
-  <span class="tagline">LIVE TV</span>
+  <div class="live-pill"><span class="dot"></span><span id="liveCount">0 LIVE</span></div>
 </header>
 
-<div class="search-wrap">
-  <div class="search-box">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-    <input id="searchInput" type="text" placeholder="Search channels…" autocomplete="off" oninput="filterChannels()">
+<div id="heroSection" class="hero">
+  <div class="hero-bg" id="heroBg"></div>
+  <div class="hero-scrim"></div>
+  <div class="hero-content">
+    <span class="hero-badge" id="heroBadge"></span>
+    <div class="hero-teams">
+      <div class="hero-team"><img id="heroT1Img"><span class="hero-team-name" id="heroT1"></span></div>
+      <span class="hero-vs">VS</span>
+      <div class="hero-team"><span class="hero-team-name" id="heroT2"></span><img id="heroT2Img"></div>
+    </div>
+    <div class="hero-meta" id="heroMeta"></div>
+    <button class="hero-cta" id="heroCta">▶ Watch Now</button>
   </div>
 </div>
 
-<div class="tabs" id="tabs">
-  <div class="tab active" data-grp="All" onclick="setTab(this)">All</div>
-  <div class="tab" data-grp="Star Sports" onclick="setTab(this)">Star Sports</div>
-  <div class="tab" data-grp="Sony Sports" onclick="setTab(this)">Sony</div>
-  <div class="tab" data-grp="Unite8" onclick="setTab(this)">Unite8</div>
-  <div class="tab" data-grp="International" onclick="setTab(this)">International</div>
-  <div class="tab" data-grp="Other" onclick="setTab(this)">Other</div>
+<div id="rails"><div class="status-msg"><div class="spin"></div>Loading India matches…</div></div>
+
+<!-- Watch overlay -->
+<div id="playerOverlay">
+  <div class="player-top">
+    <div class="player-title" id="playerTitle">Loading…</div>
+    <button class="player-close" onclick="closePlayer()">✕</button>
+  </div>
+  <div class="player-body">
+    <div class="player-frame-wrap"><iframe id="playerFrame" allow="autoplay; fullscreen" allowfullscreen></iframe></div>
+    <div class="server-list" id="serverList"></div>
+  </div>
 </div>
 
-<div class="grid" id="grid"></div>
-
 <script>
-// Logo URLs
-const STAR_LOGO   = 'https://indiantelevision.com/wp-content/uploads/2025/12/Untitled-1_23-33.jpg';
-const SONY_LOGO   = 'https://upload.wikimedia.org/wikipedia/en/thumb/c/cd/Sony_Sports_Network.svg/1280px-Sony_Sports_Network.svg.png';
-const UNITED_LOGO = 'https://img-cdn.publive.online/fit-in/640x430/filters:format(webp)/bmi/media/media_files/2026/06/02/unite8-sports-logo-2026-06-02-11-18-06.jpg';
-const OTHERS_LOGO = 'https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/main/logo.png';
-const TNT_LOGO    = 'https://img.etimg.com/thumb/width-640,height-480,imgsize-6060,resizemode-75,msid-119107113/industry/media/entertainment/media/sports18-channels-rebranded-as-star-sports-in-major-expansion-move-before-ipl-2025/star-sports.jpg'; // placeholder until real
-const WILLOW_LOGO = 'https://static.wikia.nocookie.net/logopedia/images/7/7d/Willow_2023_stacked.svg/revision/latest?cb=20240927132511';
-const WILLOWCB_LOGO = 'https://static.toiimg.com/thumb/msid-108693714,width-1280,height-720,resizemode-4/108693714.jpg';
-const FOX_LOGO    = 'https://upload.wikimedia.org/wikipedia/en/f/f4/Fox_Cricket_Logo.png';
-const SKY_LOGO    = 'https://upload.wikimedia.org/wikipedia/commons/0/0e/Sky-sports-main-cricket.jpg';
-const KAYO_LOGO   = 'https://upload.wikimedia.org/wikipedia/commons/0/0e/Sky-sports-main-cricket.jpg'; // fallback
-const TNT_REAL    = 'https://img.etimg.com/thumb/width-640,height-480,imgsize-6060,resizemode-75,msid-119107113/industry/media/entertainment/media/sports18-channels-rebranded-as-star-sports-in-major-expansion-move-before-ipl-2025/star-sports.jpg';
-
-// logoStyle: 'nobg' | 'white-sq' | 'black-sq'
-const CHANNELS=[
-  // ── Star Sports ──────────────────────────────────────────────
-  {id:'ss1',     name:'Star Sports 1',            grp:'Star Sports', subgrp:'Star Sports',          hd:false, logo:STAR_LOGO,   logoStyle:'black-sq'},
-  {id:'ss1hd',   name:'Star Sports 1 HD',          grp:'Star Sports', subgrp:'Star Sports',          hd:true,  logo:STAR_LOGO,   logoStyle:'black-sq'},
-  {id:'ss1hi',   name:'Star Sports 1 Hindi',       grp:'Star Sports', subgrp:'Star Sports',          hd:false, logo:STAR_LOGO,   logoStyle:'black-sq'},
-  {id:'ss1hihd', name:'Star Sports 1 Hindi HD',    grp:'Star Sports', subgrp:'Star Sports',          hd:true,  logo:STAR_LOGO,   logoStyle:'black-sq'},
-  {id:'ss2',     name:'Star Sports 2',             grp:'Star Sports', subgrp:'Star Sports',          hd:false, logo:STAR_LOGO,   logoStyle:'black-sq'},
-  {id:'ss2hd',   name:'Star Sports 2 HD',          grp:'Star Sports', subgrp:'Star Sports',          hd:true,  logo:STAR_LOGO,   logoStyle:'black-sq'},
-  {id:'ss2hi',   name:'Star Sports 2 Hindi',       grp:'Star Sports', subgrp:'Star Sports',          hd:false, logo:STAR_LOGO,   logoStyle:'black-sq'},
-  {id:'ss2hihd', name:'Star Sports 2 Hindi HD',    grp:'Star Sports', subgrp:'Star Sports',          hd:true,  logo:STAR_LOGO,   logoStyle:'black-sq'},
-  {id:'ss3',     name:'Star Sports 3',             grp:'Star Sports', subgrp:'Star Sports',          hd:false, logo:STAR_LOGO,   logoStyle:'black-sq'},
-  {id:'sss1',    name:'Star Sports Select 1',      grp:'Star Sports', subgrp:'Star Sports',          hd:false, logo:STAR_LOGO,   logoStyle:'black-sq'},
-  {id:'sss1hd',  name:'Star Sports Select 1 HD',   grp:'Star Sports', subgrp:'Star Sports',          hd:true,  logo:STAR_LOGO,   logoStyle:'black-sq'},
-  {id:'sss2',    name:'Star Sports Select 2',      grp:'Star Sports', subgrp:'Star Sports',          hd:false, logo:STAR_LOGO,   logoStyle:'black-sq'},
-  {id:'sss2hd',  name:'Star Sports Select 2 HD',   grp:'Star Sports', subgrp:'Star Sports',          hd:true,  logo:STAR_LOGO,   logoStyle:'black-sq'},
-  // ── Star Sports Regional ─────────────────────────────────────
-  {id:'ss1ta',   name:'Star Sports 1 Tamil',       grp:'Star Sports', subgrp:'Regional',             hd:false, logo:STAR_LOGO,   logoStyle:'black-sq'},
-  {id:'ss1tahd', name:'Star Sports 1 Tamil HD',    grp:'Star Sports', subgrp:'Regional',             hd:true,  logo:STAR_LOGO,   logoStyle:'black-sq'},
-  {id:'ss1te',   name:'Star Sports 1 Telugu',      grp:'Star Sports', subgrp:'Regional',             hd:false, logo:STAR_LOGO,   logoStyle:'black-sq'},
-  {id:'ss1tehd', name:'Star Sports 1 Telugu HD',   grp:'Star Sports', subgrp:'Regional',             hd:true,  logo:STAR_LOGO,   logoStyle:'black-sq'},
-  {id:'ss1kn',   name:'Star Sports 1 Kannada',     grp:'Star Sports', subgrp:'Regional',             hd:false, logo:STAR_LOGO,   logoStyle:'black-sq'},
-  {id:'ss2ta',   name:'Star Sports 2 Tamil',       grp:'Star Sports', subgrp:'Regional',             hd:false, logo:STAR_LOGO,   logoStyle:'black-sq'},
-  {id:'ss2tahd', name:'Star Sports 2 Tamil HD',    grp:'Star Sports', subgrp:'Regional',             hd:true,  logo:STAR_LOGO,   logoStyle:'black-sq'},
-  {id:'ss2te',   name:'Star Sports 2 Telugu',      grp:'Star Sports', subgrp:'Regional',             hd:false, logo:STAR_LOGO,   logoStyle:'black-sq'},
-  {id:'ss2tehd', name:'Star Sports 2 Telugu HD',   grp:'Star Sports', subgrp:'Regional',             hd:true,  logo:STAR_LOGO,   logoStyle:'black-sq'},
-  {id:'ss2kn',   name:'Star Sports 2 Kannada',     grp:'Star Sports', subgrp:'Regional',             hd:false, logo:STAR_LOGO,   logoStyle:'black-sq'},
-  // ── Sony Sports ──────────────────────────────────────────────
-  {id:'sliv1',   name:'Sony Sports Ten 1',         grp:'Sony Sports', subgrp:'Sony Sports',          hd:false, logo:SONY_LOGO,   logoStyle:'nobg'},
-  {id:'sliv2',   name:'Sony Sports Ten 2',         grp:'Sony Sports', subgrp:'Sony Sports',          hd:false, logo:SONY_LOGO,   logoStyle:'nobg'},
-  {id:'sliv3',   name:'Sony Sports Ten 3',         grp:'Sony Sports', subgrp:'Sony Sports',          hd:false, logo:SONY_LOGO,   logoStyle:'nobg'},
-  {id:'sliv4ta', name:'Sony Sports Ten 4 Tamil',   grp:'Sony Sports', subgrp:'Regional',             hd:false, logo:SONY_LOGO,   logoStyle:'nobg'},
-  {id:'sliv4te', name:'Sony Sports Ten 4 Telugu',  grp:'Sony Sports', subgrp:'Regional',             hd:false, logo:SONY_LOGO,   logoStyle:'nobg'},
-  {id:'sliv4kn', name:'Sony Sports Ten 4 Kannada', grp:'Sony Sports', subgrp:'Regional',             hd:false, logo:SONY_LOGO,   logoStyle:'nobg'},
-  {id:'sliv5',   name:'Sony Sports Ten 5',         grp:'Sony Sports', subgrp:'Sony Sports',          hd:false, logo:SONY_LOGO,   logoStyle:'nobg'},
-  // ── Unite8 ───────────────────────────────────────────────────
-  {id:'u81hd',   name:'Unite8 Sports 1 HD',        grp:'Unite8',      subgrp:'Unite8',               hd:true,  logo:UNITED_LOGO, logoStyle:'black-sq'},
-  {id:'u82hd',   name:'Unite8 Sports 2 HD',        grp:'Unite8',      subgrp:'Unite8',               hd:true,  logo:UNITED_LOGO, logoStyle:'black-sq'},
-  // ── International ────────────────────────────────────────────
-  {id:'tnt1',    name:'TNT Sports',                grp:'International',subgrp:'International',        hd:false, logo:'https://img.etimg.com/thumb/width-640,height-480,imgsize-6060,resizemode-75,msid-119107113/industry/media/entertainment/media/sports18-channels-rebranded-as-star-sports-in-major-expansion-move-before-ipl-2025/star-sports.jpg', logoStyle:'white-sq', logoOverride:'https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/TNT_Sports_%282023%29.svg/3840px-TNT_Sports_%282023%29.svg.png'},
-  {id:'willow1', name:'Willow Sports',             grp:'International',subgrp:'International',        hd:false, logo:WILLOW_LOGO, logoStyle:'white-sq'},
-  {id:'willowcb',name:'Willow by Cricbuzz',        grp:'International',subgrp:'International',        hd:false, logo:WILLOWCB_LOGO,logoStyle:'white-sq'},
-  {id:'fox1',    name:'Fox Sports Cricket',        grp:'International',subgrp:'International',        hd:false, logo:FOX_LOGO,    logoStyle:'white-sq'},
-  {id:'sky1',    name:'Sky Sports Cricket',        grp:'International',subgrp:'International',        hd:false, logo:SKY_LOGO,    logoStyle:'nobg'},
-  {id:'kayo1',   name:'Kayo Sports',               grp:'International',subgrp:'International',        hd:false, logo:'https://upload.wikimedia.org/wikipedia/en/4/47/Kayo_Sports_logo.svg', logoStyle:'black-sq'},
-  // ── Other ────────────────────────────────────────────────────
-  {id:'awsn',    name:'AWSN',                      grp:'Other',       subgrp:'Other',                 hd:false, logo:OTHERS_LOGO, logoStyle:'nobg'},
-];
-
-let activeGrp='All';
-
-function setTab(el){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  activeGrp=el.dataset.grp;
-  filterChannels();
+// ── CSV fetch/parse (same pattern as the main EV SPORTS CMS) ──────────────
+function parseCSV(text) {
+  const rows = []; let cur = '', inQ = false, row = [];
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i], nx = text[i+1];
+    if (inQ) {
+      if (ch === '"' && nx === '"') { cur += '"'; i++; }
+      else if (ch === '"') inQ = false;
+      else cur += ch;
+    } else {
+      if (ch === '"') inQ = true;
+      else if (ch === ',') { row.push(cur.trim()); cur = ''; }
+      else if (ch === '\r' && nx === '\n') { row.push(cur.trim()); rows.push(row); row = []; cur = ''; i++; }
+      else if (ch === '\n' || ch === '\r') { row.push(cur.trim()); rows.push(row); row = []; cur = ''; }
+      else cur += ch;
+    }
+  }
+  if (cur || row.length) { row.push(cur.trim()); rows.push(row); }
+  return rows.filter(r => r.some(c => c));
+}
+function toObj(rows) {
+  if (rows.length < 2) return [];
+  const headers = rows[0].map(h => h.toLowerCase().replace(/[^a-z0-9_]/g,'_').replace(/__+/g,'_').replace(/^_|_$/g,''));
+  return rows.slice(1).map(r => { const o = {}; headers.forEach((h,i) => o[h] = (r[i]||'').trim()); return o; });
+}
+async function fetchSheet(name) {
+  if (!SHEET_ID || SHEET_ID === 'YOUR_SPREADSHEET_ID_HERE') { console.warn('SHEET_ID not set'); return null; }
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(name)}`;
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(r.status);
+    return toObj(parseCSV(await r.text()));
+  } catch(e) { console.warn(`Sheet "${name}" failed:`, e); return null; }
 }
 
-function makeLogoHTML(ch){
-  const url = ch.logoOverride || ch.logo;
-  const style = ch.logoStyle || 'nobg';
-  return `<div class="card-logo-wrap ${style}">
-    <img src="${url}" alt="${ch.name}" onerror="this.parentElement.outerHTML='<div class=\\'card-logo-placeholder\\'>${ch.id.toUpperCase()}</div>'">
+const ACTIVE_FLAG_KEYS = ['active_true_false','active','is_active','isactive','enabled','show','visible'];
+function isRowActive(r) {
+  let raw = '';
+  for (const k of ACTIVE_FLAG_KEYS) { if (r[k] !== undefined && r[k] !== null && String(r[k]).trim() !== '') { raw = r[k]; break; } }
+  const a = String(raw).trim().replace(/^['"]+|['"]+$/g,'').toUpperCase();
+  return a !== 'FALSE' && a !== 'NO' && a !== 'N' && a !== '0' && a !== 'OFF';
+}
+
+// ── India filter — matches "india" anywhere, or the bare "ind" code ───────
+function isIndiaText(t) {
+  t = String(t || '').trim(); if (!t) return false;
+  return /india/i.test(t) || /\bind\b/i.test(t);
+}
+function isIndiaMatch(m) {
+  return isIndiaText(m.team1_code) || isIndiaText(m.team2_code) ||
+         isIndiaText(m.team1_full_name) || isIndiaText(m.team2_full_name) ||
+         isIndiaText(m.details) || isIndiaText(m.game) || isIndiaText(m.country);
+}
+
+function img(src, alt) { return src ? `<img src="${src}" alt="${alt||''}" onerror="this.style.display='none'">` : ''; }
+
+function matchStatusText(m) {
+  const s = (m.status || '').trim().toLowerCase();
+  if (s === 'live') return 'live';
+  if (s === 'finished' || s === 'completed') return 'finished';
+  return 'upcoming';
+}
+
+function getServers(m) {
+  const raw = [
+    { url: m.btn_url,   text: m.btn_text   || 'Server 1' },
+    { url: m.btn_url_2, text: m.btn_text_2 || 'Server 2' },
+    { url: m.btn_url_3, text: m.btn_text_3 || 'Server 3' },
+    { url: m.btn_url_4, text: m.btn_text_4 || 'Server 4' },
+    { url: m.btn_url_5, text: m.btn_text_5 || 'Server 5' }
+  ];
+  return raw.filter(s => s.url && String(s.url).trim() && String(s.url).trim() !== '#');
+}
+
+let _matches = [];
+
+function mcardHtml(m, idx) {
+  const status = matchStatusText(m);
+  const badge = status === 'live'
+    ? `<span class="mcard-badge live"><span class="dot"></span>LIVE</span>`
+    : status === 'finished'
+    ? `<span class="mcard-badge finished">FINISHED</span>`
+    : `<span class="mcard-badge upcoming">⏰ UPCOMING</span>`;
+  const countdown = (status === 'upcoming' && (m.countdown_to_iso_datetime || m.countdown_to))
+    ? `<div class="mcard-cd"><span class="lbl">STARTS IN</span><span id="cd-${idx}">--:--:--</span></div>` : '';
+  return `
+  <div class="mcard" onclick="openMatch(${idx})">
+    <div class="mcard-top">
+      ${badge}
+      <div class="mcard-teams">
+        <div class="mcard-team">${img(m.team1_logo_url, m.team1_code)}<div class="mcard-code">${m.team1_code||''}</div></div>
+        <div class="mcard-vs">VS</div>
+        <div class="mcard-team">${img(m.team2_logo_url, m.team2_code)}<div class="mcard-code">${m.team2_code||''}</div></div>
+      </div>
+    </div>
+    <div class="mcard-body">
+      <div class="mcard-names">${m.team1_full_name||m.team1_code||''} vs ${m.team2_full_name||m.team2_code||''}</div>
+      <div class="mcard-meta"><span class="mcard-tag">${m.game || 'Cricket'}</span><span>${m.date_label || ''}</span></div>
+      ${countdown}
+      <button class="mcard-watch" onclick="event.stopPropagation();openMatch(${idx})">▶ Watch Now</button>
+    </div>
   </div>`;
 }
 
-function filterChannels(){
-  const q=document.getElementById('searchInput').value.toLowerCase().trim();
-  const grid=document.getElementById('grid');
-  grid.innerHTML='';
+function renderHero(liveList, upcomingList) {
+  const heroM = liveList[0] || upcomingList[0];
+  const sec = document.getElementById('heroSection');
+  if (!heroM) { sec.classList.remove('show'); return; }
+  const idx = _matches.indexOf(heroM);
+  const status = matchStatusText(heroM);
+  document.getElementById('heroBg').style.backgroundImage = `url('${heroM.team1_logo_url || heroM.team2_logo_url || ''}')`;
+  document.getElementById('heroBadge').className = 'hero-badge ' + (status === 'live' ? 'live' : 'upcoming');
+  document.getElementById('heroBadge').textContent = status === 'live' ? '🔴 LIVE NOW' : '⏰ UPCOMING';
+  document.getElementById('heroT1Img').src = heroM.team1_logo_url || '';
+  document.getElementById('heroT2Img').src = heroM.team2_logo_url || '';
+  document.getElementById('heroT1').textContent = heroM.team1_code || heroM.team1_full_name || '';
+  document.getElementById('heroT2').textContent = heroM.team2_code || heroM.team2_full_name || '';
+  document.getElementById('heroMeta').innerHTML =
+    `<span>🏏 ${heroM.game || 'Cricket'}</span>` +
+    (heroM.date_label ? `<span>🗓 ${heroM.date_label}</span>` : '') +
+    (heroM.details ? `<span>${heroM.details}</span>` : '');
+  document.getElementById('heroCta').onclick = () => openMatch(idx);
+  sec.classList.add('show');
+}
 
-  let filtered=CHANNELS.filter(ch=>{
-    const matchGrp=activeGrp==='All'||ch.grp===activeGrp;
-    const matchQ=!q||ch.name.toLowerCase().includes(q)||ch.id.toLowerCase().includes(q);
-    return matchGrp&&matchQ;
-  });
+function render(rows) {
+  const rails = document.getElementById('rails');
+  if (!rows) { rails.innerHTML = `<div class="empty-box"><span class="big">Couldn't load matches</span>Check the sheet is published &amp; shared.</div>`; document.getElementById('heroSection').classList.remove('show'); return; }
 
-  if(!filtered.length){
-    grid.innerHTML='<div class="no-results">No channels found</div>';
+  _matches = rows.filter(isRowActive).filter(isIndiaMatch);
+
+  if (!_matches.length) {
+    rails.innerHTML = `<div class="empty-box"><span class="big">No India matches right now 🇮🇳</span>Check back soon.</div>`;
+    document.getElementById('heroSection').classList.remove('show');
+    document.getElementById('liveCount').textContent = '0 LIVE';
     return;
   }
 
-  // Group by grp, then subgrp
-  const grpMap={};
-  filtered.forEach(ch=>{
-    if(!grpMap[ch.grp])grpMap[ch.grp]={};
-    if(!grpMap[ch.grp][ch.subgrp])grpMap[ch.grp][ch.subgrp]=[];
-    grpMap[ch.grp][ch.subgrp].push(ch);
-  });
+  const live = _matches.filter(m => matchStatusText(m) === 'live');
+  const upcoming = _matches.filter(m => matchStatusText(m) === 'upcoming');
+  const finished = _matches.filter(m => matchStatusText(m) === 'finished');
 
-  Object.entries(grpMap).forEach(([grp, subgrps])=>{
-    // Main group label (only in All view)
-    if(activeGrp==='All'){
-      const lbl=document.createElement('div');
-      lbl.className='grp-label';
-      lbl.textContent=grp;
-      grid.appendChild(lbl);
-    }
+  document.getElementById('liveCount').textContent = `${live.length} LIVE`;
+  renderHero(live, upcoming);
 
-    const subgrpNames=Object.keys(subgrps);
-    const hasMultipleSubgrps=subgrpNames.length>1;
+  let html = '';
+  const rail = (title, cls, list) => {
+    if (!list.length) return;
+    html += `<div class="rail">
+      <div class="rail-head"><span class="rail-title ${cls}">${title}</span><span class="rail-count">${list.length}</span></div>
+      <div class="rail-track">${list.map(m => mcardHtml(m, _matches.indexOf(m))).join('')}</div>
+    </div>`;
+  };
+  rail('🔴 Live Now', 'live', live);
+  rail('⏰ Upcoming', 'upcoming', upcoming);
+  rail('✅ Finished', 'finished', finished);
+  rails.innerHTML = html;
 
-    subgrpNames.forEach(subgrp=>{
-      // Sub-group label: always show in All view if multiple subgrps,
-      // or when viewing a specific group that has multiple subgrps
-      const showSubLabel = hasMultipleSubgrps;
-      if(showSubLabel){
-        const slbl=document.createElement('div');
-        slbl.className='subgrp-label';
-        slbl.textContent=subgrp;
-        grid.appendChild(slbl);
-      }
-
-      subgrps[subgrp].forEach(ch=>{
-        const a=document.createElement('a');
-        a.className='card';
-        a.href='https://saptarshixtrasports.pages.dev/india/'+ch.id;
-        a.innerHTML=`
-          <div class="live-dot"></div>
-          ${ch.hd?'<div class="hd-badge">HD</div>':''}
-          ${makeLogoHTML(ch)}
-          <span class="card-name">${ch.name}</span>
-        `;
-        grid.appendChild(a);
-      });
-    });
+  _matches.forEach((m, i) => {
+    if (matchStatusText(m) === 'upcoming') startCountdown(i, m.countdown_to_iso_datetime || m.countdown_to);
   });
 }
 
-filterChannels();
+function startCountdown(i, target) {
+  if (!target) return;
+  const t = new Date(target).getTime();
+  if (isNaN(t)) return;
+  const tick = () => {
+    const elm = document.getElementById('cd-' + i);
+    if (!elm) return; // card no longer in DOM
+    const diff = t - Date.now();
+    if (diff <= 0) { elm.textContent = 'LIVE'; return; }
+    const h = Math.floor(diff/3600000), mnt = Math.floor((diff%3600000)/60000), s = Math.floor((diff%60000)/1000);
+    elm.textContent = `${String(h).padStart(2,'0')}:${String(mnt).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    setTimeout(tick, 1000);
+  };
+  tick();
+}
+
+function openMatch(i) {
+  const m = _matches[i];
+  if (!m) return;
+  const servers = getServers(m);
+  const name = `${m.team1_code||m.team1_full_name||''} vs ${m.team2_code||m.team2_full_name||''}`;
+  document.getElementById('playerTitle').textContent = name;
+  const list = document.getElementById('serverList');
+  if (!servers.length) {
+    list.innerHTML = '';
+    document.getElementById('playerFrame').src = 'about:blank';
+    alert('No stream server configured for this match yet.');
+    return;
+  }
+  list.innerHTML = `<div class="server-list-title">SERVERS</div>` + servers.map((s, idx) =>
+    `<button class="server-btn${idx===0?' active':''}" data-idx="${idx}" onclick="pickServer(this,'${encodeURIComponent(s.url)}')">${s.text}</button>`
+  ).join('');
+  document.getElementById('playerFrame').src = servers[0].url;
+  document.getElementById('playerOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function pickServer(btn, encUrl) {
+  document.querySelectorAll('.server-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('playerFrame').src = decodeURIComponent(encUrl);
+}
+function closePlayer() {
+  document.getElementById('playerOverlay').classList.remove('open');
+  document.getElementById('playerFrame').src = 'about:blank';
+  document.body.style.overflow = '';
+}
+
+let _splashDismissed = false;
+async function load() {
+  const rows = await fetchSheet('MATCH CARDS');
+  render(rows);
+  if (!_splashDismissed) {
+    _splashDismissed = true;
+    const s = document.getElementById('splash');
+    if (s) setTimeout(() => s.classList.add('hide'), 350);
+  }
+}
+load();
+setInterval(load, 30000); // keep matches/countdowns/live-status fresh
 </script>
 </body>
 </html>
