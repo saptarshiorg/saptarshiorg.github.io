@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ISOF — Indian Scholars Olympiad Foundation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy: #0B2545;
+    --gold: #B8860B;
+    --cream: #FDFCFA;
+    --ink: #202634;
+    --slate: #5B6478;
+    --line: #DFDCD3;
+    --radius: 8px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'Inter', Arial, sans-serif;
+    color:var(--ink);
+    background:var(--cream);
+    line-height:1.65;
+  }
+  h1,h2,h3,h4{font-family:'Poppins', sans-serif; color:var(--navy); font-weight:600;}
+  a{text-decoration:none; color:inherit;}
+  ul{list-style:none;}
+  img,svg{display:block; max-width:100%;}
+  .wrap{max-width:1120px; margin:0 auto; padding:0 24px;}
+  section{padding:64px 0;}
+  section.alt{background:#F3F1EA;}
+  @media (max-width:720px){ section{padding:44px 0;} }
+
+  a:focus-visible, button:focus-visible, input:focus-visible{
+    outline:2px solid var(--gold); outline-offset:2px;
+  }
+
+  /* ---------- Top bar ---------- */
+  .top-bar{background:var(--navy); color:#fff; font-size:13px;}
+  .top-bar .wrap{display:flex; justify-content:space-between; align-items:center; padding:8px 24px; flex-wrap:wrap; gap:6px;}
+  .top-bar a{color:#fff;}
+
+  /* ---------- Nav ---------- */
+  header.site-nav{
+    background:#fff; border-bottom:2px solid var(--navy); position:sticky; top:0; z-index:100;
+  }
+  .nav-inner{
+    max-width:1120px; margin:0 auto; padding:16px 24px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .brand{display:flex; align-items:center; gap:12px;}
+  .brand .mark{width:44px; height:44px;}
+  .brand-text{display:flex; flex-direction:column; line-height:1.15;}
+  .brand-text strong{font-family:'Poppins'; font-weight:700; font-size:19px; color:var(--navy);}
+  .brand-text span{font-size:11px; color:var(--slate); font-weight:500;}
+  nav.links{display:flex; align-items:center; gap:26px;}
+  nav.links a{font-size:14.5px; font-weight:500; color:var(--ink);}
+  nav.links a:hover{color:var(--navy); text-decoration:underline;}
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center;
+    padding:11px 22px; border-radius:4px;
+    font-weight:600; font-size:14px; font-family:'Inter';
+    cursor:pointer; border:1.5px solid transparent;
+  }
+  .btn-primary{background:var(--navy); color:#fff;}
+  .btn-primary:hover{background:#0F3060;}
+  .btn-outline{background:transparent; border:1.5px solid var(--navy); color:var(--navy);}
+  .btn-outline:hover{background:var(--navy); color:#fff;}
+  .menu-toggle{display:none; background:none; border:1px solid var(--line); border-radius:4px; padding:6px 10px; cursor:pointer;}
+
+  @media (max-width:900px){
+    nav.links{
+      position:fixed; inset:0 0 0 0; top:112px; background:#fff;
+      flex-direction:column; padding:24px; gap:18px; align-items:flex-start;
+      display:none; border-top:1px solid var(--line); overflow-y:auto;
+    }
+    nav.links.open{display:flex;}
+    .menu-toggle{display:block;}
+  }
+
+  /* ---------- Hero ---------- */
+  .hero{background:var(--navy); color:#fff; padding:64px 0;}
+  .hero .wrap{display:grid; grid-template-columns:1fr; gap:20px; text-align:center; max-width:820px;}
+  .hero .eyebrow{font-size:13px; letter-spacing:1px; color:#D9C27E; font-weight:600; margin-bottom:6px;}
+  .hero h1{color:#fff; font-size:34px; line-height:1.25; margin-bottom:8px;}
+  .hero p.tagline{font-size:17px; color:rgba(255,255,255,0.85); margin-bottom:8px;}
+  .hero-actions{display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-top:8px;}
+  .hero .btn-outline{border-color:#fff; color:#fff;}
+  .hero .btn-outline:hover{background:#fff; color:var(--navy);}
+
+  /* ---------- Section heading ---------- */
+  .section-head{max-width:700px; margin:0 auto 36px; text-align:center;}
+  .section-head h2{font-size:26px; margin-bottom:10px;}
+  .section-head p{color:var(--slate); font-size:15px;}
+
+  /* ---------- Olympiad cards ---------- */
+  .cat-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:18px;}
+  @media (max-width:1000px){ .cat-grid{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:560px){ .cat-grid{grid-template-columns:1fr;} }
+  .cat-card{
+    background:#fff; border:1px solid var(--line); border-radius:var(--radius);
+    padding:24px 18px; text-align:left;
+  }
+  .cat-card h3{font-size:16.5px; margin-bottom:6px;}
+  .cat-card p{font-size:13.5px; color:var(--slate); margin-bottom:14px;}
+  .cat-card a{font-size:13px; font-weight:600; color:var(--navy); text-decoration:underline;}
+
+  /* ---------- Stats ---------- */
+  .stat-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:24px; text-align:center;}
+  @media (max-width:800px){ .stat-grid{grid-template-columns:repeat(2,1fr);} }
+  .stat{border:1px solid var(--line); border-radius:var(--radius); padding:24px 12px; background:#fff;}
+  .stat .num{font-family:'Poppins'; font-size:28px; font-weight:700; color:var(--navy); display:block;}
+  .stat .label{font-size:13px; color:var(--slate); margin-top:6px;}
+  .stat-note{margin-top:20px; font-size:12.5px; color:var(--slate); text-align:center;}
+
+  /* ---------- Registration ---------- */
+  .reg-box{
+    background:#fff; border:1px solid var(--line); border-radius:var(--radius);
+    padding:40px; display:grid; grid-template-columns:1.3fr 1fr; gap:36px; align-items:center;
+  }
+  @media (max-width:820px){ .reg-box{grid-template-columns:1fr; padding:28px 22px;} }
+  .reg-box h2{font-size:22px; margin-bottom:10px;}
+  .reg-box p.lead{color:var(--slate); margin-bottom:16px; font-size:14.5px;}
+  .reg-steps{display:flex; flex-direction:column; gap:0;}
+  .reg-steps li{display:flex; gap:12px; padding:10px 0; border-bottom:1px solid var(--line); font-size:14px;}
+  .reg-steps li:last-child{border-bottom:none;}
+  .reg-steps .step-num{
+    width:24px; height:24px; border-radius:50%; background:var(--navy); color:#fff;
+    font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .reg-cta{text-align:center;}
+  .reg-cta .btn{width:100%; padding:14px 18px; font-size:15px; margin-bottom:10px;}
+  .reg-cta small{color:var(--slate); font-size:12px; display:block;}
+
+  /* ---------- Results / certificates ---------- */
+  .lookup-grid{display:grid; grid-template-columns:1fr 1fr; gap:22px;}
+  @media (max-width:760px){ .lookup-grid{grid-template-columns:1fr;} }
+  .lookup-card{background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:28px;}
+  .lookup-card h3{font-size:17px; margin-bottom:6px;}
+  .lookup-card p{font-size:13.5px; color:var(--slate); margin-bottom:16px;}
+  .lookup-form{display:flex; gap:10px; flex-wrap:wrap;}
+  .lookup-form input{
+    flex:1 1 200px; padding:11px 14px; border-radius:4px; border:1px solid var(--line);
+    font-family:'Inter'; font-size:14px;
+  }
+  .lookup-form input:focus{border-color:var(--navy); outline:none;}
+  .lookup-result{margin-top:12px; font-size:13px; color:var(--navy); min-height:16px;}
+
+  /* ---------- Schools ---------- */
+  .schools-box{background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:40px;}
+  .schools-top{display:flex; justify-content:space-between; align-items:flex-end; gap:20px; flex-wrap:wrap; margin-bottom:30px;}
+  .schools-top h2{font-size:22px; max-width:480px;}
+  .school-feature-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:18px;}
+  @media (max-width:800px){ .school-feature-grid{grid-template-columns:repeat(2,1fr);} }
+  .school-feature{border:1px solid var(--line); border-radius:var(--radius); padding:18px;}
+  .school-feature h4{font-size:14.5px; margin-bottom:6px;}
+  .school-feature p{font-size:13px; color:var(--slate);}
+
+  /* ---------- Student registration strip ---------- */
+  .student-strip{
+    background:#fff; border:1px solid var(--line); border-radius:var(--radius);
+    padding:32px; display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap;
+  }
+  .student-strip h2{font-size:20px; margin-bottom:6px;}
+  .student-strip p{color:var(--slate); font-size:14px;}
+
+  /* ---------- Registered students table ---------- */
+  .table-card{background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:0; overflow:hidden;}
+  .table-scroll{overflow-x:auto;}
+  table.students{width:100%; border-collapse:collapse; min-width:640px;}
+  table.students th, table.students td{
+    text-align:left; padding:12px 16px; font-size:13.5px; border-bottom:1px solid var(--line); white-space:nowrap;
+  }
+  table.students th{background:var(--navy); color:#fff; font-weight:600; font-size:12.5px; text-transform:uppercase; letter-spacing:0.3px;}
+  table.students tbody tr:nth-child(even){background:#FAF9F5;}
+  table.students tbody tr:hover{background:#F1EFE6;}
+  .table-status{padding:16px; font-size:13.5px; color:var(--slate);}
+  .table-note{margin-top:14px; font-size:12.5px; color:var(--slate);}
+
+  /* ---------- News ---------- */
+  .news-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:18px;}
+  @media (max-width:900px){ .news-grid{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:600px){ .news-grid{grid-template-columns:1fr;} }
+  .news-card{background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:22px;}
+  .news-tag{font-size:11.5px; font-weight:600; color:var(--navy); text-transform:uppercase;}
+  .news-card h4{font-size:15px; margin:8px 0 6px;}
+  .news-card p{font-size:13px; color:var(--slate);}
+
+  /* ---------- Footer ---------- */
+  footer{background:var(--navy); color:rgba(255,255,255,0.8); padding:48px 0 24px; font-size:13.5px;}
+  .footer-top{display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:32px; padding-bottom:28px; border-bottom:1px solid rgba(255,255,255,0.15);}
+  @media (max-width:760px){ .footer-top{grid-template-columns:1fr;} }
+  .footer-brand{display:flex; align-items:center; gap:10px; margin-bottom:10px;}
+  .footer-brand strong{color:#fff; font-family:'Poppins'; font-size:16px;}
+  .footer-tagline{font-size:12.5px; color:#D9C27E; font-weight:600; margin-bottom:10px;}
+  .footer-col h5{color:#fff; font-size:13.5px; margin-bottom:12px;}
+  .footer-col ul{display:flex; flex-direction:column; gap:8px;}
+  .footer-col a{color:rgba(255,255,255,0.75);}
+  .footer-col a:hover{color:#fff; text-decoration:underline;}
+  .footer-bottom{display:flex; justify-content:space-between; align-items:center; padding-top:18px; flex-wrap:wrap; gap:10px;}
+  .socials{display:flex; gap:10px;}
+  .socials a{width:30px; height:30px; border-radius:50%; background:rgba(255,255,255,0.12); display:flex; align-items:center; justify-content:center;}
+  .footer-bottom p{color:rgba(255,255,255,0.55); font-size:12px;}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="wrap">
+    <span>Indian Scholars Olympiad Foundation</span>
+    <a href="mailto:info@isof.org">info@isof.org</a>
+  </div>
+</div>
+
+<header class="site-nav">
+  <div class="nav-inner">
+    <a href="#top" class="brand">
+      <svg class="mark" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="24" cy="24" r="23" fill="#0B2545" stroke="#B8860B" stroke-width="1.4"/>
+        <path d="M14 32 L30 12 C31.2 10.5 33.4 10.3 34.7 11.7 C36 13 35.8 15.2 34.3 16.4 L16.5 34.5 L10.5 36.5 Z" fill="#D9C27E"/>
+      </svg>
+      <span class="brand-text">
+        <strong>ISOF</strong>
+        <span>Indian Scholars Olympiad Foundation</span>
+      </span>
+    </a>
+    <nav class="links" id="navLinks">
+      <a href="#top">Home</a>
+      <a href="#about">About ISOF</a>
+      <a href="#olympiads">Olympiads</a>
+      <a href="#registration">Registration</a>
+      <a href="#results">Results</a>
+      <a href="#certificates">Certificates</a>
+      <a href="#schools">Schools</a>
+      <a href="#registered-students">Registered Students</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <a href="#registration" class="btn btn-primary">Register Now</a>
+      <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu" aria-expanded="false">Menu</button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero" id="about">
+    <div class="wrap">
+      <p class="eyebrow">THINK. CHALLENGE. EXCEL.</p>
+      <h1>International Olympiad 2026</h1>
+      <p class="tagline">A national academic platform for students in Classes 1&ndash;12 to test their knowledge and reasoning across five subjects.</p>
+      <div class="hero-actions">
+        <a href="#registration" class="btn" style="background:#D9C27E; color:#0B2545;">Register Now</a>
+        <a href="#olympiads" class="btn btn-outline">Explore Olympiads</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="olympiads">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Olympiad Categories</h2>
+        <p>Grade-appropriate papers across five subjects, from Class 1 through Class 12.</p>
+      </div>
+      <div class="cat-grid">
+        <div class="cat-card">
+          <h3>Mathematics</h3>
+          <p>Number sense, logic and problem-solving.</p>
+          <a href="#registration">View Olympiad &rarr;</a>
+        </div>
+        <div class="cat-card">
+          <h3>Science</h3>
+          <p>Physics, chemistry and biology fundamentals.</p>
+          <a href="#registration">View Olympiad &rarr;</a>
+        </div>
+        <div class="cat-card">
+          <h3>English</h3>
+          <p>Grammar, comprehension and vocabulary.</p>
+          <a href="#registration">View Olympiad &rarr;</a>
+        </div>
+        <div class="cat-card">
+          <h3>General Knowledge</h3>
+          <p>Current affairs, geography and awareness.</p>
+          <a href="#registration">View Olympiad &rarr;</a>
+        </div>
+        <div class="cat-card">
+          <h3>Logical Reasoning</h3>
+          <p>Pattern recognition and analytical thinking.</p>
+          <a href="#registration">View Olympiad &rarr;</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="alt">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>A Global Platform for Young Minds</h2>
+        <p>ISOF is building the infrastructure for students to compete and grow on a wider stage.</p>
+      </div>
+      <div class="stat-grid">
+        <div class="stat"><span class="num">1&ndash;12</span><span class="label">Classes covered</span></div>
+        <div class="stat"><span class="num">5</span><span class="label">Olympiad categories</span></div>
+        <div class="stat"><span class="num">2026</span><span class="label">International edition</span></div>
+        <div class="stat"><span class="num">10+</span><span class="label">Countries (target reach)</span></div>
+      </div>
+      <p class="stat-note">*Figures marked as "target" reflect ISOF's 2026 vision and will be updated with verified numbers as the foundation grows.</p>
+    </div>
+  </section>
+
+  <section id="registration">
+    <div class="wrap">
+      <div class="reg-box">
+        <div>
+          <h2>Registrations for International Olympiad 2026 are open</h2>
+          <p class="lead">Follow four steps to register — confirmation is sent right after you submit the form.</p>
+          <ul class="reg-steps">
+            <li><span class="step-num">1</span>Choose your Olympiad</li>
+            <li><span class="step-num">2</span>Enter student details</li>
+            <li><span class="step-num">3</span>Complete registration</li>
+            <li><span class="step-num">4</span>Receive confirmation</li>
+          </ul>
+        </div>
+        <div class="reg-cta">
+          <a class="btn btn-primary" href="https://docs.google.com/forms/d/e/1FAIpQLSd3lC5e-KgAUkMRfxIsklkON_-tmmRG10MInzHX1cSaxMe89g/viewform" target="_blank" rel="noopener">Register Now</a>
+          <small>Opens the official ISOF registration form in a new tab.</small>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="results" class="alt">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Results &amp; Certificates</h2>
+        <p>Once results are published, look them up here with your Registration ID.</p>
+      </div>
+      <div class="lookup-grid">
+        <div class="lookup-card" id="certificates">
+          <h3>Check Results</h3>
+          <p>Enter your Registration ID to view your score and rank.</p>
+          <form class="lookup-form" onsubmit="return handleLookup(event, 'result')">
+            <input type="text" placeholder="e.g. ISOF26-000123" aria-label="Registration ID for results" required>
+            <button class="btn btn-outline" type="submit">Check Result</button>
+          </form>
+          <p class="lookup-result" id="resultMsg"></p>
+        </div>
+        <div class="lookup-card">
+          <h3>Download Certificate</h3>
+          <p>Enter your Registration ID to download your certificate.</p>
+          <form class="lookup-form" onsubmit="return handleLookup(event, 'certificate')">
+            <input type="text" placeholder="e.g. ISOF26-000123" aria-label="Registration ID for certificate" required>
+            <button class="btn btn-outline" type="submit">Get Certificate</button>
+          </form>
+          <p class="lookup-result" id="certMsg"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="schools">
+    <div class="wrap">
+      <div class="schools-box">
+        <div class="schools-top">
+          <h2>Bring ISOF Olympiads to your school</h2>
+          <a class="btn btn-primary" href="#registration">Register Your School</a>
+        </div>
+        <div class="school-feature-grid">
+          <div class="school-feature">
+            <h4>School Registration</h4>
+            <p>One-time onboarding for your institution.</p>
+          </div>
+          <div class="school-feature">
+            <h4>Student Enrollment</h4>
+            <p>Bulk-enrol students across grades.</p>
+          </div>
+          <div class="school-feature">
+            <h4>Examination Coordination</h4>
+            <p>Schedules and logistics handled centrally.</p>
+          </div>
+          <div class="school-feature">
+            <h4>Results &amp; Certificates</h4>
+            <p>Consolidated reports for every student.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="alt">
+    <div class="wrap">
+      <div class="student-strip">
+        <div>
+          <h2>Ready to take part?</h2>
+          <p>Students can register directly using the official ISOF registration form.</p>
+        </div>
+        <a class="btn btn-primary" href="https://docs.google.com/forms/d/e/1FAIpQLSd3lC5e-KgAUkMRfxIsklkON_-tmmRG10MInzHX1cSaxMe89g/viewform" target="_blank" rel="noopener">Student Registration &rarr;</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="registered-students" class="alt">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Registered Students</h2>
+        <p>Live list pulled from the ISOF registration sheet.</p>
+      </div>
+      <div class="table-card">
+        <div class="table-scroll">
+          <table class="students" id="studentsTable" style="display:none;">
+            <thead>
+              <tr>
+                <th>Full Name of Student</th>
+                <th>School Name</th>
+                <th>State / Province</th>
+                <th>Olympiad Subject(s)</th>
+                <th>ISOF ID</th>
+              </tr>
+            </thead>
+            <tbody id="studentsTableBody"></tbody>
+          </table>
+        </div>
+        <p class="table-status" id="studentsStatus">Loading registered students&hellip;</p>
+      </div>
+      <p class="table-note">Only public fields are shown here. Contact details and other personal information are kept private.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="section-head">
+        <h2>News &amp; Announcements</h2>
+      </div>
+      <div class="news-grid">
+        <div class="news-card">
+          <span class="news-tag">Registration Updates</span>
+          <h4>International Olympiad 2026 registrations are live</h4>
+          <p>Register across five categories before the window closes.</p>
+        </div>
+        <div class="news-card">
+          <span class="news-tag">Examination Schedule</span>
+          <h4>Exam dates to be announced</h4>
+          <p>The schedule will be published here and sent to registered students.</p>
+        </div>
+        <div class="news-card">
+          <span class="news-tag">Results Announcements</span>
+          <h4>Result publication process</h4>
+          <p>Results will be released here by Registration ID.</p>
+        </div>
+        <div class="news-card">
+          <span class="news-tag">Certificate Updates</span>
+          <h4>Certificates issued digitally</h4>
+          <p>All participants receive a downloadable digital certificate.</p>
+        </div>
+        <div class="news-card">
+          <span class="news-tag">International Events</span>
+          <h4>Building ISOF's global footprint</h4>
+          <p>Partnerships and international participation updates will appear here.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer id="contact">
+  <div class="wrap">
+    <div class="footer-top">
+      <div>
+        <div class="footer-brand">
+          <svg width="34" height="34" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="24" cy="24" r="23" fill="#0F2E56" stroke="#B8860B" stroke-width="1.4"/>
+            <path d="M14 32 L30 12 C31.2 10.5 33.4 10.3 34.7 11.7 C36 13 35.8 15.2 34.3 16.4 L16.5 34.5 L10.5 36.5 Z" fill="#D9C27E"/>
+          </svg>
+          <strong>ISOF</strong>
+        </div>
+        <p class="footer-tagline">Think &bull; Challenge &bull; Excel</p>
+        <p style="max-width:280px;">Indian Scholars Olympiad Foundation — a national platform for young academic talent.</p>
+      </div>
+      <div class="footer-col">
+        <h5>Quick Links</h5>
+        <ul>
+          <li><a href="#about">About</a></li>
+          <li><a href="#olympiads">Olympiads</a></li>
+          <li><a href="#registration">Registration</a></li>
+          <li><a href="#results">Results</a></li>
+          <li><a href="#schools">Schools</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Contact</h5>
+        <ul>
+          <li><a href="mailto:info@isof.org">info@isof.org</a></li>
+          <li><a href="#registration">Registration Form</a></li>
+          <li>Kolkata, West Bengal, India</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 Indian Scholars Olympiad Foundation. All rights reserved.</p>
+      <div class="socials">
+        <a href="#" aria-label="Facebook">f</a>
+        <a href="#" aria-label="Instagram">IG</a>
+        <a href="#" aria-label="Email">@</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const menuToggle = document.getElementById('menuToggle');
+  const navLinks = document.getElementById('navLinks');
+  menuToggle.addEventListener('click', () => {
+    const isOpen = navLinks.classList.toggle('open');
+    menuToggle.setAttribute('aria-expanded', isOpen);
+  });
+  navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+    navLinks.classList.remove('open');
+    menuToggle.setAttribute('aria-expanded', false);
+  }));
+
+  // ---- Registered Students: pulled live from the Google Sheet (CMS) ----
+  (function(){
+    var SHEET_ID = '1eoNYBTvhwSvUBHRsPSR6bXi065pGemik2LGmKQwxOw0';
+    var GVIZ_URL = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:json&gid=0';
+    var WANTED_COLUMNS = ['Full Name of Student', 'School Name', 'State / Province', 'Olympiad Subject(s)', 'ISOF ID'];
+
+    var statusEl = document.getElementById('studentsStatus');
+    var tableEl = document.getElementById('studentsTable');
+    var bodyEl = document.getElementById('studentsTableBody');
+
+    fetch(GVIZ_URL)
+      .then(function(res){
+        if(!res.ok) throw new Error('Sheet request failed (' + res.status + ')');
+        return res.text();
+      })
+      .then(function(text){
+        // Response is wrapped like: google.visualization.Query.setResponse({...});
+        var jsonStart = text.indexOf('{');
+        var jsonEnd = text.lastIndexOf('}');
+        var data = JSON.parse(text.substring(jsonStart, jsonEnd + 1));
+
+        if(!data.table || !data.table.cols){
+          throw new Error('Unexpected sheet format');
+        }
+
+        var cols = data.table.cols.map(function(c){ return (c.label || '').trim(); });
+        var colIndex = WANTED_COLUMNS.map(function(name){ return cols.indexOf(name); });
+
+        if(colIndex.some(function(i){ return i === -1; })){
+          throw new Error('Could not find expected columns in the sheet');
+        }
+
+        var rows = (data.table.rows || []).filter(function(r){
+          // Skip fully blank rows
+          return r.c && r.c.some(function(cell){ return cell && cell.v !== null && cell.v !== ''; });
+        });
+
+        if(rows.length === 0){
+          statusEl.textContent = 'No students have registered yet. Check back soon.';
+          return;
+        }
+
+        bodyEl.innerHTML = rows.map(function(row){
+          return '<tr>' + colIndex.map(function(i){
+            var cell = row.c[i];
+            var value = (cell && cell.v !== null && cell.v !== undefined) ? cell.v : '';
+            return '<td>' + escapeHtml(String(value)) + '</td>';
+          }).join('') + '</tr>';
+        }).join('');
+
+        tableEl.style.display = '';
+        statusEl.style.display = 'none';
+      })
+      .catch(function(err){
+        statusEl.textContent = 'Registered students list is temporarily unavailable. Please make sure the Google Sheet is shared as "Anyone with the link can view".';
+        console.error('ISOF students sheet error:', err);
+      });
+
+    function escapeHtml(str){
+      return str.replace(/[&<>"']/g, function(ch){
+        return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch];
+      });
+    }
+  })();
+
+  function handleLookup(e, type){
+    e.preventDefault();
+    const input = e.target.querySelector('input').value.trim();
+    const msg = document.getElementById(type === 'result' ? 'resultMsg' : 'certMsg');
+    if(!input){ return false; }
+    msg.textContent = 'Results are not published yet for ' + input + '. Please check back after the exam schedule is announced.';
+    return false;
+  }
+</script>
+
+</body>
+</html>
