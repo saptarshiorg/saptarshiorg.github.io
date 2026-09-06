@@ -46,17 +46,18 @@
     background:#fff; border-bottom:2px solid var(--navy); position:sticky; top:0; z-index:100;
   }
   .nav-inner{
-    max-width:1120px; margin:0 auto; padding:16px 24px;
-    display:flex; align-items:center; justify-content:space-between;
+    max-width:1120px; margin:0 auto; padding:14px 24px;
+    display:flex; align-items:center; justify-content:space-between; gap:20px;
   }
   .brand{display:flex; align-items:center; gap:12px;}
-  .brand .mark{width:44px; height:44px;}
+  .brand .mark{width:44px; height:44px; flex-shrink:0;}
   .brand-text{display:flex; flex-direction:column; line-height:1.15;}
   .brand-text strong{font-family:'Poppins'; font-weight:700; font-size:19px; color:var(--navy);}
   .brand-text span{font-size:11px; color:var(--slate); font-weight:500;}
-  nav.links{display:flex; align-items:center; gap:26px;}
-  nav.links a{font-size:14.5px; font-weight:500; color:var(--ink);}
-  nav.links a:hover{color:var(--navy); text-decoration:underline;}
+  nav.links{display:flex; align-items:center; gap:24px;}
+  nav.links a{font-size:14.5px; font-weight:500; color:var(--ink); padding:6px 0; border-bottom:2px solid transparent;}
+  nav.links a:hover{color:var(--navy); border-bottom-color:var(--gold);}
+  .nav-right{display:flex; align-items:center; gap:14px;}
   .btn{
     display:inline-flex; align-items:center; justify-content:center;
     padding:11px 22px; border-radius:4px;
@@ -67,16 +68,32 @@
   .btn-primary:hover{background:#0F3060;}
   .btn-outline{background:transparent; border:1.5px solid var(--navy); color:var(--navy);}
   .btn-outline:hover{background:var(--navy); color:#fff;}
-  .menu-toggle{display:none; background:none; border:1px solid var(--line); border-radius:4px; padding:6px 10px; cursor:pointer;}
+
+  .menu-toggle{
+    display:none; flex-direction:column; justify-content:center; align-items:center; gap:5px;
+    width:40px; height:40px; background:none; border:1px solid var(--line); border-radius:4px; cursor:pointer; flex-shrink:0;
+  }
+  .menu-toggle span{
+    display:block; width:20px; height:2px; background:var(--navy); border-radius:2px;
+    transition:transform .2s ease, opacity .2s ease;
+  }
+  .menu-toggle.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+  .menu-toggle.open span:nth-child(2){opacity:0;}
+  .menu-toggle.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
 
   @media (max-width:900px){
+    header.site-nav{position:sticky;}
+    .nav-inner{position:relative;}
     nav.links{
-      position:fixed; inset:0 0 0 0; top:112px; background:#fff;
-      flex-direction:column; padding:24px; gap:18px; align-items:flex-start;
-      display:none; border-top:1px solid var(--line); overflow-y:auto;
+      position:absolute; top:100%; left:0; right:0; background:#fff;
+      flex-direction:column; align-items:stretch; gap:0;
+      border-top:1px solid var(--line); box-shadow:0 12px 24px rgba(11,37,69,0.12);
+      max-height:0; overflow:hidden; transition:max-height .25s ease;
     }
-    nav.links.open{display:flex;}
-    .menu-toggle{display:block;}
+    nav.links.open{max-height:420px;}
+    nav.links a{padding:14px 24px; border-bottom:1px solid var(--line); width:100%;}
+    nav.links a:hover{background:#F5F3EC; border-bottom:1px solid var(--line);}
+    .menu-toggle{display:flex;}
   }
 
   /* ---------- Hero ---------- */
@@ -132,30 +149,6 @@
   .reg-cta{text-align:center;}
   .reg-cta .btn{width:100%; padding:14px 18px; font-size:15px; margin-bottom:10px;}
   .reg-cta small{color:var(--slate); font-size:12px; display:block;}
-
-  /* ---------- Results / certificates ---------- */
-  .lookup-grid{display:grid; grid-template-columns:1fr 1fr; gap:22px;}
-  @media (max-width:760px){ .lookup-grid{grid-template-columns:1fr;} }
-  .lookup-card{background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:28px;}
-  .lookup-card h3{font-size:17px; margin-bottom:6px;}
-  .lookup-card p{font-size:13.5px; color:var(--slate); margin-bottom:16px;}
-  .lookup-form{display:flex; gap:10px; flex-wrap:wrap;}
-  .lookup-form input{
-    flex:1 1 200px; padding:11px 14px; border-radius:4px; border:1px solid var(--line);
-    font-family:'Inter'; font-size:14px;
-  }
-  .lookup-form input:focus{border-color:var(--navy); outline:none;}
-  .lookup-result{margin-top:12px; font-size:13px; color:var(--navy); min-height:16px;}
-
-  /* ---------- Schools ---------- */
-  .schools-box{background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:40px;}
-  .schools-top{display:flex; justify-content:space-between; align-items:flex-end; gap:20px; flex-wrap:wrap; margin-bottom:30px;}
-  .schools-top h2{font-size:22px; max-width:480px;}
-  .school-feature-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:18px;}
-  @media (max-width:800px){ .school-feature-grid{grid-template-columns:repeat(2,1fr);} }
-  .school-feature{border:1px solid var(--line); border-radius:var(--radius); padding:18px;}
-  .school-feature h4{font-size:14.5px; margin-bottom:6px;}
-  .school-feature p{font-size:13px; color:var(--slate);}
 
   /* ---------- Student registration strip ---------- */
   .student-strip{
@@ -230,15 +223,14 @@
       <a href="#about">About ISOF</a>
       <a href="#olympiads">Olympiads</a>
       <a href="#registration">Registration</a>
-      <a href="#results">Results</a>
-      <a href="#certificates">Certificates</a>
-      <a href="#schools">Schools</a>
       <a href="#registered-students">Registered Students</a>
       <a href="#contact">Contact</a>
     </nav>
-    <div style="display:flex; align-items:center; gap:12px;">
+    <div class="nav-right">
       <a href="#registration" class="btn btn-primary">Register Now</a>
-      <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu" aria-expanded="false">Menu</button>
+      <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="navLinks">
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </div>
 </header>
@@ -329,64 +321,6 @@
     </div>
   </section>
 
-  <section id="results" class="alt">
-    <div class="wrap">
-      <div class="section-head">
-        <h2>Results &amp; Certificates</h2>
-        <p>Once results are published, look them up here with your Registration ID.</p>
-      </div>
-      <div class="lookup-grid">
-        <div class="lookup-card" id="certificates">
-          <h3>Check Results</h3>
-          <p>Enter your Registration ID to view your score and rank.</p>
-          <form class="lookup-form" onsubmit="return handleLookup(event, 'result')">
-            <input type="text" placeholder="e.g. ISOF26-000123" aria-label="Registration ID for results" required>
-            <button class="btn btn-outline" type="submit">Check Result</button>
-          </form>
-          <p class="lookup-result" id="resultMsg"></p>
-        </div>
-        <div class="lookup-card">
-          <h3>Download Certificate</h3>
-          <p>Enter your Registration ID to download your certificate.</p>
-          <form class="lookup-form" onsubmit="return handleLookup(event, 'certificate')">
-            <input type="text" placeholder="e.g. ISOF26-000123" aria-label="Registration ID for certificate" required>
-            <button class="btn btn-outline" type="submit">Get Certificate</button>
-          </form>
-          <p class="lookup-result" id="certMsg"></p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section id="schools">
-    <div class="wrap">
-      <div class="schools-box">
-        <div class="schools-top">
-          <h2>Bring ISOF Olympiads to your school</h2>
-          <a class="btn btn-primary" href="#registration">Register Your School</a>
-        </div>
-        <div class="school-feature-grid">
-          <div class="school-feature">
-            <h4>School Registration</h4>
-            <p>One-time onboarding for your institution.</p>
-          </div>
-          <div class="school-feature">
-            <h4>Student Enrollment</h4>
-            <p>Bulk-enrol students across grades.</p>
-          </div>
-          <div class="school-feature">
-            <h4>Examination Coordination</h4>
-            <p>Schedules and logistics handled centrally.</p>
-          </div>
-          <div class="school-feature">
-            <h4>Results &amp; Certificates</h4>
-            <p>Consolidated reports for every student.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <section class="alt">
     <div class="wrap">
       <div class="student-strip">
@@ -399,7 +333,7 @@
     </div>
   </section>
 
-  <section id="registered-students" class="alt">
+  <section id="registered-students">
     <div class="wrap">
       <div class="section-head">
         <h2>Registered Students</h2>
@@ -443,9 +377,9 @@
           <p>The schedule will be published here and sent to registered students.</p>
         </div>
         <div class="news-card">
-          <span class="news-tag">Results Announcements</span>
-          <h4>Result publication process</h4>
-          <p>Results will be released here by Registration ID.</p>
+          <span class="news-tag">Registered Students</span>
+          <h4>Live registration list</h4>
+          <p>See the growing list of registered students on this page, updated automatically.</p>
         </div>
         <div class="news-card">
           <span class="news-tag">Certificate Updates</span>
@@ -482,8 +416,7 @@
           <li><a href="#about">About</a></li>
           <li><a href="#olympiads">Olympiads</a></li>
           <li><a href="#registration">Registration</a></li>
-          <li><a href="#results">Results</a></li>
-          <li><a href="#schools">Schools</a></li>
+          <li><a href="#registered-students">Registered Students</a></li>
         </ul>
       </div>
       <div class="footer-col">
@@ -511,60 +444,66 @@
   const navLinks = document.getElementById('navLinks');
   menuToggle.addEventListener('click', () => {
     const isOpen = navLinks.classList.toggle('open');
+    menuToggle.classList.toggle('open', isOpen);
     menuToggle.setAttribute('aria-expanded', isOpen);
   });
   navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
     navLinks.classList.remove('open');
+    menuToggle.classList.remove('open');
     menuToggle.setAttribute('aria-expanded', false);
   }));
 
   // ---- Registered Students: pulled live from the Google Sheet (CMS) ----
   (function(){
     var SHEET_ID = '1eoNYBTvhwSvUBHRsPSR6bXi065pGemik2LGmKQwxOw0';
-    var GVIZ_URL = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:json&gid=0';
+    // CSV export is the most reliable no-backend way to read a shared Google Sheet.
+    // Requires the sheet to be shared as "Anyone with the link" -> Viewer.
+    var GID = '0';
+    var CSV_URL = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/export?format=csv&gid=' + GID + '&_=' + Date.now();
     var WANTED_COLUMNS = ['Full Name of Student', 'School Name', 'State / Province', 'Olympiad Subject(s)', 'ISOF ID'];
 
     var statusEl = document.getElementById('studentsStatus');
     var tableEl = document.getElementById('studentsTable');
     var bodyEl = document.getElementById('studentsTableBody');
 
-    fetch(GVIZ_URL)
+    fetch(CSV_URL, { credentials: 'omit', cache: 'no-store' })
       .then(function(res){
-        if(!res.ok) throw new Error('Sheet request failed (' + res.status + ')');
+        if(res.redirected || (res.url && res.url.indexOf('/export') === -1)){
+          // Google redirects to a login/access page when the sheet isn't link-shared
+          throw new Error('access-denied');
+        }
+        if(!res.ok){ throw new Error('http-' + res.status); }
         return res.text();
       })
       .then(function(text){
-        // Response is wrapped like: google.visualization.Query.setResponse({...});
-        var jsonStart = text.indexOf('{');
-        var jsonEnd = text.lastIndexOf('}');
-        var data = JSON.parse(text.substring(jsonStart, jsonEnd + 1));
-
-        if(!data.table || !data.table.cols){
-          throw new Error('Unexpected sheet format');
+        if(/^\s*<(!DOCTYPE|html)/i.test(text)){
+          // Got an HTML sign-in page instead of CSV -> sharing isn't set correctly
+          throw new Error('access-denied');
         }
 
-        var cols = data.table.cols.map(function(c){ return (c.label || '').trim(); });
-        var colIndex = WANTED_COLUMNS.map(function(name){ return cols.indexOf(name); });
-
-        if(colIndex.some(function(i){ return i === -1; })){
-          throw new Error('Could not find expected columns in the sheet');
-        }
-
-        var rows = (data.table.rows || []).filter(function(r){
-          // Skip fully blank rows
-          return r.c && r.c.some(function(cell){ return cell && cell.v !== null && cell.v !== ''; });
+        var rows = parseCsv(text).filter(function(r){
+          return r.some(function(cell){ return cell && cell.trim() !== ''; });
         });
 
-        if(rows.length === 0){
+        if(rows.length === 0){ throw new Error('empty-sheet'); }
+
+        var header = rows[0].map(function(h){ return h.trim(); });
+        var colIndex = WANTED_COLUMNS.map(function(name){ return header.indexOf(name); });
+
+        if(colIndex.some(function(i){ return i === -1; })){
+          throw new Error('missing-columns');
+        }
+
+        var dataRows = rows.slice(1);
+
+        if(dataRows.length === 0){
           statusEl.textContent = 'No students have registered yet. Check back soon.';
           return;
         }
 
-        bodyEl.innerHTML = rows.map(function(row){
+        bodyEl.innerHTML = dataRows.map(function(row){
           return '<tr>' + colIndex.map(function(i){
-            var cell = row.c[i];
-            var value = (cell && cell.v !== null && cell.v !== undefined) ? cell.v : '';
-            return '<td>' + escapeHtml(String(value)) + '</td>';
+            return '<td>' + escapeHtml((row[i] || '').trim()) + '</td>';
           }).join('') + '</tr>';
         }).join('');
 
@@ -572,9 +511,46 @@
         statusEl.style.display = 'none';
       })
       .catch(function(err){
-        statusEl.textContent = 'Registered students list is temporarily unavailable. Please make sure the Google Sheet is shared as "Anyone with the link can view".';
+        var msg = err && err.message;
+        if(msg === 'access-denied'){
+          statusEl.textContent = 'This list needs the Google Sheet shared as "Anyone with the link \u2192 Viewer" to load here.';
+        } else if(msg === 'missing-columns'){
+          statusEl.textContent = 'The sheet\u2019s column headers don\u2019t match what this page expects (Full Name of Student, School Name, State / Province, Olympiad Subject(s), ISOF ID).';
+        } else if(msg === 'empty-sheet'){
+          statusEl.textContent = 'No students have registered yet. Check back soon.';
+        } else {
+          statusEl.textContent = 'Registered students list is temporarily unavailable. Please try again shortly.';
+        }
         console.error('ISOF students sheet error:', err);
       });
+
+    // Minimal RFC4180-style CSV parser: handles quoted fields, escaped quotes,
+    // and commas/newlines inside quotes.
+    function parseCsv(text){
+      var rows = [];
+      var row = [];
+      var field = '';
+      var inQuotes = false;
+      for(var i = 0; i < text.length; i++){
+        var ch = text[i];
+        if(inQuotes){
+          if(ch === '"'){
+            if(text[i + 1] === '"'){ field += '"'; i++; }
+            else { inQuotes = false; }
+          } else {
+            field += ch;
+          }
+        } else {
+          if(ch === '"'){ inQuotes = true; }
+          else if(ch === ','){ row.push(field); field = ''; }
+          else if(ch === '\r'){ /* skip */ }
+          else if(ch === '\n'){ row.push(field); rows.push(row); row = []; field = ''; }
+          else { field += ch; }
+        }
+      }
+      if(field.length > 0 || row.length > 0){ row.push(field); rows.push(row); }
+      return rows;
+    }
 
     function escapeHtml(str){
       return str.replace(/[&<>"']/g, function(ch){
@@ -582,15 +558,6 @@
       });
     }
   })();
-
-  function handleLookup(e, type){
-    e.preventDefault();
-    const input = e.target.querySelector('input').value.trim();
-    const msg = document.getElementById(type === 'result' ? 'resultMsg' : 'certMsg');
-    if(!input){ return false; }
-    msg.textContent = 'Results are not published yet for ' + input + '. Please check back after the exam schedule is announced.';
-    return false;
-  }
 </script>
 
 </body>
