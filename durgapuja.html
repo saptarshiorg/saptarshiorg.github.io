@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<link rel="icon" href="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/ChatGPT Image Sep 8, 2026, 09_29_23 PM.png.png" type="image/png">
+<link rel="icon" href="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/durga.png" type="image/png">
 <meta property="og:image" content="https://i.postimg.cc/GtKyCWmv/Chat-GPT-Image-Jul-19-2026-06-25-19-PM.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="675">
@@ -24,7 +24,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title id="page-title">EV SPORTS (Powered by Saptarshi EV Streams)</title>
-<link id="favicon" rel="icon" type="image/png" href="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/ChatGPT Image Sep 8, 2026, 09_29_23 PM.png.png">
+<link id="favicon" rel="icon" type="image/png" href="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/durga.png">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Rajdhani:wght@400;500;600;700&family=Chakra+Petch:wght@400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
 <!-- ── Google Cast (Chromecast) Sender SDK — lets the stream player cast
@@ -137,7 +137,7 @@
 
   /* Glows */
   --glow-indigo: rgba(232,35,42,0.35);
-  --glow-ChatGPT Image Sep 8, 2026, 09_29_23 PM.png: rgba(232,35,42,0.32);
+  --glow-magenta: rgba(232,35,42,0.32);
   --glow-gold: rgba(255,122,24,0.45);
   --glow-diamond: rgba(232,35,42,0.40);
 
@@ -154,7 +154,7 @@
   /* Gradients */
   --grad-brand: linear-gradient(135deg,#000000 0%,#4A0000 50%,#E8232A 100%);
   --grad-brand-h: linear-gradient(90deg,#000000,#4A0000,#E8232A,#FFD37A);
-  --grad-ChatGPT Image Sep 8, 2026, 09_29_23 PM.png: linear-gradient(135deg,#4A0000,#E8232A);
+  --grad-magenta: linear-gradient(135deg,#4A0000,#E8232A);
   --grad-gold: linear-gradient(135deg,#FFD37A 0%,#E8232A 55%,#4A0000 100%);
   --grad-gold-h: linear-gradient(90deg,#4A0000,#E8232A,#FFD37A,#E8232A,#4A0000);
   --grad-diamond: linear-gradient(135deg,#FFD37A 0%,#E8232A 50%,#4A0000 100%);
@@ -196,10 +196,13 @@
 html { scroll-behavior:smooth; }
 body {
   font-family: var(--font-body);
-  background: var(--s0);
+  background: linear-gradient(rgba(5,0,0,0.86),rgba(5,0,0,0.90)), url('https://t3.ftcdn.net/jpg/09/87/74/30/360_F_987743002_QQgZT8W0VNLvkVMSICVYmIs7WORHKe3w.jpg') center top / cover no-repeat fixed, var(--s0);
   color: var(--white);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+}
+@media (max-width: 900px){
+  body{ background-attachment: scroll; }
 }
 
 /* ────────────────────────────────────────────
@@ -2024,7 +2027,7 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
   /* Device name/ID is desktop-only */
   .nav-device-info { display: none !important; }
 
-  /* Hamburger + QR/scanner: flat, ChatGPT Image Sep 8, 2026, 09_29_23 PM.png */
+  /* Hamburger + QR/scanner: flat, magenta */
   .nav-qr-btn {
     background: transparent; border: none;
     color: #E8232A; box-shadow: none;
@@ -2511,7 +2514,7 @@ footer{ border-top:1px solid var(--cu-line); }
 
 /* ══════════════════════════════════════════════════════════════════════
    FLAT PASS — kill every gradient / 3D inset shadow / glow.
-   Palette reduced to: ChatGPT Image Sep 8, 2026, 09_29_23 PM.png (--cu-accent), white, and neutral dark grays.
+   Palette reduced to: magenta (--cu-accent), white, and neutral dark grays.
    Curves normalized: small 4-8px radius everywhere except filter pills
    (.ch-tab / .wcs-btn / .tab / .dot) which stay fully rounded, same as
    the TimStreams reference.
@@ -2521,7 +2524,7 @@ footer{ border-top:1px solid var(--cu-line); }
       this alone flattens dozens of buttons/badges that reference them. */
 :root{
   --grad-brand:#E8232A; --grad-brand-h:#E8232A;
-  --grad-ChatGPT Image Sep 8, 2026, 09_29_23 PM.png:#E8232A; --grad-gold:#E8232A; --grad-gold-h:#E8232A;
+  --grad-magenta:#E8232A; --grad-gold:#E8232A; --grad-gold-h:#E8232A;
   --grad-diamond:#E8232A; --logo-grad:#E8232A; --logo-grad-rev:#E8232A;
   --logo-grad-h:#E8232A;
   --live-red:#E8232A; --gold:#E8232A; --gold-light:#E8232A; --gold-dark:#E8232A;
@@ -2548,7 +2551,7 @@ body::before{ display:none !important; }
 }
 .btn-watch-sm{ background:var(--cu-accent) !important; color:#fff !important; }
 
-/* 4) Solid ChatGPT Image Sep 8, 2026, 09_29_23 PM.png for every remaining "watch" style CTA (was gold gradient) */
+/* 4) Solid magenta for every remaining "watch" style CTA (was gold gradient) */
 .hsc-btn-watch,.bc-watch-btn{
   background:var(--cu-accent) !important; color:#fff !important; border-radius: 8px !important;
 }
@@ -2567,9 +2570,9 @@ body::before{ display:none !important; }
 }
 .fpx-premium,.fpx-pill-4k{ background:#fff !important; color:#000000 !important; }
 
-/* 6) Category cards: one flat ChatGPT Image Sep 8, 2026, 09_29_23 PM.png-accented look instead of a rainbow
+/* 6) Category cards: one flat magenta-accented look instead of a rainbow
       of per-sport gradients (cricket blue / football green / tennis
-      orange / f1 red all collapse to the same flat panel + ChatGPT Image Sep 8, 2026, 09_29_23 PM.png edge) */
+      orange / f1 red all collapse to the same flat panel + magenta edge) */
 .cat-card{
   background:var(--cu-panel) !important;
   border-left:3px solid var(--cu-accent) !important;
@@ -2577,7 +2580,7 @@ body::before{ display:none !important; }
 .cat-cricket,.cat-football,.cat-tennis,.cat-f1{ background:var(--cu-panel) !important; }
 .cat-card .cat-emoji{ opacity:0.10 !important; }
 
-/* 7) Live / status dots: ChatGPT Image Sep 8, 2026, 09_29_23 PM.png instead of red, no pulsing glow halo */
+/* 7) Live / status dots: magenta instead of red, no pulsing glow halo */
 .live-dot,.live-dot-r{ background:var(--cu-accent) !important; box-shadow:none !important; }
 .fpx-dot,.wt20-dot,.ch-live-dot{ box-shadow:none !important; }
 
@@ -2619,7 +2622,7 @@ body::before{ display:none !important; }
 <!-- LOADING FULL SCREEN -->
 <div id="cms-loader">
   <div class="loader-popup">
-    <div class="loader-brand"><img src="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/ChatGPT Image Sep 8, 2026, 09_29_23 PM.png.png" alt="RISHI.EV" class="loader-brand-img"></div>
+    <div class="loader-brand"><img src="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/durga.png" alt="RISHI.EV" class="loader-brand-img"></div>
     <div class="loader-goldbar"><div class="loader-goldbar-inner"></div></div>
   </div>
 </div>
@@ -2637,52 +2640,104 @@ body::before{ display:none !important; }
 <!-- WELCOME BACK BAR — sits above the header, not a popup. Dismissible, shown once per session. -->
 
 <!-- ══════════════════════════════════════════════════════════════════════
-     DURGA PUJA FESTIVE STRIP — slim announcement bar above the header.
-     Red→gold gradient, diya icons, dismissible. Pure decoration, no
-     dependency on any other script/markup.
+     DURGA PUJA FESTIVE BADGE + POPUP
+     A small floating circular badge (fixed position, sits above every
+     section incl. Live TV since it's outside the section containers)
+     that opens a centered popup with the greeting. No top strip, no
+     per-section duplication.
 ═══════════════════════════════════════════════════════════════════════ -->
 <style>
-#dp-festive-strip{
-  position: relative; z-index: 40;
-  display: flex; align-items: center; justify-content: center; gap: 10px;
-  padding: 9px 40px 9px 14px;
-  background: linear-gradient(90deg,#4A0000 0%,#E8232A 45%,#FF7A18 100%);
-  background-size: 200% 100%;
-  animation: dpStripShift 6s ease-in-out infinite;
-  color: #FFF3E2;
+#dp-badge{
+  position: fixed; right: 16px; bottom: 96px; z-index: 9990;
+  width: 96px; height: 96px; border-radius: 50%;
+  background: url('https://as2.ftcdn.net/jpg/02/90/42/85/1000_F_290428559_bcAQ8uPW9Ileg5aL7F1zMPGHDKBjpK8H.jpg') center/cover no-repeat;
+  border: 3px solid #FF7A18;
+  box-shadow: 0 0 0 5px rgba(232,35,42,0.18), 0 6px 20px rgba(0,0,0,0.5), 0 0 24px rgba(255,122,24,0.45);
+  cursor: pointer; animation: dpBadgePulse 2.6s ease-in-out infinite;
+}
+@keyframes dpBadgePulse{
+  0%,100%{ box-shadow: 0 0 0 5px rgba(232,35,42,0.18), 0 6px 20px rgba(0,0,0,0.5), 0 0 24px rgba(255,122,24,0.45); }
+  50%{ box-shadow: 0 0 0 10px rgba(232,35,42,0.10), 0 6px 26px rgba(0,0,0,0.55), 0 0 34px rgba(255,122,24,0.7); }
+}
+@media (max-width: 640px){
+  #dp-badge{ width: 78px; height: 78px; right: 12px; bottom: 84px; }
+}
+
+#dp-modal-overlay{
+  position: fixed; inset: 0; z-index: 9995;
+  background: rgba(0,0,0,0.72);
+  display: none; align-items: center; justify-content: center;
+  padding: 20px;
+}
+#dp-modal-overlay.open{ display: flex; }
+#dp-modal-card{
+  position: relative; max-width: 360px; width: 100%;
+  background: linear-gradient(160deg,#1a0000 0%,#3a0000 60%,#5c0d00 100%);
+  border: 1px solid rgba(255,122,24,0.4);
+  border-radius: 18px; padding: 28px 22px 24px;
+  text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.6);
   font-family: var(--cu-font,inherit);
-  font-weight: 700;
-  font-size: 12.5px;
-  letter-spacing: 0.02em;
-  text-align: center;
-  overflow: hidden;
 }
-@keyframes dpStripShift{
-  0%,100%{ background-position: 0% 50%; }
-  50%{ background-position: 100% 50%; }
+#dp-modal-card img{
+  width: 84px; height: 84px; border-radius: 50%; object-fit: cover;
+  border: 2px solid #FF7A18; margin: 0 auto 14px;
+  box-shadow: 0 0 20px rgba(255,122,24,0.5);
 }
-#dp-festive-strip::before,#dp-festive-strip::after{
-  content: "🪔"; font-size: 14px; flex-shrink: 0;
+#dp-modal-card p{
+  color: #FFF3E2; font-size: 14.5px; font-weight: 600; line-height: 1.55;
+  margin: 0;
 }
-#dp-festive-strip span{
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+#dp-modal-close{
+  position: absolute; top: 10px; right: 10px;
+  background: rgba(255,255,255,0.14); border: none; color: #FFF3E2;
+  width: 26px; height: 26px; border-radius: 50%; cursor: pointer;
+  font-size: 13px; line-height: 1; display: flex; align-items: center; justify-content: center;
 }
-#dp-festive-close{
-  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-  background: rgba(255,255,255,0.16); border: none; color: #FFF3E2;
-  width: 20px; height: 20px; border-radius: 50%; cursor: pointer;
-  font-size: 12px; line-height: 1; display: flex; align-items: center; justify-content: center;
-  font-family: inherit;
+#dp-modal-close:hover{ background: rgba(255,255,255,0.26); }
+
+/* ── Durga Puja player decoration — applied to every video/stream
+     player frame (Live TV, FIFA/fpx, FanCode, Prime, Willow, VIP).
+     Pure overlay: pointer-events:none so it never blocks controls. ── */
+.dp-deco-frame{ position: relative; }
+.dp-deco-frame::before{
+  content: ""; position: absolute; inset: -3px; border-radius: 14px;
+  border: 2px solid #FF7A18; pointer-events: none; z-index: 6;
+  box-shadow: 0 0 0 1px rgba(232,35,42,0.55), 0 0 18px rgba(255,122,24,0.35);
 }
-#dp-festive-close:hover{ background: rgba(255,255,255,0.28); }
-@media (max-width: 480px){
-  #dp-festive-strip{ font-size: 11.5px; padding: 8px 34px 8px 10px; gap: 7px; }
+.dp-deco-garland{
+  position: absolute; top: -2px; left: 0; right: 0; height: 11px;
+  pointer-events: none; z-index: 7;
+  background-image:
+    radial-gradient(circle at 6px 5px, #FF7A18 3px, transparent 3.6px),
+    radial-gradient(circle at 16px 5px, #E8232A 3px, transparent 3.6px);
+  background-size: 22px 11px; background-repeat: repeat-x;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.55));
+}
+.dp-deco-corner{
+  position: absolute; font-size: 17px; pointer-events: none; z-index: 7;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.65));
+}
+.dp-deco-corner.tl{ top: 5px; left: 6px; }
+.dp-deco-corner.tr{ top: 5px; right: 6px; }
+@media (max-width: 640px){
+  .dp-deco-corner{ font-size: 14px; }
 }
 </style>
-<div id="dp-festive-strip">
-  <span>Happy Durga Puja from EV Streams — pujor cheye boro utsob nei, khela cheye boro adda nei! 🎉</span>
-  <button id="dp-festive-close" onclick="document.getElementById('dp-festive-strip').style.display='none'" aria-label="Dismiss">✕</button>
+
+<div id="dp-badge" onclick="dpOpenModal()" title="Happy Durga Puja from EV Streams" aria-label="Durga Puja greeting"></div>
+
+<div id="dp-modal-overlay" onclick="if(event.target===this) dpCloseModal()">
+  <div id="dp-modal-card" onclick="dpCloseModal();openDurgaPuja();" style="cursor:pointer;">
+    <button id="dp-modal-close" onclick="event.stopPropagation();dpCloseModal()" aria-label="Close">✕</button>
+    <img src="https://as2.ftcdn.net/jpg/02/90/42/85/1000_F_290428559_bcAQ8uPW9Ileg5aL7F1zMPGHDKBjpK8H.jpg" alt="Durga Puja">
+    <p>Happy Durga Puja from EV Streams — pujor cheye boro utsob nei, khela cheye boro adda nei! 🎉</p>
+  </div>
 </div>
+
+<script>
+function dpOpenModal(){ document.getElementById('dp-modal-overlay').classList.add('open'); }
+function dpCloseModal(){ document.getElementById('dp-modal-overlay').classList.remove('open'); }
+</script>
 
 <!-- HEADER -->
 <header>
@@ -2722,6 +2777,9 @@ body::before{ display:none !important; }
       <a class="pcqn-item" data-sxtab="fifa" href="#sxTabPanels" onclick="event.preventDefault();openFifa();">
         <img src="https://upload.wikimedia.org/wikipedia/en/1/17/2026_FIFA_World_Cup_emblem.svg" alt="FIFA" class="pcqn-icon" style="filter:drop-shadow(0 0 4px rgba(0,160,255,0.5));">
         FIFA
+      </a>
+      <a class="pcqn-item" data-sxtab="durgapuja" href="#sxTabPanels" onclick="event.preventDefault();openDurgaPuja();">
+        🪔 Durga Puja
       </a>
 
     </nav>
@@ -3361,7 +3419,7 @@ window.addEventListener('resize', () => {
 //    keep their own in-page Back button, and sit above the nav bar (so the
 //    nav bar isn't shown while inside them).
 function sxCloseAllOverlays(){
-  const ids = ['livetv-overlay','movies-overlay','fifa-overlay','ott-overlay','fancode-overlay','prime-overlay','willow-overlay','adminchat-overlay'];
+  const ids = ['livetv-overlay','movies-overlay','fifa-overlay','ott-overlay','fancode-overlay','prime-overlay','willow-overlay','adminchat-overlay','durgapuja-overlay'];
   ids.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.remove('open');
@@ -3381,7 +3439,7 @@ const SX_ALL_OVERLAY_IDS = [
   'livetv-overlay','movies-overlay','fifa-overlay','ott-overlay','fancode-overlay',
   'prime-overlay','willow-overlay','vip-overlay','vip-player-overlay',
   'stream-player-overlay','adminchat-overlay','adminchat-discord-popup',
-  'va-tv-modal','sx-cast-help-overlay','dmca-overlay'
+  'va-tv-modal','sx-cast-help-overlay','dmca-overlay','durgapuja-overlay'
 ];
 function goHome(){
   SX_ALL_OVERLAY_IDS.forEach(id => {
@@ -3809,12 +3867,15 @@ window.sxSwitchTab = sxSwitchTab;
         <div id="fpx-ch-name"><span class="fpx-dot"></span><span id="fpx-active-name">Select a Channel</span></div>
         <span id="fpx-badge">LIVE STREAM</span>
       </div>
-      <div id="fpx-iframe-box">
+      <div id="fpx-iframe-box" class="dp-deco-frame">
         <div id="fpx-placeholder">
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
           <span>Pick a channel below</span>
         </div>
         <iframe id="fpx-iframe" src="" allowfullscreen allow="autoplay; fullscreen" scrolling="no"></iframe>
+        <div class="dp-deco-garland"></div>
+        <span class="dp-deco-corner tl">🪔</span>
+        <span class="dp-deco-corner tr">🪔</span>
       </div>
     </div>
 
@@ -4180,8 +4241,11 @@ window.sxSwitchTab = sxSwitchTab;
 <div id="fancode-overlay">
   <div id="fancode-topbar"></div>
 <div id="fancode-panel-wrap">
-  <div id="fancode-iframe-wrap">
+  <div id="fancode-iframe-wrap" class="dp-deco-frame">
     <iframe id="fancode-iframe" src="https://saptarshiorg.github.io/Fancode/" title="FanCode" loading="lazy" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer-when-downgrade" onerror="document.getElementById('fancode-embed-fallback').style.display='flex'"></iframe>
+    <div class="dp-deco-garland"></div>
+    <span class="dp-deco-corner tl">🪔</span>
+    <span class="dp-deco-corner tr">🪔</span>
     <div id="fancode-embed-fallback">
       <div>FanCode didn't load in the embedded view.</div>
       <a href="https://saptarshiorg.github.io/Fancode/" target="_blank" rel="noopener">Open FanCode ↗</a>
@@ -4219,8 +4283,11 @@ window.sxSwitchTab = sxSwitchTab;
 <div id="prime-overlay">
   <div id="prime-topbar"></div>
 <div id="prime-panel-wrap">
-  <div id="prime-iframe-wrap">
+  <div id="prime-iframe-wrap" class="dp-deco-frame">
     <iframe id="prime-iframe" src="https://evxrishi.site.je/PRIME" title="Prime Video" loading="lazy" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer-when-downgrade" onerror="document.getElementById('prime-embed-fallback').style.display='flex'"></iframe>
+    <div class="dp-deco-garland"></div>
+    <span class="dp-deco-corner tl">🪔</span>
+    <span class="dp-deco-corner tr">🪔</span>
     <div id="prime-embed-fallback">
       <div>Prime Video didn't load in the embedded view.</div>
       <a href="https://evxrishi.site.je/PRIME" target="_blank" rel="noopener">Open Prime Video ↗</a>
@@ -4257,8 +4324,11 @@ window.sxSwitchTab = sxSwitchTab;
 <div id="willow-overlay">
   <div id="willow-topbar"></div>
 <div id="willow-panel-wrap">
-  <div id="willow-iframe-wrap">
+  <div id="willow-iframe-wrap" class="dp-deco-frame">
     <iframe id="willow-iframe" src="https://evxrishi.site.je/WILLOW" title="Willow OTT" loading="lazy" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer-when-downgrade" onerror="document.getElementById('willow-embed-fallback').style.display='flex'"></iframe>
+    <div class="dp-deco-garland"></div>
+    <span class="dp-deco-corner tl">🪔</span>
+    <span class="dp-deco-corner tr">🪔</span>
     <div id="willow-embed-fallback">
       <div>Willow OTT didn't load in the embedded view.</div>
       <a href="https://evxrishi.site.je/WILLOW" target="_blank" rel="noopener">Open Willow OTT ↗</a>
@@ -4266,6 +4336,98 @@ window.sxSwitchTab = sxSwitchTab;
   </div>
 </div><!-- /willow-panel-wrap -->
 </div><!-- /willow-overlay -->
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     DURGA PUJA — standalone festive page. Full-bleed background image at
+     full opacity (no dark overlay, unlike the rest of the site), with a
+     Bengali greeting over it. Own topbar w/ Back, same simple pattern as
+     FanCode/Prime/Willow.
+═══════════════════════════════════════════════════════════════════════ -->
+<style>
+#durgapuja-overlay{
+  display: none; position: fixed; inset: 0; z-index: 1600;
+  background: #000;
+}
+#durgapuja-overlay.open{ display: block; }
+#durgapuja-topbar{
+  position: absolute; top: 0; left: 0; right: 0; z-index: 2;
+  padding: 14px;
+}
+#durgapuja-back{
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(0,0,0,0.45); border: 1px solid rgba(255,122,24,0.5); color: #fff;
+  font-family: var(--cu-font,inherit); font-weight: 700; font-size: 12px;
+  padding: 8px 12px; cursor: pointer; border-radius: 8px; letter-spacing: 0.03em;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+#durgapuja-back:hover{ background: rgba(255,122,24,0.28); border-color: #FF7A18; }
+#durgapuja-back svg{ width: 14px; height: 14px; flex-shrink: 0; color: #FF7A18; }
+#durgapuja-close{
+  position: absolute; top: 14px; right: 14px;
+  display: flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: 50%;
+  background: rgba(0,0,0,0.45); border: 1px solid rgba(255,122,24,0.5); color: #fff;
+  cursor: pointer; font-size: 15px; line-height: 1;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+#durgapuja-close:hover{ background: rgba(255,122,24,0.28); border-color: #FF7A18; }
+
+#durgapuja-stage{
+  position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  background: url('https://t3.ftcdn.net/jpg/09/87/74/30/360_F_987743002_QQgZT8W0VNLvkVMSICVYmIs7WORHKe3w.jpg') center top / cover no-repeat;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  padding: 90px 24px 60px;
+}
+#durgapuja-content{ max-width: 640px; }
+#durgapuja-content h1{
+  font-family: var(--font-display, var(--cu-font,inherit));
+  font-size: clamp(30px,6vw,52px); font-weight: 800; color: #FFF3E2;
+  text-shadow: 0 3px 18px rgba(0,0,0,0.8), 0 0 30px rgba(255,122,24,0.5);
+  margin-bottom: 14px; letter-spacing: 0.01em;
+}
+#durgapuja-content p{
+  font-size: clamp(15px,2.4vw,19px); font-weight: 600; color: #FFF3E2;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.85);
+  line-height: 1.7; margin: 0 auto 8px;
+}
+#durgapuja-content .dp-sub{
+  font-size: clamp(12.5px,2vw,14.5px); font-weight: 500;
+  color: rgba(255,243,226,0.85);
+  text-shadow: 0 2px 8px rgba(0,0,0,0.85);
+}
+</style>
+<div id="durgapuja-overlay">
+  <div id="durgapuja-topbar">
+    <button id="durgapuja-back" onclick="closeDurgaPuja()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      Back
+    </button>
+    <button id="durgapuja-close" onclick="closeDurgaPuja()" aria-label="Close">✕</button>
+  </div>
+  <div id="durgapuja-stage">
+    <div id="durgapuja-content">
+      <h1>শুভ শারদীয়া দুর্গা পূজা</h1>
+      <p>মা দুর্গার আশীর্বাদে আপনার জীবন হোক আনন্দ, সাফল্য ও শান্তিতে ভরপুর।</p>
+      <div class="dp-sub">EV Streams-এর পক্ষ থেকে সবাইকে শুভ শারদীয়া দুর্গা পূজার আন্তরিক শুভেচ্ছা 🪔</div>
+    </div>
+  </div>
+</div>
+
+<script>
+function openDurgaPuja(){
+  sxCloseAllOverlays();
+  document.getElementById('durgapuja-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  window.scrollTo(0,0);
+  document.querySelectorAll('[data-sxtab]').forEach(el => el.classList.toggle('active', el.dataset.sxtab === 'durgapuja'));
+}
+function closeDurgaPuja(){
+  document.getElementById('durgapuja-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+window.openDurgaPuja = openDurgaPuja;
+window.closeDurgaPuja = closeDurgaPuja;
+</script>
 
 
 
@@ -4686,6 +4848,10 @@ function renderNav(rows) {
   // in-site VidAPI-powered Movies overlay instead.
   desktop.innerHTML += `<a href="#" class="nav-movies-link" data-sxtab="movies" onclick="openMoviesOverlay();return false;"><img class="movies-logo-icon" src="https://static.vecteezy.com/system/resources/thumbnails/050/699/896/small/movie-night-illustration-cinema-poster-concept-banner-design-for-movie-theater-png.png" alt="Movies">MOVIES</a>`;
   drawerNav.innerHTML += `<a href="#" class="drawer-movies" data-sxtab="movies" onclick="closeDrawer();openMoviesOverlay();return false;"><img class="movies-logo-icon" src="https://static.vecteezy.com/system/resources/thumbnails/050/699/896/small/movie-night-illustration-cinema-poster-concept-banner-design-for-movie-theater-png.png" alt="Movies">MOVIES</a>`;
+  // DURGA PUJA — festive standalone page, own nav entry on both desktop
+  // header and hamburger drawer.
+  desktop.innerHTML += `<a href="#" data-sxtab="durgapuja" onclick="openDurgaPuja();return false;">🪔 Durga Puja</a>`;
+  drawerNav.innerHTML += `<a href="#" data-sxtab="durgapuja" onclick="closeDrawer();openDurgaPuja();return false;">🪔 Durga Puja</a>`;
 }
 function renderNav_CMS_UNUSED(rows) {
   if (!rows) return;
@@ -6809,7 +6975,7 @@ header{
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   GLOBAL THIN ChatGPT Image Sep 8, 2026, 09_29_23 PM.png SCROLLBAR — applies to the whole page and to any
+   GLOBAL THIN MAGENTA SCROLLBAR — applies to the whole page and to any
    scrollable embed (FanCode panel, movie embeds, modals, etc.)
 ═══════════════════════════════════════════════════════════════════════ */
 * {
@@ -6940,7 +7106,8 @@ footer{
 ═══════════════════════════════════════════════════════════════════════ */
 #adminchat-overlay{
   position: fixed; inset: 0; z-index: 1200;
-  background: #000000; display: flex; flex-direction: column;
+  background: linear-gradient(rgba(5,0,0,0.88),rgba(5,0,0,0.92)), url('https://t3.ftcdn.net/jpg/09/87/74/30/360_F_987743002_QQgZT8W0VNLvkVMSICVYmIs7WORHKe3w.jpg') center top / cover no-repeat fixed, #000000;
+  display: flex; flex-direction: column;
   opacity: 0; visibility: hidden; pointer-events: none;
   transform: translateY(28px) scale(0.98);
   transition: opacity 0.32s cubic-bezier(.22,.9,.32,1),
@@ -7103,7 +7270,8 @@ function closeAdminChatDiscordPopup(){
 <style>
 #livetv-overlay{
   display: none; position: fixed; inset: 0; z-index: 1200;
-  background: #000000; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  background: linear-gradient(rgba(5,0,0,0.88),rgba(5,0,0,0.92)), url('https://t3.ftcdn.net/jpg/09/87/74/30/360_F_987743002_QQgZT8W0VNLvkVMSICVYmIs7WORHKe3w.jpg') center top / cover no-repeat fixed, #000000;
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
 }
 #livetv-overlay.open{ display: block; }
 
@@ -8041,8 +8209,11 @@ function closeAdminChatDiscordPopup(){
       <span id="stream-player-title">Live Stream</span>
     </div>
     <div id="stream-player-body">
-      <div id="stream-player-frame-wrap">
+      <div id="stream-player-frame-wrap" class="dp-deco-frame">
         <iframe id="stream-player-frame" src="" title="Live Stream" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
+        <div class="dp-deco-garland"></div>
+        <span class="dp-deco-corner tl">🪔</span>
+        <span class="dp-deco-corner tr">🪔</span>
         <div id="stream-player-loading">
           <div id="sp-loading-spinner"></div>
           <div id="sp-loading-status">
@@ -9390,8 +9561,11 @@ function closeFifa(){
       Back
     </button>
   </div>
-  <div id="vip-player-iframe-wrap">
+  <div id="vip-player-iframe-wrap" class="dp-deco-frame">
     <iframe id="vip-player-iframe" title="VIP Player" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
+    <div class="dp-deco-garland"></div>
+    <span class="dp-deco-corner tl">🪔</span>
+    <span class="dp-deco-corner tr">🪔</span>
   </div>
 </div>
 
