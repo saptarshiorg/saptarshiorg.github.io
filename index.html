@@ -6494,8 +6494,16 @@ function sxInitGoogleAuth() {
       }
     });
     // Catches the user coming back after a signInWithRedirect() fallback below
-    sxAuth.getRedirectResult().catch((err) => {
-      console.warn('Redirect sign-in failed:', err);
+    sxAuth.getRedirectResult().then((result) => {
+      if (!result || !result.user) {
+        // Redirect completed with no user and no thrown error — usually means
+        // the browser silently blocked the storage/cookie exchange with the
+        // Firebase authDomain (common with strict third-party cookie settings).
+        console.warn('Google redirect sign-in returned no user. If you just tried signing in, your browser likely blocked third-party cookies for firebaseapp.com/google.com.');
+      }
+    }).catch((err) => {
+      console.error('Redirect sign-in failed:', err && err.code, err && err.message);
+      alert('Sign-in failed after redirect: ' + (err && err.message ? err.message : 'unknown error') + (err && err.code ? ' (' + err.code + ')' : ''));
     });
   } catch (e) {
     console.warn('Firebase auth init failed:', e);
