@@ -550,6 +550,48 @@ header.scrolled {
   .btn-login-label { display: none; }
 }
 
+/* Google sign-in / profile chip — sits in the top nav next to the other action buttons */
+.sx-auth-wrap { position: relative; display: flex; align-items: center; flex-shrink: 0; }
+.sx-profile-chip {
+  display: none; align-items: center; gap: 8px; cursor: pointer;
+  background: rgba(240,79,140,0.10); border: 1px solid rgba(240,79,140,0.30);
+  border-radius: 999px; padding: 4px 12px 4px 4px; transition: all 0.18s var(--ease);
+}
+.sx-profile-chip:hover { background: rgba(240,79,140,0.18); }
+.sx-profile-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; display: block; background: rgba(255,255,255,0.1); }
+.sx-profile-name {
+  font-family: var(--font-display); font-weight: 700; font-size: 12px; letter-spacing: 0.03em;
+  color: rgba(255,255,255,0.9); white-space: nowrap; max-width: 90px; overflow: hidden; text-overflow: ellipsis;
+}
+.sx-profile-caret { color: rgba(255,255,255,0.55); flex-shrink: 0; transition: transform 0.18s var(--ease); }
+.sx-profile-chip.open .sx-profile-caret { transform: rotate(180deg); }
+@media(max-width:1050px) {
+  .sx-profile-chip { padding: 3px; border-radius: 50%; }
+  .sx-profile-name, .sx-profile-caret { display: none; }
+}
+
+.sx-profile-dropdown {
+  position: absolute; top: calc(100% + 12px); right: 0; z-index: 500; width: 230px;
+  background: rgba(8,8,9,0.97); backdrop-filter: var(--blur); border-radius: 8px;
+  box-shadow: 0 0 44px rgba(240,79,140,0.15), 0 14px 44px rgba(0,0,0,0.75);
+  transform: scale(0.9) translateY(-8px); opacity: 0; pointer-events: none;
+  transform-origin: top right; transition: all 0.2s var(--spring); overflow: hidden;
+}
+.sx-profile-dropdown.open { transform: scale(1) translateY(0); opacity: 1; pointer-events: all; }
+.sx-profile-dropdown-head { display: flex; align-items: center; gap: 10px; padding: 14px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.sx-profile-dropdown-head img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.sx-profile-dropdown-name { font-family: var(--font-display); font-weight: 700; font-size: 13px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sx-profile-dropdown-email { font-size: 11px; color: var(--text-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sx-profile-dropdown-item {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 11px 14px;
+  background: none; border: none; color: rgba(255,255,255,0.8); font-family: var(--font-display);
+  font-weight: 600; font-size: 12.5px; letter-spacing: 0.02em; text-align: left; cursor: pointer;
+  transition: all 0.15s var(--ease);
+}
+.sx-profile-dropdown-item svg { width: 15px; height: 15px; flex-shrink: 0; }
+.sx-profile-dropdown-item:hover { background: rgba(240,79,140,0.10); color: #FF8FBB; }
+.sx-profile-dropdown-item.sx-signout { color: #F04F8C; border-top: 1px solid rgba(255,255,255,0.06); }
+
 .btn-yt {
   display: flex; align-items: center; justify-content: center; gap: 0;
   background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.75);
@@ -670,6 +712,30 @@ header.scrolled {
 .drawer-login-icon { display: flex; align-items: center; flex-shrink: 0; }
 .drawer-login-icon svg { width: 16px; height: 16px; display: block; }
 .drawer-divider { height: 1px; background: rgba(255,255,255,0.05); margin: 8px 16px; }
+
+/* Drawer (mobile) profile block — sits under the drawer header, above the nav links */
+.drawer-profile { padding: 4px 12px 10px; }
+.drawer-profile-signin {
+  display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
+  color: var(--cu-accent,#F04F8C) !important; background: rgba(240,79,140,0.10);
+  border: 1px solid rgba(240,79,140,0.30); border-radius: 999px; padding: 11px 16px;
+  font-family: var(--font-display); font-weight: 800; font-size: 13px; letter-spacing: 0.03em;
+  cursor: pointer; transition: all 0.18s var(--ease);
+}
+.drawer-profile-signin:hover { background: rgba(240,79,140,0.18); }
+.drawer-profile-chip {
+  display: none; align-items: center; gap: 10px; padding: 10px 12px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
+}
+.drawer-profile-chip img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.drawer-profile-info { flex: 1; min-width: 0; }
+.drawer-profile-info-name { font-family: var(--font-display); font-weight: 700; font-size: 13px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.drawer-profile-info-email { font-size: 11px; color: var(--text-muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.drawer-profile-signout {
+  background: none; border: none; color: #F04F8C; flex-shrink: 0; cursor: pointer;
+  padding: 6px; display: flex; align-items: center; justify-content: center;
+}
+.drawer-profile-signout svg { width: 18px; height: 18px; display: block; }
 
 /* ────────────────────────────────────────────
    HERO — Desktop card grid
@@ -2612,6 +2678,8 @@ body::before{ display:none !important; }
 
 </style>
 <script defer src="https://cloud.umami.is/script.js" data-website-id="42676c0d-b886-471b-b6d5-d2ecc1d8b7e9"></script>
+<!-- Google Identity Services — powers the nav-bar "Sign in with Google" button -->
+<script src="https://accounts.google.com/gsi/client" async defer onload="sxInitGoogleAuth()"></script>
 </head>
 <body>
  
@@ -2631,6 +2699,23 @@ body::before{ display:none !important; }
     <img class="drawer-logo" id="drawer-logo" src="" alt="Logo" style="display:none">
     <button class="drawer-close" onclick="closeDrawer()">✕</button>
   </div>
+  <div class="drawer-profile" id="drawer-profile">
+    <button type="button" class="drawer-profile-signin" id="drawer-signin-btn" onclick="sxGoogleSignIn()">
+      <svg width="16" height="16" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.9-2.26 5.36-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      Sign in with Google
+    </button>
+    <div class="drawer-profile-chip" id="drawer-profile-chip">
+      <img id="drawer-profile-avatar" src="" alt="">
+      <div class="drawer-profile-info">
+        <div class="drawer-profile-info-name" id="drawer-profile-name"></div>
+        <div class="drawer-profile-info-email" id="drawer-profile-email"></div>
+      </div>
+      <button type="button" class="drawer-profile-signout" onclick="sxGoogleSignOut(event)" aria-label="Sign out" title="Sign out">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="drawer-divider"></div>
   <nav class="drawer-nav" id="drawer-nav"></nav>
 </div>
 
@@ -2690,6 +2775,34 @@ body::before{ display:none !important; }
         <svg class="btn-telegram-icon" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M170.6 68.3 145.9 187c-1.9 8.4-6.8 10.4-13.8 6.5l-38.1-28.1-18.4 17.7c-2 2-3.7 3.7-7.6 3.7l2.7-38.8 70.6-63.8c3.1-2.7-.7-4.2-4.8-1.5L54 137.5l-38-11.9c-8.3-2.6-8.4-8.3 1.7-12.2l148.3-57.2c6.9-2.6 13 1.6 10.6 12.1z"/></svg>
         <span class="btn-telegram-label">Telegram</span>
       </a>
+    </div>
+
+    <!-- GOOGLE SIGN-IN / PROFILE — nav bar auth widget -->
+    <div class="sx-auth-wrap" id="sx-auth-wrap">
+      <button type="button" class="btn-login-nav" id="sx-signin-btn" onclick="sxGoogleSignIn()" aria-label="Sign in with Google" title="Sign in with Google">
+        <span class="btn-login-icon">
+          <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.9-2.26 5.36-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        </span>
+        <span class="btn-login-label">Sign in</span>
+      </button>
+      <div class="sx-profile-chip" id="sx-profile-chip" onclick="sxToggleProfileMenu(event)">
+        <img class="sx-profile-avatar" id="sx-profile-avatar" src="" alt="">
+        <span class="sx-profile-name" id="sx-profile-name"></span>
+        <svg class="sx-profile-caret" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="sx-profile-dropdown" id="sx-profile-dropdown">
+        <div class="sx-profile-dropdown-head">
+          <img id="sx-profile-dropdown-avatar" src="" alt="">
+          <div style="min-width:0">
+            <div class="sx-profile-dropdown-name" id="sx-profile-dropdown-name"></div>
+            <div class="sx-profile-dropdown-email" id="sx-profile-dropdown-email"></div>
+          </div>
+        </div>
+        <button type="button" class="sx-profile-dropdown-item sx-signout" onclick="sxGoogleSignOut(event)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Sign out
+        </button>
+      </div>
     </div>
     <div class="nav-device-info" id="nav-device-info" title="This device's name and ID">
       <span class="nav-device-name" id="nav-device-name"></span>
@@ -6257,6 +6370,132 @@ function countryFlagHTML(rawCountry){
   });
 })();
 // ── END CMS-DRIVEN CHANNELS BROWSER ──────────────────────────
+
+// ── GOOGLE SIGN-IN (nav bar) ─────────────────────────────────
+// Uses Google Identity Services' OAuth2 token client so the real "Sign in"
+// button can live in our own pill-shaped nav button instead of Google's
+// stock widget. No backend needed — we just read the public profile.
+//
+// SETUP: create an OAuth 2.0 "Web application" Client ID in Google Cloud
+// Console (APIs & Services → Credentials), add both
+//   https://saptarshixtrasports.pages.dev  and  https://saptarshiorg.github.io
+// under "Authorized JavaScript origins", then paste the Client ID below.
+const SX_GOOGLE_CLIENT_ID = '377284155889-4uu5pq0e7p8b0jqkvfh0f7jvfecr2pe3.apps.googleusercontent.com';
+
+let sxTokenClient = null;
+
+function sxInitGoogleAuth() {
+  if (!window.google || !google.accounts || !google.accounts.oauth2) return;
+  try {
+    sxTokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: SX_GOOGLE_CLIENT_ID,
+      scope: 'openid email profile',
+      callback: (resp) => {
+        if (resp && resp.access_token) sxFetchGoogleProfile(resp.access_token);
+      },
+    });
+  } catch (e) {
+    console.warn('Google auth init failed:', e);
+  }
+  // Restore a previous session (client-side only — just cached profile info)
+  const saved = localStorage.getItem('sx_google_user');
+  if (saved) {
+    try { sxRenderProfile(JSON.parse(saved)); } catch (e) { localStorage.removeItem('sx_google_user'); }
+  }
+}
+
+function sxGoogleSignIn() {
+  if (SX_GOOGLE_CLIENT_ID.indexOf('YOUR_GOOGLE_CLIENT_ID') === 0) {
+    alert('Google sign-in isn\'t configured yet — add a Client ID from Google Cloud Console.');
+    return;
+  }
+  if (!sxTokenClient) { console.warn('Google auth not ready yet — try again in a moment.'); return; }
+  sxTokenClient.requestAccessToken();
+}
+
+async function sxFetchGoogleProfile(accessToken) {
+  try {
+    const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: 'Bearer ' + accessToken }
+    });
+    const p = await res.json();
+    const user = { name: p.name || '', email: p.email || '', picture: p.picture || '' };
+    localStorage.setItem('sx_google_user', JSON.stringify(user));
+    sxRenderProfile(user);
+  } catch (e) {
+    console.warn('Failed to fetch Google profile:', e);
+  }
+}
+
+function sxRenderProfile(user) {
+  const firstName = (user.name || '').split(' ')[0];
+
+  const signinBtn = document.getElementById('sx-signin-btn');
+  const chip = document.getElementById('sx-profile-chip');
+  if (signinBtn) signinBtn.style.display = 'none';
+  if (chip) chip.style.display = 'flex';
+  const avatar = document.getElementById('sx-profile-avatar');
+  if (avatar) avatar.src = user.picture;
+  const nameEl = document.getElementById('sx-profile-name');
+  if (nameEl) nameEl.textContent = firstName;
+  const dAvatar = document.getElementById('sx-profile-dropdown-avatar');
+  if (dAvatar) dAvatar.src = user.picture;
+  const dName = document.getElementById('sx-profile-dropdown-name');
+  if (dName) dName.textContent = user.name;
+  const dEmail = document.getElementById('sx-profile-dropdown-email');
+  if (dEmail) dEmail.textContent = user.email;
+
+  const drawerSignin = document.getElementById('drawer-signin-btn');
+  const drawerChip = document.getElementById('drawer-profile-chip');
+  if (drawerSignin) drawerSignin.style.display = 'none';
+  if (drawerChip) drawerChip.style.display = 'flex';
+  const dwAvatar = document.getElementById('drawer-profile-avatar');
+  if (dwAvatar) dwAvatar.src = user.picture;
+  const dwName = document.getElementById('drawer-profile-name');
+  if (dwName) dwName.textContent = user.name;
+  const dwEmail = document.getElementById('drawer-profile-email');
+  if (dwEmail) dwEmail.textContent = user.email;
+}
+
+function sxToggleProfileMenu(e) {
+  if (e) e.stopPropagation();
+  const dropdown = document.getElementById('sx-profile-dropdown');
+  const chip = document.getElementById('sx-profile-chip');
+  if (dropdown) dropdown.classList.toggle('open');
+  if (chip) chip.classList.toggle('open');
+}
+
+function sxGoogleSignOut(e) {
+  if (e) e.stopPropagation();
+  localStorage.removeItem('sx_google_user');
+
+  const signinBtn = document.getElementById('sx-signin-btn');
+  const chip = document.getElementById('sx-profile-chip');
+  if (signinBtn) signinBtn.style.display = '';
+  if (chip) { chip.style.display = 'none'; chip.classList.remove('open'); }
+  const dropdown = document.getElementById('sx-profile-dropdown');
+  if (dropdown) dropdown.classList.remove('open');
+
+  const drawerSignin = document.getElementById('drawer-signin-btn');
+  const drawerChip = document.getElementById('drawer-profile-chip');
+  if (drawerSignin) drawerSignin.style.display = '';
+  if (drawerChip) drawerChip.style.display = 'none';
+
+  if (window.google && google.accounts && google.accounts.id) {
+    google.accounts.id.disableAutoSelect();
+  }
+}
+
+document.addEventListener('click', (e) => {
+  const wrap = document.getElementById('sx-auth-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    const dropdown = document.getElementById('sx-profile-dropdown');
+    const chip = document.getElementById('sx-profile-chip');
+    if (dropdown) dropdown.classList.remove('open');
+    if (chip) chip.classList.remove('open');
+  }
+});
+// ── END GOOGLE SIGN-IN ───────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
   const loader = document.getElementById('cms-loader');
