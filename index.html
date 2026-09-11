@@ -2678,8 +2678,10 @@ body::before{ display:none !important; }
 
 </style>
 <script defer src="https://cloud.umami.is/script.js" data-website-id="42676c0d-b886-471b-b6d5-d2ecc1d8b7e9"></script>
-<!-- Google Identity Services — powers the nav-bar "Sign in with Google" button -->
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+
+<!-- Firebase Authentication — powers the nav-bar "Sign in with Google" button -->
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
 </head>
 <body>
  
@@ -6371,66 +6373,51 @@ function countryFlagHTML(rawCountry){
 })();
 // ── END CMS-DRIVEN CHANNELS BROWSER ──────────────────────────
 
-// ── GOOGLE SIGN-IN (nav bar) ─────────────────────────────────
-// Uses Google Identity Services' OAuth2 token client so the real "Sign in"
-// button can live in our own pill-shaped nav button instead of Google's
-// stock widget. No backend needed — we just read the public profile.
-//
-// SETUP: create an OAuth 2.0 "Web application" Client ID in Google Cloud
-// Console (APIs & Services → Credentials), add both
-//   https://evstreams.pages.dev  and  https://saptarshiorg.github.io
-// under "Authorized JavaScript origins", then paste the Client ID below.
-const SX_GOOGLE_CLIENT_ID = '377284155889-4uu5pq0e7p8b0jqkvfh0f7jvfecr2pe3.apps.googleusercontent.com';
+// ── GOOGLE SIGN-IN via Firebase Authentication (nav bar) ─────
+// Uses Firebase Auth's signInWithPopup + GoogleAuthProvider. Firebase
+// handles session persistence itself, so no manual localStorage needed.
+// Domains must be listed under Firebase Console → Authentication →
+// Settings → Authorized domains (evstreams.pages.dev already added).
+const firebaseConfig = {
+  apiKey: "AIzaSyAMc0MwhOlm9ce2bg27qWYMHdBkaL-_uh0",
+  authDomain: "saptarshiorg-67933.firebaseapp.com",
+  projectId: "saptarshiorg-67933",
+  storageBucket: "saptarshiorg-67933.firebasestorage.app",
+  messagingSenderId: "377284155889",
+  appId: "1:377284155889:web:094f56ad2c62ce6a660c50",
+  measurementId: "G-522E487P5Y"
+};
 
-let sxTokenClient = null;
+let sxAuth = null;
+let sxGoogleProvider = null;
 
 function sxInitGoogleAuth() {
-  if (!window.google || !google.accounts || !google.accounts.oauth2) return;
+  if (!window.firebase || sxAuth) return;
   try {
-    sxTokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: SX_GOOGLE_CLIENT_ID,
-      scope: 'openid email profile',
-      callback: (resp) => {
-        if (resp && resp.access_token) sxFetchGoogleProfile(resp.access_token);
-      },
+    firebase.initializeApp(firebaseConfig);
+    sxAuth = firebase.auth();
+    sxGoogleProvider = new firebase.auth.GoogleAuthProvider();
+    sxAuth.onAuthStateChanged((user) => {
+      if (user) {
+        sxRenderProfile({ name: user.displayName || '', email: user.email || '', picture: user.photoURL || '' });
+      } else {
+        sxClearProfile();
+      }
     });
   } catch (e) {
-    console.warn('Google auth init failed:', e);
-  }
-  // Restore a previous session (client-side only — just cached profile info)
-  const saved = localStorage.getItem('sx_google_user');
-  if (saved) {
-    try { sxRenderProfile(JSON.parse(saved)); } catch (e) { localStorage.removeItem('sx_google_user'); }
+    console.warn('Firebase auth init failed:', e);
   }
 }
 
 function sxGoogleSignIn() {
-  if (SX_GOOGLE_CLIENT_ID.indexOf('YOUR_GOOGLE_CLIENT_ID') === 0) {
-    alert('Google sign-in isn\'t configured yet — add a Client ID from Google Cloud Console.');
-    return;
-  }
-  if (!sxTokenClient) {
-    if (window.google && google.accounts && google.accounts.oauth2) sxInitGoogleAuth();
-  }
-  if (!sxTokenClient) {
-    alert('Still loading Google sign-in — please try again in a second.');
-    return;
-  }
-  sxTokenClient.requestAccessToken();
-}
-
-async function sxFetchGoogleProfile(accessToken) {
-  try {
-    const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-      headers: { Authorization: 'Bearer ' + accessToken }
-    });
-    const p = await res.json();
-    const user = { name: p.name || '', email: p.email || '', picture: p.picture || '' };
-    localStorage.setItem('sx_google_user', JSON.stringify(user));
-    sxRenderProfile(user);
-  } catch (e) {
-    console.warn('Failed to fetch Google profile:', e);
-  }
+  if (!sxAuth) { sxInitGoogleAuth(); }
+  if (!sxAuth) { alert('Still loading sign-in — please try again in a second.'); return; }
+  sxAuth.signInWithPopup(sxGoogleProvider).catch((err) => {
+    console.warn('Google sign-in failed:', err);
+    if (err && err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+      alert('Sign-in failed: ' + (err && err.message ? err.message : 'unknown error'));
+    }
+  });
 }
 
 function sxRenderProfile(user) {
@@ -6463,18 +6450,7 @@ function sxRenderProfile(user) {
   if (dwEmail) dwEmail.textContent = user.email;
 }
 
-function sxToggleProfileMenu(e) {
-  if (e) e.stopPropagation();
-  const dropdown = document.getElementById('sx-profile-dropdown');
-  const chip = document.getElementById('sx-profile-chip');
-  if (dropdown) dropdown.classList.toggle('open');
-  if (chip) chip.classList.toggle('open');
-}
-
-function sxGoogleSignOut(e) {
-  if (e) e.stopPropagation();
-  localStorage.removeItem('sx_google_user');
-
+function sxClearProfile() {
   const signinBtn = document.getElementById('sx-signin-btn');
   const chip = document.getElementById('sx-profile-chip');
   if (signinBtn) signinBtn.style.display = '';
@@ -6486,10 +6462,20 @@ function sxGoogleSignOut(e) {
   const drawerChip = document.getElementById('drawer-profile-chip');
   if (drawerSignin) drawerSignin.style.display = '';
   if (drawerChip) drawerChip.style.display = 'none';
+}
 
-  if (window.google && google.accounts && google.accounts.id) {
-    google.accounts.id.disableAutoSelect();
-  }
+function sxToggleProfileMenu(e) {
+  if (e) e.stopPropagation();
+  const dropdown = document.getElementById('sx-profile-dropdown');
+  const chip = document.getElementById('sx-profile-chip');
+  if (dropdown) dropdown.classList.toggle('open');
+  if (chip) chip.classList.toggle('open');
+}
+
+function sxGoogleSignOut(e) {
+  if (e) e.stopPropagation();
+  if (sxAuth) sxAuth.signOut();
+  sxClearProfile();
 }
 
 document.addEventListener('click', (e) => {
@@ -6501,19 +6487,9 @@ document.addEventListener('click', (e) => {
     if (chip) chip.classList.remove('open');
   }
 });
-// ── END GOOGLE SIGN-IN ───────────────────────────────────────
 
-// Poll for the Google library instead of relying on the script's onload
-// event, since `async` can fire that before this code has even parsed.
-(function sxTryInitGoogleAuth(attemptsLeft) {
-  if (window.google && google.accounts && google.accounts.oauth2) {
-    sxInitGoogleAuth();
-  } else if (attemptsLeft > 0) {
-    setTimeout(() => sxTryInitGoogleAuth(attemptsLeft - 1), 200);
-  } else {
-    console.warn('Google Identity Services failed to load — sign-in button will be inactive.');
-  }
-})(50); // ~10 seconds of retries
+sxInitGoogleAuth();
+// ── END GOOGLE SIGN-IN ───────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
   const loader = document.getElementById('cms-loader');
