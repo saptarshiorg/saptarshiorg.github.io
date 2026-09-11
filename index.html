@@ -2679,7 +2679,7 @@ body::before{ display:none !important; }
 </style>
 <script defer src="https://cloud.umami.is/script.js" data-website-id="42676c0d-b886-471b-b6d5-d2ecc1d8b7e9"></script>
 <!-- Google Identity Services — powers the nav-bar "Sign in with Google" button -->
-<script src="https://accounts.google.com/gsi/client" async defer onload="sxInitGoogleAuth()"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
  
@@ -3232,7 +3232,7 @@ window.renderFifaPanel = function(rows) {
 
     const cazeStyle = isCaze ? ' style="background:linear-gradient(135deg,rgba(80,60,10,0.55),rgba(40,30,0,0.85));border-color:rgba(240,79,140,0.5);box-shadow:0 0 14px rgba(240,79,140,0.18);"' : '';
     const safeName = (r.channel_name||'').replace(/'/g,"\\'");
-    const watchUrl = r.watch_url || ('https://saptarshixtrasports.pages.dev/india/' + (r.channel_name||'').toLowerCase().replace(/[^a-z0-9]+/g,''));
+    const watchUrl = r.watch_url || ('https://evstreams.pages.dev/india/' + (r.channel_name||'').toLowerCase().replace(/[^a-z0-9]+/g,''));
     const onclick = isComingSoon ? '' : ` onclick="fpxLoad(this,'${watchUrl}','${safeName}')"`;
     const badgeImg = is4K ? `<img class="fpx-4k-badge-big" src="https://png.pngtree.com/png-vector/20221016/ourmid/pngtree-4k-ultra-hd-icon-badges-png-image_6345247.png" alt="4K Ultra HD">` : '';
     const liveDot = isComingSoon ? '' : '<div class="fpx-live-dot"></div>';
@@ -6378,7 +6378,7 @@ function countryFlagHTML(rawCountry){
 //
 // SETUP: create an OAuth 2.0 "Web application" Client ID in Google Cloud
 // Console (APIs & Services → Credentials), add both
-//   https://saptarshixtrasports.pages.dev  and  https://saptarshiorg.github.io
+//   https://evstreams.pages.dev  and  https://saptarshiorg.github.io
 // under "Authorized JavaScript origins", then paste the Client ID below.
 const SX_GOOGLE_CLIENT_ID = '377284155889-4uu5pq0e7p8b0jqkvfh0f7jvfecr2pe3.apps.googleusercontent.com';
 
@@ -6409,7 +6409,13 @@ function sxGoogleSignIn() {
     alert('Google sign-in isn\'t configured yet — add a Client ID from Google Cloud Console.');
     return;
   }
-  if (!sxTokenClient) { console.warn('Google auth not ready yet — try again in a moment.'); return; }
+  if (!sxTokenClient) {
+    if (window.google && google.accounts && google.accounts.oauth2) sxInitGoogleAuth();
+  }
+  if (!sxTokenClient) {
+    alert('Still loading Google sign-in — please try again in a second.');
+    return;
+  }
   sxTokenClient.requestAccessToken();
 }
 
@@ -6496,6 +6502,18 @@ document.addEventListener('click', (e) => {
   }
 });
 // ── END GOOGLE SIGN-IN ───────────────────────────────────────
+
+// Poll for the Google library instead of relying on the script's onload
+// event, since `async` can fire that before this code has even parsed.
+(function sxTryInitGoogleAuth(attemptsLeft) {
+  if (window.google && google.accounts && google.accounts.oauth2) {
+    sxInitGoogleAuth();
+  } else if (attemptsLeft > 0) {
+    setTimeout(() => sxTryInitGoogleAuth(attemptsLeft - 1), 200);
+  } else {
+    console.warn('Google Identity Services failed to load — sign-in button will be inactive.');
+  }
+})(50); // ~10 seconds of retries
 
 document.addEventListener('DOMContentLoaded', () => {
   const loader = document.getElementById('cms-loader');
