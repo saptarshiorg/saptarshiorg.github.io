@@ -6404,6 +6404,10 @@ function sxInitGoogleAuth() {
         sxClearProfile();
       }
     });
+    // Catches the user coming back after a signInWithRedirect() fallback below
+    sxAuth.getRedirectResult().catch((err) => {
+      console.warn('Redirect sign-in failed:', err);
+    });
   } catch (e) {
     console.warn('Firebase auth init failed:', e);
   }
@@ -6413,10 +6417,17 @@ function sxGoogleSignIn() {
   if (!sxAuth) { sxInitGoogleAuth(); }
   if (!sxAuth) { alert('Still loading sign-in — please try again in a second.'); return; }
   sxAuth.signInWithPopup(sxGoogleProvider).catch((err) => {
-    console.warn('Google sign-in failed:', err);
-    if (err && err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
-      alert('Sign-in failed: ' + (err && err.message ? err.message : 'unknown error'));
+    const code = err && err.code;
+    if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
+      return; // user just closed it — not an error worth surfacing
     }
+    if (code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment') {
+      // Browser blocked the popup — fall back to a full-page redirect instead
+      sxAuth.signInWithRedirect(sxGoogleProvider);
+      return;
+    }
+    console.warn('Google sign-in failed:', err);
+    alert('Sign-in failed: ' + (err && err.message ? err.message : 'unknown error'));
   });
 }
 
