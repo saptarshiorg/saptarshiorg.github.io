@@ -550,84 +550,6 @@ header.scrolled {
   .btn-login-label { display: none; }
 }
 
-/* Google sign-in / profile chip — sits in the top nav next to the other action buttons */
-.sx-auth-wrap { position: relative; display: flex; align-items: center; flex-shrink: 0; }
-.sx-profile-chip {
-  display: none; align-items: center; gap: 8px; cursor: pointer;
-  background: rgba(240,79,140,0.10); border: 1px solid rgba(240,79,140,0.30);
-  border-radius: 999px; padding: 4px 12px 4px 4px; transition: all 0.18s var(--ease);
-}
-.sx-profile-chip:hover { background: rgba(240,79,140,0.18); }
-.sx-profile-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; display: block; background: rgba(255,255,255,0.1); }
-.sx-profile-name {
-  font-family: var(--font-display); font-weight: 700; font-size: 12px; letter-spacing: 0.03em;
-  color: rgba(255,255,255,0.9); white-space: nowrap; max-width: 90px; overflow: hidden; text-overflow: ellipsis;
-}
-.sx-profile-caret { color: rgba(255,255,255,0.55); flex-shrink: 0; transition: transform 0.18s var(--ease); }
-.sx-profile-chip.open .sx-profile-caret { transform: rotate(180deg); }
-@media(max-width:1050px) {
-  .sx-profile-chip { padding: 3px; border-radius: 50%; }
-  .sx-profile-name, .sx-profile-caret { display: none; }
-}
-
-.sx-profile-dropdown {
-  position: absolute; top: calc(100% + 12px); right: 0; z-index: 500; width: 230px;
-  background: rgba(8,8,9,0.97); backdrop-filter: var(--blur); border-radius: 8px;
-  box-shadow: 0 0 44px rgba(240,79,140,0.15), 0 14px 44px rgba(0,0,0,0.75);
-  transform: scale(0.9) translateY(-8px); opacity: 0; pointer-events: none;
-  transform-origin: top right; transition: all 0.2s var(--spring); overflow: hidden;
-}
-.sx-profile-dropdown.open { transform: scale(1) translateY(0); opacity: 1; pointer-events: all; }
-.sx-profile-dropdown-head { display: flex; align-items: center; gap: 10px; padding: 14px; border-bottom: 1px solid rgba(255,255,255,0.06); }
-.sx-profile-dropdown-head img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
-.sx-profile-dropdown-name { font-family: var(--font-display); font-weight: 700; font-size: 13px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sx-profile-dropdown-email { font-size: 11px; color: var(--text-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sx-profile-dropdown-item {
-  display: flex; align-items: center; gap: 10px; width: 100%; padding: 11px 14px;
-  background: none; border: none; color: rgba(255,255,255,0.8); font-family: var(--font-display);
-  font-weight: 600; font-size: 12.5px; letter-spacing: 0.02em; text-align: left; cursor: pointer;
-  transition: all 0.15s var(--ease);
-}
-.sx-profile-dropdown-item svg { width: 15px; height: 15px; flex-shrink: 0; }
-.sx-profile-dropdown-item:hover { background: rgba(240,79,140,0.10); color: #FF8FBB; }
-.sx-profile-dropdown-item.sx-signout { color: #F04F8C; border-top: 1px solid rgba(255,255,255,0.06); }
-
-/* Profile page — full modal, reuses .watch-overlay/.watch-modal shell */
-.sx-profile-page-head { display: flex; align-items: center; gap: 16px; padding: 6px 0 22px; border-bottom: 1px solid rgba(255,255,255,0.06); margin-bottom: 20px; }
-.sx-profile-page-avatar { width: 68px; height: 68px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: rgba(255,255,255,0.08); border: 2px solid rgba(240,79,140,0.35); }
-.sx-profile-page-name { font-family: var(--font-display); font-weight: 800; font-size: 18px; color: #fff; }
-.sx-profile-page-email { font-size: 12.5px; color: var(--text-muted); margin-top: 3px; }
-.sx-profile-page-since { font-size: 10.5px; color: var(--text-dim); margin-top: 6px; letter-spacing: 0.03em; }
-
-.sx-profile-page-vip {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  background: rgba(240,79,140,0.08); border: 1px solid rgba(240,79,140,0.25);
-  border-radius: 8px; padding: 14px 16px; margin-bottom: 20px;
-}
-.sx-profile-page-vip-label { font-family: var(--font-display); font-weight: 800; font-size: 12.5px; letter-spacing: 0.05em; color: rgba(255,255,255,0.85); display: flex; align-items: center; gap: 8px; }
-.sx-profile-page-vip-badge { font-size: 10px; font-weight: 800; letter-spacing: 0.06em; color: var(--text-dim); background: rgba(255,255,255,0.06); padding: 3px 9px; border-radius: 999px; }
-.sx-profile-page-vip-cta {
-  background: var(--grad-gold); color: #fff; border: none; border-radius: 999px; padding: 8px 16px;
-  font-family: var(--font-display); font-weight: 800; font-size: 11.5px; letter-spacing: 0.04em;
-  cursor: pointer; white-space: nowrap; transition: all 0.18s var(--ease);
-}
-.sx-profile-page-vip-cta:hover { transform: translateY(-1px); }
-
-.sx-profile-page-section { margin-bottom: 20px; }
-.sx-profile-page-section-title { font-family: var(--font-display); font-weight: 800; font-size: 12px; letter-spacing: 0.08em; color: rgba(255,255,255,0.6); text-transform: uppercase; margin-bottom: 10px; }
-.sx-profile-page-empty {
-  border: 1px dashed rgba(255,255,255,0.12); border-radius: 8px; padding: 20px 16px;
-  text-align: center; color: var(--text-dim); font-size: 12.5px; line-height: 1.5;
-}
-
-.sx-profile-page-signout {
-  display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
-  background: rgba(240,79,140,0.10); border: 1px solid rgba(240,79,140,0.30); color: #F04F8C;
-  border-radius: 8px; padding: 12px; font-family: var(--font-display); font-weight: 800;
-  font-size: 12.5px; letter-spacing: 0.04em; cursor: pointer; transition: all 0.18s var(--ease);
-}
-.sx-profile-page-signout:hover { background: rgba(240,79,140,0.18); }
-
 .btn-yt {
   display: flex; align-items: center; justify-content: center; gap: 0;
   background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.75);
@@ -748,30 +670,6 @@ header.scrolled {
 .drawer-login-icon { display: flex; align-items: center; flex-shrink: 0; }
 .drawer-login-icon svg { width: 16px; height: 16px; display: block; }
 .drawer-divider { height: 1px; background: rgba(255,255,255,0.05); margin: 8px 16px; }
-
-/* Drawer (mobile) profile block — sits under the drawer header, above the nav links */
-.drawer-profile { padding: 4px 12px 10px; }
-.drawer-profile-signin {
-  display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
-  color: var(--cu-accent,#F04F8C) !important; background: rgba(240,79,140,0.10);
-  border: 1px solid rgba(240,79,140,0.30); border-radius: 999px; padding: 11px 16px;
-  font-family: var(--font-display); font-weight: 800; font-size: 13px; letter-spacing: 0.03em;
-  cursor: pointer; transition: all 0.18s var(--ease);
-}
-.drawer-profile-signin:hover { background: rgba(240,79,140,0.18); }
-.drawer-profile-chip {
-  display: none; align-items: center; gap: 10px; padding: 10px 12px;
-  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
-}
-.drawer-profile-chip img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
-.drawer-profile-info { flex: 1; min-width: 0; }
-.drawer-profile-info-name { font-family: var(--font-display); font-weight: 700; font-size: 13px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.drawer-profile-info-email { font-size: 11px; color: var(--text-muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.drawer-profile-signout {
-  background: none; border: none; color: #F04F8C; flex-shrink: 0; cursor: pointer;
-  padding: 6px; display: flex; align-items: center; justify-content: center;
-}
-.drawer-profile-signout svg { width: 18px; height: 18px; display: block; }
 
 /* ────────────────────────────────────────────
    HERO — Desktop card grid
@@ -2714,10 +2612,6 @@ body::before{ display:none !important; }
 
 </style>
 <script defer src="https://cloud.umami.is/script.js" data-website-id="42676c0d-b886-471b-b6d5-d2ecc1d8b7e9"></script>
-
-<!-- Firebase Authentication — powers the nav-bar "Sign in with Google" button -->
-<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
 </head>
 <body>
  
@@ -2737,23 +2631,6 @@ body::before{ display:none !important; }
     <img class="drawer-logo" id="drawer-logo" src="" alt="Logo" style="display:none">
     <button class="drawer-close" onclick="closeDrawer()">✕</button>
   </div>
-  <div class="drawer-profile" id="drawer-profile">
-    <button type="button" class="drawer-profile-signin" id="drawer-signin-btn" onclick="sxGoogleSignIn()">
-      <svg width="16" height="16" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.9-2.26 5.36-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-      Sign in with Google
-    </button>
-    <div class="drawer-profile-chip" id="drawer-profile-chip" onclick="closeDrawer();openProfilePage();" style="cursor:pointer;">
-      <img id="drawer-profile-avatar" src="" alt="">
-      <div class="drawer-profile-info">
-        <div class="drawer-profile-info-name" id="drawer-profile-name"></div>
-        <div class="drawer-profile-info-email" id="drawer-profile-email"></div>
-      </div>
-      <button type="button" class="drawer-profile-signout" onclick="event.stopPropagation();sxGoogleSignOut(event)" aria-label="Sign out" title="Sign out">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-      </button>
-    </div>
-  </div>
-  <div class="drawer-divider"></div>
   <nav class="drawer-nav" id="drawer-nav"></nav>
 </div>
 
@@ -2813,38 +2690,6 @@ body::before{ display:none !important; }
         <svg class="btn-telegram-icon" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M170.6 68.3 145.9 187c-1.9 8.4-6.8 10.4-13.8 6.5l-38.1-28.1-18.4 17.7c-2 2-3.7 3.7-7.6 3.7l2.7-38.8 70.6-63.8c3.1-2.7-.7-4.2-4.8-1.5L54 137.5l-38-11.9c-8.3-2.6-8.4-8.3 1.7-12.2l148.3-57.2c6.9-2.6 13 1.6 10.6 12.1z"/></svg>
         <span class="btn-telegram-label">Telegram</span>
       </a>
-    </div>
-
-    <!-- GOOGLE SIGN-IN / PROFILE — nav bar auth widget -->
-    <div class="sx-auth-wrap" id="sx-auth-wrap">
-      <button type="button" class="btn-login-nav" id="sx-signin-btn" onclick="sxGoogleSignIn()" aria-label="Sign in with Google" title="Sign in with Google">
-        <span class="btn-login-icon">
-          <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.9-2.26 5.36-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-        </span>
-        <span class="btn-login-label">Sign in</span>
-      </button>
-      <div class="sx-profile-chip" id="sx-profile-chip" onclick="sxToggleProfileMenu(event)">
-        <img class="sx-profile-avatar" id="sx-profile-avatar" src="" alt="">
-        <span class="sx-profile-name" id="sx-profile-name"></span>
-        <svg class="sx-profile-caret" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-      </div>
-      <div class="sx-profile-dropdown" id="sx-profile-dropdown">
-        <div class="sx-profile-dropdown-head">
-          <img id="sx-profile-dropdown-avatar" src="" alt="">
-          <div style="min-width:0">
-            <div class="sx-profile-dropdown-name" id="sx-profile-dropdown-name"></div>
-            <div class="sx-profile-dropdown-email" id="sx-profile-dropdown-email"></div>
-          </div>
-        </div>
-        <button type="button" class="sx-profile-dropdown-item" onclick="openProfilePage();sxToggleProfileMenu();">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          My Profile
-        </button>
-        <button type="button" class="sx-profile-dropdown-item sx-signout" onclick="sxGoogleSignOut(event)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          Sign out
-        </button>
-      </div>
     </div>
     <div class="nav-device-info" id="nav-device-info" title="This device's name and ID">
       <span class="nav-device-name" id="nav-device-name"></span>
@@ -3274,7 +3119,7 @@ window.renderFifaPanel = function(rows) {
 
     const cazeStyle = isCaze ? ' style="background:linear-gradient(135deg,rgba(80,60,10,0.55),rgba(40,30,0,0.85));border-color:rgba(240,79,140,0.5);box-shadow:0 0 14px rgba(240,79,140,0.18);"' : '';
     const safeName = (r.channel_name||'').replace(/'/g,"\\'");
-    const watchUrl = r.watch_url || ('https://evstreams.pages.dev/india/' + (r.channel_name||'').toLowerCase().replace(/[^a-z0-9]+/g,''));
+    const watchUrl = r.watch_url || ('https://saptarshixtrasports.pages.dev/india/' + (r.channel_name||'').toLowerCase().replace(/[^a-z0-9]+/g,''));
     const onclick = isComingSoon ? '' : ` onclick="fpxLoad(this,'${watchUrl}','${safeName}')"`;
     const badgeImg = is4K ? `<img class="fpx-4k-badge-big" src="https://png.pngtree.com/png-vector/20221016/ourmid/pngtree-4k-ultra-hd-icon-badges-png-image_6345247.png" alt="4K Ultra HD">` : '';
     const liveDot = isComingSoon ? '' : '<div class="fpx-live-dot"></div>';
@@ -4512,50 +4357,6 @@ window.sxSwitchTab = sxSwitchTab;
     </div>
     <div class="watch-modal-body" id="watch-modal-body"></div>
     <div class="watch-modal-footer" id="watch-modal-footer"></div>
-  </div>
-</div>
-
-<!-- PROFILE PAGE — opened from the nav-bar / drawer profile chip once signed in -->
-<div class="watch-overlay" id="sxProfileOverlay" onclick="if(event.target===this)closeProfilePage()">
-  <div class="watch-modal">
-    <div class="watch-modal-header">
-      <div class="watch-modal-title">👤 My Profile</div>
-      <button class="watch-modal-close" onclick="closeProfilePage()">✕</button>
-    </div>
-    <div class="watch-modal-body">
-      <div class="sx-profile-page-head">
-        <img class="sx-profile-page-avatar" id="sx-profile-page-avatar" src="" alt="">
-        <div style="min-width:0">
-          <div class="sx-profile-page-name" id="sx-profile-page-name"></div>
-          <div class="sx-profile-page-email" id="sx-profile-page-email"></div>
-          <div class="sx-profile-page-since" id="sx-profile-page-since"></div>
-        </div>
-      </div>
-
-      <div class="sx-profile-page-vip">
-        <div class="sx-profile-page-vip-label">
-          <svg width="16" height="14" viewBox="0 0 24 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2 6.5a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm20 0a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm-10-2a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zM2 7.8l4.6 3.4L12 5l5.4 6.2L22 7.8 20 17H4L2 7.8z"/></svg>
-          Membership
-          <span class="sx-profile-page-vip-badge">FREE</span>
-        </div>
-        <button type="button" class="sx-profile-page-vip-cta" onclick="closeProfilePage();openVip();">Get VIP</button>
-      </div>
-
-      <div class="sx-profile-page-section">
-        <div class="sx-profile-page-section-title">Favorites</div>
-        <div class="sx-profile-page-empty">You haven't added any favorites yet. Tap the ♥ on a channel or match to save it here.</div>
-      </div>
-
-      <div class="sx-profile-page-section">
-        <div class="sx-profile-page-section-title">Continue Watching</div>
-        <div class="sx-profile-page-empty">Nothing in progress right now — pick up where you left off once you start watching.</div>
-      </div>
-
-      <button type="button" class="sx-profile-page-signout" onclick="sxGoogleSignOut(event);closeProfilePage();">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        Sign out
-      </button>
-    </div>
   </div>
 </div>
 
@@ -6456,178 +6257,6 @@ function countryFlagHTML(rawCountry){
   });
 })();
 // ── END CMS-DRIVEN CHANNELS BROWSER ──────────────────────────
-
-// ── GOOGLE SIGN-IN via Firebase Authentication (nav bar) ─────
-// Uses Firebase Auth's signInWithPopup + GoogleAuthProvider. Firebase
-// handles session persistence itself, so no manual localStorage needed.
-// Domains must be listed under Firebase Console → Authentication →
-// Settings → Authorized domains (evstreams.pages.dev already added).
-const firebaseConfig = {
-  apiKey: "AIzaSyAMc0MwhOlm9ce2bg27qWYMHdBkaL-_uh0",
-  authDomain: "saptarshiorg-67933.firebaseapp.com",
-  projectId: "saptarshiorg-67933",
-  storageBucket: "saptarshiorg-67933.firebasestorage.app",
-  messagingSenderId: "377284155889",
-  appId: "1:377284155889:web:094f56ad2c62ce6a660c50",
-  measurementId: "G-522E487P5Y"
-};
-
-let sxAuth = null;
-let sxGoogleProvider = null;
-
-function sxInitGoogleAuth() {
-  if (!window.firebase || sxAuth) return;
-  try {
-    firebase.initializeApp(firebaseConfig);
-    sxAuth = firebase.auth();
-    sxGoogleProvider = new firebase.auth.GoogleAuthProvider();
-    sxAuth.onAuthStateChanged((user) => {
-      if (user) {
-        sxRenderProfile({
-          name: user.displayName || '',
-          email: user.email || '',
-          picture: user.photoURL || '',
-          since: (user.metadata && user.metadata.creationTime) || ''
-        });
-      } else {
-        sxClearProfile();
-      }
-    });
-    // Catches the user coming back after a signInWithRedirect() fallback below
-    sxAuth.getRedirectResult().then((result) => {
-      if (!result || !result.user) {
-        // Redirect completed with no user and no thrown error — usually means
-        // the browser silently blocked the storage/cookie exchange with the
-        // Firebase authDomain (common with strict third-party cookie settings).
-        console.warn('Google redirect sign-in returned no user. If you just tried signing in, your browser likely blocked third-party cookies for firebaseapp.com/google.com.');
-      }
-    }).catch((err) => {
-      console.error('Redirect sign-in failed:', err && err.code, err && err.message);
-      alert('Sign-in failed after redirect: ' + (err && err.message ? err.message : 'unknown error') + (err && err.code ? ' (' + err.code + ')' : ''));
-    });
-  } catch (e) {
-    console.warn('Firebase auth init failed:', e);
-  }
-}
-
-function sxGoogleSignIn() {
-  if (!sxAuth) { sxInitGoogleAuth(); }
-  if (!sxAuth) { alert('Still loading sign-in — please try again in a second.'); return; }
-  sxAuth.signInWithPopup(sxGoogleProvider).catch((err) => {
-    const code = err && err.code;
-    if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
-      return; // user just closed it — not an error worth surfacing
-    }
-    if (code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment') {
-      // Browser blocked the popup — fall back to a full-page redirect instead
-      sxAuth.signInWithRedirect(sxGoogleProvider);
-      return;
-    }
-    console.warn('Google sign-in failed:', err);
-    alert('Sign-in failed: ' + (err && err.message ? err.message : 'unknown error'));
-  });
-}
-
-let sxCurrentUser = null;
-
-function sxRenderProfile(user) {
-  sxCurrentUser = user;
-  const firstName = (user.name || '').split(' ')[0];
-
-  const signinBtn = document.getElementById('sx-signin-btn');
-  const chip = document.getElementById('sx-profile-chip');
-  if (signinBtn) signinBtn.style.display = 'none';
-  if (chip) chip.style.display = 'flex';
-  const avatar = document.getElementById('sx-profile-avatar');
-  if (avatar) avatar.src = user.picture;
-  const nameEl = document.getElementById('sx-profile-name');
-  if (nameEl) nameEl.textContent = firstName;
-  const dAvatar = document.getElementById('sx-profile-dropdown-avatar');
-  if (dAvatar) dAvatar.src = user.picture;
-  const dName = document.getElementById('sx-profile-dropdown-name');
-  if (dName) dName.textContent = user.name;
-  const dEmail = document.getElementById('sx-profile-dropdown-email');
-  if (dEmail) dEmail.textContent = user.email;
-
-  const drawerSignin = document.getElementById('drawer-signin-btn');
-  const drawerChip = document.getElementById('drawer-profile-chip');
-  if (drawerSignin) drawerSignin.style.display = 'none';
-  if (drawerChip) drawerChip.style.display = 'flex';
-  const dwAvatar = document.getElementById('drawer-profile-avatar');
-  if (dwAvatar) dwAvatar.src = user.picture;
-  const dwName = document.getElementById('drawer-profile-name');
-  if (dwName) dwName.textContent = user.name;
-  const dwEmail = document.getElementById('drawer-profile-email');
-  if (dwEmail) dwEmail.textContent = user.email;
-}
-
-function sxClearProfile() {
-  sxCurrentUser = null;
-  const signinBtn = document.getElementById('sx-signin-btn');
-  const chip = document.getElementById('sx-profile-chip');
-  if (signinBtn) signinBtn.style.display = '';
-  if (chip) { chip.style.display = 'none'; chip.classList.remove('open'); }
-  const dropdown = document.getElementById('sx-profile-dropdown');
-  if (dropdown) dropdown.classList.remove('open');
-
-  const drawerSignin = document.getElementById('drawer-signin-btn');
-  const drawerChip = document.getElementById('drawer-profile-chip');
-  if (drawerSignin) drawerSignin.style.display = '';
-  if (drawerChip) drawerChip.style.display = 'none';
-}
-
-function openProfilePage() {
-  if (!sxCurrentUser) { sxGoogleSignIn(); return; }
-  const avatar = document.getElementById('sx-profile-page-avatar');
-  if (avatar) avatar.src = sxCurrentUser.picture || '';
-  const name = document.getElementById('sx-profile-page-name');
-  if (name) name.textContent = sxCurrentUser.name || '';
-  const email = document.getElementById('sx-profile-page-email');
-  if (email) email.textContent = sxCurrentUser.email || '';
-  const since = document.getElementById('sx-profile-page-since');
-  if (since) {
-    if (sxCurrentUser.since) {
-      const d = new Date(sxCurrentUser.since);
-      since.textContent = 'Member since ' + d.toLocaleDateString(undefined, { year: 'numeric', month: 'long' });
-    } else {
-      since.textContent = '';
-    }
-  }
-  const overlay = document.getElementById('sxProfileOverlay');
-  if (overlay) overlay.classList.add('open');
-}
-
-function closeProfilePage() {
-  const overlay = document.getElementById('sxProfileOverlay');
-  if (overlay) overlay.classList.remove('open');
-}
-
-function sxToggleProfileMenu(e) {
-  if (e) e.stopPropagation();
-  const dropdown = document.getElementById('sx-profile-dropdown');
-  const chip = document.getElementById('sx-profile-chip');
-  if (dropdown) dropdown.classList.toggle('open');
-  if (chip) chip.classList.toggle('open');
-}
-
-function sxGoogleSignOut(e) {
-  if (e) e.stopPropagation();
-  if (sxAuth) sxAuth.signOut();
-  sxClearProfile();
-}
-
-document.addEventListener('click', (e) => {
-  const wrap = document.getElementById('sx-auth-wrap');
-  if (wrap && !wrap.contains(e.target)) {
-    const dropdown = document.getElementById('sx-profile-dropdown');
-    const chip = document.getElementById('sx-profile-chip');
-    if (dropdown) dropdown.classList.remove('open');
-    if (chip) chip.classList.remove('open');
-  }
-});
-
-sxInitGoogleAuth();
-// ── END GOOGLE SIGN-IN ───────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
   const loader = document.getElementById('cms-loader');
