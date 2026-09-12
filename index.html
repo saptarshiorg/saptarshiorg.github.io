@@ -646,12 +646,12 @@ header.scrolled {
 .drawer-nav .drawer-movies .movies-logo-icon { width: 22px; height: 22px; object-fit: contain; border-radius: 8px; flex-shrink: 0; }
 .drawer-nav .drawer-vip {
   color: #FFFFFF !important;
-  background: linear-gradient(135deg,#FF8FBB,#C21764);
+  background: #F04F8C;
   margin: 6px 12px 4px; padding: 12px 16px;
   font-weight: 800 !important; letter-spacing: 0.03em;
 }
 .drawer-nav .drawer-vip:hover {
-  background: linear-gradient(135deg,#FFB3CF,#FF5FA0);
+  background: #FF3D96;
   color: #FFFFFF !important; padding-left: 16px;
 }
 .drawer-vip-icon { display: flex; align-items: center; flex-shrink: 0; }
@@ -1265,6 +1265,21 @@ header.scrolled {
   letter-spacing:0.08em; color: rgba(255,255,255,0.75); text-transform:uppercase;
 }
 
+/* ── Home screen "Live Channels" preview: compact one-line list rows on
+   mobile (thumb + name + badge), instead of the tall vertical
+   match-style poster cards used for Matches/Movies previews. ── */
+@media(max-width:560px){
+  #channelsPreviewGrid{ display:flex !important; flex-direction:column; gap:8px; }
+  #channelsPreviewGrid .fx2-card{ flex-direction:row !important; align-items:center; border-radius:8px; }
+  #channelsPreviewGrid .fx2-thumb{ width:84px !important; flex:0 0 84px !important; aspect-ratio:16/9; }
+  #channelsPreviewGrid .fx2-body{ padding:8px 12px 8px 0 !important; gap:4px !important; flex:1; min-width:0; }
+  #channelsPreviewGrid .fx2-title{ font-size:13px !important; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #channelsPreviewGrid .fx2-date{ display:none; }
+  #channelsPreviewGrid .fx2-badge{ top:6px !important; left:6px !important; padding:3px 7px !important; font-size:8.5px !important; }
+  #channelsPreviewGrid .fx2-viewall{ flex-direction:row; min-height:0; padding:14px; gap:10px; }
+  #channelsPreviewGrid .fx2-viewall-arrow{ width:36px; height:36px; font-size:16px; }
+}
+
 /* ── Live TV home preview: categories list + View All Channels ── */
 .chp-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; }
 
@@ -1492,18 +1507,19 @@ header.scrolled {
 }
 .ott-btn {
   display: inline-flex; align-items: center; gap: 6px;
-  background: var(--grad-gold); color: #FFFFFF; border: none;
+  background: var(--cu-accent,#F04F8C); color: #FFFFFF; border: none;
   font-family: var(--font-display); font-weight: 800; font-size: 11px;
   padding: 8px 16px; border-radius: 6px; text-decoration: none;
-  transition: all 0.22s var(--spring);
-  box-shadow: 0 1px 0 rgba(255,255,255,0.55) inset, 0 -2px 0 rgba(122,10,62,0.4) inset, 0 5px 0 -1px rgba(122,10,62,0.5), 0 8px 24px rgba(240,79,140,0.35);
+  transition: background-color 0.2s ease, transform 0.15s ease;
+  box-shadow: none;
   position: relative; z-index: 2;
   cursor: pointer; margin: 0 12px 12px;
   width: calc(100% - 24px);
 }
 .ott-btn:hover:not(:disabled) { 
-  transform: translateY(-2px) scale(1.02); 
-  box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 -2px 0 rgba(122,10,62,0.4) inset, 0 7px 0 -1px rgba(122,10,62,0.5), 0 14px 36px rgba(240,79,140,0.50);
+  transform: translateY(-1px); 
+  background: #FF3D96;
+  box-shadow: none;
 }
 .ott-btn:disabled {
   opacity: 0.8;
@@ -3356,7 +3372,7 @@ window.goHome = goHome;
 // VIP page. Deliberately NOT used for the stream player, FanCode,
 // Prime Video or Willow OTT overlays — those stay full-bleed/immersive.
 // ══════════════════════════════════════════════════════════════════════
-const SX_HEADER_TOPBARS = ['livetv-topbar','movies-topbar','fifa-topbar','vip-topbar'];
+const SX_HEADER_TOPBARS = ['livetv-topbar','movies-topbar','fifa-topbar'];
 function sxHeaderHome(){
   const header = document.querySelector('header');
   const anchor = document.getElementById('sx-header-anchor');
@@ -3425,7 +3441,7 @@ window.sxSwitchTab = sxSwitchTab;
 </div>
 <div class="smo-empty-box" id="smo-sport-prompt" style="display:none;margin:14px 20px 0;">SELECT A SPORT ABOVE TO VIEW MATCHES</div>
 <div class="match-overlay-section" id="match-overlay-section">
-  <div class="slider-match-overlay" id="match-overlay"></div>
+  <div class="slider-match-overlay" id="match-overlay"><div class="smo-section"><div class="sk sk-match-card"></div><div class="sk sk-match-card"></div><div class="sk sk-match-card"></div><div class="sk sk-match-card"></div></div></div>
 </div>
 </div>
 
@@ -4002,17 +4018,18 @@ window.sxSwitchTab = sxSwitchTab;
 }
 .ott-btn {
   display: inline-flex; align-items: center; gap: 6px;
-  background: var(--grad-gold); color: #FFFFFF; border: none;
+  background: var(--cu-accent,#F04F8C); color: #FFFFFF; border: none;
   font-family: var(--font-display); font-weight: 800; font-size: 11px;
   padding: 8px 18px; border-radius: 6px; text-decoration: none;
-  transition: all 0.22s var(--spring);
-  box-shadow: 0 1px 0 rgba(255,255,255,0.55) inset, 0 -2px 0 rgba(122,10,62,0.4) inset, 0 5px 0 -1px rgba(122,10,62,0.5), 0 8px 24px rgba(240,79,140,0.35);
+  transition: background-color 0.2s ease, transform 0.15s ease;
+  box-shadow: none;
   position: relative; z-index: 2;
   cursor: pointer;
 }
 .ott-btn:hover:not(:disabled) { 
-  transform: translateY(-2px) scale(1.02); 
-  box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 -2px 0 rgba(122,10,62,0.4) inset, 0 7px 0 -1px rgba(122,10,62,0.5), 0 14px 36px rgba(240,79,140,0.50);
+  transform: translateY(-1px); 
+  background: #FF3D96;
+  box-shadow: none;
 }
 .ott-btn:disabled {
   opacity: 0.8;
@@ -4641,7 +4658,8 @@ function renderNav(rows) {
     const click = r.onclick ? ` onclick="${r.onclick}"` : '';
     const sxtab = r.sxtab ? ` data-sxtab="${r.sxtab}"` : '';
     dHtml += `<a href="${r.href}"${activeCls}${sxtab}${target}${click}>${r.label}</a>`;
-    mHtml += `<a href="${r.href}"${sxtab}${target}${click ? click : ' onclick="closeDrawer()"'}>${r.label}</a>`;
+    const mclick = r.onclick ? ` onclick="closeDrawer();${r.onclick}"` : ' onclick="closeDrawer()"';
+    mHtml += `<a href="${r.href}"${sxtab}${target}${mclick}>${r.label}</a>`;
   });
   // VIP — hamburger drawer only (desktop already has the gold header button)
   mHtml += `<a href="#" class="drawer-vip" onclick="closeDrawer();openVip();return false;"><span class="drawer-vip-icon"><svg viewBox="0 0 24 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2 6.5a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm20 0a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm-10-2a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zM2 7.8l4.6 3.4L12 5l5.4 6.2L22 7.8 20 17H4L2 7.8z"/></svg></span>Get VIP</a>`;
@@ -5740,12 +5758,21 @@ function renderChannelsPreview() {
   const all = (window._cmsChannels || []).filter(c => (c.group || '').trim() !== 'News');
   if (!all.length) { grid.innerHTML = ''; return; }
 
-  // Show live channels first, then a handful of others — like the
-  // homepage match cards, only a short preview here ("View All" opens
-  // the full Live TV channel guide).
+  // One representative channel per section/group (Star Sports, Sony Sports,
+  // FanCode, etc.) instead of just grabbing whichever channels happen to
+  // sort first overall — so the home preview actually shows a spread of
+  // categories. Within a group, a live channel is preferred over an
+  // off-air one; groups with a live pick are shown first.
   const isLive = c => (c.status_live_off || '').toUpperCase() === 'LIVE';
-  const sorted = [...all].sort((a, b) => (isLive(b) ? 1 : 0) - (isLive(a) ? 1 : 0));
-  const preview = sorted.slice(0, 6);
+  const groupOf = c => (c.group || '').trim() || 'Other';
+  const byGroup = new Map();
+  all.forEach(c => {
+    const g = groupOf(c);
+    const current = byGroup.get(g);
+    if (!current || (!isLive(current) && isLive(c))) byGroup.set(g, c);
+  });
+  const preview = Array.from(byGroup.values())
+    .sort((a, b) => (isLive(b) ? 1 : 0) - (isLive(a) ? 1 : 0));
 
   const channelCards = preview.map(c => {
     const grp = (c.group || '').trim() || 'Other';
@@ -5786,26 +5813,32 @@ function renderFixtures(rows) {
   // sheet — kept short on purpose ("View All" opens the full Matches
   // page). The full list lives in the Matches overlay.
   //
-  // Ordering priority for the home preview:
-  //   1) Any category branded "WORLD CUP" (or just "WORL") — e.g. "FIFA
-  //      World Cup 2026" — always shows first, regardless of live status.
-  //   2) Among the rest, live matches show next.
-  // Only these two kinds of matches appear on the home screen at all —
-  // ordinary upcoming matches outside a World Cup category are left out
-  // here (they're still visible on the full Matches page).
+  // Ordering priority for the home preview (live-first, like the full
+  // Matches page):
+  //   1) Any category branded "WORLD CUP" (or just "WORL") that's LIVE
+  //   2) Any other LIVE match
+  //   3) Any category branded "WORLD CUP" that's UPCOMING
+  //   4) Any other UPCOMING match
+  // Finished matches never appear on the home preview. If nothing is
+  // live or upcoming, the section shows a "NO MATCHES LISTED" message
+  // instead of an empty grid.
   const isWorldCup = c => /worl/i.test(c.game || '');
   const isLiveCard = c => matchStatusText(c).toLowerCase() === 'live';
   const fixtureRank = c => {
-    if (isWorldCup(c)) return isLiveCard(c) ? 0 : 1;
-    return isLiveCard(c) ? 2 : 3;
+    if (isLiveCard(c)) return isWorldCup(c) ? 0 : 1;
+    return isWorldCup(c) ? 2 : 3;
   };
   const source = (window._matchCardsData || [])
-    .filter(c => !isMatchFinished(c) && (isLiveCard(c) || isWorldCup(c)))
+    .filter(c => !isMatchFinished(c))
     .slice()
     .sort((a, b) => fixtureRank(a) - fixtureRank(b));
   const fx = source.slice(0, 11);
   const grid = document.getElementById('fixtures-grid');
   if (!grid) return;
+  if (!fx.length) {
+    grid.innerHTML = `<div class="smo-empty-box">NO MATCHES LISTED NOW</div>`;
+    return;
+  }
   grid.innerHTML = fx.map(c => {
     const isLive = matchStatusText(c).toLowerCase() === 'live';
     const thumb = c.banner_image_url
@@ -6339,7 +6372,7 @@ document.addEventListener('DOMContentLoaded', () => {
   <a class="mtab" data-sxtab="livetv" href="#sxTabPanels" style="position:relative;" onclick="event.preventDefault();openLiveTV();">
     <span class="mtab-live-dot"></span>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-    Live Sports
+    Live Channels
   </a>
   <a class="mtab" data-sxtab="ott" href="#sxTabPanels" onclick="event.preventDefault();openOTT();">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="10" rx="2"/><path d="M12 12v2M8 12v2M16 12v2"/></svg>
@@ -7543,9 +7576,9 @@ function closeAdminChatDiscordPopup(){
   flex-shrink:0; display:none; align-items:center; gap:6px;
   font-family:var(--cu-font,inherit); font-weight:800; font-size:12.5px;
   color:#fff; padding:13px 18px; border-radius:8px; cursor:pointer;
-  background:linear-gradient(135deg,#C21764 0%,#E0155F 100%); border:none;
+  background:var(--cu-accent,#F04F8C); border:none;
 }
-.va-search-play-btn:hover{ filter:brightness(1.1); }
+.va-search-play-btn:hover{ background:#FF3D96; }
 .va-search-hint{
   font-size:11.5px; color:rgba(255,255,255,0.4); margin-top:-6px;
 }
@@ -7638,7 +7671,34 @@ function closeAdminChatDiscordPopup(){
 .va-tv-modal-actions{ display:flex; gap:8px; justify-content:flex-end; }
 .va-tv-modal-actions button{ font-family:var(--cu-font,inherit); font-weight:700; font-size:12px; padding:8px 14px; border-radius:6px; cursor:pointer; border:none; }
 .va-tv-modal-cancel{ background:rgba(255,255,255,0.08); color:#fff; }
-.va-tv-modal-play{ background:linear-gradient(135deg,#C21764,#E0155F); color:#fff; font-weight:800; }
+.va-tv-modal-play{ background:var(--cu-accent,#F04F8C); color:#fff; font-weight:800; }
+
+/* ── Load-on-demand gate: Movies content only starts fetching once the
+     visitor explicitly taps "Load Movies", instead of auto-fetching the
+     moment the Movies page opens (from hamburger, nav, or bottom tab). ── */
+.va-load-gate{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  text-align:center; gap:12px; padding:60px 20px; margin-top:8px;
+  background: var(--pm-surface-1,rgba(255,255,255,0.03));
+  border:1px solid var(--pm-border,rgba(255,255,255,0.08));
+  border-radius: 12px;
+}
+.va-load-gate-icon{ font-size:34px; line-height:1; }
+.va-load-gate-title{
+  font-family:var(--cu-font,inherit); font-weight:800; font-size:16px; color:#fff;
+}
+.va-load-gate-sub{
+  font-family:var(--cu-font,inherit); font-size:13px; color:rgba(255,255,255,0.60);
+  max-width:320px; line-height:1.5;
+}
+.va-load-gate-btn{
+  display:inline-flex; align-items:center; gap:8px;
+  background: var(--cu-accent,#F04F8C); color:#fff; border:none;
+  font-family:var(--cu-font,inherit); font-weight:800; font-size:14px;
+  padding:12px 26px; border-radius:8px; cursor:pointer; letter-spacing:0.02em;
+  margin-top:6px; transition: background-color .2s ease, transform .15s ease;
+}
+.va-load-gate-btn:hover{ background:#FF3D96; transform: translateY(-1px); }
 </style>
 
 <div id="movies-overlay">
@@ -7665,6 +7725,7 @@ function closeAdminChatDiscordPopup(){
             </div>
           </div>
 
+          <div id="vaLoadableContent">
           <div class="va-search-row">
             <div class="epg-search-box">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -7706,6 +7767,7 @@ function closeAdminChatDiscordPopup(){
           <div class="va-grid" id="vaMovieGrid"><div class="sk sk-poster"></div><div class="sk sk-poster"></div><div class="sk sk-poster"></div><div class="sk sk-poster"></div><div class="sk sk-poster"></div><div class="sk sk-poster"></div><div class="sk sk-poster"></div><div class="sk sk-poster"></div><div class="sk sk-poster"></div><div class="sk sk-poster"></div></div>
           <div class="va-sentinel" id="vaSentinel"></div>
           <div class="va-loading-more" id="vaLoadingMore" style="display:none;">Loading more…</div>
+          </div>
         </div>
       </div>
     </section>
@@ -8565,6 +8627,10 @@ function openMoviesOverlay(){
   document.body.style.overflow = 'hidden';
   window.scrollTo(0,0);
   document.querySelectorAll('[data-sxtab]').forEach(el => el.classList.toggle('active', el.dataset.sxtab === 'movies'));
+  // Movies loads automatically the instant this page opens — no manual
+  // "Load Movies" tap gate. The background preload (bottom of file) usually
+  // already kicked this off right after the site loaded; if it somehow
+  // hasn't run yet, start it right now so there's no visible wait either way.
   if (typeof window.vaInit === 'function'){
     window.vaInit();
     window.vaInit = null;
@@ -8577,31 +8643,78 @@ function closeMoviesOverlay(){
   sxHeaderHome();
 }
 
+// Some networks/ISPs/corporate firewalls block the .ru domain outright or
+// the response comes back without CORS headers, which makes a plain fetch()
+// fail silently in the browser (rejected promise, no useful error shown to
+// the visitor) — that's the main reason the Movies grid can get stuck on
+// its loading skeleton forever. To make this resilient: try the direct
+// request first, and if that fails, retry once through a public CORS
+// proxy before giving up.
+const VIDAPI_CORS_PROXY = 'https://api.allorigins.win/raw?url=';
 async function vaFetchPage(type, page){
   const path = type === 'tv' ? 'tvshows' : 'movies';
-  const r = await fetch(`${VIDAPI_LIST_BASE}/${path}/latest/page-${page}.json`);
-  if (!r.ok) throw new Error('HTTP ' + r.status);
-  return r.json();
+  const url = `${VIDAPI_LIST_BASE}/${path}/latest/page-${page}.json`;
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return await r.json();
+  } catch (directErr) {
+    try {
+      const r2 = await fetch(VIDAPI_CORS_PROXY + encodeURIComponent(url));
+      if (!r2.ok) throw new Error('HTTP ' + r2.status);
+      return await r2.json();
+    } catch (proxyErr) {
+      throw directErr; // surface the original (usually more informative) error
+    }
+  }
 }
 
-async function vaLoadMoreCurrent(){
-  const pool = vaPools[vaCurrentType];
+async function vaLoadMoreCurrent(type){
+  type = type || vaCurrentType;
+  const pool = vaPools[type];
   if (pool.loading) return;
   if (pool.totalPages !== null && pool.page > pool.totalPages) return;
   pool.loading = true;
-  const loadingEl = document.getElementById('vaLoadingMore');
+  // Only touch the visible "Loading more…" UI when we're loading the type
+  // that's actually on screen — a background prefetch of the other type
+  // (Movie vs TV Show) shouldn't flicker any loading indicator at all.
+  const isVisible = type === vaCurrentType;
+  const loadingEl = isVisible ? document.getElementById('vaLoadingMore') : null;
   if (loadingEl) loadingEl.style.display = '';
-  try {
-    const data = await vaFetchPage(vaCurrentType, pool.page);
-    pool.totalPages = data.total_pages;
-    pool.all.push(...(data.items || []));
-    pool.page++;
-    vaRenderMovies();
-  } catch (e) {
-    console.warn('VidAPI fetch failed:', e);
+  // Retry a couple of times with a short backoff before giving up — a
+  // single transient failure shouldn't leave the whole section stuck.
+  const ATTEMPTS = 3;
+  let lastErr = null;
+  for (let i = 0; i < ATTEMPTS; i++) {
+    try {
+      const data = await vaFetchPage(type, pool.page);
+      pool.totalPages = data.total_pages;
+      pool.all.push(...(data.items || []));
+      pool.page++;
+      lastErr = null;
+      break;
+    } catch (e) {
+      lastErr = e;
+      console.warn('VidAPI fetch failed (attempt ' + (i + 1) + '/' + ATTEMPTS + '):', e);
+      if (i < ATTEMPTS - 1) await new Promise(res => setTimeout(res, 700 * (i + 1)));
+    }
   }
   pool.loading = false;
   if (loadingEl) loadingEl.style.display = 'none';
+  if (!isVisible) return; // background prefetch — nothing to render yet
+  const grid = document.getElementById('vaMovieGrid');
+  if (lastErr && pool.all.length === 0) {
+    // Show a real error + retry action instead of an endless skeleton/
+    // "Loading…" placeholder that never explains what went wrong.
+    if (grid) grid.innerHTML = `<div class="epg-no-results">Couldn't load movies right now — the movie service may be unreachable on this network.<br><button type="button" class="va-load-gate-btn" style="margin-top:14px;" onclick="vaRetryLoad()">↻ Retry</button></div>`;
+  } else {
+    vaRenderMovies();
+  }
+}
+function vaRetryLoad(){
+  const pool = vaPools[vaCurrentType];
+  pool.totalPages = null; // clear any stale error state so the load loop runs again
+  vaLoadMoreCurrent();
 }
 
 // ── Movie / TV toggle, Trending / Top Rated sort, genre chips ──
@@ -8883,6 +8996,10 @@ window.vaInit = function(){
   vaApplySettingsToForm(vaGetSettings());
   vaInitSentinel();
   vaSetType('movie', document.querySelector('.va-type-btn[data-type="movie"]'));
+  // Also prefetch the first page of TV Shows right away, in the background
+  // — so switching the Movie/TV Show toggle never shows a loading state
+  // either, it's (almost always) already sitting in memory by then.
+  vaLoadMoreCurrent('tv');
 };
 
 // ── Bulk background preload — after the site goes idle, fetches pages in
@@ -8943,9 +9060,9 @@ async function vaBulkPreload(type){
     setTimeout(() => vaBulkPreload('tv'), 3000); // stagger so movies get first crack at bandwidth
   }
   if ('requestIdleCallback' in window) {
-    requestIdleCallback(kickoff, { timeout: 1200 });
+    requestIdleCallback(kickoff, { timeout: 300 });
   } else {
-    setTimeout(kickoff, 400);
+    setTimeout(kickoff, 50);
   }
 })();
 
@@ -9073,30 +9190,6 @@ function closeFifa(){
   background: #000000; overflow-y: auto; -webkit-overflow-scrolling: touch;
 }
 #vip-overlay.open{ display: block; }
-
-#vip-topbar{
-  position: sticky; top: 0; z-index: 2;
-  display: flex; align-items: center; gap: 12px;
-  padding: 14px 20px; background: rgba(10,10,11,0.92);
-  backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.08);
-}
-#vip-topbar-title{
-  font-family: var(--cu-font,inherit); font-weight: 800; font-size: 13px;
-  color: rgba(255,255,255,0.75); letter-spacing: 0.04em; text-transform: uppercase;
-}
-#vip-login-topbtn{
-  display: flex; align-items: center; gap: 6px;
-  background: linear-gradient(135deg,#FFB3CF,#FF5FA0); color: #FFFFFF; border: none;
-  font-family: var(--cu-font,inherit); font-weight: 800; font-size: 12px;
-  padding: 8px 14px; cursor: pointer; border-radius: 8px; letter-spacing: 0.03em;
-  white-space: nowrap;
-}
-#vip-login-topbtn svg{ width: 14px; height: 14px; flex-shrink: 0; }
-#vip-login-topbtn:hover{ box-shadow: 0 4px 14px rgba(240,187,64,0.40); }
-@media(max-width:640px){
-  #vip-login-topbtn span{ display:none; }
-  #vip-login-topbtn{ padding: 8px 10px; }
-}
 
 #vip-page-inner{ max-width: 880px; margin: 0 auto; padding: 40px 20px 80px; }
 
@@ -9252,9 +9345,6 @@ function closeFifa(){
 </style>
 
 <div id="vip-overlay">
-  <div id="vip-topbar">
-    <div style="flex:1"></div>
-  </div>
 
   <div id="vip-page-inner">
     <div id="vip-discontinued-banner" style="display:flex;align-items:center;gap:10px;background:rgba(224,21,95,0.12);border:1px solid rgba(224,21,95,0.4);color:#FF6FA0;font-family:var(--cu-font,inherit);font-weight:700;font-size:13.5px;line-height:1.5;padding:12px 16px;border-radius:10px;margin-bottom:24px;">
@@ -9395,7 +9485,7 @@ function openVip(){
   document.getElementById('vip-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   window.scrollTo(0,0);
-  sxHeaderInto('vip-overlay', 'vip-topbar');
+  sxHeaderInto('vip-overlay', null);
 }
 function closeVip(){
   document.getElementById('vip-overlay').classList.remove('open');
@@ -9816,11 +9906,11 @@ header{
 .sx-comingsoon-title{ font-family: var(--cu-font,inherit); font-weight: 800; font-size: 17px; color: #fff; margin-bottom: 8px; }
 .sx-comingsoon-msg{ font-family: var(--cu-font,inherit); font-size: 13px; color: rgba(255,255,255,0.65); line-height: 1.5; margin-bottom: 20px; }
 .sx-comingsoon-close{
-  background: linear-gradient(135deg,#F04F8C,#C21764); color: #fff; border: none;
+  background: #F04F8C; color: #fff; border: none;
   font-family: var(--cu-font,inherit); font-weight: 700; font-size: 13px;
   padding: 10px 24px; border-radius: 8px; cursor: pointer; letter-spacing: 0.02em;
 }
-.sx-comingsoon-close:hover{ opacity: 0.9; }
+.sx-comingsoon-close:hover{ background: #FF3D96; }
 </style>
 <div id="sx-comingsoon-overlay" onclick="if(event.target===this) closeComingSoon();">
   <div class="sx-comingsoon-box">
@@ -10282,6 +10372,7 @@ button,a.btn,.btn{ text-shadow:none !important; }
 }
 .sk-text{ height:11px; border-radius:4px; }
 .sk-circle{ border-radius:50%; }
+.sk-match-card{ height:120px; border-radius:8px; }
 
 /* Nav link pills, shown until the real nav renders */
 #nav-desktop:empty{ display:flex !important; gap:6px; }
@@ -10338,8 +10429,7 @@ button,a.btn,.btn{ text-shadow:none !important; }
   box-shadow:none !important;
 }
 .discord-online-dot,.whatsapp-online-dot{ background:var(--pm-magenta) !important; animation:none !important; }
-.discord-join-btn,.whatsapp-join-btn,.btn-get-vip,.btn-join-discord-footer,
-#vip-login-topbtn{
+.discord-join-btn,.whatsapp-join-btn,.btn-get-vip,.btn-join-discord-footer{
   background:var(--pm-magenta) !important;
   color:#fff !important;
   box-shadow:none !important;
@@ -10348,7 +10438,7 @@ button,a.btn,.btn{ text-shadow:none !important; }
   transition:background-color .2s ease, transform .15s ease;
 }
 .discord-join-btn:hover,.whatsapp-join-btn:hover,.btn-get-vip:hover,
-.btn-join-discord-footer:hover,#vip-login-topbtn:hover{
+.btn-join-discord-footer:hover{
   background:var(--pm-magenta-hover) !important;
   box-shadow:none !important;
   transform:translateY(-1px);
