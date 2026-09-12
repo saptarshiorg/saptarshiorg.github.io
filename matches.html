@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="icon" href="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/magenta.png" type="image/png">
+<meta property="og:image" content="https://i.postimg.cc/GtKyCWmv/Chat-GPT-Image-Jul-19-2026-06-25-19-PM.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="675">
+
+<link rel="canonical" href="saptarshiorg.github.io" />
+<meta name="robots" content="index, follow" />
+<title>EV IPTV - Matches (Powered by Saptarshi IPTV)</title>
+
+<meta property="og:site_name" content="EV IPTV - Matches" />
+<meta name="description" content="Live Matches & Scores - Cricket, Football, Soccer & More Sports on EV IPTV." />
+
+<meta name="referrer" content="no-referrer-when-downgrade">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title id="page-title">EV IPTV - Matches</title>
+<link id="favicon" rel="icon" type="image/png" href="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/magenta.png">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Rajdhani:wght@400;500;600;700&family=Chakra+Petch:wght@400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
+
+<script>
+  const SHEET_ID = '1UcPVLGxSTJmAdtfPHsA_f5VCtbABwVdwef-va512HQU';
+</script>
+
+<style>
+:root {
+  --magenta: #F04F8C;
+  --magenta-hover: #E0155F;
+  --dark-bg: #000000;
+  --surface-1: rgba(255,255,255,0.03);
+  --surface-2: rgba(255,255,255,0.05);
+  --text-primary: #FFFFFF;
+  --text-secondary: rgba(255,255,255,0.6);
+  --border-soft: rgba(255,255,255,0.08);
+  --radius: 8px;
+  --ease: cubic-bezier(0.4,0,0.2,1);
+  --saffron: #FF8F00;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; }
+body {
+  background: var(--dark-bg);
+  color: var(--text-primary);
+  font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+#matches-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: var(--dark-bg);
+  padding: 20px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 900px) {
+  #matches-panel {
+    padding: 14px 14px calc(60px + env(safe-area-inset-bottom, 0));
+  }
+}
+
+.epg-hero {
+  padding: 6px 2px 2px;
+  margin-bottom: 24px;
+}
+
+.epg-hero-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 900;
+  font-size: clamp(28px, 5vw, 42px);
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  line-height: 1.05;
+  margin-bottom: 6px;
+  text-shadow: 0 0 24px rgba(240, 79, 140, 0.35);
+}
+
+.epg-hero-sub {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.smo-sport-toolbar {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.smo-sport-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.smo-sport-tabs::-webkit-scrollbar { display: none; }
+
+.smo-sport-tab {
+  padding: 8px 14px;
+  border-radius: var(--radius);
+  background: var(--surface-1);
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.smo-sport-tab:hover {
+  color: var(--text-primary);
+  border-color: rgba(63, 198, 255, 0.45);
+}
+
+.smo-sport-tab.active {
+  background: rgba(63, 198, 255, 0.15);
+  color: #3FC6FF;
+  border-color: #3FC6FF;
+}
+
+.smo-toolbar {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  background: var(--surface-1);
+  border-radius: var(--radius);
+  flex-wrap: wrap;
+}
+
+.smo-game-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  overflow-x: auto;
+}
+
+.smo-game-tab {
+  padding: 8px 14px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.smo-game-tab:hover {
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.smo-game-tab.active {
+  background: var(--magenta);
+  color: white;
+  border-color: var(--magenta);
+}
+
+.smo-empty-box {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+  background: var(--surface-1);
+  border-radius: var(--radius);
+  margin: 20px 0;
+}
+
+.match-overlay-section {
+  display: block;
+}
+
+.slider-match-overlay {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.smo-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.match-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.match-card:hover {
+  background: var(--surface-2);
+  border-color: var(--magenta);
+  transform: translateY(-2px);
+}
+
+.match-card-time {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.match-card-sport {
+  font-size: 10px;
+  color: #3FC6FF;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-bottom: 10px;
+}
+
+.match-card-teams {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.team {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.team-logo {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 14px;
+}
+
+.match-card-score {
+  text-align: center;
+  padding: 8px 0;
+  margin: 10px 0;
+  border-top: 1px solid var(--border-soft);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.score-value {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--magenta);
+}
+
+.match-card-status {
+  font-size: 11px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.match-card.live {
+  border-color: var(--magenta);
+  background: rgba(240, 79, 140, 0.05);
+}
+
+.match-card.live::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 8px;
+  height: 8px;
+  background: var(--magenta);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.sk-match-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  padding: 16px;
+  height: 180px;
+  animation: skeleton-pulse 2s infinite;
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.no-matches {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.no-matches svg {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 16px;
+  opacity: 0.4;
+}
+</style>
+
+</head>
+<body>
+
+<div id="matches-panel">
+  <div class="epg-hero" style="padding:6px 2px 2px;">
+    <div class="epg-hero-title">MATCHES</div>
+    <div class="epg-hero-sub">Live scores and upcoming fixtures across every sport.</div>
+  </div>
+
+  <div class="smo-sport-toolbar" id="smo-sport-toolbar" style="display:none;">
+    <div class="smo-sport-tabs" id="smo-sport-tabs"></div>
+  </div>
+
+  <div class="smo-toolbar" id="smo-toolbar" style="display:none;">
+    <div class="smo-game-tabs" id="smo-game-tabs"></div>
+    <select class="smo-game-select" id="smo-game-select" aria-label="Select event"></select>
+  </div>
+
+  <div class="smo-empty-box" id="smo-sport-prompt" style="display:none;">SELECT A SPORT ABOVE TO VIEW MATCHES</div>
+
+  <div class="match-overlay-section" id="match-overlay-section">
+    <div class="slider-match-overlay" id="match-overlay">
+      <div class="smo-section">
+        <div class="sk-match-card"></div>
+        <div class="sk-match-card"></div>
+        <div class="sk-match-card"></div>
+        <div class="sk-match-card"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="no-matches" id="no-matches" style="display:none;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6m0 4h.01"/></svg>
+    <p>No matches scheduled at the moment.</p>
+  </div>
+</div>
+
+<script>
+// Load Google Sheets data
+async function loadSheetData(sheetId, tabName) {
+  try {
+    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=${tabName}`;
+    const response = await fetch(url);
+    const text = await response.text();
+    const json = JSON.parse(text.slice(47, -2));
+    const rows = [];
+    json.table.rows.forEach(row => {
+      const obj = {};
+      row.c.forEach((cell, i) => {
+        obj[json.table.cols[i].label] = cell ? cell.v : '';
+      });
+      rows.push(obj);
+    });
+    return rows;
+  } catch(e) {
+    console.error('Sheet load error:', e);
+    return [];
+  }
+}
+
+let matchesData = [];
+let sportsList = [];
+let eventsList = [];
+let selectedSport = null;
+let selectedEvent = null;
+
+async function initMatches() {
+  matchesData = await loadSheetData(SHEET_ID, 'MATCH CARDS');
+  
+  // Extract unique sports
+  sportsList = [...new Set(matchesData.filter(m => m.sport_name).map(m => m.sport_name))];
+  
+  if (sportsList.length === 0) {
+    document.getElementById('no-matches').style.display = 'block';
+    return;
+  }
+
+  // Build sport tabs
+  const sportToolbar = document.getElementById('smo-sport-toolbar');
+  const sportTabs = document.getElementById('smo-sport-tabs');
+  
+  sportsList.forEach((sport, idx) => {
+    const tab = document.createElement('button');
+    tab.className = 'smo-sport-tab' + (idx === 0 ? ' active' : '');
+    tab.textContent = sport;
+    tab.onclick = () => selectSport(sport);
+    sportTabs.appendChild(tab);
+  });
+  
+  sportToolbar.style.display = 'flex';
+  selectedSport = sportsList[0];
+  renderMatches();
+}
+
+function selectSport(sport) {
+  selectedSport = sport;
+  
+  // Update active tab
+  document.querySelectorAll('.smo-sport-tab').forEach(tab => {
+    tab.classList.toggle('active', tab.textContent === sport);
+  });
+  
+  renderMatches();
+}
+
+function renderMatches() {
+  const overlay = document.getElementById('match-overlay');
+  const section = overlay.querySelector('.smo-section') || overlay;
+  
+  const filtered = matchesData.filter(m => !selectedSport || m.sport_name === selectedSport);
+  
+  if (filtered.length === 0) {
+    section.innerHTML = '<div class="no-matches" style="grid-column:1/-1;"><p>No matches for this sport.</p></div>';
+    return;
+  }
+
+  let html = '<div class="smo-section">';
+  
+  filtered.forEach(match => {
+    const isLive = match.status && match.status.toLowerCase().includes('live');
+    const timeStr = match.match_time || 'TBD';
+    const team1 = match.team_1 || 'Team 1';
+    const team2 = match.team_2 || 'Team 2';
+    const score1 = match.score_1 || '-';
+    const score2 = match.score_2 || '-';
+    
+    html += `
+      <div class="match-card ${isLive ? 'live' : ''}" onclick="openMatch('${match.watch_url || '#'}')">
+        <div class="match-card-time">${timeStr}</div>
+        <div class="match-card-sport">${match.sport_name || 'SPORT'}</div>
+        
+        <div class="match-card-teams">
+          <div class="team">
+            <div class="team-logo">${team1.charAt(0).toUpperCase()}</div>
+            <span>${team1}</span>
+          </div>
+          <div class="match-card-score">
+            <div class="score-value">${score1} - ${score2}</div>
+          </div>
+          <div class="team">
+            <div class="team-logo">${team2.charAt(0).toUpperCase()}</div>
+            <span>${team2}</span>
+          </div>
+        </div>
+        
+        <div class="match-card-status">
+          ${match.status || (isLive ? '🔴 LIVE' : 'UPCOMING')}
+        </div>
+      </div>
+    `;
+  });
+  
+  html += '</div>';
+  section.innerHTML = html;
+}
+
+function openMatch(url) {
+  if (url && url !== '#') {
+    window.location.href = url;
+  }
+}
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', initMatches);
+</script>
+
+</body>
+</html>
