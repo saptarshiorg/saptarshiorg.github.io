@@ -4150,7 +4150,7 @@ window.sxSwitchTab = sxSwitchTab;
     <iframe id="fancode-iframe" src="https://saptarshiorg.github.io/Fancode/" title="FanCode" loading="lazy" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer-when-downgrade" onerror="document.getElementById('fancode-embed-fallback').style.display='flex'"></iframe>
     <div id="fancode-embed-fallback">
       <div>FanCode didn't load in the embedded view.</div>
-      <a href="https://saptarshiorg.github.io/Fancode/" target="_blank" rel="noopener">Open FanCode ↗</a>
+      <a href="https://saptarshiorg.github.io/Fancode/">Open FanCode ↗</a>
     </div>
   </div>
 </div><!-- /fancode-panel-wrap -->
@@ -5899,7 +5899,7 @@ function renderWatchPopup(rows) {
   let html = '';
   featured.forEach(f => {
     html += `
-    <a class="watch-sx-featured" href="${sxResolveFanCodeMatchUrl(f.watch_url||'#')}" target="_blank" rel="noopener">
+    <a class="watch-sx-featured" href="${sxResolveFanCodeMatchUrl(f.watch_url||'#')}">
       <div class="watch-ch-logo">${img(f.logo_url,'',)}</div>
       <div class="watch-ch-info">
         <div class="watch-ch-name" style="font-size:16px;font-weight:900">${f.channel_name}</div>
@@ -5916,7 +5916,7 @@ function renderWatchPopup(rows) {
     groupItems.forEach(ch => {
       const isUnavail = (ch.badge||'').toLowerCase() === 'unavail';
       html += `
-      <a class="watch-channel-btn${isUnavail?' unavail-card':''}" href="${sxResolveFanCodeMatchUrl(ch.watch_url||'#')}" target="_blank" rel="noopener">
+      <a class="watch-channel-btn${isUnavail?' unavail-card':''}" href="${sxResolveFanCodeMatchUrl(ch.watch_url||'#')}">
         <div class="watch-ch-logo">${img(ch.logo_url,'')}</div>
         <div class="watch-ch-info">
           <div class="watch-ch-name">${ch.channel_name}</div>
@@ -8196,12 +8196,10 @@ function openStreamPlayer(url, name, type){
   if (!url || url === '#') return;
   // Match cards, hero slides, and Live TV all funnel every stream link
   // through here — so this is the single choke point to catch any
-  // famcodexwebs.pages.dev link and send it to a real new tab instead of
+  // famcodexwebs.pages.dev link and send it to the same tab instead of
   // the in-page iframe overlay (that site doesn't play nicely embedded).
   if (/famcodexwebs\.pages\.dev/i.test(url)) {
-    url = sxResolveFanCodeMatchUrl(url);
-    window.__sxAllowPopup = true; // this is one of our own links, not an injected popup
-    window.open(url, '_blank', 'noopener,noreferrer');
+    location.href = sxResolveFanCodeMatchUrl(url);
     return;
   }
   const label = name || 'Live Stream';
@@ -8933,13 +8931,21 @@ async function vaBulkPreload(type){
 
 (function(){
   function kickoff(){
+    // Pre-warm the Movies grid itself (not just the raw data pool) so the
+    // very first page of posters is already rendered into #vaMovieGrid,
+    // in place of the skeleton, before the user ever opens the overlay —
+    // opening it then just reveals content instead of triggering a fetch.
+    if (typeof window.vaInit === 'function'){
+      window.vaInit();
+      window.vaInit = null;
+    }
     vaBulkPreload('movie');
     setTimeout(() => vaBulkPreload('tv'), 3000); // stagger so movies get first crack at bandwidth
   }
   if ('requestIdleCallback' in window) {
-    requestIdleCallback(kickoff, { timeout: 4000 });
+    requestIdleCallback(kickoff, { timeout: 1200 });
   } else {
-    setTimeout(kickoff, 1500);
+    setTimeout(kickoff, 400);
   }
 })();
 
@@ -8965,14 +8971,13 @@ function sxResolveFanCodeMatchUrl(url){
 // A few anchors (e.g. the match-card WATCH button) link straight to a
 // watch_url instead of routing through openStreamPlayer. This intercepts
 // just the famcodexwebs.pages.dev links on click — geo-resolves IN→WW
-// and forces a real new tab — and leaves every other link's normal
-// click-through behavior completely untouched.
+// and keeps navigation in the current tab (no popup) — and leaves every
+// other link's normal click-through behavior completely untouched.
 function sxWatchLinkClick(evt, a){
   const raw = a.getAttribute('href') || '';
   if (!/famcodexwebs\.pages\.dev/i.test(raw)) return true; // navigate normally
   evt.preventDefault();
-  window.__sxAllowPopup = true; // this is one of our own links, not an injected popup
-  window.open(sxResolveFanCodeMatchUrl(raw), '_blank', 'noopener,noreferrer');
+  location.href = sxResolveFanCodeMatchUrl(raw);
   return false;
 }
 // FanCode PANEL tab shows a different mirror depending on the visitor's
@@ -10314,6 +10319,50 @@ button,a.btn,.btn{ text-shadow:none !important; }
    skeleton markup for grid containers is inserted as literal HTML further
    down (see body), and is simply overwritten by each render function's
    innerHTML assignment. Nothing further to clean up here. */
+
+/* ══════════════════════════════════════════════════════════════════════
+   FINAL SKEUOMORPHISM SWEEP — flatten every remaining glossy/3D/glow
+   surface (gradient CTA cards, bevel buttons, icon badges, hamburger)
+   to the same flat magenta-on-dark language used everywhere else.
+═══════════════════════════════════════════════════════════════════════ */
+.discord-card,.whatsapp-card{
+  background:var(--pm-surface-1) !important;
+  border:1px solid var(--pm-border) !important;
+  box-shadow:none !important;
+  backdrop-filter:none !important;
+}
+.discord-card::before,.discord-card::after,
+.whatsapp-card::before,.whatsapp-card::after{ display:none !important; }
+.discord-icon-badge,.whatsapp-icon-badge{
+  background:var(--pm-surface-2) !important;
+  box-shadow:none !important;
+}
+.discord-online-dot,.whatsapp-online-dot{ background:var(--pm-magenta) !important; animation:none !important; }
+.discord-join-btn,.whatsapp-join-btn,.btn-get-vip,.btn-join-discord-footer,
+#vip-login-topbtn{
+  background:var(--pm-magenta) !important;
+  color:#fff !important;
+  box-shadow:none !important;
+  border:none !important;
+  border-radius:var(--pm-radius-sm) !important;
+  transition:background-color .2s ease, transform .15s ease;
+}
+.discord-join-btn:hover,.whatsapp-join-btn:hover,.btn-get-vip:hover,
+.btn-join-discord-footer:hover,#vip-login-topbtn:hover{
+  background:var(--pm-magenta-hover) !important;
+  box-shadow:none !important;
+  transform:translateY(-1px);
+}
+.discord-tag,.whatsapp-tag,.discord-title .live-pill,.whatsapp-title .live-pill{
+  background:var(--pm-surface-2) !important;
+  color:var(--pm-text-muted) !important;
+  box-shadow:none !important;
+}
+.btn-3d-gold,.btn-diamond-glow{
+  background:var(--pm-magenta) !important;
+  text-shadow:none !important;
+  filter:none !important;
+}
 </style>
 
 </body>
