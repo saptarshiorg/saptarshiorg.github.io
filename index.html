@@ -2853,7 +2853,7 @@ body::before{ display:none !important; }
     </div>
   </div>
   <!-- MOBILE FULL-WIDTH SLIDES (hidden on desktop via CSS) -->
-  <div class="slides-container" id="slides-container"></div>
+  <div class="slides-container" id="slides-container"><div class="sk sk-hero"></div></div>
 </section>
 <!-- QUICK TAB SWITCHER STRIP (Live TV / Matches / FIFA / News / FanCode) -->
 <div id="watch-ch-strip">
@@ -3784,7 +3784,7 @@ window.sxSwitchTab = sxSwitchTab;
         <span>⚠️ Channel Available during Live match.</span>
       </div>
 
-      <div id="fpx-grid"></div><!-- /fpx-grid : populated by renderFifaPanel() via PANELS registry -->
+      <div id="fpx-grid"><div class="sk-card-grid"><div class="sk sk-card"></div><div class="sk sk-card"></div><div class="sk sk-card"></div><div class="sk sk-card"></div></div></div><!-- /fpx-grid : populated by renderFifaPanel() via PANELS registry -->
 
     </div><!-- /fpx-ch-section -->
   </div><!-- /fifa-panel -->
@@ -4110,10 +4110,20 @@ window.sxSwitchTab = sxSwitchTab;
 }
 
 #fancode-overlay.open{ display: block; }
+#fancode-overlay.open > header{ display:none !important; }
 #fancode-topbar{
   position: absolute; top: 0; left: 0; z-index: 2;
   padding: 14px;
 }
+#fancode-back-btn{
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.10); border: none; color: #fff;
+  font-family: var(--cu-font,inherit); font-weight: 700; font-size: 12px;
+  padding: 8px 12px; cursor: pointer; border-radius: 8px; letter-spacing: 0.03em;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+#fancode-back-btn:hover{ background: rgba(255,255,255,0.18); }
+#fancode-back-btn svg{ width: 14px; height: 14px; flex-shrink: 0; }
 
 #fancode-panel-wrap{ position: absolute; inset: 0; }
 #fancode-iframe-wrap{ position: absolute; inset: 0; background: #000; }
@@ -4129,7 +4139,12 @@ window.sxSwitchTab = sxSwitchTab;
 }
 </style>
 <div id="fancode-overlay">
-  <div id="fancode-topbar"></div>
+  <div id="fancode-topbar">
+    <button id="fancode-back-btn" onclick="closeFanCode()" aria-label="Back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      Back
+    </button>
+  </div>
 <div id="fancode-panel-wrap">
   <div id="fancode-iframe-wrap">
     <iframe id="fancode-iframe" src="https://saptarshiorg.github.io/Fancode/" title="FanCode" loading="lazy" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer-when-downgrade" onerror="document.getElementById('fancode-embed-fallback').style.display='flex'"></iframe>
@@ -4225,7 +4240,7 @@ window.sxSwitchTab = sxSwitchTab;
 <!-- LIVE FIXTURES -->
 <section class="section" style="background:linear-gradient(180deg,#000000,#000000);padding:40px 0;" id="fixtures-section">
   <div class="section-inner">
-    <div class="fixtures-grid" id="fixtures-grid"></div>
+    <div class="fixtures-grid" id="fixtures-grid"><div class="sk sk-card"></div><div class="sk sk-card"></div><div class="sk sk-card"></div><div class="sk sk-card"></div><div class="sk sk-card"></div><div class="sk sk-card"></div></div>
   </div>
 </section>
 
@@ -4236,7 +4251,7 @@ window.sxSwitchTab = sxSwitchTab;
       <h2 style="font-family:var(--font-display);font-weight:900;font-size:clamp(24px,5vw,36px);color:#fff;letter-spacing:0.02em;margin:0;">Live Channels</h2>
       <p style="font-size:14px;color:rgba(255,255,255,0.65);margin:8px 0 0 0;">A few channels to get you started — view all for the full guide</p>
     </div>
-    <div class="fixtures-grid" id="channelsPreviewGrid"></div>
+    <div class="fixtures-grid" id="channelsPreviewGrid"><div class="sk sk-card"></div><div class="sk sk-card"></div><div class="sk sk-card"></div><div class="sk sk-card"></div><div class="sk sk-card"></div><div class="sk sk-card"></div></div>
   </div>
 </section>
 
@@ -6260,7 +6275,6 @@ function countryFlagHTML(rawCountry){
 
 document.addEventListener('DOMContentLoaded', () => {
   const loader = document.getElementById('cms-loader');
-  const MAX_SECONDS = 8; // hard cap — loader never waits longer than this even if CMS is slow
   let dismissed = false;
 
   // ── DEVELOPER BYPASS ─────────────────────────────────────────
@@ -6282,18 +6296,25 @@ document.addEventListener('DOMContentLoaded', () => {
     loader.style.display = 'none';
     init().catch(e => console.warn('DEV MODE: init() error (ignored):', e));
   } else {
-    // Loader closes the moment CMS data is actually ready, capped at 8s max
-    // if the CMS is slow/unreachable — whichever happens first, silently.
-    const capTimer = setTimeout(hideLoader, MAX_SECONDS * 1000);
+    // YT-style pattern: only show the branded splash for a brief instant,
+    // then reveal the real page frame — the grids/rows underneath already
+    // hold shimmering skeleton placeholders (see .sk-* CSS + markup), so
+    // the moment the splash lifts it reads as "already loaded, just data
+    // filling in" rather than a blocking loading screen. A short fixed
+    // timer replaces the old wait-for-full-init behavior; init() still
+    // runs in the background exactly as before and simply swaps each
+    // skeleton block for real content (via innerHTML) whenever it's ready.
+    const BRAND_FLASH_MS = 700;
+    const quickTimer = setTimeout(hideLoader, BRAND_FLASH_MS);
 
     init()
       .then(() => {
-        clearTimeout(capTimer);
+        clearTimeout(quickTimer);
         hideLoader();
       })
       .catch(e => {
         console.warn('init() error (ignored):', e);
-        clearTimeout(capTimer);
+        clearTimeout(quickTimer);
         hideLoader();
       });
   }
@@ -7459,7 +7480,7 @@ function closeAdminChatDiscordPopup(){
 
       <div class="epg-body">
         <div class="epg-list-wrap">
-          <div class="epg-list" id="chGrid"></div>
+          <div class="epg-list" id="chGrid"><div class="sk-row"><div class="sk sk-circle"></div><div class="sk-lines"><div class="sk sk-text" style="width:55%"></div><div class="sk sk-text" style="width:30%"></div></div></div><div class="sk-row"><div class="sk sk-circle"></div><div class="sk-lines"><div class="sk sk-text" style="width:45%"></div><div class="sk sk-text" style="width:25%"></div></div></div><div class="sk-row"><div class="sk sk-circle"></div><div class="sk-lines"><div class="sk sk-text" style="width:60%"></div><div class="sk sk-text" style="width:35%"></div></div></div><div class="sk-row"><div class="sk sk-circle"></div><div class="sk-lines"><div class="sk sk-text" style="width:40%"></div><div class="sk sk-text" style="width:28%"></div></div></div></div>
         </div>
       </div>
     </div>
@@ -7682,7 +7703,7 @@ function closeAdminChatDiscordPopup(){
             <button type="button" class="va-genre-chip" data-genre="Fantasy" onclick="vaSetGenre('Fantasy', this)">Fantasy</button>
           </div>
 
-          <div class="va-grid" id="vaMovieGrid"></div>
+          <div class="va-grid" id="vaMovieGrid"><div class="sk sk-poster"></div><div class="sk sk-poster"></div><div class="sk sk-poster"></div><div class="sk sk-poster"></div><div class="sk sk-poster"></div><div class="sk sk-poster"></div><div class="sk sk-poster"></div><div class="sk sk-poster"></div><div class="sk sk-poster"></div><div class="sk sk-poster"></div></div>
           <div class="va-sentinel" id="vaSentinel"></div>
           <div class="va-loading-more" id="vaLoadingMore" style="display:none;">Loading more…</div>
         </div>
@@ -9227,7 +9248,6 @@ function closeFifa(){
 
 <div id="vip-overlay">
   <div id="vip-topbar">
-    <span id="vip-topbar-title">VIP Access</span>
     <div style="flex:1"></div>
   </div>
 
@@ -10177,6 +10197,123 @@ footer{ background:var(--pm-bg) !important; border-top:1px solid var(--pm-border
 /* ── Generic shadow flattening safety-net for anything not covered ──── */
 [style*="box-shadow"]{ box-shadow:var(--pm-shadow-sm) !important; }
 button,a.btn,.btn{ text-shadow:none !important; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   LOADING ANIMATIONS — calm and minimal, no pulsing glow / rainbow sweep
+═══════════════════════════════════════════════════════════════════════ */
+
+/* Boot loader */
+#cms-loader{ background:var(--pm-bg) !important; }
+.loader-brand-img{
+  animation:pmLogoFade 1.8s ease-in-out infinite !important;
+  filter:none !important;
+}
+@keyframes pmLogoFade{
+  0%,100%{ opacity:1; transform:scale(1); }
+  50%{ opacity:0.5; transform:scale(1); }
+}
+.loader-goldbar{ background:var(--pm-border) !important; }
+.loader-goldbar-inner{
+  background:var(--pm-magenta) !important;
+  animation:pmBarSlide 1.3s ease-in-out infinite !important;
+}
+@keyframes pmBarSlide{
+  0%{ transform:translateX(-120%); }
+  100%{ transform:translateX(420%); }
+}
+.loader-powered{
+  background:var(--pm-surface-1) !important;
+  border:1px solid var(--pm-border) !important;
+  color:var(--pm-text-faint) !important;
+}
+.loader-powered:hover{ background:var(--pm-surface-2) !important; color:var(--pm-text-muted) !important; }
+.loader-powered strong{ color:var(--pm-text) !important; }
+
+/* Panel-open logo splash (Live TV / FIFA / FanCode) */
+#sx-panel-intro{ background:var(--pm-bg) !important; }
+#sx-panel-intro img{
+  animation:pmPanelIntro .45s ease both !important;
+  filter:none !important;
+}
+@keyframes pmPanelIntro{
+  0%{ opacity:0; transform:scale(0.94); }
+  100%{ opacity:1; transform:scale(1); }
+}
+
+/* Stream player loading spinner + bar */
+#stream-player-loading{ background:var(--pm-bg) !important; }
+#sp-loading-spinner{
+  width:30px !important; height:30px !important;
+  border:2px solid var(--pm-border) !important;
+  border-top-color:var(--pm-magenta) !important;
+}
+#sp-loading-label{
+  color:var(--pm-text-muted) !important;
+  font-weight:600 !important;
+  letter-spacing:0.04em !important;
+}
+#sp-loading-barwrap{ background:var(--pm-surface-2) !important; }
+#sp-loading-bar{ background:var(--pm-magenta) !important; }
+
+/* Generic "loading more" text */
+.va-loading-more{ color:var(--pm-text-faint) !important; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   SKELETON / SHIMMER LOADING — YouTube-style: the real page frame shows
+   immediately, gray shimmering placeholders sit where content will pop
+   in, so it reads as "already loaded, just data trickling in" instead
+   of a blocking splash screen.
+═══════════════════════════════════════════════════════════════════════ */
+@keyframes pmShimmer{
+  0%{ background-position:-300px 0; }
+  100%{ background-position:300px 0; }
+}
+.sk{
+  background:linear-gradient(90deg,var(--pm-surface-1) 25%,var(--pm-surface-2) 37%,var(--pm-surface-1) 63%);
+  background-size:600px 100%;
+  animation:pmShimmer 1.5s ease-in-out infinite;
+  border-radius:var(--pm-radius-sm);
+  border:1px solid var(--pm-border-soft);
+}
+.sk-text{ height:11px; border-radius:4px; }
+.sk-circle{ border-radius:50%; }
+
+/* Nav link pills, shown until the real nav renders */
+#nav-desktop:empty{ display:flex !important; gap:6px; }
+#nav-desktop:empty::before{
+  content:''; display:block; width:64px; height:28px; border-radius:var(--pm-radius-sm);
+  background:linear-gradient(90deg,var(--pm-surface-1) 25%,var(--pm-surface-2) 37%,var(--pm-surface-1) 63%);
+  background-size:600px 100%; animation:pmShimmer 1.5s ease-in-out infinite;
+}
+#nav-desktop:empty::after{
+  content:''; display:block; width:64px; height:28px; margin-left:6px; border-radius:var(--pm-radius-sm);
+  background:linear-gradient(90deg,var(--pm-surface-1) 25%,var(--pm-surface-2) 37%,var(--pm-surface-1) 63%);
+  background-size:600px 100%; animation:pmShimmer 1.5s ease-in-out infinite;
+}
+
+/* Hero slide */
+.sk-hero{ position:absolute; inset:0; }
+
+/* Card-grid skeletons (fixtures / channel previews / FIFA) */
+.sk-card-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; }
+.sk-card{ aspect-ratio:16/9; padding:0; }
+
+/* EPG row skeleton (Live TV list) */
+.sk-row{ display:flex; align-items:center; gap:14px; background:var(--pm-surface-1); border:1px solid var(--pm-border-soft); border-radius:var(--pm-radius-sm); padding:10px; }
+.sk-row .sk-circle{ width:36px; height:36px; flex-shrink:0; }
+.sk-row .sk-lines{ flex:1; display:flex; flex-direction:column; gap:6px; }
+
+/* Poster-grid skeleton (Movies/TV) */
+.sk-poster-grid{ display:grid; grid-template-columns:repeat(5,1fr); gap:16px; }
+.sk-poster{ aspect-ratio:2/3; }
+@media(max-width:1100px){ .sk-poster-grid{ grid-template-columns:repeat(3,1fr); } }
+@media(max-width:640px){ .sk-poster-grid{ grid-template-columns:repeat(2,1fr); } }
+
+/* Once real content is injected these containers stop being empty, so
+   plain-CSS :empty rules above naturally stop applying — but the initial
+   skeleton markup for grid containers is inserted as literal HTML further
+   down (see body), and is simply overwritten by each render function's
+   innerHTML assignment. Nothing further to clean up here. */
 </style>
 
 </body>
