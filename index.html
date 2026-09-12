@@ -9816,5 +9816,368 @@ function closeComingSoon(){
 window.sxShowComingSoon = sxShowComingSoon;
 window.closeComingSoon = closeComingSoon;
 </script>
+
+<style id="premium-magenta-redesign">
+/* ══════════════════════════════════════════════════════════════════════
+   PREMIUM MAGENTA MINIMALIST — final design pass
+   Deep black canvas · vibrant-but-tasteful magenta accent · flat surfaces
+   · soft single-layer shadows only · Inter typography · generous spacing
+═══════════════════════════════════════════════════════════════════════ */
+
+:root{
+  /* Core palette */
+  --pm-bg:            #000000;
+  --pm-bg-2:          #08080A;
+  --pm-surface-1:      #111114;
+  --pm-surface-2:      #16161A;
+  --pm-surface-3:      #1C1C21;
+  --pm-border:         rgba(255,255,255,0.08);
+  --pm-border-soft:    rgba(255,255,255,0.05);
+  --pm-border-strong:  rgba(255,255,255,0.14);
+
+  --pm-magenta:        #F0146E;
+  --pm-magenta-hover:  #FF3D96;
+  --pm-magenta-dim:    rgba(240,20,110,0.14);
+  --pm-magenta-dim-2:  rgba(240,20,110,0.28);
+  --pm-magenta-text:   #FF6BB0;
+
+  --pm-text:           #F5F5F7;
+  --pm-text-muted:     rgba(245,245,247,0.58);
+  --pm-text-faint:     rgba(245,245,247,0.36);
+
+  --pm-radius-sm:  8px;
+  --pm-radius-md:  12px;
+  --pm-radius-lg:  18px;
+  --pm-radius-pill: 999px;
+
+  --pm-shadow-sm:  0 2px 10px rgba(0,0,0,0.35);
+  --pm-shadow-md:  0 8px 24px rgba(0,0,0,0.40);
+  --pm-shadow-lg:  0 16px 40px rgba(0,0,0,0.45);
+  --pm-shadow-glow: 0 4px 18px rgba(240,20,110,0.22);
+
+  --pm-glass-bg:   rgba(17,17,20,0.72);
+  --pm-glass-blur: blur(18px) saturate(1.4);
+
+  --pm-font: 'Inter','Satoshi',-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;
+
+  /* Re-point every legacy brand/gradient/glow variable at the flat palette
+     so components that reference them inherit the new look automatically */
+  --gold: var(--pm-magenta); --gold-light: var(--pm-magenta-hover); --gold-dark: var(--pm-magenta);
+  --diamond: var(--pm-magenta); --diamond-light: var(--pm-magenta-hover); --diamond-dark: var(--pm-magenta);
+  --indigo: var(--pm-magenta); --violet: var(--pm-magenta); --lavender: var(--pm-magenta-hover);
+  --ice: var(--pm-magenta-hover); --live-red: var(--pm-magenta);
+  --yellow: var(--pm-magenta); --yellow-dark: var(--pm-magenta); --yellow-light: var(--pm-magenta-dim);
+  --cyan: var(--pm-magenta); --cyan-dark: var(--pm-magenta); --cyan-glow: var(--pm-magenta-dim-2);
+  --bhagva: var(--pm-magenta); --bhagva-dark: var(--pm-magenta);
+  --white: var(--pm-text); --text-muted: var(--pm-text-muted); --text-dim: var(--pm-text-faint);
+  --s0: var(--pm-bg); --s1: var(--pm-surface-1); --s2: var(--pm-surface-1); --s3: var(--pm-surface-2);
+  --glow-indigo: var(--pm-magenta-dim); --glow-magenta: var(--pm-magenta-dim);
+  --glow-gold: var(--pm-magenta-dim); --glow-diamond: var(--pm-magenta-dim);
+  --glass: var(--pm-glass-bg); --glass-h: rgba(255,255,255,0.06);
+  --blur: var(--pm-glass-blur); --blur-sm: blur(12px) saturate(1.3);
+  --grad-brand: var(--pm-magenta); --grad-brand-h: var(--pm-magenta);
+  --grad-magenta: var(--pm-magenta); --grad-gold: var(--pm-magenta); --grad-gold-h: var(--pm-magenta);
+  --grad-diamond: var(--pm-magenta); --logo-grad: var(--pm-magenta); --logo-grad-rev: var(--pm-magenta);
+  --logo-grad-h: var(--pm-magenta); --purple-glow: none;
+  --font-display: var(--pm-font); --font-body: var(--pm-font); --font-pricedown: var(--pm-font);
+  --cu-bg: var(--pm-bg); --cu-panel: var(--pm-surface-1); --cu-panel-2: var(--pm-surface-2);
+  --cu-line: var(--pm-border); --cu-text: var(--pm-text); --cu-text-dim: var(--pm-text-muted);
+  --cu-text-faint: var(--pm-text-faint); --cu-accent: var(--pm-magenta); --cu-accent-light: var(--pm-magenta-hover);
+  --cu-font: var(--pm-font);
+}
+
+/* ── Base canvas & typography ───────────────────────────────────────── */
+html,body{ background:var(--pm-bg) !important; }
+body{
+  font-family:var(--pm-font) !important;
+  color:var(--pm-text) !important;
+  -webkit-font-smoothing:antialiased;
+  letter-spacing:0 !important;
+}
+body::before,body::after{ display:none !important; }
+h1,h2,h3,h4,h5,h6,p,span,div,a,button,input,select,textarea,label{
+  font-family:var(--pm-font);
+}
+*{ text-shadow:none !important; }
+::selection{ background:var(--pm-magenta-dim-2); color:#fff; }
+
+/* Section titles: clean weight/tracking, no gradient text fill */
+.section-title,.cta-title,.cat-name,.broadcast-name,#fifa-panel-title,#wt20-panel-title{
+  -webkit-text-fill-color:var(--pm-text) !important;
+  background:none !important;
+  color:var(--pm-text) !important;
+  font-weight:700 !important;
+  letter-spacing:-0.01em !important;
+  text-transform:none !important;
+}
+.section-title span,#fifa-panel-title span,#wt20-panel-title span{ color:var(--pm-magenta-text) !important; }
+
+/* ── Header: minimal glass bar ──────────────────────────────────────── */
+header{
+  background:var(--pm-glass-bg) !important;
+  backdrop-filter:var(--pm-glass-blur) !important;
+  -webkit-backdrop-filter:var(--pm-glass-blur) !important;
+  border-bottom:1px solid var(--pm-border) !important;
+  box-shadow:none !important;
+}
+.header-bg-logo{ opacity:0.03 !important; }
+.header-inner{ height:64px !important; padding-left:24px !important; padding-right:24px !important; }
+.logo-img{ filter:none !important; }
+
+.nav-links-desktop{ gap:4px !important; }
+.nav-links-desktop a{
+  color:var(--pm-text-muted) !important;
+  font-weight:500 !important;
+  border-radius:var(--pm-radius-sm) !important;
+  transition:color .2s ease, background-color .2s ease;
+}
+.nav-links-desktop a:hover,.nav-links-desktop a.active{
+  color:var(--pm-text) !important;
+  background:rgba(255,255,255,0.05) !important;
+}
+
+#pc-quicknav{ gap:4px !important; }
+.pcqn-item{
+  color:var(--pm-text-muted) !important;
+  border:1px solid transparent !important;
+  border-radius:var(--pm-radius-pill) !important;
+  transition:all .2s ease;
+}
+.pcqn-item:hover{
+  color:var(--pm-text) !important;
+  background:var(--pm-surface-2) !important;
+  border-color:var(--pm-border) !important;
+}
+.pcqn-item.active{
+  color:#fff !important;
+  background:var(--pm-magenta-dim) !important;
+  border-color:var(--pm-magenta-dim-2) !important;
+}
+.pcqn-dot{ background:var(--pm-magenta) !important; box-shadow:none !important; }
+
+/* Header action buttons: minimal, no shadow, unified pill/rounded shape */
+.btn-get-vip-nav,.btn-discord,.btn-telegram{
+  background:var(--pm-surface-2) !important;
+  border:1px solid var(--pm-border) !important;
+  border-radius:var(--pm-radius-sm) !important;
+  box-shadow:none !important;
+  transition:background-color .2s ease, border-color .2s ease, transform .15s ease;
+}
+.btn-get-vip-nav{ background:var(--pm-magenta) !important; border-color:var(--pm-magenta) !important; }
+.btn-get-vip-nav:hover{ background:var(--pm-magenta-hover) !important; transform:translateY(-1px); }
+.btn-discord:hover,.btn-telegram:hover{ background:var(--pm-surface-3) !important; border-color:var(--pm-border-strong) !important; transform:translateY(-1px); }
+
+.nav-device-info{ color:var(--pm-text-faint) !important; }
+.nav-qr-btn{
+  background:var(--pm-surface-2) !important; border:1px solid var(--pm-border) !important;
+  border-radius:var(--pm-radius-sm) !important; box-shadow:none !important;
+}
+.qr-float-panel{
+  background:var(--pm-surface-1) !important; border:1px solid var(--pm-border) !important;
+  box-shadow:var(--pm-shadow-lg) !important; border-radius:var(--pm-radius-md) !important;
+  backdrop-filter:var(--pm-glass-blur) !important;
+}
+.qr-open-btn{ background:var(--pm-magenta) !important; border-radius:var(--pm-radius-sm) !important; box-shadow:none !important; }
+
+/* Compact hamburger, clean line style */
+.hamburger{
+  background:var(--pm-surface-2) !important;
+  border:1px solid var(--pm-border) !important;
+  border-radius:var(--pm-radius-sm) !important;
+  box-shadow:none !important;
+}
+.hamburger span{ background:var(--pm-text) !important; box-shadow:none !important; }
+
+/* Side drawer */
+.sideDrawer,#sideDrawer{
+  background:var(--pm-bg-2) !important; border-right:1px solid var(--pm-border) !important;
+  box-shadow:var(--pm-shadow-lg) !important;
+}
+#drawerOverlay{ background:rgba(0,0,0,0.6) !important; backdrop-filter:blur(2px); }
+.drawer-nav a,.drawer-nav .drawer-movies{
+  color:var(--pm-text-muted) !important; text-shadow:none !important; animation:none !important;
+  border-radius:var(--pm-radius-sm) !important;
+}
+.drawer-nav a:hover,.drawer-nav a.active{ color:#fff !important; background:rgba(255,255,255,0.05) !important; }
+
+/* ── Cards: one flat, consistent card language everywhere ──────────── */
+.ch-card,.fixture-card,.broadcast-card,.cat-card,.cta-box,.fpx-card,.wt20-card,
+[class$="-card"],[class*="-card "],.smo-card,.slide-card,.va-card,.hsc-card{
+  background:var(--pm-surface-1) !important;
+  border:1px solid var(--pm-border) !important;
+  box-shadow:var(--pm-shadow-sm) !important;
+  backdrop-filter:none !important;
+  border-radius:var(--pm-radius-md) !important;
+  transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+.ch-card:hover,.fixture-card:hover,.broadcast-card:hover,.cat-card:hover,
+.fpx-card:hover,.wt20-card:hover,[class$="-card"]:hover,.smo-card:hover,
+.slide-card:hover,.va-card:hover,.hsc-card:hover{
+  transform:translateY(-3px);
+  box-shadow:var(--pm-shadow-md) !important;
+  border-color:var(--pm-border-strong) !important;
+}
+.cat-card{ border-left:2px solid var(--pm-magenta) !important; }
+.cat-card .cat-emoji{ opacity:0.08 !important; }
+
+.ch-thumb{ background:#EFEFEF !important; }
+.ch-info,.ch-card{ background:var(--pm-surface-1) !important; }
+.ch-name{ color:var(--pm-text) !important; }
+.ch-cat,.ch-sub{ color:var(--pm-text-faint) !important; }
+
+#fifa-panel,#wt20-panel{
+  background:var(--pm-surface-1) !important; border:1px solid var(--pm-border) !important;
+  box-shadow:var(--pm-shadow-sm) !important; border-radius:var(--pm-radius-lg) !important;
+}
+#fifa-panel-hdr,#wt20-panel-hdr{ border-bottom:1px solid var(--pm-border) !important; }
+.fpx-card,.wt20-card{ background:var(--pm-surface-2) !important; }
+
+/* ── Buttons: solid magenta primary, minimal outline secondary ─────── */
+.cta-btn-primary,.hsc-btn-watch,.bc-watch-btn,.smo-btn,.nav-watch-btn,.nav-live-btn,
+.btn-watch-sm,.btn-3d-gold,.btn-diamond-glow,.btn-slide-watch,.qr-open-btn,
+button[class*="watch"],button[class*="primary"],a[class*="watch-btn"]{
+  background:var(--pm-magenta) !important;
+  color:#fff !important;
+  border:1px solid var(--pm-magenta) !important;
+  border-radius:var(--pm-radius-sm) !important;
+  box-shadow:none !important;
+  font-weight:600 !important;
+  text-shadow:none !important;
+  filter:none !important;
+  transition:background-color .2s ease, transform .15s ease, box-shadow .2s ease;
+}
+.cta-btn-primary:hover,.hsc-btn-watch:hover,.bc-watch-btn:hover,.smo-btn:hover,
+.btn-watch-sm:hover,.btn-slide-watch:hover,button[class*="watch"]:hover{
+  background:var(--pm-magenta-hover) !important;
+  border-color:var(--pm-magenta-hover) !important;
+  transform:translateY(-1px);
+  box-shadow:var(--pm-shadow-glow) !important;
+}
+
+.cta-btn-outline,.hsc-btn-outline,.btn-slide-outline{
+  background:transparent !important;
+  color:var(--pm-text) !important;
+  border:1px solid var(--pm-border-strong) !important;
+  border-radius:var(--pm-radius-sm) !important;
+  box-shadow:none !important;
+  font-weight:500 !important;
+}
+.cta-btn-outline:hover,.hsc-btn-outline:hover,.btn-slide-outline:hover{
+  border-color:var(--pm-magenta) !important;
+  color:#fff !important;
+  background:var(--pm-magenta-dim) !important;
+}
+
+/* Filter / tab pills stay fully rounded */
+.wcs-btn,.ch-tab,.tab,.mtab,.va-type-btn,.va-sort-btn,.va-genre-chip{
+  background:var(--pm-surface-1) !important;
+  color:var(--pm-text-muted) !important;
+  border:1px solid var(--pm-border) !important;
+  border-radius:var(--pm-radius-pill) !important;
+  box-shadow:none !important;
+  font-weight:500 !important;
+  transition:all .2s ease;
+}
+.wcs-btn:hover,.ch-tab:hover,.tab:hover,.mtab:hover,
+.va-type-btn:hover,.va-sort-btn:hover,.va-genre-chip:hover{
+  color:var(--pm-text) !important;
+  background:var(--pm-surface-2) !important;
+  border-color:var(--pm-border-strong) !important;
+  transform:none !important;
+}
+.wcs-btn.active,.ch-tab.active,.tab.active,.mtab.active,
+.va-type-btn.active,.va-sort-btn.active,.va-genre-chip.active{
+  background:var(--pm-magenta) !important;
+  color:#fff !important;
+  border-color:var(--pm-magenta) !important;
+}
+
+/* ── Badges / pills / live tags: consistent magenta accent ──────────── */
+.smo-live-badge,.hsc-live-badge,.slide-live-badge,.match-live-tag,.ch-live-dot,
+.slide-badge-live,#fifa-panel-live,#wt20-panel-live,.fpx-live-dot,.wt20-live-dot{
+  background:var(--pm-magenta) !important;
+  color:#fff !important;
+  border-radius:var(--pm-radius-pill) !important;
+  box-shadow:none !important;
+  font-weight:700 !important;
+}
+.smo-upcoming-badge,.fpx-pill,.wt20-pill,.discord-tag,.whatsapp-tag,
+.fixture-badge,.broadcast-quality,.quality-badge,.ch-hd,#fpx-badge,
+#fpx-ch-count,#wt20-ch-count{
+  background:var(--pm-surface-2) !important;
+  color:var(--pm-text-muted) !important;
+  border:1px solid var(--pm-border) !important;
+  border-radius:var(--pm-radius-sm) !important;
+  box-shadow:none !important;
+}
+.fpx-premium,.fpx-pill-4k{
+  background:var(--pm-magenta-dim) !important; color:var(--pm-magenta-text) !important;
+  border:1px solid var(--pm-magenta-dim-2) !important; box-shadow:none !important;
+}
+.live-dot,.live-dot-r,.fpx-dot,.wt20-dot{ background:var(--pm-magenta) !important; box-shadow:none !important; }
+
+/* ── Inputs, selects & search bars: compact, minimal ────────────────── */
+input[type="text"],input[type="search"],input[type="email"],input[type="password"],
+select,textarea,.smo-game-select,#fpx-ch-select,#chCategorySelect{
+  background:var(--pm-surface-2) !important;
+  color:var(--pm-text) !important;
+  border:1px solid var(--pm-border) !important;
+  border-radius:var(--pm-radius-sm) !important;
+  box-shadow:none !important;
+  padding:9px 14px !important;
+  font-family:var(--pm-font) !important;
+  transition:border-color .2s ease, background-color .2s ease;
+}
+input[type="text"]:focus,input[type="search"]:focus,select:focus,textarea:focus{
+  outline:none !important;
+  border-color:var(--pm-magenta) !important;
+  background:var(--pm-surface-3) !important;
+  box-shadow:0 0 0 3px var(--pm-magenta-dim) !important;
+}
+input::placeholder{ color:var(--pm-text-faint) !important; }
+
+/* ── Tables ──────────────────────────────────────────────────────────── */
+#vip-compare-table,table{
+  background:var(--pm-surface-1) !important;
+  border:1px solid var(--pm-border) !important;
+  border-radius:var(--pm-radius-md) !important;
+  overflow:hidden;
+  border-collapse:separate !important;
+  box-shadow:none !important;
+}
+#vip-compare-table th,table th{
+  background:var(--pm-surface-2) !important;
+  color:var(--pm-text) !important;
+  border-bottom:1px solid var(--pm-border) !important;
+  font-weight:600 !important;
+}
+#vip-compare-table td,table td{
+  color:var(--pm-text-muted) !important;
+  border-bottom:1px solid var(--pm-border-soft) !important;
+}
+#vip-compare-table tr:last-child td,table tr:last-child td{ border-bottom:none !important; }
+
+/* ── CTA / footer ────────────────────────────────────────────────────── */
+.cta-box{ background:var(--pm-surface-1) !important; border:1px solid var(--pm-border) !important; }
+.cta-box::before{ display:none !important; }
+footer{ background:var(--pm-bg) !important; border-top:1px solid var(--pm-border) !important; }
+.footer-col h4{ color:var(--pm-text) !important; letter-spacing:0.04em !important; }
+.footer-col a{ color:var(--pm-text-muted) !important; transition:color .2s ease; }
+.footer-col a:hover{ color:var(--pm-magenta-text) !important; }
+
+/* ── Category card sport tints: unify into one flat surface ─────────── */
+.cat-cricket,.cat-football,.cat-tennis,.cat-f1{ background:var(--pm-surface-1) !important; }
+
+/* ── Scrollbar: subtle, minimal ─────────────────────────────────────── */
+::-webkit-scrollbar{ width:8px; height:8px; }
+::-webkit-scrollbar-track{ background:var(--pm-bg); }
+::-webkit-scrollbar-thumb{ background:var(--pm-surface-3); border-radius:var(--pm-radius-pill); }
+::-webkit-scrollbar-thumb:hover{ background:var(--pm-border-strong); }
+
+/* ── Generic shadow flattening safety-net for anything not covered ──── */
+[style*="box-shadow"]{ box-shadow:var(--pm-shadow-sm) !important; }
+button,a.btn,.btn{ text-shadow:none !important; }
+</style>
+
 </body>
 </html>
