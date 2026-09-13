@@ -4712,9 +4712,16 @@ function sxHeroWatch(url, location, title) {
   openStreamPlayer(u, title, 'stream');
 }
 
-function renderSlides(rows) {
-  if (!rows) return;
-  const slides = active(rows);
+function renderSlides(rows, channelRows) {
+  const slides = active(rows || []);
+
+  // No active rows in HERO SLIDES → show a channels banner instead of an
+  // empty hero, so there's always something useful above the fold with a
+  // single button straight into Live TV.
+  if (!slides.length) {
+    renderHeroChannelsFallback(channelRows);
+    return;
+  }
 
   // ── DESKTOP: Hotstar-style 1:1 cards ───────────────────────
   const track = document.getElementById('hero-cards-track');
@@ -4825,6 +4832,55 @@ function renderSlides(rows) {
   currentSlide = 0;
   goSlide(0);
   startSlider();
+}
+
+// ── Hero fallback: no active HERO SLIDES rows → one banner slide that
+//    shows (almost) every live channel plus a single button into Live TV,
+//    instead of the hero sitting empty. Reuses the exact .slide markup so
+//    it inherits all existing hero CSS (height, overlay, positioning).
+function renderHeroChannelsFallback(channelRows) {
+  const track = document.getElementById('hero-cards-track');
+  if (track) track.innerHTML = '';
+  const cardDotsEl = document.getElementById('hero-card-dots');
+  if (cardDotsEl) cardDotsEl.innerHTML = '';
+
+  const container = document.getElementById('slides-container');
+  if (!container) return;
+
+  const channels = active(channelRows || []).slice(0, 60);
+  const logosHtml = channels.map(ch =>
+    `<div class="hfl-logo" title="${escJs(ch.channel_name || '')}">${img(ch.logo_url, ch.channel_name || '', '', '📺')}</div>`
+  ).join('');
+
+  container.innerHTML = `
+  <div class="slide active">
+    <div class="slide-bg"></div>
+    <div class="slide-overlay"></div>
+    <div class="slide-content">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;">
+        <span class="slide-sport-badge">LIVE CHANNELS</span>
+      </div>
+      <div class="slide-title">All Your Channels, One Tap Away</div>
+      <div class="slide-sub">${channels.length ? `${channels.length}+ live channels ready to stream.` : 'Live channels ready to stream.'}</div>
+      ${channels.length ? `<div class="hero-fallback-logos">${logosHtml}</div>` : ''}
+      <div class="slide-btns">
+        <a href="#" class="btn-slide-watch" onclick="event.preventDefault();openLiveTV()">▶ Watch Live TV</a>
+      </div>
+    </div>
+  </div>
+  <div id="sxHeroOverride" class="sx-hero-override">
+    <div class="slide-bg" id="sxHeroOverrideBg"></div>
+    <div class="slide-overlay"></div>
+    <div class="slide-content">
+      <div class="slide-title" id="sxHeroOverrideTitle"></div>
+      <div class="slide-sub" id="sxHeroOverrideSub"></div>
+    </div>
+  </div>`;
+
+  totalSlides = 1;
+  currentSlide = 0;
+  goSlide(0);
+  clearInterval(slideInterval); // single slide — nothing to rotate to
 }
 
 // ── Route match-card links: a real URL opens in a new tab as before.
@@ -5991,10 +6047,18 @@ async function init() {
   );
 
   // Render in the original, correct visual order once all data is back.
+  const liveChannelsIdx = steps.findIndex(([sheet]) => sheet === 'LIVE CHANNELS');
   steps.forEach(([sheet, render, pct, label], i) => {
     setProgress(pct, label);
     try {
-      render(results[i]);
+      // HERO SLIDES also gets the LIVE CHANNELS rows, so that if the sheet
+      // has no active slides it can fall back to a channels banner instead
+      // of rendering nothing.
+      if (sheet === 'HERO SLIDES') {
+        render(results[i], results[liveChannelsIdx]);
+      } else {
+        render(results[i]);
+      }
     } catch (e) {
       console.warn(`Render step "${sheet}" failed, continuing:`, e);
     }
@@ -10453,6 +10517,77 @@ button,a.btn,.btn{ text-shadow:none !important; }
   text-shadow:none !important;
   filter:none !important;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   MINIMALISM PASS — hierarchy, less clutter, one accent, consistent
+   spacing/radius, quieter motion. Loads last → wins the cascade.
+   No markup/JS touched — CSS only.
+═══════════════════════════════════════════════════════════════════════ */
+
+/* 1) Kill purely-decorative ambient motion (keep functional loaders
+      and the small live/online status pulses — those carry meaning). */
+body::before{ animation:none !important; opacity:0.18 !important; }
+.mws-bg{ animation:none !important; }
+.mws-panel::before{
+  animation:none !important;
+  background:var(--pm-magenta) !important;
+}
+.nav-movies-link, .drawer-nav .drawer-movies{
+  animation:none !important;
+  color:var(--pm-magenta) !important;
+}
+
+/* 2) Flatten remaining elevation noise on cards/panels/badges/pills —
+      depth now comes from a single flat border, not shadow stacks. */
+[class*="-card"], .card,
+[class*="-panel"]:not(.mws-panel), .panel,
+[class*="-badge"], .badge,
+[class*="-pill"], .pill,
+[class*="-tag"], .tag{
+  box-shadow:none !important;
+}
+
+/* 3) Normalize interactive-control radius to two sizes only:
+      8px for controls, 12px for containers — kills the mismatched
+      radii that make the grid feel inconsistent. */
+button, a.btn, [class*="btn-"], input, select, textarea{
+  border-radius:8px !important;
+}
+[class*="-card"], .card, .modal, [class*="-modal"]{
+  border-radius:12px !important;
+}
+
+/* 4) One accent only — any leftover gold/gradient text collapses to
+      plain white so magenta stays the single call-to-action color. */
+.gradient-text{
+  background:none !important;
+  -webkit-text-fill-color:#fff !important;
+  color:#fff !important;
+}
+
+/* 5) Consistent 16px rhythm across every card/tile grid in the app. */
+[class*="-grid"], .card-grid{ gap:16px !important; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   HERO FALLBACK — when HERO SLIDES has no active rows, the banner shows
+   a scrollable channel strip + one "Watch Live TV" button instead of an
+   empty hero. Reuses .slide/.slide-content, so this only styles the strip.
+═══════════════════════════════════════════════════════════════════════ */
+.hero-fallback-logos{
+  display:flex; gap:10px; overflow-x:auto; padding:2px 0 14px; max-width:100%;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 24px, #000 calc(100% - 40px), transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 24px, #000 calc(100% - 40px), transparent 100%);
+  scrollbar-width: none;
+}
+.hero-fallback-logos::-webkit-scrollbar{ display:none; }
+.hfl-logo{
+  flex:0 0 auto; width:44px; height:44px; border-radius:8px;
+  background:var(--pm-surface-1,rgba(255,255,255,0.06));
+  border:1px solid var(--pm-border,rgba(255,255,255,0.08));
+  display:flex; align-items:center; justify-content:center; overflow:hidden;
+}
+.hfl-logo img{ width:100%; height:100%; object-fit:contain; padding:6px; }
+@media(max-width:900px){ .hfl-logo{ width:38px; height:38px; } }
 </style>
 
 </body>
