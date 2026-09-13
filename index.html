@@ -56,7 +56,7 @@
       Set active_true_false = FALSE on a row to hide that whole panel.
       Add a new row + matching sheet tab to add a brand new panel later.
   ▸ New tabs "FIFA CHANNELS" and "WT20 CHANNELS" hold each panel's channel rows:
-      columns: active_true_false | channel_name | sub_label | logo_url | watch_url |
+      columns: active_true_false | channel_name | sub_label | icon_url | watch_url |
                quality_badge | style | flag_emoji | coming_soon | sort_order
 ════════════════════════════════════════════════════════════ -->
 <script>
@@ -3159,7 +3159,7 @@ window.renderFifaPanel = function(rows) {
 
     return `<div class="${cardCls}"${cazeStyle}${onclick} title="${isComingSoon?'Coming Soon':''}">
       <div class="fpx-thumb-wrap">
-        <img class="fpx-thumb" src="${r.logo_url||''}" alt="${r.channel_name||''}" onerror="this.src='https://via.placeholder.com/320x180/0a1830/fce8f5?text=${encodeURIComponent(r.channel_name||'')}'">
+        <img class="fpx-thumb" src="${r.icon_url||''}" alt="${r.channel_name||''}" onerror="this.src='https://via.placeholder.com/320x180/0a1830/fce8f5?text=${encodeURIComponent(r.channel_name||'')}'">
         ${badgeImg}
         ${overlay}
         ${liveDot}
@@ -4594,7 +4594,7 @@ function renderSettings(rows) {
   // with no null check — the moment ANY one of those ids was missing from the
   // page (e.g. the ticker bar, which has now been removed entirely) it threw
   // and silently killed every setting queued after it in this function
-  // (logo_url, footer, QR, etc. never got applied). Guarding each one means a
+  // (icon_url, footer, QR, etc. never got applied). Guarding each one means a
   // single missing/renamed element can no longer take the rest down with it.
   const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
   const setAttr = (id, attr, val) => { const el = document.getElementById(id); if (el) el[attr] = val; };
@@ -4610,7 +4610,7 @@ function renderSettings(rows) {
   if (s.social_bar_text) { setText('social-text', s.social_bar_text); }
   if (s.footer_tagline)  { setText('footer-tagline', s.footer_tagline); }
   if (s.footer_copy)     { setText('footer-copy', s.footer_copy); }
-  if (s.footer_logo_url) { setAttr('footer-logo', 'src', s.footer_logo_url); }
+  if (s.footer_icon_url) { setAttr('footer-logo', 'src', s.footer_icon_url); }
   if (s.qr_title)        { setText('qr-title', s.qr_title); }
   if (s.qr_sub)          { setText('qr-sub', s.qr_sub); }
   if (s.qr_image_url)    { setAttr('qr-img', 'src', s.qr_image_url); }
@@ -4618,13 +4618,13 @@ function renderSettings(rows) {
   if (s.watch_popup_footer){ setText('watch-modal-footer', s.watch_popup_footer); }
 
   // logo
-  if (s.logo_url) {
+  if (s.icon_url) {
     const navLogo = document.getElementById('nav-logo-img');
-    if (navLogo) { navLogo.src = s.logo_url; navLogo.alt = s.logo_alt||'Logo'; navLogo.style.display = ''; }
+    if (navLogo) { navLogo.src = s.icon_url; navLogo.alt = s.logo_alt||'Logo'; navLogo.style.display = ''; }
     const drawerLogo = document.getElementById('drawer-logo');
-    if (drawerLogo) { drawerLogo.src = s.logo_url; drawerLogo.style.display = ''; }
+    if (drawerLogo) { drawerLogo.src = s.icon_url; drawerLogo.style.display = ''; }
     const headerBgLogo = document.getElementById('header-bg-logo');
-    if (headerBgLogo) { headerBgLogo.style.backgroundImage = `url('${s.logo_url}')`; }
+    if (headerBgLogo) { headerBgLogo.style.backgroundImage = `url('${s.icon_url}')`; }
   }
 }
 
@@ -4818,9 +4818,9 @@ function renderSlides(rows, channelRows) {
   //    Only channels with a real logo are used (no generic placeholder
   //    icon), laid out as a full-bleed wall behind the title/button —
   //    same visual weight as a normal hero slide's background image.
-  const channels = active(channelRows || []).filter(ch => (ch.logo_url || '').trim()).slice(0, 60);
+  const channels = active(channelRows || []).filter(ch => (ch.icon_url || '').trim()).slice(0, 60);
   const logosHtml = channels.map(ch =>
-    `<div class="hfl-logo" title="${escJs(ch.channel_name || '')}"><img src="${ch.logo_url}" alt="${escJs(ch.channel_name || '')}" onerror="this.parentElement.style.display='none'"></div>`
+    `<div class="hfl-logo" title="${escJs(ch.channel_name || '')}"><img src="${ch.icon_url}" alt="${escJs(ch.channel_name || '')}" onerror="this.parentElement.style.display='none'"></div>`
   ).join('');
   const bannerIdx = slides.length;
   html += `
@@ -4929,14 +4929,14 @@ function sxServersEnc(m) { return encodeURIComponent(JSON.stringify(sxGetMatchSe
 // Match a MATCH CARDS server label (btn_text, e.g. "Star Sports 1") against
 // the LIVE TV CMS channel list (window._cmsChannels, from the LIVE TV sheet
 // tab) by channel_name — case/whitespace-insensitive exact match. Returns
-// that channel's logo_url if found, else '' (caller falls back to the
+// that channel's icon_url if found, else '' (caller falls back to the
 // plain numbered badge).
 function sxFindLiveTvLogoForLabel(label) {
   const n = (label || '').trim().toLowerCase();
   if (!n) return '';
   const list = window._cmsChannels || [];
   const hit = list.find(c => (c.channel_name || '').trim().toLowerCase() === n);
-  return (hit && hit.logo_url) || '';
+  return (hit && hit.icon_url) || '';
 }
 
 // URI-encoded JSON of the match-detail fields shown on the left panel of
@@ -4946,8 +4946,8 @@ function sxMatchInfoEnc(m, name) {
   m = m || {};
   const info = {
     name: name || '',
-    team1_code: m.team1_code || '', team1_full_name: m.team1_full_name || '', team1_logo_url: m.team1_logo_url || '',
-    team2_code: m.team2_code || '', team2_full_name: m.team2_full_name || '', team2_logo_url: m.team2_logo_url || '',
+    team1_code: m.team1_code || '', team1_full_name: m.team1_full_name || '', team1_icon_url: m.team1_icon_url || '',
+    team2_code: m.team2_code || '', team2_full_name: m.team2_full_name || '', team2_icon_url: m.team2_icon_url || '',
     date_label: m.date_label || '', details: m.details || '',
     countdown: m.countdown_to_iso_datetime || m.countdown_to || '',
     status: matchStatusText(m).toLowerCase()
@@ -5000,13 +5000,13 @@ function openMatchWatchScreen(servers, info) {
       ${info.date_label ? `<div class="mws-date">${info.date_label}</div>` : ''}
       <div class="mws-teams">
         <div class="mws-team">
-          ${img(info.team1_logo_url, '', 'mws-team-logo', '')}
+          ${img(info.team1_icon_url, '', 'mws-team-logo', '')}
           <div class="mws-team-code">${info.team1_code || ''}</div>
           <div class="mws-team-full">${info.team1_full_name || ''}</div>
         </div>
         <div class="mws-vs">VS</div>
         <div class="mws-team">
-          ${img(info.team2_logo_url, '', 'mws-team-logo', '')}
+          ${img(info.team2_icon_url, '', 'mws-team-logo', '')}
           <div class="mws-team-code">${info.team2_code || ''}</div>
           <div class="mws-team-full">${info.team2_full_name || ''}</div>
         </div>
@@ -5021,7 +5021,7 @@ function openMatchWatchScreen(servers, info) {
   }
 
   const bgEl = document.getElementById('mwsBg');
-  if (bgEl) bgEl.style.backgroundImage = info.team1_logo_url ? `url('${info.team1_logo_url}')` : '';
+  if (bgEl) bgEl.style.backgroundImage = info.team1_icon_url ? `url('${info.team1_icon_url}')` : '';
 
   const titleEl = document.getElementById('mwsRightTitle');
   if (titleEl) titleEl.textContent = label;
@@ -5131,13 +5131,13 @@ function injectMatchInfoIntoHeroCards(matchCards) {
         ${badge}
         <div style="display:flex;align-items:center;justify-content:space-between;gap:3px;">
           <div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;min-width:0;">
-            ${img(m.team1_logo_url,'','smo-logo','')}
+            ${img(m.team1_icon_url,'','smo-logo','')}
             <div class="smo-name" style="font-size:12px;line-height:1.1;text-align:center">${m.team1_code||''}</div>
             <div class="smo-full" style="font-size:9px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%">${m.team1_full_name||''}</div>
           </div>
           <div class="smo-vs" style="font-size:11px;flex-shrink:0;padding:0 2px">VS</div>
           <div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;min-width:0;">
-            ${img(m.team2_logo_url,'','smo-logo','')}
+            ${img(m.team2_icon_url,'','smo-logo','')}
             <div class="smo-name" style="font-size:12px;line-height:1.1;text-align:center">${m.team2_code||''}</div>
             <div class="smo-full" style="font-size:9px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%">${m.team2_full_name||''}</div>
           </div>
@@ -5195,13 +5195,13 @@ function injectMatchInfoIntoHeroCards(matchCards) {
           ${badge}
           <div style="display:flex;align-items:center;justify-content:space-between;gap:3px;">
             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;min-width:0;">
-              ${img(m.team1_logo_url,'','smo-logo','')}
+              ${img(m.team1_icon_url,'','smo-logo','')}
               <div class="smo-name" style="font-size:12px;line-height:1.1;text-align:center">${m.team1_code||''}</div>
               <div class="smo-full" style="font-size:9px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%">${m.team1_full_name||''}</div>
             </div>
             <div class="smo-vs" style="font-size:11px;flex-shrink:0;padding:0 2px">VS</div>
             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;min-width:0;">
-              ${img(m.team2_logo_url,'','smo-logo','')}
+              ${img(m.team2_icon_url,'','smo-logo','')}
               <div class="smo-name" style="font-size:12px;line-height:1.1;text-align:center">${m.team2_code||''}</div>
               <div class="smo-full" style="font-size:9px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%">${m.team2_full_name||''}</div>
             </div>
@@ -5269,13 +5269,13 @@ function injectMatchInfoIntoSlides(matchCards) {
       <div style="margin-bottom:10px;">${badge}</div>
       <div style="display:flex;align-items:center;justify-content:center;gap:18px;margin-bottom:6px;">
         <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:0;max-width:110px;">
-          ${img(m.team1_logo_url,'','smo-logo','')}
+          ${img(m.team1_icon_url,'','smo-logo','')}
           <div class="smo-name" style="font-size:13px;text-align:center;">${m.team1_code||''}</div>
           <div class="smo-full" style="font-size:10px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">${m.team1_full_name||''}</div>
         </div>
         <div class="smo-vs" style="font-size:13px;flex-shrink:0;">VS</div>
         <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:0;max-width:110px;">
-          ${img(m.team2_logo_url,'','smo-logo','')}
+          ${img(m.team2_icon_url,'','smo-logo','')}
           <div class="smo-name" style="font-size:13px;text-align:center;">${m.team2_code||''}</div>
           <div class="smo-full" style="font-size:10px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">${m.team2_full_name||''}</div>
         </div>
@@ -5669,9 +5669,9 @@ function renderMatchCards(rows) {
       <div class="smo-card fx2-card" id="${cardId}" data-live="${isLive ? '1' : '0'}"${hideAt !== null ? ` data-expire-at="${hideAt}"` : ''}>
         <div class="fx2-thumb">
           <div class="fx2-thumb-teams">
-            <div class="fx2-thumb-team">${img(c.team1_logo_url,c.team1_code||'','')}</div>
+            <div class="fx2-thumb-team">${img(c.team1_icon_url,c.team1_code||'','')}</div>
             <div class="fx2-thumb-vs">VS</div>
-            <div class="fx2-thumb-team">${img(c.team2_logo_url,c.team2_code||'','')}</div>
+            <div class="fx2-thumb-team">${img(c.team2_icon_url,c.team2_code||'','')}</div>
           </div>
           ${badge}
         </div>
@@ -5874,9 +5874,9 @@ function renderFixtures(rows) {
     const thumb = c.banner_image_url
       ? `<img src="${c.banner_image_url}" alt="" class="fx2-thumb-img">`
       : `<div class="fx2-thumb-teams">
-           <div class="fx2-thumb-team">${img(c.team1_logo_url,c.team1_code||'','')}</div>
+           <div class="fx2-thumb-team">${img(c.team1_icon_url,c.team1_code||'','')}</div>
            <div class="fx2-thumb-vs">VS</div>
-           <div class="fx2-thumb-team">${img(c.team2_logo_url,c.team2_code||'','')}</div>
+           <div class="fx2-thumb-team">${img(c.team2_icon_url,c.team2_code||'','')}</div>
          </div>`;
     return `
     <a class="fx2-card" href="${matchWatchHref(c.btn_url)}" onclick="return sxHandleMatchWatch(event,'${sxServersEnc(c)}','${escJs(c.btn_url)}','${escJs((c.team1_code||'')+' vs '+(c.team2_code||''))}','${sxMatchInfoEnc(c,(c.team1_code||'')+' vs '+(c.team2_code||''))}')">
@@ -5963,7 +5963,7 @@ function renderWatchPopup(rows) {
   featured.forEach(f => {
     html += `
     <a class="watch-sx-featured" href="${sxResolveFanCodeMatchUrl(f.watch_url||'#')}">
-      <div class="watch-ch-logo">${img(f.logo_url,'',)}</div>
+      <div class="watch-ch-logo">${img(f.icon_url,'',)}</div>
       <div class="watch-ch-info">
         <div class="watch-ch-name" style="font-size:16px;font-weight:900">${f.channel_name}</div>
         <div style="display:flex;gap:6px;margin-top:4px">${badgeHtml(f.badge)}</div>
@@ -5980,7 +5980,7 @@ function renderWatchPopup(rows) {
       const isUnavail = (ch.badge||'').toLowerCase() === 'unavail';
       html += `
       <a class="watch-channel-btn${isUnavail?' unavail-card':''}" href="${sxResolveFanCodeMatchUrl(ch.watch_url||'#')}">
-        <div class="watch-ch-logo">${img(ch.logo_url,'')}</div>
+        <div class="watch-ch-logo">${img(ch.icon_url,'')}</div>
         <div class="watch-ch-info">
           <div class="watch-ch-name">${ch.channel_name}</div>
           <div style="margin-top:2px">${badgeHtml(ch.badge)}</div>
@@ -8358,7 +8358,7 @@ function spUpdateInfobar(type, label){
   if (type === 'match') {
     const m = (window._matchCardsData || []).find(c => ((c.team1_code||'') + ' vs ' + (c.team2_code||'')) === label);
     const live = m && matchStatusText(m).toLowerCase() === 'live';
-    logoImg.src = (m && (m.team1_logo_url || m.team2_logo_url)) || '';
+    logoImg.src = (m && (m.team1_icon_url || m.team2_icon_url)) || '';
     metaEl.innerHTML = (live ? '<span class="sp-info-live">LIVE</span>' : '') + (m && m.game ? `<span>${m.game}</span>` : '');
     if (!logoImg.src) logoWrap.style.display = 'none';
   } else {
@@ -8385,7 +8385,7 @@ function populateStreamPlayerRail(type, currentLabel){
       const label = (c.team1_code||'') + ' vs ' + (c.team2_code||'');
       return `
       <button type="button" class="sp-rail-item${label===currentLabel?' active':''}" onclick="sxHandleMatchWatch(null,'${sxServersEnc(c)}','${escJs(c.btn_url)}','${escJs(label)}','${sxMatchInfoEnc(c,label)}')">
-        <span class="sp-rail-thumb">${img(c.team1_logo_url||c.team2_logo_url,'','')}</span>
+        <span class="sp-rail-thumb">${img(c.team1_icon_url||c.team2_icon_url,'','')}</span>
         <span class="sp-rail-info">
           <span class="sp-rail-name">${label}</span>
           <span class="sp-rail-meta"><span class="sp-rail-live">LIVE</span>${c.game||''}</span>
@@ -8579,7 +8579,7 @@ function closeDmca(){
 <script>
 // Plays a brief logo splash over whichever panel overlay (Live TV / FIFA /
 // FanCode) is about to open. Reuses the current nav logo (whatever the
-// SETTINGS sheet's logo_url is set to) so it always matches the live logo
+// SETTINGS sheet's icon_url is set to) so it always matches the live logo
 // instead of a second hardcoded image. One shared element, created lazily.
 function sxPlayPanelIntro(){
   // Disabled site-wide: Live TV / FanCode / FIFA now open instantly —
