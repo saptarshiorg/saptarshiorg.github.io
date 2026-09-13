@@ -4715,14 +4715,6 @@ function sxHeroWatch(url, location, title) {
 function renderSlides(rows, channelRows) {
   const slides = active(rows || []);
 
-  // No active rows in HERO SLIDES → show a channels banner instead of an
-  // empty hero, so there's always something useful above the fold with a
-  // single button straight into Live TV.
-  if (!slides.length) {
-    renderHeroChannelsFallback(channelRows);
-    return;
-  }
-
   // ── DESKTOP: Hotstar-style 1:1 cards ───────────────────────
   const track = document.getElementById('hero-cards-track');
   const cardDotsEl = document.getElementById('hero-card-dots');
@@ -4819,7 +4811,38 @@ function renderSlides(rows, channelRows) {
   const dotsHtml = slides.map((_, i) =>
     `<div class="dot${i===0?' active':''}" onclick="goSlide(${i});startSlider()"></div>`
   ).join('');
-  container.innerHTML = html + `<div class="slide-dots">${dotsHtml}</div>` + `
+
+  // ── Channels banner — always appended as the LAST slide in the
+  //    rotation (lowest priority), after every real hero slide. If the
+  //    sheet has zero active rows this ends up being the only slide.
+  //    Only channels with a real logo are used (no generic placeholder
+  //    icon), laid out as a full-bleed wall behind the title/button —
+  //    same visual weight as a normal hero slide's background image.
+  const channels = active(channelRows || []).filter(ch => (ch.logo_url || '').trim()).slice(0, 60);
+  const logosHtml = channels.map(ch =>
+    `<div class="hfl-logo" title="${escJs(ch.channel_name || '')}"><img src="${ch.logo_url}" alt="${escJs(ch.channel_name || '')}" onerror="this.parentElement.style.display='none'"></div>`
+  ).join('');
+  const bannerIdx = slides.length;
+  html += `
+    <div class="slide${bannerIdx===0?' active':''}" data-orig-title="">
+      <div class="slide-bg"></div>
+      ${channels.length ? `<div class="hero-fallback-logowall">${logosHtml}</div>` : ''}
+      <div class="slide-overlay"></div>
+      <div class="slide-content">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;">
+          <span class="slide-sport-badge">LIVE CHANNELS</span>
+        </div>
+        <div class="slide-title">All Your Channels, One Tap Away</div>
+        <div class="slide-sub">${channels.length ? `${channels.length}+ live channels ready to stream.` : 'Live channels ready to stream.'}</div>
+        <div class="slide-btns">
+          <a href="#" class="btn-slide-watch" onclick="event.preventDefault();openLiveTV()">Watch Live TV</a>
+        </div>
+      </div>
+    </div>`;
+  const allDotsHtml = dotsHtml + `<div class="dot${bannerIdx===0?' active':''}" onclick="goSlide(${bannerIdx});startSlider()"></div>`;
+
+
+  container.innerHTML = html + `<div class="slide-dots">${allDotsHtml}</div>` + `
 <div id="sxHeroOverride" class="sx-hero-override">
   <div class="slide-bg" id="sxHeroOverrideBg"></div>
   <div class="slide-overlay"></div>
@@ -4828,59 +4851,10 @@ function renderSlides(rows, channelRows) {
     <div class="slide-sub" id="sxHeroOverrideSub"></div>
   </div>
 </div>`;
-  totalSlides = slides.length;
+  totalSlides = slides.length + 1;
   currentSlide = 0;
   goSlide(0);
   startSlider();
-}
-
-// ── Hero fallback: no active HERO SLIDES rows → one banner slide that
-//    shows (almost) every live channel plus a single button into Live TV,
-//    instead of the hero sitting empty. Reuses the exact .slide markup so
-//    it inherits all existing hero CSS (height, overlay, positioning).
-function renderHeroChannelsFallback(channelRows) {
-  const track = document.getElementById('hero-cards-track');
-  if (track) track.innerHTML = '';
-  const cardDotsEl = document.getElementById('hero-card-dots');
-  if (cardDotsEl) cardDotsEl.innerHTML = '';
-
-  const container = document.getElementById('slides-container');
-  if (!container) return;
-
-  const channels = active(channelRows || []).slice(0, 60);
-  const logosHtml = channels.map(ch =>
-    `<div class="hfl-logo" title="${escJs(ch.channel_name || '')}">${img(ch.logo_url, ch.channel_name || '', '', '📺')}</div>`
-  ).join('');
-
-  container.innerHTML = `
-  <div class="slide active">
-    <div class="slide-bg"></div>
-    <div class="slide-overlay"></div>
-    <div class="slide-content">
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;">
-        <span class="slide-sport-badge">LIVE CHANNELS</span>
-      </div>
-      <div class="slide-title">All Your Channels, One Tap Away</div>
-      <div class="slide-sub">${channels.length ? `${channels.length}+ live channels ready to stream.` : 'Live channels ready to stream.'}</div>
-      ${channels.length ? `<div class="hero-fallback-logos">${logosHtml}</div>` : ''}
-      <div class="slide-btns">
-        <a href="#" class="btn-slide-watch" onclick="event.preventDefault();openLiveTV()">▶ Watch Live TV</a>
-      </div>
-    </div>
-  </div>
-  <div id="sxHeroOverride" class="sx-hero-override">
-    <div class="slide-bg" id="sxHeroOverrideBg"></div>
-    <div class="slide-overlay"></div>
-    <div class="slide-content">
-      <div class="slide-title" id="sxHeroOverrideTitle"></div>
-      <div class="slide-sub" id="sxHeroOverrideSub"></div>
-    </div>
-  </div>`;
-
-  totalSlides = 1;
-  currentSlide = 0;
-  goSlide(0);
-  clearInterval(slideInterval); // single slide — nothing to rotate to
 }
 
 // ── Route match-card links: a real URL opens in a new tab as before.
@@ -10569,25 +10543,54 @@ button, a.btn, [class*="btn-"], input, select, textarea{
 [class*="-grid"], .card-grid{ gap:16px !important; }
 
 /* ══════════════════════════════════════════════════════════════════════
-   HERO FALLBACK — when HERO SLIDES has no active rows, the banner shows
-   a scrollable channel strip + one "Watch Live TV" button instead of an
-   empty hero. Reuses .slide/.slide-content, so this only styles the strip.
+   HERO FALLBACK — when HERO SLIDES has no active rows (or always, as the
+   last slide) the banner's background becomes a wall of channel logos —
+   same visual weight/size as a normal slide's photo background — with
+   the usual overlay + title + single "Watch Live TV" button on top.
 ═══════════════════════════════════════════════════════════════════════ */
-.hero-fallback-logos{
-  display:flex; gap:10px; overflow-x:auto; padding:2px 0 14px; max-width:100%;
-  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 24px, #000 calc(100% - 40px), transparent 100%);
-  mask-image: linear-gradient(90deg, transparent 0, #000 24px, #000 calc(100% - 40px), transparent 100%);
-  scrollbar-width: none;
+.hero-fallback-logowall{
+  position:absolute; inset:0; z-index:0; overflow:hidden;
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(84px,1fr)); grid-auto-rows:84px;
 }
-.hero-fallback-logos::-webkit-scrollbar{ display:none; }
 .hfl-logo{
-  flex:0 0 auto; width:44px; height:44px; border-radius:8px;
-  background:var(--pm-surface-1,rgba(255,255,255,0.06));
+  width:100%; height:100%;
+  background:var(--pm-surface-1,#111114);
   border:1px solid var(--pm-border,rgba(255,255,255,0.08));
   display:flex; align-items:center; justify-content:center; overflow:hidden;
 }
-.hfl-logo img{ width:100%; height:100%; object-fit:contain; padding:6px; }
-@media(max-width:900px){ .hfl-logo{ width:38px; height:38px; } }
+.hfl-logo img{ width:72%; height:72%; object-fit:contain; }
+@media(max-width:900px){
+  .hero-fallback-logowall{ grid-template-columns:repeat(auto-fill, minmax(64px,1fr)); grid-auto-rows:64px; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   HERO WATCH BUTTON — single source of truth, loaded last so it wins
+   over every earlier .btn-slide-watch rule in the file. One fixed size,
+   one standard play-triangle icon, identical on every hero slide
+   (real slides and the channels banner alike) — no more mismatched or
+   doubled icons.
+═══════════════════════════════════════════════════════════════════════ */
+.btn-slide-watch{
+  display:inline-flex !important; align-items:center !important; justify-content:center !important;
+  gap:8px !important;
+  background:var(--pm-magenta) !important; color:#fff !important;
+  border:none !important; box-shadow:none !important; text-shadow:none !important; filter:none !important;
+  font-weight:700 !important; font-size:13px !important; line-height:1 !important;
+  padding:12px 22px !important; border-radius:999px !important;
+  text-transform:uppercase; letter-spacing:0.04em;
+  text-decoration:none !important;
+}
+.btn-slide-watch::before{
+  content:"" !important; display:inline-block !important;
+  width:12px !important; height:12px !important; min-width:12px !important; flex-shrink:0 !important;
+  background-color:#fff !important;
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M8 5v14l11-7z'/%3E%3C/svg%3E") !important;
+  mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M8 5v14l11-7z'/%3E%3C/svg%3E") !important;
+  -webkit-mask-size:contain !important; mask-size:contain !important;
+  -webkit-mask-repeat:no-repeat !important; mask-repeat:no-repeat !important;
+  -webkit-mask-position:center !important; mask-position:center !important;
+}
+.btn-slide-watch:hover{ background:var(--pm-magenta-hover,#C21764) !important; }
 </style>
 
 </body>
