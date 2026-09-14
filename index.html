@@ -4059,61 +4059,6 @@ window.sxSwitchTab = sxSwitchTab;
             <div class="ott-desc">Sports & Cricket</div>
             <button class="ott-btn" onclick="event.stopPropagation();openFanCode();">Open</button>
           </div>
-
-          <!-- Prime Video -->
-          <div class="ott-card-full ott-coming-soon" role="button">
-            <div class="ott-soon-badge">COMING SOON</div>
-            <div class="ott-logo-wrap">
-              <img src="https://static.vecteezy.com/system/resources/thumbnails/046/437/251/small_2x/amazon-prime-logo-free-png.png" alt="Prime Video">
-            </div>
-            <div class="ott-name">Prime Video</div>
-            <div class="ott-desc">Entertainment</div>
-            <button class="ott-btn" disabled>Coming Soon</button>
-          </div>
-
-          <!-- Willow OTT -->
-          <div class="ott-card-full ott-coming-soon" role="button">
-            <div class="ott-soon-badge">COMING SOON</div>
-            <div class="ott-logo-wrap">
-              <img src="https://bobgoldpr.com/wp-content/uploads/2024/05/logo-transparent-cb-1.png" alt="Willow">
-            </div>
-            <div class="ott-name">Willow OTT</div>
-            <div class="ott-desc">Premium Cricket</div>
-            <button class="ott-btn" disabled>Coming Soon</button>
-          </div>
-
-          <!-- Jio Hotstar -->
-          <div class="ott-card-full ott-coming-soon" role="button">
-            <div class="ott-soon-badge">COMING SOON</div>
-            <div class="ott-logo-wrap">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Hotstar_logo.svg/1200px-Hotstar_logo.svg.png" alt="Jio Hotstar">
-            </div>
-            <div class="ott-name">Jio Hotstar</div>
-            <div class="ott-desc">Movies & Sports</div>
-            <button class="ott-btn" disabled>Coming Soon</button>
-          </div>
-
-          <!-- Sony Liv -->
-          <div class="ott-card-full ott-coming-soon" role="button">
-            <div class="ott-soon-badge">COMING SOON</div>
-            <div class="ott-logo-wrap">
-              <img src="https://www.sonyliv.com/_next/image?url=%2Fimages%2Flogo.png&w=256&q=75" alt="Sony Liv">
-            </div>
-            <div class="ott-name">Sony Liv</div>
-            <div class="ott-desc">TV & Cricket</div>
-            <button class="ott-btn" disabled>Coming Soon</button>
-          </div>
-
-          <!-- Netflix -->
-          <div class="ott-card-full ott-coming-soon" role="button">
-            <div class="ott-soon-badge">COMING SOON</div>
-            <div class="ott-logo-wrap">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Netflix_logo.svg/1024px-Netflix_logo.svg.png" alt="Netflix">
-            </div>
-            <div class="ott-name">Netflix</div>
-            <div class="ott-desc">Entertainment</div>
-            <button class="ott-btn" disabled>Coming Soon</button>
-          </div>
         </div>
       </div>
     </section>
@@ -4142,17 +4087,78 @@ window.sxSwitchTab = sxSwitchTab;
 #fancode-back-btn:hover{ background: rgba(255,255,255,0.18); }
 #fancode-back-btn svg{ width: 14px; height: 14px; flex-shrink: 0; }
 
-#fancode-panel-wrap{ position: absolute; inset: 0; }
-#fancode-iframe-wrap{ position: absolute; inset: 0; background: #000; }
-#fancode-iframe-wrap iframe{ position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
-#fancode-embed-fallback{
-  position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center;
-  gap: 14px; text-align: center; padding: 24px; color: rgba(255,255,255,0.75);
-  font-family: var(--cu-font,inherit);
+#fancode-panel-wrap{ position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; background: #000; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   FCX — integrated FanCode match browser (was an external iframe embed,
+   now the full match-listing UI lives inline in the page). Every class
+   and id is "fcx-" prefixed so nothing collides with the rest of the
+   site's generic .card/.btn/.grid/.badge/.meta selectors. Cards route to
+   play.html — that player page is already set up separately.
+═══════════════════════════════════════════════════════════════════════ */
+#fcx-root{ max-width: 1400px; margin: 0 auto; padding: 76px 20px 60px; }
+.fcx-search-wrap{ position: relative; width: 100%; max-width: 320px; margin: 0 0 20px; }
+.fcx-search-wrap input{
+  width: 100%; background: var(--s2,rgba(255,255,255,0.06)); border: 1px solid var(--s3,rgba(255,255,255,0.08));
+  color: var(--white,#fff); font-family: var(--font-body); font-size: 13px; padding: 10px 14px;
+  border-radius: 8px; outline: none;
 }
-#fancode-embed-fallback a{
-  background: #F04F8C; color: #fff; font-weight: 800; font-size: 13px;
-  padding: 10px 20px; border-radius: 8px; text-decoration: none;
+.fcx-search-wrap input:focus{ border-color: var(--indigo,#F04F8C); }
+
+.fcx-hero{ position: relative; width: 100%; height: 380px; margin-bottom: 40px; border-radius: 12px; overflow: hidden; box-shadow: 0 12px 48px rgba(0,0,0,0.9); background:#000; }
+.fcx-carousel-track{ position: relative; width: 100%; height: 100%; display: flex; transition: transform 0.5s cubic-bezier(0.4,0,0.2,1); }
+.fcx-carousel-slide{ position: relative; min-width: 100%; height: 100%; background: #000; overflow: hidden; }
+.fcx-slide-bg{ position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.7; }
+.fcx-slide-content{ position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; padding: 32px; }
+.fcx-slide-content::before{ content:''; position:absolute; inset:0; z-index:-1; background: linear-gradient(135deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.35) 50%, transparent 100%); }
+.fcx-slide-status{ display: inline-flex; align-items: center; gap: 6px; background: transparent; border: 1px solid rgba(0,212,170,0.5); color: #00d4aa; font-family: var(--font-display); font-size: 10px; font-weight: 700; letter-spacing: 1px; padding: 5px 11px; border-radius: 18px; margin-bottom: 16px; text-transform: uppercase; width: fit-content; }
+.fcx-slide-title{ font-family: var(--font-display); font-weight: 800; font-size: clamp(20px,4vw,36px); line-height: 1.15; margin-bottom: 12px; letter-spacing: -0.4px; color: var(--white,#fff); }
+.fcx-slide-meta{ display: flex; gap: 16px; font-size: 13px; color: var(--text-muted,rgba(255,255,255,0.6)); margin-bottom: 16px; }
+.fcx-slide-time{ font-size: 14px; font-weight: 600; color: var(--white,#fff); margin-bottom: 16px; }
+.fcx-slide-actions{ display: flex; gap: 10px; }
+.fcx-slide-btn{ appearance: none; border: none; cursor: pointer; background: var(--indigo,#F04F8C); color: #fff; font-family: var(--font-display); font-weight: 700; font-size: 12px; padding: 11px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(240,79,140,0.3); transition: filter 0.2s; text-transform: uppercase; letter-spacing: 0.03em; }
+.fcx-slide-btn:hover:not(:disabled){ filter: brightness(1.15); }
+.fcx-slide-btn:disabled{ opacity: 0.6; cursor: not-allowed; box-shadow: none; }
+
+.fcx-carousel-nav{ position: absolute; top: 50%; transform: translateY(-50%); z-index: 10; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: rgba(240,79,140,0.2); border: 1px solid rgba(240,79,140,0.3); color: var(--indigo,#F04F8C); font-size: 18px; font-weight: 700; cursor: pointer; border-radius: 8px; transition: all 0.3s; opacity: 0; }
+.fcx-hero:hover .fcx-carousel-nav{ opacity: 1; }
+.fcx-carousel-nav:hover{ background: var(--indigo,#F04F8C); color: #fff; }
+.fcx-carousel-nav.fcx-prev{ left: 16px; } .fcx-carousel-nav.fcx-next{ right: 16px; }
+
+.fcx-carousel-dots{ position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 10; display: flex; gap: 8px; }
+.fcx-dot{ width: 8px; height: 8px; background: rgba(255,255,255,0.3); border-radius: 50%; cursor: pointer; transition: all 0.3s; }
+.fcx-dot.fcx-active{ background: var(--indigo,#F04F8C); width: 22px; border-radius: 4px; }
+
+.fcx-section-title{ font-family: var(--font-display); font-size: 12px; font-weight: 700; margin: 0 0 24px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted,rgba(255,255,255,0.55)); }
+
+.fcx-grid{ display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+.fcx-loading-state, .fcx-empty-state{ grid-column: 1/-1; text-align: center; padding: 70px 20px; color: var(--text-muted,rgba(255,255,255,0.55)); font-size: 13px; border: 1px dashed var(--s3,rgba(255,255,255,0.08)); border-radius: 12px; }
+
+.fcx-card{ background: var(--s1,rgba(255,255,255,0.03)); border: 1px solid var(--s3,rgba(255,255,255,0.08)); overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.6); transition: all 0.3s cubic-bezier(0.4,0,0.2,1); display: flex; flex-direction: column; }
+.fcx-card:hover{ transform: translateY(-2px); border-color: rgba(240,79,140,0.4); box-shadow: 0 12px 32px rgba(0,0,0,0.8); }
+.fcx-thumb-wrap{ position: relative; width: 100%; height: 150px; background: #000; overflow: hidden; }
+.fcx-thumb-wrap img{ width: 100%; height: 100%; object-fit: cover; }
+.fcx-badge{ position: absolute; top: 8px; right: 8px; display: inline-flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.6); border: 1px solid rgba(0,212,170,0.5); color: #00d4aa; font-family: var(--font-display); font-size: 9px; font-weight: 700; letter-spacing: 0.8px; padding: 4px 8px; border-radius: 14px; text-transform: uppercase; }
+.fcx-badge.fcx-upcoming{ border-color: rgba(240,79,140,0.5); color: var(--indigo,#F04F8C); }
+.fcx-meta{ padding: 14px; display: flex; flex-direction: column; gap: 8px; flex: 1; text-align: center; }
+.fcx-teams{ font-family: var(--font-body); font-size: 13px; font-weight: 600; line-height: 1.35; color: var(--white,#fff); }
+.fcx-event{ font-size: 11px; color: var(--text-muted,rgba(255,255,255,0.55)); }
+.fcx-card-time{ font-size: 11px; color: var(--text-muted,rgba(255,255,255,0.55)); }
+.fcx-actions{ display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+.fcx-btn{ appearance: none; border: none; background: var(--indigo,#F04F8C); color: #fff; font-family: var(--font-display); font-weight: 700; font-size: 11px; padding: 10px 12px; border-radius: 6px; cursor: pointer; transition: filter 0.2s; text-transform: uppercase; letter-spacing: 0.02em; }
+.fcx-btn:hover:not(:disabled){ filter: brightness(1.15); }
+.fcx-btn:disabled{ opacity: 0.7; cursor: default; }
+.fcx-btn.fcx-btn-upcoming{ background: transparent; border: 1px solid var(--s3,rgba(255,255,255,0.08)); color: var(--text-muted,rgba(255,255,255,0.55)); }
+
+@media(max-width:768px){
+  #fcx-root{ padding: 70px 16px 50px; }
+  .fcx-hero{ height: 280px; margin-bottom: 30px; }
+  .fcx-grid{ grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+}
+@media(max-width:480px){
+  .fcx-hero{ height: 220px; margin-bottom: 26px; }
+  .fcx-slide-content{ padding: 18px; }
+  .fcx-grid{ grid-template-columns: 1fr; gap: 14px; }
 }
 </style>
 <div id="fancode-overlay">
@@ -4163,94 +4169,346 @@ window.sxSwitchTab = sxSwitchTab;
     </button>
   </div>
 <div id="fancode-panel-wrap">
-  <div id="fancode-iframe-wrap">
-    <iframe id="fancode-iframe" src="https://saptarshiorg.github.io/Fancode/" title="FanCode" loading="lazy" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer-when-downgrade" onerror="document.getElementById('fancode-embed-fallback').style.display='flex'"></iframe>
-    <div id="fancode-embed-fallback">
-      <div>FanCode didn't load in the embedded view.</div>
-      <a href="https://saptarshiorg.github.io/Fancode/">Open FanCode ↗</a>
+  <div id="fcx-root">
+    <div class="fcx-search-wrap">
+      <input type="text" id="fcxSearchInput" placeholder="Search matches...">
     </div>
+
+    <div class="fcx-hero" id="fcxHero">
+      <div class="fcx-carousel-track" id="fcxCarouselTrack">
+        <div class="fcx-carousel-slide fcx-loading-state"><p>Loading matches...</p></div>
+      </div>
+      <button class="fcx-carousel-nav fcx-prev" id="fcxPrevBtn" aria-label="Previous">‹</button>
+      <button class="fcx-carousel-nav fcx-next" id="fcxNextBtn" aria-label="Next">›</button>
+      <div class="fcx-carousel-dots" id="fcxDotsContainer"></div>
+    </div>
+
+    <section>
+      <h2 class="fcx-section-title">All Matches</h2>
+      <div id="fcxGrid" class="fcx-grid">
+        <div class="fcx-loading-state">Loading matches...</div>
+      </div>
+    </section>
   </div>
 </div><!-- /fancode-panel-wrap -->
 </div><!-- /fancode-overlay -->
 
-<!-- ── PRIME panel: same simple pattern as FanCode — fixed overlay,
-     own topbar w/ Back, iframe embed straight to the hosted watch page.
-     No geo-mirroring, just embed and don't worry about what's inside. ── -->
-<style>
-#prime-overlay{
-  display: none; position: fixed; inset: 0; z-index: 1600;
-  background: #000;
-}
-#prime-overlay.open{ display: block; }
-#prime-topbar{
-  position: absolute; top: 0; left: 0; z-index: 2;
-  padding: 14px;
-}
-#prime-panel-wrap{ position: absolute; inset: 0; }
-#prime-iframe-wrap{ position: absolute; inset: 0; background: #000; }
-#prime-iframe-wrap iframe{ position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
-#prime-embed-fallback{
-  position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center;
-  gap: 14px; text-align: center; padding: 24px; color: rgba(255,255,255,0.75);
-  font-family: var(--cu-font,inherit);
-}
-#prime-embed-fallback a{
-  background: #00A8E1; color: #fff; font-weight: 800; font-size: 13px;
-  padding: 10px 20px; border-radius: 8px; text-decoration: none;
-}
-</style>
-<div id="prime-overlay">
-  <div id="prime-topbar"></div>
-<div id="prime-panel-wrap">
-  <div id="prime-iframe-wrap">
-    <iframe id="prime-iframe" src="https://evxrishi.site.je/PRIME" title="Prime Video" loading="lazy" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer-when-downgrade" onerror="document.getElementById('prime-embed-fallback').style.display='flex'"></iframe>
-    <div id="prime-embed-fallback">
-      <div>Prime Video didn't load in the embedded view.</div>
-      <a href="https://evxrishi.site.je/PRIME" target="_blank" rel="noopener">Open Prime Video ↗</a>
-    </div>
-  </div>
-</div><!-- /prime-panel-wrap -->
-</div><!-- /prime-overlay -->
+<script>
+// ══════════════════════════════════════════════════════════════════════
+// FCX — FanCode match data + carousel + grid, integrated straight into
+// the page (this used to be an iframe pointed at a separately-hosted
+// FanCode site). Everything lives in its own closure so nothing here
+// touches the rest of the app's globals. openFanCode()/closeFanCode()
+// call fcxInit()/fcxStop() below to start and pause it.
+// ══════════════════════════════════════════════════════════════════════
+(function(){
+  const FCX_API_CNPTV = 'https://raw.githubusercontent.com/kajju027/Fancode-Events-Json/main/fan.json';
+  const FCX_API_WORLD = 'https://raw.githubusercontent.com/kajju027/Fancode-Events-Json/main/fancode.json';
 
-<!-- ── WILLOW OTT panel: same simple pattern as FanCode/PRIME. ── -->
-<style>
-#willow-overlay{
-  display: none; position: fixed; inset: 0; z-index: 1600;
-  background: #000;
+  let fcxMatches = [];
+  let fcxSlide = 0;
+  let fcxRefreshTimer = null;
+  let fcxAutoplayTimer = null;
+  let fcxListenersBound = false;
+
+  function fcxParseTime(str){
+    if(!str) return null;
+    const m = String(str).match(/(\d{1,2}):(\d{2}):(\d{2})\s+(AM|PM)\s+(\d{1,2})-(\d{1,2})-(\d{4})/i);
+    if(!m) return new Date(str);
+    let [,h,mm,ss,ampm,d,mo,y] = m;
+    h=+h; mm=+mm; d=+d; mo=+mo; y=+y;
+    if(ampm.toUpperCase()=='PM'&&h<12)h+=12;
+    if(ampm.toUpperCase()=='AM'&&h==12)h=0;
+    return new Date(y,mo-1,d,h,mm,+ss);
+  }
+
+  function fcxFormatTime(date){
+    if(!date) return 'TBA';
+    const dp = date.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}).toUpperCase();
+    let h = date.getHours();
+    const mm = String(date.getMinutes()).padStart(2,'0');
+    const ap = h>=12?'PM':'AM';
+    h=h%12; if(h===0)h=12;
+    return `${dp}, ${h}:${mm} ${ap}`;
+  }
+
+  // Cards/slides link straight into the existing play.html player — that
+  // page is already set up separately and just needs the match id.
+  function fcxPlayUrl(m){
+    return `play.html?id=${encodeURIComponent(m.id)}_eng&s=0`;
+  }
+
+  function fcxBuildSlide(m){
+    const isLive = m.status === 'LIVE';
+    return `
+      <div class="fcx-carousel-slide">
+        <img src="${m.image}" alt="${m.title}" class="fcx-slide-bg" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22800%22 height=%22300%22%3E%3Crect fill=%22%23111%22 width=%22800%22 height=%22300%22/%3E%3C/svg%3E'">
+        <div class="fcx-slide-content">
+          <div class="fcx-slide-status">${m.status}</div>
+          <div class="fcx-slide-title">${m.title}</div>
+          <div class="fcx-slide-meta"><span>${m.tournament}</span></div>
+          <div class="fcx-slide-time">${fcxFormatTime(m.time)}</div>
+          <div class="fcx-slide-actions">
+            <button class="fcx-slide-btn" ${isLive ? `onclick="openStreamPlayer('${fcxPlayUrl(m)}','${escJs(m.title)}','match')"` : 'disabled'}>${isLive ? 'WATCH NOW' : 'VIEW DETAILS'}</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function fcxUpdateCarousel(){
+    const track = document.getElementById('fcxCarouselTrack');
+    if (track) track.style.transform = `translateX(${-fcxSlide*100}%)`;
+    document.querySelectorAll('#fcxDotsContainer .fcx-dot').forEach((d,i) => d.classList.toggle('fcx-active', i===fcxSlide));
+  }
+
+  function fcxBuildCard(m){
+    let badge = m.status==='LIVE' ? '<span class="fcx-badge">● LIVE</span>' : m.status==='COMPLETED' ? '<span class="fcx-badge">✓ COMPLETED</span>' : '<span class="fcx-badge fcx-upcoming">UPCOMING</span>';
+    return `
+      <article class="fcx-card">
+        <div class="fcx-thumb-wrap">
+          <img src="${m.image}" alt="${m.title}" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22%3E%3Crect fill=%22%23111%22 width=%22400%22 height=%22300%22/%3E%3C/svg%3E'">
+          ${badge}
+        </div>
+        <div class="fcx-meta">
+          <div class="fcx-teams">${m.title}</div>
+          <div class="fcx-event">${m.tournament}</div>
+          <div class="fcx-card-time">${fcxFormatTime(m.time)}</div>
+          <div class="fcx-actions">
+            <button class="fcx-btn ${m.status==='UPCOMING'?'fcx-btn-upcoming':''}" ${m.status==='LIVE'?`onclick="openStreamPlayer('${fcxPlayUrl(m)}','${escJs(m.title)}','match')"`:'disabled'}>
+              ${m.status==='LIVE'?'WATCH NOW':m.status==='COMPLETED'?'MATCH OVER':fcxFormatTime(m.time)}
+            </button>
+          </div>
+        </div>
+      </article>
+    `;
+  }
+
+  function fcxRender(list){
+    const track = document.getElementById('fcxCarouselTrack');
+    const dots = document.getElementById('fcxDotsContainer');
+    const grid = document.getElementById('fcxGrid');
+    if (!track || !dots || !grid) return;
+
+    if (!list.length){
+      grid.innerHTML = '<div class="fcx-empty-state">No matches found</div>';
+      track.innerHTML = '<div class="fcx-carousel-slide fcx-loading-state"><p>No matches</p></div>';
+      dots.innerHTML = '';
+      return;
+    }
+
+    track.innerHTML = list.map(fcxBuildSlide).join('');
+    dots.innerHTML = list.map((m,i) => `<div class="fcx-dot ${i===0?'fcx-active':''}" data-i="${i}"></div>`).join('');
+    fcxSlide = 0;
+    fcxUpdateCarousel();
+    grid.innerHTML = list.map(fcxBuildCard).join('');
+  }
+
+  function fcxLoad(){
+    Promise.all([
+      fetch(FCX_API_CNPTV).then(r=>r.json()).catch(()=>({matches:[]})),
+      fetch(FCX_API_WORLD).then(r=>r.json()).catch(()=>({matches:[]}))
+    ]).then(([cnptv, world]) => {
+      fcxMatches = (world.matches||[]).map(m => ({
+        id: m.match_id,
+        title: m.title||'Match',
+        tournament: m.tournament||'',
+        image: m.image||'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22800%22 height=%22300%22%3E%3Crect fill=%22%23222%22 width=%22800%22 height=%22300%22/%3E%3C/svg%3E',
+        status: String(m.status||'').toUpperCase(),
+        time: fcxParseTime(m.startTime)
+      })).sort((a,b) => (a.time?.getTime() || Infinity) - (b.time?.getTime() || Infinity));
+
+      const q = (document.getElementById('fcxSearchInput')?.value || '').trim().toLowerCase();
+      fcxRender(q ? fcxMatches.filter(m => m.title.toLowerCase().includes(q) || m.tournament.toLowerCase().includes(q)) : fcxMatches);
+
+      // Push every refresh out to the home Matches tab + hero slides bridge
+      // (defined further down, outside this closure) so FanCode matches
+      // keep showing up there even while the FanCode panel itself is closed.
+      window._fcxMatchesCache = fcxMatches;
+      if (typeof window.fcxAppendHomeSections === 'function') window.fcxAppendHomeSections();
+      if (typeof window.fcxAppendHeroSlides === 'function') window.fcxAppendHeroSlides();
+    }).catch(err => {
+      console.error('FCX load error:', err);
+      const grid = document.getElementById('fcxGrid');
+      if (grid) grid.innerHTML = '<div class="fcx-empty-state">Error loading matches. Please refresh.</div>';
+    });
+  }
+
+  function fcxBindListeners(){
+    if (fcxListenersBound) return;
+    fcxListenersBound = true;
+
+    document.getElementById('fcxSearchInput')?.addEventListener('input', function(){
+      const q = this.value.trim().toLowerCase();
+      fcxRender(q ? fcxMatches.filter(m => m.title.toLowerCase().includes(q) || m.tournament.toLowerCase().includes(q)) : fcxMatches);
+    });
+
+    document.getElementById('fcxDotsContainer')?.addEventListener('click', e => {
+      const dot = e.target.closest('.fcx-dot');
+      if (dot) { fcxSlide = +dot.dataset.i; fcxUpdateCarousel(); }
+    });
+
+    document.getElementById('fcxPrevBtn')?.addEventListener('click', () => {
+      if (!fcxMatches.length) return;
+      fcxSlide = (fcxSlide - 1 + fcxMatches.length) % fcxMatches.length;
+      fcxUpdateCarousel();
+    });
+
+    document.getElementById('fcxNextBtn')?.addEventListener('click', () => {
+      if (!fcxMatches.length) return;
+      fcxSlide = (fcxSlide + 1) % fcxMatches.length;
+      fcxUpdateCarousel();
+    });
+  }
+
+  // Called by openFanCode() — panel is already populated (data loads at
+  // page load now, see bottom of this file) so this just binds the
+  // search/dot listeners once and starts the carousel autoplay.
+  window.fcxInit = function(){
+    fcxBindListeners();
+    fcxRender(fcxMatches);
+    clearInterval(fcxAutoplayTimer);
+    fcxAutoplayTimer = setInterval(() => {
+      if (fcxMatches.length > 1) { fcxSlide = (fcxSlide + 1) % fcxMatches.length; fcxUpdateCarousel(); }
+    }, 8000);
+  };
+
+  // Called by closeFanCode() — pauses just the panel's own carousel
+  // autoplay while it's off-screen; the background data refresh below
+  // keeps running so the Matches tab / hero slides stay live.
+  window.fcxStop = function(){
+    clearInterval(fcxAutoplayTimer); fcxAutoplayTimer = null;
+  };
+
+  // Kick off the FanCode match feed right away at page load (not only when
+  // the FanCode panel is opened) so these matches can also be surfaced in
+  // the Matches tab and homescreen hero slides — see fcxAppendHomeSections()
+  // / fcxAppendHeroSlides() further down.
+  fcxLoad();
+  fcxRefreshTimer = setInterval(fcxLoad, 30000);
+})();
+
+// ══════════════════════════════════════════════════════════════════════
+// FCX BRIDGE — surfaces the same FanCode matches (cached above on
+// window._fcxMatchesCache every 30s) inside the main Matches tab and the
+// homescreen hero carousel, as their own "FanCode" section/slides. Kept
+// deliberately separate from the sheet-driven MATCH CARDS schema (team1_
+// code/team2_code/etc.) rather than merged into it, so nothing else that
+// already reads that schema has to change shape to accommodate FCX data.
+// ══════════════════════════════════════════════════════════════════════
+window._fcxMatchesCache = [];
+
+function fcxJsUrl(m){
+  return `play.html?id=${encodeURIComponent(m.id)}_eng&s=0`;
 }
-#willow-overlay.open{ display: block; }
-#willow-topbar{
-  position: absolute; top: 0; left: 0; z-index: 2;
-  padding: 14px;
+function fcxStatusRank(m){
+  if (m.status === 'LIVE') return 0;
+  if (m.status === 'COMPLETED') return 2;
+  return 1; // UPCOMING / unknown
+}
+function fcxFmtMatchTime(m){
+  if (!m.time) return 'TBA';
+  const dp = m.time.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}).toUpperCase();
+  let h = m.time.getHours();
+  const mm = String(m.time.getMinutes()).padStart(2,'0');
+  const ap = h>=12?'PM':'AM';
+  h=h%12; if(h===0)h=12;
+  return `${dp}, ${h}:${mm} ${ap}`;
 }
 
-#willow-panel-wrap{ position: absolute; inset: 0; }
-#willow-iframe-wrap{ position: absolute; inset: 0; background: #000; }
-#willow-iframe-wrap iframe{ position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
-#willow-embed-fallback{
-  position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center;
-  gap: 14px; text-align: center; padding: 24px; color: rgba(255,255,255,0.75);
-  font-family: var(--cu-font,inherit);
-}
-#willow-embed-fallback a{
-  background: #F04F8C; color: #fff; font-weight: 800; font-size: 13px;
-  padding: 10px 20px; border-radius: 8px; text-decoration: none;
-}
-</style>
-<div id="willow-overlay">
-  <div id="willow-topbar"></div>
-<div id="willow-panel-wrap">
-  <div id="willow-iframe-wrap">
-    <iframe id="willow-iframe" src="https://evxrishi.site.je/WILLOW" title="Willow OTT" loading="lazy" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer-when-downgrade" onerror="document.getElementById('willow-embed-fallback').style.display='flex'"></iframe>
-    <div id="willow-embed-fallback">
-      <div>Willow OTT didn't load in the embedded view.</div>
-      <a href="https://evxrishi.site.je/WILLOW" target="_blank" rel="noopener">Open Willow OTT ↗</a>
-    </div>
-  </div>
-</div><!-- /willow-panel-wrap -->
-</div><!-- /willow-overlay -->
+// Re-appends a "FanCode" section into the Matches tab (#match-overlay),
+// after every sheet-driven MATCH CARDS render AND every FCX refresh — so
+// it survives being wiped by either 30s cycle, whichever runs last.
+window.fcxAppendHomeSections = function(){
+  const el = document.getElementById('match-overlay');
+  if (!el) return;
+  const prev = document.getElementById('fcx-smo-section');
+  if (prev) prev.remove();
+  const list = (window._fcxMatchesCache || []).slice().sort((a,b) => fcxStatusRank(a) - fcxStatusRank(b));
+  if (!list.length) return;
+  let html = '<div class="smo-section" id="fcx-smo-section" data-game="FanCode" data-sport="FanCode">';
+  html += '<div class="smo-section-label">FanCode</div>';
+  list.forEach(m => {
+    const isLive = m.status === 'LIVE';
+    const isFinished = m.status === 'COMPLETED';
+    const badge = isLive
+      ? '<span class="fx2-badge fx2-badge-live"><span class="fx2-live-dot"></span>LIVE</span>'
+      : isFinished
+      ? '<span class="fx2-badge">FINISHED</span>'
+      : '<span class="fx2-badge">⏰ UPCOMING</span>';
+    const watchBtn = isLive
+      ? `<a class="smo-btn" href="javascript:void(0)" onclick="openStreamPlayer('${fcxJsUrl(m)}','${escJs(m.title)}','match')">▶ Watch Now</a>`
+      : `<span class="smo-btn" style="opacity:.5;pointer-events:none;">${isFinished?'MATCH OVER':fcxFmtMatchTime(m)}</span>`;
+    html += `
+    <div class="smo-card fx2-card" data-live="${isLive?'1':'0'}">
+      <div class="fx2-thumb">
+        <img src="${m.image}" alt="${escJs(m.title)}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">
+        ${badge}
+      </div>
+      <div class="fx2-body">
+        <div class="fx2-title-row">
+          <div class="fx2-title">${m.title}</div>
+          <span class="fx2-free">FREE</span>
+        </div>
+        <div class="fx2-meta">
+          <span class="fx2-tag">${m.tournament||'FanCode'}</span>
+          <span class="fx2-date">${fcxFmtMatchTime(m)}</span>
+        </div>
+        ${watchBtn}
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+  el.insertAdjacentHTML('beforeend', html);
+};
 
-
+// Re-appends live FanCode matches as extra slides into the real, visible
+// mobile hero carousel (#slides-container) — the desktop .hero-slide-card
+// grid is hidden site-wide via CSS so it's skipped. Inserted right before
+// the trailing "all channels" banner slide, which always stays last.
+window.fcxAppendHeroSlides = function(){
+  const container = document.getElementById('slides-container');
+  if (!container || typeof totalSlides === 'undefined') return;
+  container.querySelectorAll('.fcx-hero-slide').forEach(s => s.remove());
+  container.querySelectorAll('.fcx-hero-dot').forEach(d => d.remove());
+  const live = (window._fcxMatchesCache || []).filter(m => m.status === 'LIVE').slice(0, 3);
+  if (!live.length) return;
+  const slides = container.querySelectorAll(':scope > .slide');
+  const bannerSlide = slides.length ? slides[slides.length - 1] : null;
+  const dotsWrap = container.querySelector('.slide-dots');
+  live.forEach((m, j) => {
+    const idx = totalSlides + j;
+    const slide = document.createElement('div');
+    slide.className = 'slide fcx-hero-slide';
+    slide.dataset.origTitle = '';
+    slide.innerHTML = `
+      <div class="slide-bg" style="background-image:url('${m.image}')"></div>
+      <div class="slide-overlay"></div>
+      <div class="slide-content">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;">
+          <span class="slide-sport-badge slide-badge-live">LIVE NOW</span>
+        </div>
+        <div class="slide-title">${m.title}</div>
+        <div class="slide-sub">${m.tournament||'FanCode'}</div>
+        <div class="slide-btns">
+          <a href="#" class="btn-slide-watch" onclick="event.preventDefault();openStreamPlayer('${fcxJsUrl(m)}','${escJs(m.title)}','match')">Watch Now</a>
+        </div>
+      </div>`;
+    if (bannerSlide) container.insertBefore(slide, bannerSlide);
+    else if (dotsWrap) container.insertBefore(slide, dotsWrap);
+    else container.appendChild(slide);
+    if (dotsWrap) {
+      const dot = document.createElement('div');
+      dot.className = 'dot fcx-hero-dot';
+      dot.onclick = () => { goSlide(idx); startSlider(); };
+      // Keep the trailing "all channels" banner dot last.
+      if (dotsWrap.lastElementChild) dotsWrap.insertBefore(dot, dotsWrap.lastElementChild);
+      else dotsWrap.appendChild(dot);
+    }
+  });
+  totalSlides += live.length;
+};
+</script>
 
 </div><!-- /sxTabPanels -->
 
@@ -4292,38 +4550,6 @@ window.sxSwitchTab = sxSwitchTab;
           </div>
           <div class="fx2-meta">
             <span class="fx2-tag">Live sports and exclusive cricket content</span>
-          </div>
-        </div>
-      </a>
-
-      <!-- Prime Video -->
-      <a class="fx2-card" href="#sxTabPanels" onclick="event.preventDefault();openPrime();">
-        <div class="fx2-thumb">
-          <img src="https://static.vecteezy.com/system/resources/thumbnails/046/437/251/small_2x/amazon-prime-logo-free-png.png" alt="Prime Video" class="fx2-thumb-img" style="object-fit:contain;padding:22px;background:#0a0a0a;">
-        </div>
-        <div class="fx2-body">
-          <div class="fx2-title-row">
-            <div class="fx2-title">Prime Video</div>
-            <span class="fx2-free">OTT</span>
-          </div>
-          <div class="fx2-meta">
-            <span class="fx2-tag">Sports and entertainment streaming</span>
-          </div>
-        </div>
-      </a>
-
-      <!-- Willow OTT -->
-      <a class="fx2-card" href="#sxTabPanels" onclick="event.preventDefault();openWillow();">
-        <div class="fx2-thumb">
-          <img src="https://bobgoldpr.com/wp-content/uploads/2024/05/logo-transparent-cb-1.png" alt="Willow" class="fx2-thumb-img" style="object-fit:contain;padding:22px;background:#0a0a0a;">
-        </div>
-        <div class="fx2-body">
-          <div class="fx2-title-row">
-            <div class="fx2-title">Willow OTT</div>
-            <span class="fx2-free">OTT</span>
-          </div>
-          <div class="fx2-meta">
-            <span class="fx2-tag">Premium cricket streaming and analysis</span>
           </div>
         </div>
       </a>
@@ -5768,6 +5994,11 @@ function renderMatchCards(rows) {
   // Re-apply whatever event is currently selected in the toolbar (defaults
   // to "All Events" the first time, keeps the visitor's choice on refresh).
   smoApplyFilter();
+
+  // This render just rebuilt #match-overlay from scratch (wiping any
+  // previously-appended FanCode section) — put it back using whatever FCX
+  // data is currently cached, so it survives this 30s cycle too.
+  if (typeof window.fcxAppendHomeSections === 'function') window.fcxAppendHomeSections();
 }
 
 function renderChannels(rows) {
@@ -9135,24 +9366,6 @@ function sxWatchLinkClick(evt, a){
   location.href = sxResolveFanCodeMatchUrl(raw);
   return false;
 }
-// FanCode PANEL tab shows a different mirror depending on the visitor's
-// country: India stays on famcodexwebs.pages.dev (plural), everyone
-// outside India gets famcodexweb.pages.dev (singular). Uses the same
-// window._sxCountry client-side IP lookup set up by the geo-check IIFE
-// above. If country hasn't resolved yet, default to the India mirror and
-// let sxApplyFanCodeUrl() swap it in once geo detection finishes.
-const FANCODE_URL_IN = 'https://saptarshiorg.github.io/Fancode/';
-const FANCODE_URL_INTL = 'https://famcodexweb.pages.dev/';
-function sxFanCodeUrl(){
-  return (window._sxCountry && window._sxCountry !== 'IN') ? FANCODE_URL_INTL : FANCODE_URL_IN;
-}
-function sxApplyFanCodeUrl(){
-  const url = sxFanCodeUrl();
-  const iframe = document.getElementById('fancode-iframe');
-  const fallbackLink = document.querySelector('#fancode-embed-fallback a');
-  if (iframe && iframe.src !== url) iframe.src = url;
-  if (fallbackLink) fallbackLink.href = url;
-}
 function openOTT(){
   sxCloseAllOverlays();
   sxPlayPanelIntro();
@@ -9171,17 +9384,18 @@ function closeOTT(){
 function openFanCode(){
   sxCloseAllOverlays();
   sxPlayPanelIntro();
-  sxApplyFanCodeUrl();
   document.getElementById('fancode-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   window.scrollTo(0,0);
   document.querySelectorAll('[data-sxtab]').forEach(el => el.classList.toggle('active', el.dataset.sxtab === 'fancode'));
   sxHeaderInto('fancode-overlay', 'fancode-topbar');
+  if (typeof window.fcxInit === 'function') window.fcxInit();
 }
 function closeFanCode(){
   document.getElementById('fancode-overlay').classList.remove('open');
   document.body.style.overflow = '';
   sxHeaderHome();
+  if (typeof window.fcxStop === 'function') window.fcxStop();
 }
 function openPrime(){
   sxShowComingSoon('Prime Video');
