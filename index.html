@@ -4327,6 +4327,7 @@ window.sxSwitchTab = sxSwitchTab;
       window._fcxMatchesCache = fcxMatches;
       if (typeof window.fcxAppendHomeSections === 'function') window.fcxAppendHomeSections();
       if (typeof window.fcxAppendHeroSlides === 'function') window.fcxAppendHeroSlides();
+      if (typeof window.fcxAppendFixturesPreview === 'function') window.fcxAppendFixturesPreview();
     }).catch(err => {
       console.error('FCX load error:', err);
       const grid = document.getElementById('fcxGrid');
@@ -4416,34 +4417,122 @@ function fcxFmtMatchTime(m){
   return `${dp}, ${h}:${mm} ${ap}`;
 }
 
-// Re-appends a "FanCode" section into the Matches tab (#match-overlay),
-// after every sheet-driven MATCH CARDS render AND every FCX refresh — so
-// it survives being wiped by either 30s cycle, whichever runs last.
+// Re-appends FanCode matches into the Matches tab (#match-overlay) as their
+// own set of sections — one per tournament/series, same as the sheet-driven
+// groups are one per game/event — after every sheet-driven MATCH CARDS
+// render AND every FCX refresh, so it survives being wiped by either 30s
+// cycle, whichever runs last. Card markup mirrors the sheet-driven .fx2-card
+// cards exactly (same thumb, badge, and reserved timer-block structure) so
+// FanCode and normal match cards always come out the same size in the grid.
 window.fcxAppendHomeSections = function(){
   const el = document.getElementById('match-overlay');
   if (!el) return;
-  const prev = document.getElementById('fcx-smo-section');
-  if (prev) prev.remove();
-  const list = (window._fcxMatchesCache || []).slice().sort((a,b) => fcxStatusRank(a) - fcxStatusRank(b));
+  el.querySelectorAll('.fcx-smo-section').forEach(s => s.remove());
+  const all = window._fcxMatchesCache || [];
+  if (!all.length) return;
+
+  const groups = new Map();
+  all.forEach(m => {
+    const g = (m.tournament || '').trim() || 'FanCode';
+    if (!groups.has(g)) groups.set(g, []);
+    groups.get(g).push(m);
+  });
+  const entries = Array.from(groups.entries());
+  entries.forEach(([, cards]) => cards.sort((a,b) => fcxStatusRank(a) - fcxStatusRank(b)));
+  entries.sort((a,b) => {
+    const aLive = a[1].some(m => m.status === 'LIVE') ? 0 : 1;
+    const bLive = b[1].some(m => m.status === 'LIVE') ? 0 : 1;
+    return aLive - bLive;
+  });
+
+  const timers = [];
+  entries.forEach(([tournament, cards]) => {
+    let html = `<div class="smo-section fcx-smo-section" data-game="${escJs(tournament)}" data-sport="FanCode">`;
+    html += `<div class="smo-section-label">${tournament}</div>`;
+    cards.forEach(m => {
+      const isLive = m.status === 'LIVE';
+      const isFinished = m.status === 'COMPLETED';
+      const uid = 'fcx-' + m.id;
+      const badgeId = 'smo-badge-' + uid;
+      const liveBadgeHtml = `<span class="fx2-badge fx2-badge-live" id="${badgeId}"><span class="fx2-live-dot"></span>LIVE</span>`;
+      const badge = isLive
+        ? liveBadgeHtml
+        : isFinished
+        ? `<span class="fx2-badge" id="${badgeId}">FINISHED</span>`
+        : `<span class="fx2-badge" id="${badgeId}">⏰ UPCOMING</span>`;
+      const countdown = (!isLive && !isFinished && m.time) ? m.time.toISOString() : '';
+      const timerId = 'smo-timer-' + uid;
+      const timerWrapId = 'smo-timerwrap-' + uid;
+      // Always render the timer wrapper — even hidden — so every card
+      // reserves the exact same vertical space as the sheet-driven cards,
+      // whether or not this particular match has a countdown to show.
+      const timerBlock = `<div class="smo-timer" id="${timerWrapId}" style="visibility:${countdown ? 'visible' : 'hidden'}"><div class="timer-label">STARTS IN</div><div class="timer-display" id="${timerId}">--:--:--</div></div>`;
+      html += `
+      <div class="smo-card fx2-card" data-live="${isLive?'1':'0'}">
+        <div class="fx2-thumb">
+          <img src="${m.image}" alt="${escJs(m.title)}" class="fx2-thumb-img" onerror="this.style.display='none'">
+          ${badge}
+        </div>
+        <div class="fx2-body">
+          <div class="fx2-title-row">
+            <div class="fx2-title">${m.title}</div>
+            <span class="fx2-free">FREE</span>
+          </div>
+          <div class="fx2-meta">
+            <span class="fx2-tag">${tournament}</span>
+            <span class="fx2-date">${fcxFmtMatchTime(m)}</span>
+          </div>
+          ${timerBlock}
+          <a class="smo-btn" href="javascript:void(0)" onclick="openStreamPlayer('${fcxJsUrl(m)}','${escJs(m.title)}','match')">▶ Watch Now</a>
+        </div>
+      </div>`;
+      if (countdown) timers.push({ timerDisplayId: timerId, timerWrapId, badgeId, liveBadgeHtml, target: countdown });
+    });
+    html += '</div>';
+    el.insertAdjacentHTML('beforeend', html);
+  });
+  timers.forEach(({ timerDisplayId, timerWrapId, badgeId, liveBadgeHtml, target }) => {
+    setTimeout(() => {
+      wireAutoLiveCountdown(target, { timerDisplayId, timerWrapId, badgeId, liveBadgeHtml });
+    }, 100);
+  });
+};
+
+// Re-appends live + soonest-upcoming FanCode matches into the homescreen
+// "Matches" preview grid (#fixtures-grid, built by renderFixtures()) —
+// capped to 4 so the sheet-driven preview still leads. Card markup is the
+// exact bare <a class="fx2-card"> anchor renderFixtures() itself uses (no
+// timer block there either), so sizing matches the sheet cards exactly.
+window.fcxAppendFixturesPreview = function(){
+  const grid = document.getElementById('fixtures-grid');
+  if (!grid) return;
+  grid.querySelectorAll('.fcx-fixture-card').forEach(c => c.remove());
+  const list = (window._fcxMatchesCache || [])
+    .filter(m => m.status !== 'COMPLETED')
+    .slice()
+    .sort((a,b) => fcxStatusRank(a) - fcxStatusRank(b))
+    .slice(0, 4);
   if (!list.length) return;
-  let html = '<div class="smo-section" id="fcx-smo-section" data-game="FanCode" data-sport="FanCode">';
-  html += '<div class="smo-section-label">FanCode</div>';
-  list.forEach(m => {
+  // Sheet had zero fixtures (just the empty-state box) — clear it and make
+  // sure there's still a "View All" link through to the full Matches tab.
+  const emptyBox = grid.querySelector('.smo-empty-box');
+  if (emptyBox) emptyBox.remove();
+  let viewAll = grid.querySelector('.fx2-viewall');
+  if (!viewAll && !grid.children.length) {
+    grid.insertAdjacentHTML('beforeend', `
+    <a class="fx2-viewall" href="#sxTabPanels" onclick="event.preventDefault();openMatches();">
+      <span class="fx2-viewall-arrow">→</span>
+      <span class="fx2-viewall-text">VIEW ALL</span>
+    </a>`);
+    viewAll = grid.querySelector('.fx2-viewall');
+  }
+  const cardsHtml = list.map(m => {
     const isLive = m.status === 'LIVE';
-    const isFinished = m.status === 'COMPLETED';
-    const badge = isLive
-      ? '<span class="fx2-badge fx2-badge-live"><span class="fx2-live-dot"></span>LIVE</span>'
-      : isFinished
-      ? '<span class="fx2-badge">FINISHED</span>'
-      : '<span class="fx2-badge">⏰ UPCOMING</span>';
-    const watchBtn = isLive
-      ? `<a class="smo-btn" href="javascript:void(0)" onclick="openStreamPlayer('${fcxJsUrl(m)}','${escJs(m.title)}','match')">▶ Watch Now</a>`
-      : `<span class="smo-btn" style="opacity:.5;pointer-events:none;">${isFinished?'MATCH OVER':fcxFmtMatchTime(m)}</span>`;
-    html += `
-    <div class="smo-card fx2-card" data-live="${isLive?'1':'0'}">
+    return `
+    <a class="fx2-card fcx-fixture-card" href="javascript:void(0)" onclick="openStreamPlayer('${fcxJsUrl(m)}','${escJs(m.title)}','match')">
       <div class="fx2-thumb">
-        <img src="${m.image}" alt="${escJs(m.title)}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">
-        ${badge}
+        <img src="${m.image}" alt="${escJs(m.title)}" class="fx2-thumb-img" onerror="this.style.display='none'">
+        ${isLive ? '<span class="fx2-badge fx2-badge-live"><span class="fx2-live-dot"></span>LIVE</span>' : ''}
       </div>
       <div class="fx2-body">
         <div class="fx2-title-row">
@@ -4454,12 +4543,11 @@ window.fcxAppendHomeSections = function(){
           <span class="fx2-tag">${m.tournament||'FanCode'}</span>
           <span class="fx2-date">${fcxFmtMatchTime(m)}</span>
         </div>
-        ${watchBtn}
       </div>
-    </div>`;
-  });
-  html += '</div>';
-  el.insertAdjacentHTML('beforeend', html);
+    </a>`;
+  }).join('');
+  if (viewAll) viewAll.insertAdjacentHTML('beforebegin', cardsHtml);
+  else grid.insertAdjacentHTML('beforeend', cardsHtml);
 };
 
 // Re-appends live FanCode matches as extra slides into the real, visible
@@ -6098,6 +6186,7 @@ function renderFixtures(rows) {
   if (!grid) return;
   if (!fx.length) {
     grid.innerHTML = `<div class="smo-empty-box">NO MATCHES LISTED NOW</div>`;
+    if (typeof window.fcxAppendFixturesPreview === 'function') window.fcxAppendFixturesPreview();
     return;
   }
   grid.innerHTML = fx.map(c => {
@@ -6131,6 +6220,10 @@ function renderFixtures(rows) {
       <span class="fx2-viewall-arrow">→</span>
       <span class="fx2-viewall-text">VIEW ALL</span>
     </a>`;
+
+  // This just rebuilt #fixtures-grid from scratch — put back any FanCode
+  // preview cards a prior FCX refresh had already added.
+  if (typeof window.fcxAppendFixturesPreview === 'function') window.fcxAppendFixturesPreview();
 }
 
 function renderCategories(rows) {
