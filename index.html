@@ -2075,6 +2075,21 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
   .mws-more-thumb { height: 62px; }
 }
 
+/* Sidebar ad placeholder — sits under the More Live Matches strip (or on
+   its own when there are no other live matches). Flat, dashed border so
+   it visually reads as a slot, not a real match/server row. */
+.mws-ad-box {
+  margin-top: 14px;
+  border: 1px dashed rgba(240,79,140,0.35);
+  border-radius: 6px;
+  padding: 18px 14px;
+  text-align: center;
+  background: rgba(240,79,140,0.05);
+}
+.mws-ad-title { font-family: var(--font-display); font-size: 12px; font-weight: 800; letter-spacing: 0.14em; color: rgba(240,79,140,0.75); margin-bottom: 6px; }
+.mws-ad-contact { font-size: 11px; color: rgba(255,255,255,0.4); }
+.mws-ad-handle { color: #F04F8C; font-weight: 700; }
+
 /* Full-screen banner fallback (no team logos available) — the banner
    image fills the whole left panel edge-to-edge, with a bottom scrim so
    the badge/details/date/timer stack stays readable sitting over it. */
@@ -5975,12 +5990,12 @@ function renderMwsMoreLive(info) {
     m.status === 'LIVE' &&
     (info.fcxId ? String(m.id) !== String(info.fcxId) : m.title !== info.name)
   ).slice(0, 8);
-  if (!others.length) return;
 
   const wrap = document.createElement('div');
   wrap.id = 'mwsMoreLive';
   wrap.className = 'mws-more-live';
   wrap.innerHTML = `
+    ${others.length ? `
     <div class="mws-more-title">More Live Matches</div>
     <div class="mws-more-row">
       ${others.map(m => `
@@ -5992,6 +6007,11 @@ function renderMwsMoreLive(info) {
           <span class="mws-more-name">${m.title}</span>
         </button>
       `).join('')}
+    </div>
+    ` : ''}
+    <div class="mws-ad-box">
+      <div class="mws-ad-title">YOUR AD HERE</div>
+      <div class="mws-ad-contact">Contact Discord: <span class="mws-ad-handle">rishi.ev</span></div>
     </div>
   `;
   body.appendChild(wrap);
