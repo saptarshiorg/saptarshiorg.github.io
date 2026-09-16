@@ -1917,6 +1917,13 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
   object-fit: contain; background: rgba(255,255,255,0.06);
   padding: 3px; box-sizing: border-box;
 }
+.mws-server-btn-fcx { padding: 20px 18px; border-left-color: #F5C518; }
+.mws-server-btn-fcx:hover { border-left-color: #F5C518; }
+.mws-server-logo-lg {
+  width: 64px; height: 64px; flex-shrink: 0;
+  object-fit: contain; background: #fff;
+  padding: 6px; box-sizing: border-box;
+}
 .mws-server-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .mws-server-label { font-size: 14px; font-weight: 700; letter-spacing: 0.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mws-server-sub { font-size: 10px; color: rgba(255,255,255,0.4); letter-spacing: 0.04em; }
@@ -4493,6 +4500,7 @@ function fcxAugmentSheetCards(cards){
     if (emptyIdx === -1) return; // all 5 server slots already taken
     c[urlSlots[emptyIdx]] = fcxJsUrl(fm);
     c[textSlots[emptyIdx]] = 'FanCode';
+    c._fcxBanner = fm.image; // let the card's thumbnail fall back to FanCode's own banner too
   });
 }
 
@@ -5338,7 +5346,21 @@ function sxGetMatchServers(m) {
     { url: m.btn_url_4, text: m.btn_text_4 || 'Server 4' },
     { url: m.btn_url_5, text: m.btn_text_5 || 'Server 5' }
   ];
-  return raw.filter(s => s.url && String(s.url).trim() && String(s.url).trim() !== '#');
+  const servers = raw.filter(s => s.url && String(s.url).trim() && String(s.url).trim() !== '#');
+  // The FanCode entry (see fcxAugmentSheetCards) was filled in from
+  // whatever FanCode's feed said up to 30s ago — re-check its live status
+  // fresh, right now, so the watch screen only lets "Watch Now" actually
+  // work once the match has actually started.
+  if (typeof fcxFindSheetMatch === 'function') {
+    const fm = fcxFindSheetMatch(m);
+    servers.forEach(s => {
+      if ((s.text || '').trim().toLowerCase() === 'fancode') {
+        s.fcxLive = !!fm && fm.status === 'LIVE';
+        s.fcxTime = (fm && typeof fcxFmtMatchTime === 'function') ? fcxFmtMatchTime(fm) : '';
+      }
+    });
+  }
+  return servers;
 }
 // URI-encoded JSON of a match row's server list — safe to drop straight into
 // a single-quoted string inside an inline onclick="" attribute (no raw
@@ -5455,18 +5477,30 @@ function openMatchWatchScreen(servers, info) {
     const sortedServers = (servers || []).slice().sort((a, b) => (isFcxServer(a) ? 0 : 1) - (isFcxServer(b) ? 0 : 1));
     body.innerHTML = sortedServers.map((s, i) => {
       const isFcx = isFcxServer(s);
-      const chLogo = isFcx ? FCX_LOGO : sxFindLiveTvLogoForLabel(s.text);
+      if (isFcx) {
+        const fcxReady = !!s.fcxLive;
+        const priorityBadge = `<span style="display:inline-block;background:#F5C518;color:#111;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;margin-left:8px;vertical-align:middle;">High Priority</span>`;
+        const tag = fcxReady ? 'button' : 'div';
+        const clickAttr = fcxReady ? ` type="button" onclick="closeMatchWatchScreen();sxGoToMatchUrl(null,'${escJs(s.url)}','${escJs(label)}')"` : '';
+        return `
+        <${tag} class="mws-server-btn mws-server-btn-fcx"${clickAttr}${fcxReady ? '' : ' style="cursor:default;opacity:.85;"'}>
+          <img class="mws-server-logo-lg" src="${FCX_LOGO}" alt="FanCode" onerror="this.style.display='none'">
+          <span class="mws-server-info">
+            <span class="mws-server-label">${s.text || 'FanCode'}${priorityBadge}</span>
+            <span class="mws-server-sub">${fcxReady ? 'Tap to play this stream' : (s.fcxTime ? 'Starts ' + s.fcxTime : 'Not live yet')}</span>
+          </span>
+          <span class="mws-server-play">${fcxReady ? '▶' : '⏰'}</span>
+        </${tag}>`;
+      }
+      const chLogo = sxFindLiveTvLogoForLabel(s.text);
       const iconHtml = chLogo
         ? `<img class="mws-server-logo" src="${chLogo}" alt="" onerror="this.outerHTML='<span class=\\'mws-server-num\\'>${i + 1}</span>'">`
         : `<span class="mws-server-num">${i + 1}</span>`;
-      const priorityBadge = isFcx
-        ? `<span style="display:inline-block;background:#F5C518;color:#111;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;margin-left:8px;vertical-align:middle;">High Priority</span>`
-        : '';
       return `
       <button type="button" class="mws-server-btn" onclick="closeMatchWatchScreen();sxGoToMatchUrl(null,'${escJs(s.url)}','${escJs(label)}')">
         ${iconHtml}
         <span class="mws-server-info">
-          <span class="mws-server-label">${s.text || ('Server ' + (i + 1))}${priorityBadge}</span>
+          <span class="mws-server-label">${s.text || ('Server ' + (i + 1))}</span>
           <span class="mws-server-sub">Tap to play this stream</span>
         </span>
         <span class="mws-server-play">▶</span>
@@ -6100,15 +6134,22 @@ function renderMatchCards(rows) {
 
       const detailsHtml = c.details ? `<div class="smo-details">${c.details}</div>` : '';
       const teamsLine = `${c.team1_full_name||c.team1_code||''} vs ${c.team2_full_name||c.team2_code||''}`;
+      // Banner takes priority over the two-team-logo layout when there is
+      // one — either the sheet's own banner_image_url, or (as a fallback)
+      // the banner from a cross-matched FanCode stream for this fixture.
+      const bannerSrc = c.banner_image_url || c._fcxBanner || '';
+      const thumbInner = bannerSrc
+        ? `<img src="${bannerSrc}" alt="${escJs(teamsLine)}" class="fx2-thumb-img" onerror="this.style.display='none'">`
+        : `<div class="fx2-thumb-teams">
+            <div class="fx2-thumb-team">${img(c.team1_icon_url,c.team1_code||'','')}</div>
+            <div class="fx2-thumb-vs">VS</div>
+            <div class="fx2-thumb-team">${img(c.team2_icon_url,c.team2_code||'','')}</div>
+          </div>`;
 
       sectionHtml += `
       <div class="smo-card fx2-card" id="${cardId}" data-live="${isLive ? '1' : '0'}"${hideAt !== null ? ` data-expire-at="${hideAt}"` : ''}>
         <div class="fx2-thumb">
-          <div class="fx2-thumb-teams">
-            <div class="fx2-thumb-team">${img(c.team1_icon_url,c.team1_code||'','')}</div>
-            <div class="fx2-thumb-vs">VS</div>
-            <div class="fx2-thumb-team">${img(c.team2_icon_url,c.team2_code||'','')}</div>
-          </div>
+          ${thumbInner}
           ${badge}
         </div>
         <div class="fx2-body">
@@ -6327,8 +6368,8 @@ function renderFixtures(rows) {
   }
   grid.innerHTML = fx.map(c => {
     const isLive = matchStatusText(c).toLowerCase() === 'live';
-    const thumb = c.banner_image_url
-      ? `<img src="${c.banner_image_url}" alt="" class="fx2-thumb-img">`
+    const thumb = (c.banner_image_url || c._fcxBanner)
+      ? `<img src="${c.banner_image_url || c._fcxBanner}" alt="" class="fx2-thumb-img" onerror="this.style.display='none'">`
       : `<div class="fx2-thumb-teams">
            <div class="fx2-thumb-team">${img(c.team1_icon_url,c.team1_code||'','')}</div>
            <div class="fx2-thumb-vs">VS</div>
