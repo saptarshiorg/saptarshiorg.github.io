@@ -4425,6 +4425,22 @@ function fcxFmtMatchTime(m){
   return `${dp}, ${h}:${mm} ${ap}`;
 }
 
+// Shared "Watch Now" control for every FanCode card (Matches tab, home
+// fixtures preview, hero slides) — before kickoff it just shows the date/
+// time (not clickable), and only turns into a real, working "Watch Now"
+// once the match is actually live. `cls` lets each spot keep its own
+// button styling (smo-btn vs btn-slide-watch).
+function fcxWatchBtnHtml(m, cls){
+  cls = cls || 'smo-btn';
+  if (m.status === 'LIVE') {
+    return `<a class="${cls}" href="javascript:void(0)" onclick="openStreamPlayer('${fcxJsUrl(m)}','${escJs(m.title)}','match')">▶ Watch Now</a>`;
+  }
+  if (m.status === 'COMPLETED') {
+    return `<span class="${cls}" style="opacity:.5;pointer-events:none;">MATCH OVER</span>`;
+  }
+  return `<span class="${cls}" style="opacity:.75;pointer-events:none;">${fcxFmtMatchTime(m)}</span>`;
+}
+
 // True if `title` mentions this team — either its short code as a whole
 // word (e.g. "IND" in "IND vs PAK, 1st T20I") or its full name as a
 // substring (e.g. "India" in "India tour of Pakistan").
@@ -4480,20 +4496,14 @@ function fcxAugmentSheetCards(cards){
   });
 }
 
-// Re-appends FanCode matches into the Matches tab (#match-overlay) as their
-// own set of sections — one per tournament/series, same as the sheet-driven
-// groups are one per game/event — after every sheet-driven MATCH CARDS
-// render AND every FCX refresh, so it survives being wiped by either 30s
-// cycle, whichever runs last. Card markup mirrors the sheet-driven .fx2-card
-// cards exactly (same thumb, badge, and reserved timer-block structure) so
-// FanCode and normal match cards always come out the same size in the grid.
-window.fcxAppendHomeSections = function(){
-  const el = document.getElementById('match-overlay');
-  if (!el) return;
-  el.querySelectorAll('.fcx-smo-section').forEach(s => s.remove());
+// Groups the cached FanCode matches by tournament/series — live-first
+// ordering both across groups (a tournament with a live match sorts
+// first) and within each group — shared by the Matches-tab sections
+// below and by renderMatchCards() when it folds "FanCode" into the top
+// sport selector.
+function fcxTournamentGroups(){
   const all = window._fcxMatchesCache || [];
-  if (!all.length) return;
-
+  if (!all.length) return [];
   const groups = new Map();
   all.forEach(m => {
     const g = (m.tournament || '').trim() || 'FanCode';
@@ -4507,10 +4517,26 @@ window.fcxAppendHomeSections = function(){
     const bLive = b[1].some(m => m.status === 'LIVE') ? 0 : 1;
     return aLive - bLive;
   });
+  return entries;
+}
+
+// Re-appends FanCode matches into the Matches tab (#match-overlay) as their
+// own set of sections — one per tournament/series, same as the sheet-driven
+// groups are one per game/event — after every sheet-driven MATCH CARDS
+// render AND every FCX refresh, so it survives being wiped by either 30s
+// cycle, whichever runs last. Card markup mirrors the sheet-driven .fx2-card
+// cards exactly (same thumb, badge, and reserved timer-block structure) so
+// FanCode and normal match cards always come out the same size in the grid.
+window.fcxAppendHomeSections = function(){
+  const el = document.getElementById('match-overlay');
+  if (!el) return;
+  el.querySelectorAll('.fcx-smo-section').forEach(s => s.remove());
+  const entries = fcxTournamentGroups();
+  if (!entries.length) return;
 
   const timers = [];
   entries.forEach(([tournament, cards]) => {
-    let html = `<div class="smo-section fcx-smo-section" data-game="${escJs(tournament)}" data-sport="FanCode">`;
+    let html = `<div class="smo-section fcx-smo-section">`;
     html += `<div class="smo-section-label">${tournament}</div>`;
     cards.forEach(m => {
       const isLive = m.status === 'LIVE';
@@ -4546,13 +4572,20 @@ window.fcxAppendHomeSections = function(){
             <span class="fx2-date">${fcxFmtMatchTime(m)}</span>
           </div>
           ${timerBlock}
-          <a class="smo-btn" href="javascript:void(0)" onclick="openStreamPlayer('${fcxJsUrl(m)}','${escJs(m.title)}','match')">▶ Watch Now</a>
+          ${fcxWatchBtnHtml(m, 'smo-btn')}
         </div>
       </div>`;
       if (countdown) timers.push({ timerDisplayId: timerId, timerWrapId, badgeId, liveBadgeHtml, target: countdown });
     });
     html += '</div>';
     el.insertAdjacentHTML('beforeend', html);
+    // Tag via the DOM property (not an HTML attribute string) — same
+    // convention renderMatchCards uses for its own sections — so a
+    // tournament name with a quote in it can't break the markup, and the
+    // sport/game toolbars (which read these two properties) can filter it.
+    const secs = el.querySelectorAll('.fcx-smo-section');
+    const sec = secs[secs.length - 1];
+    if (sec) { sec.dataset.game = tournament; sec.dataset.sport = 'FanCode'; }
   });
   timers.forEach(({ timerDisplayId, timerWrapId, badgeId, liveBadgeHtml, target }) => {
     setTimeout(() => {
@@ -4591,8 +4624,10 @@ window.fcxAppendFixturesPreview = function(){
   }
   const cardsHtml = list.map(m => {
     const isLive = m.status === 'LIVE';
+    const tag = isLive ? 'a' : 'div';
+    const clickAttr = isLive ? ` href="javascript:void(0)" onclick="openStreamPlayer('${fcxJsUrl(m)}','${escJs(m.title)}','match')"` : '';
     return `
-    <a class="fx2-card fcx-fixture-card" href="javascript:void(0)" onclick="openStreamPlayer('${fcxJsUrl(m)}','${escJs(m.title)}','match')">
+    <${tag} class="fx2-card fcx-fixture-card"${clickAttr}${isLive ? '' : ' style="cursor:default;"'}>
       <div class="fx2-thumb">
         <img src="${m.image}" alt="${escJs(m.title)}" class="fx2-thumb-img" onerror="this.style.display='none'">
         ${isLive ? '<span class="fx2-badge fx2-badge-live"><span class="fx2-live-dot"></span>LIVE</span>' : ''}
@@ -4607,7 +4642,7 @@ window.fcxAppendFixturesPreview = function(){
           <span class="fx2-date">${fcxFmtMatchTime(m)}</span>
         </div>
       </div>
-    </a>`;
+    </${tag}>`;
   }).join('');
   if (viewAll) viewAll.insertAdjacentHTML('beforebegin', cardsHtml);
   else grid.insertAdjacentHTML('beforeend', cardsHtml);
@@ -4649,7 +4684,7 @@ window.fcxAppendHeroSlides = function(){
         <div class="slide-title">${m.title}</div>
         <div class="slide-sub">${m.tournament||'FanCode'}</div>
         <div class="slide-btns">
-          <a href="#" class="btn-slide-watch" onclick="event.preventDefault();openStreamPlayer('${fcxJsUrl(m)}','${escJs(m.title)}','match')">Watch Now</a>
+          ${fcxWatchBtnHtml(m, 'btn-slide-watch')}
         </div>
       </div>`;
     if (bannerSlide) container.insertBefore(slide, bannerSlide);
@@ -5412,16 +5447,26 @@ function openMatchWatchScreen(servers, info) {
 
   const body = document.getElementById('mwsRightBody');
   if (body) {
-    body.innerHTML = servers.map((s, i) => {
-      const chLogo = sxFindLiveTvLogoForLabel(s.text);
+    // FanCode (auto-cross-linked from a matching FanCode stream, see
+    // fcxAugmentSheetCards) always lists first, with its own logo and a
+    // gold "High Priority" badge, ahead of the sheet's own servers.
+    const FCX_LOGO = 'https://www.fancode.com/skillup-uploads/fc-web-logo/fc_logo_white_bg.svg';
+    const isFcxServer = s => (s.text || '').trim().toLowerCase() === 'fancode';
+    const sortedServers = (servers || []).slice().sort((a, b) => (isFcxServer(a) ? 0 : 1) - (isFcxServer(b) ? 0 : 1));
+    body.innerHTML = sortedServers.map((s, i) => {
+      const isFcx = isFcxServer(s);
+      const chLogo = isFcx ? FCX_LOGO : sxFindLiveTvLogoForLabel(s.text);
       const iconHtml = chLogo
         ? `<img class="mws-server-logo" src="${chLogo}" alt="" onerror="this.outerHTML='<span class=\\'mws-server-num\\'>${i + 1}</span>'">`
         : `<span class="mws-server-num">${i + 1}</span>`;
+      const priorityBadge = isFcx
+        ? `<span style="display:inline-block;background:#F5C518;color:#111;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;margin-left:8px;vertical-align:middle;">High Priority</span>`
+        : '';
       return `
       <button type="button" class="mws-server-btn" onclick="closeMatchWatchScreen();sxGoToMatchUrl(null,'${escJs(s.url)}','${escJs(label)}')">
         ${iconHtml}
         <span class="mws-server-info">
-          <span class="mws-server-label">${s.text || ('Server ' + (i + 1))}</span>
+          <span class="mws-server-label">${s.text || ('Server ' + (i + 1))}${priorityBadge}</span>
           <span class="mws-server-sub">Tap to play this stream</span>
         </span>
         <span class="mws-server-play">▶</span>
@@ -6110,6 +6155,20 @@ function renderMatchCards(rows) {
   window._smoAllGameOrder = gameOrder;
   window._smoGameToSport = {};
   gameOrder.forEach((g, i) => { window._smoGameToSport[g] = sportPerSection[i]; });
+
+  // Fold FanCode in as its own sport, with its tournaments/series as its
+  // "games" — same top selector, same second-tier dropdown, as any sheet
+  // sport gets. Its own sections (appended by fcxAppendHomeSections, at
+  // the very end of this function) are tagged with matching dataset.game/
+  // dataset.sport values so the filters actually work against them.
+  const fcxGroups = (typeof fcxTournamentGroups === 'function') ? fcxTournamentGroups() : [];
+  if (fcxGroups.length) {
+    if (!sportOrder.includes('FanCode')) sportOrder.push('FanCode');
+    fcxGroups.forEach(([tournament]) => {
+      if (!gameOrder.includes(tournament)) gameOrder.push(tournament);
+      window._smoGameToSport[tournament] = 'FanCode';
+    });
+  }
 
   // ── Build/refresh the sport-selector toolbar (parent tier) ──
   smoBuildSportToolbar(sportOrder);
