@@ -2044,6 +2044,8 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
 .mws-left.mws-left-banner {
   padding: 0; justify-content: flex-end; align-items: stretch;
   position: relative; overflow: hidden;
+  min-height: 100%;
+  background: #0a0a0d;
 }
 .mws-fallback-banner {
   position: absolute; inset: 0; width: 100%; height: 100%;
@@ -2136,6 +2138,18 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
   .mws-right-body { padding: 14px 20px 24px; }
   .mws-team-logo { width: 52px; height: 52px; }
   .mws-teams { gap: 14px; }
+  /* No team logos (FanCode-style single-image events): the banner takes the
+     full width of the phone screen as a proper hero, not a thin strip. */
+  .mws-left.mws-left-banner {
+    padding: 0;
+    width: 100%;
+    min-height: 42vh;
+    justify-content: flex-end;
+  }
+  .mws-left.mws-left-banner .mws-fallback-content { padding: 20px 18px 22px; gap: 10px; }
+  .mws-left.mws-left-banner .mws-fallback-scrim {
+    background: linear-gradient(180deg, rgba(10,10,13,0.25) 0%, rgba(10,10,13,0.45) 40%, rgba(10,10,13,0.95) 100%);
+  }
 }
 
 
@@ -4397,7 +4411,7 @@ window.sxSwitchTab = sxSwitchTab;
           <div class="fcx-slide-meta"><span>${m.tournament}</span></div>
           <div class="fcx-slide-time">${fcxFormatTime(m.time)}</div>
           <div class="fcx-slide-actions">
-            <button class="fcx-slide-btn" ${isLive ? `onclick="openStreamPlayer('${fcxPlayUrl(m)}','${escJs(m.title)}','match')"` : 'disabled'}>${isLive ? 'WATCH NOW' : 'VIEW DETAILS'}</button>
+            <button class="fcx-slide-btn" ${m.status === 'COMPLETED' ? 'disabled' : `onclick="return fcxOpenWatchById('${escJs(String(m.id))}')"`}>${isLive ? 'WATCH NOW' : 'VIEW DETAILS'}</button>
           </div>
         </div>
       </div>
@@ -4423,7 +4437,7 @@ window.sxSwitchTab = sxSwitchTab;
           <div class="fcx-event">${m.tournament}</div>
           <div class="fcx-card-time">${fcxFormatTime(m.time)}</div>
           <div class="fcx-actions">
-            <button class="fcx-btn ${m.status==='UPCOMING'?'fcx-btn-upcoming':''}" ${m.status==='LIVE'?`onclick="openStreamPlayer('${fcxPlayUrl(m)}','${escJs(m.title)}','match')"`:'disabled'}>
+            <button class="fcx-btn ${m.status==='UPCOMING'?'fcx-btn-upcoming':''}" ${m.status==='COMPLETED'?'disabled':`onclick="return fcxOpenWatchById('${escJs(String(m.id))}')"`}>
               ${m.status==='LIVE'?'WATCH NOW':m.status==='COMPLETED'?'MATCH OVER':fcxFormatTime(m.time)}
             </button>
           </div>
@@ -4633,7 +4647,7 @@ function fcxFmtMatchTime(m){
 function fcxWatchBtnHtml(m, cls){
   cls = cls || 'smo-btn';
   if (m.status === 'LIVE') {
-    return `<a class="${cls}" href="javascript:void(0)" onclick="openStreamPlayer('${fcxJsUrl(m)}','${escJs(m.title)}','match')">▶ Watch Now</a>`;
+    return `<a class="${cls}" href="javascript:void(0)" onclick="event.stopPropagation();return fcxOpenWatchById('${escJs(String(m.id))}')">▶ Watch Now</a>`;
   }
   if (m.status === 'COMPLETED') {
     return `<span class="${cls}" style="opacity:.5;pointer-events:none;">MATCH OVER</span>`;
@@ -4837,7 +4851,7 @@ window.fcxAppendFixturesPreview = function(){
     const isLive = m.status === 'LIVE';
     const tag = 'a';
     const clickAttr = isLive
-      ? ` href="javascript:void(0)" onclick="openStreamPlayer('${fcxJsUrl(m)}','${escJs(m.title)}','match')"`
+      ? ` href="javascript:void(0)" onclick="return fcxOpenWatchById('${escJs(String(m.id))}')"`
       : ` href="javascript:void(0)" onclick="return fcxOpenWatchById('${escJs(String(m.id))}')"`;
     return `
     <${tag} class="fx2-card fcx-fixture-card"${clickAttr}>
@@ -5687,10 +5701,10 @@ function openMatchWatchScreen(servers, info) {
       ${info.date_label ? `<div class="mws-date">${info.date_label}</div>` : ''}
       ${showTimer ? `<div id="${timerWrapId}"><div class="mws-timer-label">Starts in</div><div class="mws-timer" id="${timerId}">--:--:--</div></div>` : ''}
     `;
-    if (noTeamLogos && bannerSrc) {
+    if (noTeamLogos) {
       leftEl.classList.add('mws-left-banner');
       leftEl.innerHTML = `
-        <img class="mws-fallback-banner" src="${bannerSrc}" alt="${label}" onerror="this.style.display='none'">
+        ${bannerSrc ? `<img class="mws-fallback-banner" src="${bannerSrc}" alt="${label}" onerror="this.style.display='none'">` : ''}
         <div class="mws-fallback-scrim"></div>
         <div class="mws-fallback-content">
           ${infoBlock}
