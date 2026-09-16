@@ -2048,6 +2048,25 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
 }
 .mws-server-play { font-size: 13px; color: rgba(240,79,140,0.6); flex-shrink: 0; }
 
+/* "More Live Matches" strip — banner-fallback (FanCode, no team logos)
+   watch screens only. Sits under the server list, scrolls sideways. */
+.mws-more-live { margin-top: 6px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.08); }
+.mws-more-title { font-family: var(--font-display); font-size: 10px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(255,255,255,0.45); margin-bottom: 10px; }
+.mws-more-row { display: flex; gap: 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none; padding-bottom: 2px; }
+.mws-more-row::-webkit-scrollbar { display: none; }
+.mws-more-card { flex: 0 0 auto; width: 128px; display: flex; flex-direction: column; gap: 6px; background: transparent; border: none; padding: 0; cursor: pointer; text-align: left; }
+.mws-more-thumb { position: relative; width: 128px; height: 72px; border-radius: 6px; overflow: hidden; background: #131318; border: 1px solid rgba(255,255,255,0.08); }
+.mws-more-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.2s ease; }
+.mws-more-card:hover .mws-more-thumb img { transform: scale(1.05); }
+.mws-more-live-badge { position: absolute; top: 5px; left: 5px; display: flex; align-items: center; gap: 4px; background: #ff3b3b; color: #fff; font-size: 8.5px; font-weight: 800; letter-spacing: 0.5px; padding: 2px 6px; border-radius: 3px; }
+.mws-more-live-badge .live-dot-r { width: 4px; height: 4px; background: #fff; box-shadow: none; }
+.mws-more-name { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.75); line-height: 1.35; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.mws-more-card:hover .mws-more-name { color: #fff; }
+@media (max-width: 900px) {
+  .mws-more-card, .mws-more-thumb { width: 108px; }
+  .mws-more-thumb { height: 62px; }
+}
+
 /* Full-screen banner fallback (no team logos available) — the banner
    image fills the whole left panel edge-to-edge, with a bottom scrim so
    the badge/details/date/timer stack stays readable sitting over it. */
@@ -4622,6 +4641,7 @@ function fcxOpenWatchById(id){
   }];
   openMatchWatchScreen(servers, {
     name: m.title || 'Live Stream',
+    fcxId: m.id,
     // FanCode events are single-image, not two-team fixtures — no team
     // icon fields at all, so the banner fallback above always kicks in.
     team1_code: '', team1_full_name: '', team1_icon_url: '',
@@ -5826,7 +5846,10 @@ function openMatchWatchScreen(servers, info) {
           ${infoBlock}
         </div>
       `;
+      renderMwsMoreLive(info);
     } else {
+      const oldMoreLive = document.getElementById('mwsMoreLive');
+      if (oldMoreLive) oldMoreLive.remove();
       leftEl.classList.remove('mws-left-banner');
       leftEl.innerHTML = `
         ${infoBlock}
@@ -5865,6 +5888,10 @@ function openMatchWatchScreen(servers, info) {
     // fcxAugmentSheetCards) always lists first, with its own logo and a
     // gold "High Priority" badge, ahead of the sheet's own servers.
     const FCX_LOGO = 'https://www.fancode.com/skillup-uploads/fc-web-logo/fc_logo_white_bg.svg';
+    // Locked-state icon for the FanCode server row — a plain SVG lock, not
+    // the clock emoji it used to show (no time icon needed there, and no
+    // emoji-based icons in this row at all).
+    const MWS_LOCK_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
     const isFcxServer = s => (s.text || '').trim().toLowerCase() === 'fancode';
     const sortedServers = (servers || []).slice().sort((a, b) => (isFcxServer(a) ? 0 : 1) - (isFcxServer(b) ? 0 : 1));
     // Match hasn't started yet — the server list still opens, topped with a
@@ -5892,7 +5919,7 @@ function openMatchWatchScreen(servers, info) {
             <span class="mws-server-label">${s.text || 'FanCode'}${priorityBadge}</span>
             <span class="mws-server-sub">${fcxReady ? 'Tap to play this stream' : (s.fcxTime ? 'Starts ' + s.fcxTime : 'Not live yet')}</span>
           </span>
-          <span class="mws-server-play">${fcxReady ? '▶' : '⏰'}</span>
+          <span class="mws-server-play">${fcxReady ? '▶' : MWS_LOCK_SVG}</span>
         </button>`;
       }
       const chLogo = sxFindLiveTvLogoForLabel(s.text);
@@ -5917,6 +5944,47 @@ function openMatchWatchScreen(servers, info) {
   const overlay = document.getElementById('mwsOverlay');
   if (overlay) overlay.classList.add('open');
 }
+
+// "More Live Matches" strip — only shown for the FanCode banner-fallback
+// case (single-image events with no team logos). Lists every OTHER
+// currently-live FanCode match (excluding this one, by id) as a small
+// banner + title card underneath the server list, so a visitor watching
+// one live FanCode event can jump straight into another without closing
+// this screen and hunting through the Matches tab. Rebuilt fresh on every
+// openMatchWatchScreen() call and removed outright when not applicable.
+function renderMwsMoreLive(info) {
+  const body = document.getElementById('mwsRightBody');
+  if (!body) return;
+  const old = document.getElementById('mwsMoreLive');
+  if (old) old.remove();
+
+  const all = window._fcxMatchesCache || [];
+  const others = all.filter(m =>
+    m.status === 'LIVE' &&
+    (info.fcxId ? String(m.id) !== String(info.fcxId) : m.title !== info.name)
+  ).slice(0, 8);
+  if (!others.length) return;
+
+  const wrap = document.createElement('div');
+  wrap.id = 'mwsMoreLive';
+  wrap.className = 'mws-more-live';
+  wrap.innerHTML = `
+    <div class="mws-more-title">More Live Matches</div>
+    <div class="mws-more-row">
+      ${others.map(m => `
+        <button type="button" class="mws-more-card" onclick="fcxOpenWatchById('${escJs(String(m.id))}')">
+          <div class="mws-more-thumb">
+            <img src="${m.image}" alt="${escJs(m.title)}" onerror="this.style.display='none'">
+            <span class="mws-more-live-badge"><span class="live-dot-r"></span>LIVE</span>
+          </div>
+          <span class="mws-more-name">${m.title}</span>
+        </button>
+      `).join('')}
+    </div>
+  `;
+  body.appendChild(wrap);
+}
+
 // Tapping any locked (pre-kickoff) server: shake the row red, buzz the
 // device where that's supported, and pop the red "not live yet" toast.
 // Nothing navigates — the stream genuinely isn't up yet.
