@@ -1917,12 +1917,11 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
   object-fit: contain; background: rgba(255,255,255,0.06);
   padding: 3px; box-sizing: border-box;
 }
-.mws-server-btn-fcx { padding: 20px 18px; border-left-color: #F5C518; }
+.mws-server-btn-fcx { padding: 14px 18px; border-left-color: #F5C518; min-height: 76px; }
 .mws-server-btn-fcx:hover { border-left-color: #F5C518; }
 .mws-server-logo-lg {
-  width: 64px; height: 64px; flex-shrink: 0;
-  object-fit: contain; background: #fff;
-  padding: 6px; box-sizing: border-box;
+  height: 56px; width: auto; max-width: 150px; flex-shrink: 0;
+  object-fit: contain; background: transparent; padding: 0; border-radius: 0;
 }
 .mws-server-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .mws-server-label { font-size: 14px; font-weight: 700; letter-spacing: 0.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -5396,6 +5395,24 @@ function sxMatchInfoEnc(m, name) {
   return encodeURIComponent(JSON.stringify(info));
 }
 
+// Shared "Watch Now" control for sheet MATCH CARDS rows (Matches tab,
+// home fixtures preview, hero slides) — same gating FanCode's own cards
+// use: before kickoff it just shows the scheduled date/time (not
+// clickable), and only turns into a real, working Watch Now once the
+// match is actually live (or once it's finished, shows that instead).
+function sxWatchBtnHtml(c, cls) {
+  cls = cls || 'smo-btn';
+  const status = matchStatusText(c).toLowerCase();
+  const label = (c.team1_code||'')+' vs '+(c.team2_code||'');
+  if (status === 'live') {
+    return `<a class="${cls}" href="${matchWatchHref(c.btn_url)}" onclick="return sxHandleMatchWatch(event,'${sxServersEnc(c)}','${escJs(c.btn_url)}','${escJs(label)}','${sxMatchInfoEnc(c,label)}')">▶ Watch Now</a>`;
+  }
+  if (isMatchFinished(c)) {
+    return `<span class="${cls}" style="opacity:.5;pointer-events:none;">MATCH OVER</span>`;
+  }
+  return `<span class="${cls}" style="opacity:.75;pointer-events:none;">${c.date_label || 'UPCOMING'}</span>`;
+}
+
 // Card click / Watch Now handler — routes to the full-screen match watch
 // screen when there's more than one server, otherwise falls straight
 // through to sxGoToMatchUrl exactly like before. serversEnc / matchInfoEnc
@@ -5723,7 +5740,7 @@ function injectMatchInfoIntoSlides(matchCards) {
     const timerWrapId = 'slide-timerwrap-' + i;
     const timerBlock = `<div class="smo-timer" id="${timerWrapId}" style="margin:2px 0 10px;visibility:${(!isLive && countdown) ? 'visible' : 'hidden'}"><div class="timer-label">STARTS IN</div><div class="timer-display" id="${timerId}">--:--:--</div></div>`;
 
-    const watchBtn = `<a href="${matchWatchHref(m.btn_url)}" class="btn-slide-watch" onclick="event.preventDefault();return sxHandleMatchWatch(event,'${sxServersEnc(m)}','${escJs(m.btn_url)}','${escJs((m.team1_code||'')+' vs '+(m.team2_code||''))}','${sxMatchInfoEnc(m,(m.team1_code||'')+' vs '+(m.team2_code||''))}')">Watch Now</a>`;
+    const watchBtn = sxWatchBtnHtml(m, 'btn-slide-watch');
 
     const contentEl = slide.querySelector('.slide-content');
     if (!contentEl) return;
@@ -6163,7 +6180,7 @@ function renderMatchCards(rows) {
             <span class="fx2-date">${dateLabel}</span>
           </div>
           ${timerBlock}
-          <a class="smo-btn" href="${matchWatchHref(c.btn_url)}" onclick="return sxHandleMatchWatch(event,'${sxServersEnc(c)}','${escJs(c.btn_url)}','${escJs((c.team1_code||'')+' vs '+(c.team2_code||''))}','${sxMatchInfoEnc(c,(c.team1_code||'')+' vs '+(c.team2_code||''))}')">▶ Watch Now</a>
+          ${sxWatchBtnHtml(c, 'smo-btn')}
         </div>
       </div>`;
 
@@ -6375,8 +6392,12 @@ function renderFixtures(rows) {
            <div class="fx2-thumb-vs">VS</div>
            <div class="fx2-thumb-team">${img(c.team2_icon_url,c.team2_code||'','')}</div>
          </div>`;
+    const tag = isLive ? 'a' : 'div';
+    const clickAttr = isLive
+      ? ` href="${matchWatchHref(c.btn_url)}" onclick="return sxHandleMatchWatch(event,'${sxServersEnc(c)}','${escJs(c.btn_url)}','${escJs((c.team1_code||'')+' vs '+(c.team2_code||''))}','${sxMatchInfoEnc(c,(c.team1_code||'')+' vs '+(c.team2_code||''))}')"`
+      : ' style="cursor:default;"';
     return `
-    <a class="fx2-card" href="${matchWatchHref(c.btn_url)}" onclick="return sxHandleMatchWatch(event,'${sxServersEnc(c)}','${escJs(c.btn_url)}','${escJs((c.team1_code||'')+' vs '+(c.team2_code||''))}','${sxMatchInfoEnc(c,(c.team1_code||'')+' vs '+(c.team2_code||''))}')">
+    <${tag} class="fx2-card"${clickAttr}>
       <div class="fx2-thumb">
         ${thumb}
         ${isLive ? '<span class="fx2-badge fx2-badge-live"><span class="fx2-live-dot"></span>LIVE</span>' : ''}
@@ -6391,7 +6412,7 @@ function renderFixtures(rows) {
           <span class="fx2-date">${c.date_label||''}</span>
         </div>
       </div>
-    </a>`;
+    </${tag}>`;
   }).join('') + `
     <a class="fx2-viewall" href="#sxTabPanels" onclick="event.preventDefault();openMatches();">
       <span class="fx2-viewall-arrow">→</span>
