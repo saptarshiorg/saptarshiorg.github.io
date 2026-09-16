@@ -2046,7 +2046,15 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
   letter-spacing: 0.6px; color: #ff5b5b; text-transform: uppercase;
   margin-bottom: 4px;
 }
-.mws-server-play { font-size: 13px; color: rgba(240,79,140,0.6); flex-shrink: 0; }
+.mws-server-play { font-size: 13px; color: rgba(240,79,140,0.6); flex-shrink: 0; display: flex; align-items: center; }
+.mws-play-disc {
+  display: flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+  background: rgba(240,79,140,0.14); color: #F04F8C;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+.mws-play-disc svg { margin-left: 1px; } /* optical centering for the triangle */
+.mws-server-btn:hover .mws-play-disc { background: #F04F8C; color: #fff; transform: scale(1.06); }
 
 /* "More Live Matches" strip — banner-fallback (FanCode, no team logos)
    watch screens only. Sits under the server list, scrolls sideways. */
@@ -5892,6 +5900,10 @@ function openMatchWatchScreen(servers, info) {
     // the clock emoji it used to show (no time icon needed there, and no
     // emoji-based icons in this row at all).
     const MWS_LOCK_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+    // Ready-to-play icon for every server row — a proper filled SVG
+    // triangle in a soft magenta disc, not the plain "▶" glyph (which
+    // renders inconsistently across fonts/platforms and looks flat).
+    const MWS_PLAY_SVG = '<span class="mws-play-disc"><svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><path d="M8 5.14v13.72a1 1 0 0 0 1.5.87l11-6.86a1 1 0 0 0 0-1.72L9.5 4.27A1 1 0 0 0 8 5.14z"/></svg></span>';
     const isFcxServer = s => (s.text || '').trim().toLowerCase() === 'fancode';
     const sortedServers = (servers || []).slice().sort((a, b) => (isFcxServer(a) ? 0 : 1) - (isFcxServer(b) ? 0 : 1));
     // Match hasn't started yet — the server list still opens, topped with a
@@ -5919,7 +5931,7 @@ function openMatchWatchScreen(servers, info) {
             <span class="mws-server-label">${s.text || 'FanCode'}${priorityBadge}</span>
             <span class="mws-server-sub">${fcxReady ? 'Tap to play this stream' : (s.fcxTime ? 'Starts ' + s.fcxTime : 'Not live yet')}</span>
           </span>
-          <span class="mws-server-play">${fcxReady ? '▶' : MWS_LOCK_SVG}</span>
+          <span class="mws-server-play">${fcxReady ? MWS_PLAY_SVG : MWS_LOCK_SVG}</span>
         </button>`;
       }
       const chLogo = sxFindLiveTvLogoForLabel(s.text);
@@ -5936,7 +5948,7 @@ function openMatchWatchScreen(servers, info) {
           <span class="mws-server-label">${s.text || ('Server ' + (i + 1))}</span>
           <span class="mws-server-sub">${matchNotStarted ? 'Locked until ' + startText : 'Tap to play this stream'}</span>
         </span>
-        <span class="mws-server-play">${matchNotStarted ? '🔒' : '▶'}</span>
+        <span class="mws-server-play">${matchNotStarted ? MWS_LOCK_SVG : MWS_PLAY_SVG}</span>
       </button>`;
     }).join('');
   }
