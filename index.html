@@ -1057,14 +1057,14 @@ header.scrolled {
    tier, tournament tiles below — exactly as before; the dropdowns are
    hidden. Mobile/tablet (≤900px): the reverse, dropdowns only, since the
    bars don't fit a phone width. */
-/* Both tiers are dropdown-only on EVERY screen size — the pill/tab strips
-   stay in the DOM (other code queries them) but are never displayed. */
+/* Sport tier (top): dropdown on mobile, a flat magenta nav bar on PC.
+   Tournament tier (below): dropdown on EVERY screen size — unchanged. */
 .smo-sport-tabs, .smo-game-tabs { display: none !important; }
 .smo-sel-wrap { display: flex !important; }
 @media(min-width:901px) {
-  /* Side-by-side on desktop: sport picker and tournament picker in one row. */
-  .smo-sport-toolbar, .smo-toolbar { flex-direction: row; align-items: flex-end; gap: 14px; }
-  .smo-sel-wrap { max-width: 420px; }
+  .smo-sport-toolbar .smo-sport-tabs { display: flex !important; }
+  .smo-sport-toolbar .smo-sel-wrap { display: none !important; }
+  .smo-toolbar { max-width: 560px; }
 }
 @media(max-width:900px) {
   .smo-toolbar { padding: 8px 14px 0; }
@@ -1082,38 +1082,38 @@ header.scrolled {
   display: flex; flex-direction: column; gap: 10px;
   max-width: 1280px; margin: 0 auto; padding: 10px 20px 0;
 }
-/* Mini horizontal nav-bar strip — single row, scrolls sideways on overflow —
-   deliberately NOT the 4-col grid the game toolbar below uses, so the two
-   tiers read as visually distinct (parent "nav" vs. child "list"). */
+/* PC nav bar: a flat strip of solid squared-off magenta tabs — no glass,
+   no blur, no pill radius. Single row, scrolls sideways past ~5-6 sports. */
 .smo-sport-tabs {
   display: flex;
   flex-wrap: nowrap;
   overflow-x: auto;
   scrollbar-width: none; -ms-overflow-style: none;
-  gap: 8px;
+  gap: 2px;
   width: 100%;
-  padding-bottom: 2px;
+  background: rgba(240,79,140,0.10);
+  border: 1px solid rgba(240,79,140,0.28);
 }
 .smo-sport-tabs::-webkit-scrollbar { display: none; }
 .smo-sport-tab {
   display: inline-flex; align-items: center; justify-content: center;
   flex: 0 0 auto;
-  background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-  border: 1px solid rgba(63,198,255,0.22);
-  color: var(--text-muted);
-  font-family: var(--font-display); font-weight: 800; font-size: 11px; letter-spacing: 0.8px; text-transform: uppercase;
-  padding: 8px 16px; border-radius: 999px; cursor: pointer;
-  transition: all 0.18s var(--ease);
+  background: transparent;
+  border: none;
+  border-right: 1px solid rgba(240,79,140,0.20);
+  color: #fff;
+  font-family: var(--font-display); font-weight: 700; font-size: 11.5px; letter-spacing: 0.8px; text-transform: uppercase;
+  padding: 12px 20px; border-radius: 0; cursor: pointer;
+  transition: background 0.15s var(--ease), color 0.15s var(--ease);
   white-space: nowrap;
 }
-.smo-sport-tab:hover { color: var(--white); border-color: rgba(63,198,255,0.45); }
+.smo-sport-tabs .smo-sport-tab:last-child { border-right: none; }
+.smo-sport-tab:hover { background: rgba(240,79,140,0.22); color: #fff; }
 .smo-sport-tab.active {
-  color: #06222E; background: linear-gradient(135deg,#3FC6FF,#4FC3F7); border-color: transparent;
-  box-shadow: 0 4px 14px rgba(63,198,255,0.35);
+  color: #fff; background: #F04F8C;
 }
-.smo-sport-tab-all.active {
-  color: #FFFFFF; background: linear-gradient(135deg,#8a8f98,#5c6068); border-color: transparent;
-}
+.smo-sport-tab-all { border-right: 1px solid rgba(240,79,140,0.28); }
+.smo-sport-tab-all.active { background: #F04F8C; color: #fff; }
 @media(max-width:900px) {
   .smo-sport-toolbar { padding: 10px 14px 0; }
 }
@@ -4718,13 +4718,42 @@ function fcxAugmentSheetCards(cards){
 // first) and within each group — shared by the Matches-tab sections
 // below and by renderMatchCards() when it folds "FanCode" into the top
 // sport selector.
-// Case/space-insensitive lookup of a tournament name against a list of
-// game/event names already on the page. Returns the EXISTING spelling so
-// FanCode and the sheet always land on one shared label.
+// Loose-match normaliser for tournament/event names: lowercase, punctuation
+// stripped, whitespace collapsed. The sheet and FanCode's own feed rarely
+// spell a series identically — "India tour of Afghanistan", "India Tour Of
+// Afghanistan 2026", "IND tour of AFG, T20I Series" — so an exact string
+// match misses most real duplicates. Normalising first catches the
+// punctuation/case cases; the caller then also checks containment.
+function smoNormGameName(name){
+  return (name || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')   // strip commas, dashes, etc.
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+window.smoNormGameName = smoNormGameName;
+
+// Matches a tournament name against a list of game/event names already on
+// the page — normalised equality first, then containment either way (e.g.
+// "india tour of afghanistan" inside "india tour of afghanistan 2026 2nd
+// t20i"), so the sheet's game column and FanCode's own tournament label
+// land on ONE shared section instead of two. Ignores an empty/near-empty
+// normalised name (guards against everything matching everything on a
+// stray short label). Returns the EXISTING spelling so both sources render
+// under one label.
 function smoMatchExistingGame(list, name){
-  const n = (name || '').trim().toLowerCase();
-  if (!n) return '';
-  return (list || []).find(g => (g || '').trim().toLowerCase() === n) || '';
+  const n = smoNormGameName(name);
+  if (n.length < 3) return '';
+  let exact = '';
+  let contains = '';
+  (list || []).some(g => {
+    const gn = smoNormGameName(g);
+    if (!gn) return false;
+    if (gn === n) { exact = g; return true; }
+    if (!contains && gn.length >= 3 && (gn.includes(n) || n.includes(gn))) contains = g;
+    return false;
+  });
+  return exact || contains;
 }
 window.smoMatchExistingGame = smoMatchExistingGame;
 
@@ -4773,8 +4802,13 @@ window.fcxAppendHomeSections = function(){
     // If the sheet already rendered a section for this exact tournament,
     // these FanCode cards belong INSIDE it — one tournament, one section,
     // one dropdown entry — rather than in a duplicate section below it.
-    const existingSec = Array.from(el.querySelectorAll(':scope > .smo-section'))
-      .find(sec => (sec.dataset.game || '').trim().toLowerCase() === (tournamentRaw || '').trim().toLowerCase());
+    const existingGameName = smoMatchExistingGame(
+      Array.from(el.querySelectorAll(':scope > .smo-section')).map(sec => sec.dataset.game || ''),
+      tournamentRaw
+    );
+    const existingSec = existingGameName
+      ? Array.from(el.querySelectorAll(':scope > .smo-section')).find(sec => sec.dataset.game === existingGameName)
+      : null;
     const tournament = existingSec ? (existingSec.dataset.game || tournamentRaw) : tournamentRaw;
     let cardsHtml = '';
     cards.forEach(m => {
