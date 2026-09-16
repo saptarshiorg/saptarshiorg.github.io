@@ -932,6 +932,24 @@ header.scrolled {
   font-family: var(--font-display); font-weight: 800; font-size: 11px;
   letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted);
 }
+/* Home screen "no matches today" state: adds the date to the message and
+   a button through to the full Matches page, instead of just the bare
+   dashed-box text used elsewhere (filter empty state, sport-pick prompt). */
+.smo-empty-box-fixtures { padding: 26px 18px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.smo-empty-box-fixtures .smo-empty-title { letter-spacing: 1.5px; }
+.smo-empty-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--grad-gold); color: #FFFFFF; border: none;
+  font-family: var(--font-display); font-weight: 800; font-size: 11px; letter-spacing: 0.8px; text-transform: uppercase;
+  padding: 10px 18px; border-radius: 8px; text-decoration: none;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.55) inset,
+    0 -2px 0 rgba(122,10,62,0.4) inset,
+    0 4px 0 -1px rgba(122,10,62,0.5),
+    0 6px 18px rgba(240,79,140,0.30);
+  transition: transform 0.2s var(--spring), box-shadow 0.2s var(--ease);
+}
+.smo-empty-btn:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 -2px 0 rgba(122,10,62,0.4) inset, 0 6px 0 -1px rgba(122,10,62,0.5), 0 10px 26px rgba(240,79,140,0.45); }
 
 /* ── Match cards: 3-col grid on desktop ── */
 @media(min-width:901px) {
@@ -963,8 +981,11 @@ header.scrolled {
 /* 4-per-row grid on every screen size — categories wrap to a new line
    once there are more than 4 (ALL + LIVE NOW always occupy the first
    two slots of row 1, see smoBuildToolbar). */
+/* Game/category and sport selectors are dropdown-only now, on PC and
+   mobile alike — the pill/tab strips are kept in the DOM (built by JS,
+   used for filtering logic) but never shown. */
+.smo-game-tabs, .smo-sport-tabs { display: none !important; }
 .smo-game-tabs {
-  display: grid;
   grid-template-columns: repeat(4, minmax(0,1fr));
   gap: 8px;
   width: 100%;
@@ -1057,6 +1078,18 @@ header.scrolled {
 .smo-sport-tab-all.active {
   color: #FFFFFF; background: linear-gradient(135deg,#8a8f98,#5c6068); border-color: transparent;
 }
+.smo-sport-select {
+  background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+  border: 1px solid rgba(63,198,255,0.30);
+  color: var(--white);
+  font-family: var(--font-display); font-weight: 800; font-size: 11px; letter-spacing: 0.8px; text-transform: uppercase;
+  padding: 9px 32px 9px 14px; border-radius: 8px; cursor: pointer;
+  -webkit-appearance: none; -moz-appearance: none; appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M0 0L5 6L10 0Z' fill='%233FC6FF'/></svg>");
+  background-repeat: no-repeat; background-position: right 12px center;
+  width: 100%;
+}
+.smo-sport-select option { background: #071822; color: var(--white); }
 @media(max-width:900px) {
   .smo-sport-toolbar { padding: 10px 14px 0; }
 }
@@ -1919,6 +1952,15 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
 }
 .mws-server-btn-fcx { padding: 14px 18px; border-left-color: #F5C518; min-height: 76px; }
 .mws-server-btn-fcx:hover { border-left-color: #F5C518; }
+.mws-server-btn-offline { cursor: default; opacity: .55; border-left-color: rgba(255,255,255,0.18); }
+.mws-server-btn-offline:hover { background: #131318; border-color: rgba(255,255,255,0.09); border-left-color: rgba(255,255,255,0.18); transform: none; }
+.mws-not-live-banner{
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: rgba(245,197,24,0.10); border: 1px dashed rgba(245,197,24,0.35); border-radius: 8px;
+  padding: 11px 14px; margin-bottom: 6px;
+  font-family: var(--font-display); font-weight: 800; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: #F5C518; text-align: center;
+}
 .mws-server-logo-lg {
   height: 56px; width: auto; max-width: 150px; flex-shrink: 0;
   object-fit: contain; background: transparent; padding: 0; border-radius: 0;
@@ -3485,6 +3527,7 @@ window.sxSwitchTab = sxSwitchTab;
 </div>
 <div class="smo-sport-toolbar" id="smo-sport-toolbar" style="display:none;">
   <div class="smo-sport-tabs" id="smo-sport-tabs"></div>
+  <select class="smo-sport-select" id="smo-sport-select" aria-label="Select sport"></select>
 </div>
 <div class="smo-toolbar" id="smo-toolbar" style="display:none;">
   <div class="smo-game-tabs" id="smo-game-tabs"></div>
@@ -5580,7 +5623,17 @@ function openMatchWatchScreen(servers, info) {
     const FCX_LOGO = 'https://www.fancode.com/skillup-uploads/fc-web-logo/fc_logo_white_bg.svg';
     const isFcxServer = s => (s.text || '').trim().toLowerCase() === 'fancode';
     const sortedServers = (servers || []).slice().sort((a, b) => (isFcxServer(a) ? 0 : 1) - (isFcxServer(b) ? 0 : 1));
-    body.innerHTML = sortedServers.map((s, i) => {
+    // A match that hasn't started yet (or has already finished) has no
+    // working stream on any of its own servers — the screen still opens
+    // (so the visitor sees who's playing and when), but every regular
+    // server is shown greyed-out and un-clickable, labelled "Offline",
+    // with a banner explaining why. FanCode's own tile is unaffected —
+    // it already shows its own live/not-live state independently, since
+    // FanCode's schedule can differ slightly from the sheet's.
+    const notLiveBanner = !isLive
+      ? `<div class="mws-not-live-banner">${isFinished ? '⏹ Match Over — Servers Offline' : '⏰ Match Not Started Yet — Servers Offline'}</div>`
+      : '';
+    body.innerHTML = notLiveBanner + sortedServers.map((s, i) => {
       const isFcx = isFcxServer(s);
       if (isFcx) {
         const fcxReady = !!s.fcxLive;
@@ -5601,6 +5654,17 @@ function openMatchWatchScreen(servers, info) {
       const iconHtml = chLogo
         ? `<img class="mws-server-logo" src="${chLogo}" alt="" onerror="this.outerHTML='<span class=\\'mws-server-num\\'>${i + 1}</span>'">`
         : `<span class="mws-server-num">${i + 1}</span>`;
+      if (!isLive) {
+        return `
+        <div class="mws-server-btn mws-server-btn-offline">
+          ${iconHtml}
+          <span class="mws-server-info">
+            <span class="mws-server-label">${s.text || ('Server ' + (i + 1))}</span>
+            <span class="mws-server-sub">${isFinished ? 'Match over' : 'Offline — match not started yet'}</span>
+          </span>
+          <span class="mws-server-play">⏰</span>
+        </div>`;
+      }
       return `
       <button type="button" class="mws-server-btn" onclick="closeMatchWatchScreen();sxGoToMatchUrl(null,'${escJs(s.url)}','${escJs(label)}')">
         ${iconHtml}
@@ -6008,7 +6072,8 @@ function smoSelectGame(name) {
 function smoBuildSportToolbar(sportNames) {
   const wrap = document.getElementById('smo-sport-toolbar');
   const tabsEl = document.getElementById('smo-sport-tabs');
-  if (!wrap || !tabsEl) return;
+  const selectEl = document.getElementById('smo-sport-select');
+  if (!wrap || !tabsEl || !selectEl) return;
 
   // Fewer than 2 sports (e.g. the sheet has no sport column filled in yet,
   // or every row is the same sport) — nothing meaningful to switch
@@ -6025,6 +6090,16 @@ function smoBuildSportToolbar(sportNames) {
   if (validSelections.indexOf(window._smoActiveSport) === -1) {
     window._smoActiveSport = 'ALL';
   }
+
+  selectEl.innerHTML = '<option value="ALL">All Sports</option>';
+  sportNames.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s;
+    opt.textContent = s;
+    selectEl.appendChild(opt);
+  });
+  selectEl.value = window._smoActiveSport;
+  selectEl.onchange = () => smoSelectSport(selectEl.value);
 
   tabsEl.innerHTML = '';
   const allBtn = document.createElement('button');
@@ -6055,6 +6130,8 @@ function smoSelectSport(name) {
   window._smoActiveSport = name;
   window._smoActiveGame = 'ALL';
   window._smoSportChosen = true; // sport picked — game selector + matches unlock below
+  const selectEl = document.getElementById('smo-sport-select');
+  if (selectEl) selectEl.value = name;
   document.querySelectorAll('.smo-sport-tab').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.sport === name);
   });
@@ -6485,7 +6562,12 @@ function renderFixtures(rows) {
   const grid = document.getElementById('fixtures-grid');
   if (!grid) return;
   if (!fx.length) {
-    grid.innerHTML = `<div class="smo-empty-box">NO MATCHES LISTED NOW</div>`;
+    const todayLabel = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }).toUpperCase();
+    grid.innerHTML = `
+    <div class="smo-empty-box smo-empty-box-fixtures">
+      <div class="smo-empty-title">No Matches Listed for ${todayLabel}</div>
+      <a class="smo-empty-btn" href="#sxTabPanels" onclick="event.preventDefault();openMatches();">Watch Other Upcoming Matches</a>
+    </div>`;
     if (typeof window.fcxAppendFixturesPreview === 'function') window.fcxAppendFixturesPreview();
     return;
   }
@@ -6498,10 +6580,12 @@ function renderFixtures(rows) {
            <div class="fx2-thumb-vs">VS</div>
            <div class="fx2-thumb-team">${img(c.team2_icon_url,c.team2_code||'','')}</div>
          </div>`;
-    const tag = isLive ? 'a' : 'div';
-    const clickAttr = isLive
-      ? ` href="${matchWatchHref(c.btn_url)}" onclick="return sxHandleMatchWatch(event,'${sxServersEnc(c)}','${escJs(c.btn_url)}','${escJs((c.team1_code||'')+' vs '+(c.team2_code||''))}','${sxMatchInfoEnc(c,(c.team1_code||'')+' vs '+(c.team2_code||''))}')"`
-      : ' style="cursor:default;"';
+    // Every card opens the server-selector screen now, whether the match
+    // is live or still upcoming — openMatchWatchScreen itself shows the
+    // servers as offline with a "not started yet" banner when it isn't
+    // live (see below), instead of the card being unclickable.
+    const tag = 'a';
+    const clickAttr = ` href="${matchWatchHref(c.btn_url)}" onclick="return sxHandleMatchWatch(event,'${sxServersEnc(c)}','${escJs(c.btn_url)}','${escJs((c.team1_code||'')+' vs '+(c.team2_code||''))}','${sxMatchInfoEnc(c,(c.team1_code||'')+' vs '+(c.team2_code||''))}')"`;
     return `
     <${tag} class="fx2-card"${clickAttr}>
       <div class="fx2-thumb">
