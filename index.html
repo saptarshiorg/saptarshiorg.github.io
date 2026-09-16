@@ -467,6 +467,7 @@ header.scrolled {
   border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 .header-bg-logo {
+  background-image: url('https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/magenta.png');
   position: absolute; inset: 0;
   background-repeat: no-repeat;
   background-position: center;
@@ -1018,11 +1019,11 @@ header.scrolled {
   border: 1px solid rgba(255,255,255,0.14);
   color: var(--white);
   font-family: var(--font-display); font-weight: 700; font-size: 11px; letter-spacing: 0.6px; text-transform: uppercase;
-  padding: 8px 32px 8px 14px; border-radius: 8px; cursor: pointer;
+  padding: 11px 38px 11px 14px; border-radius: 8px; cursor: pointer;
   -webkit-appearance: none; -moz-appearance: none; appearance: none;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M0 0L5 6L10 0Z' fill='%23FFB347'/></svg>");
-  background-repeat: no-repeat; background-position: right 12px center;
   width: 100%;
+  /* keep the selected label readable instead of clipping it mid-word */
+  text-overflow: ellipsis; white-space: nowrap; overflow: hidden;
 }
 .smo-game-select option { background: #1A0A14; color: var(--white); }
 
@@ -1031,19 +1032,40 @@ header.scrolled {
    tournament) are now plain <select> dropdowns with a caret, on every
    screen size. The tab containers stay in the DOM (other code still
    queries them) but are never shown. */
-.smo-game-tabs, .smo-sport-tabs { display: none !important; }
 .smo-sel-wrap { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+/* Caret drawn by the wrapper, not a background image — guaranteed to show
+   on every browser/appearance combo, on phones and desktop alike. */
+.smo-sel-field { position: relative; display: block; width: 100%; }
+.smo-sel-field::after {
+  content: '▼';
+  position: absolute; right: 13px; top: 50%; transform: translateY(-50%);
+  font-size: 9px; line-height: 1; color: #FFB347;
+  pointer-events: none;
+}
+.smo-sport-select + .smo-sel-caret, .smo-sel-field.is-sport::after { color: #3FC6FF; }
 .smo-sel-label {
   font-family: var(--font-display); font-weight: 800; font-size: 9px;
   letter-spacing: 1.6px; text-transform: uppercase; color: var(--text-muted);
 }
 /* Sport tier keeps its Diamond Blue accent so it still reads as the
    parent selector above the gold tournament one. */
-.smo-sport-select {
-  border-color: rgba(63,198,255,0.30);
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M0 0L5 6L10 0Z' fill='%233FC6FF'/></svg>");
-}
+.smo-sport-select { border-color: rgba(63,198,255,0.30); }
 .smo-sport-select:focus, .smo-game-select:focus { outline: none; border-color: rgba(255,255,255,0.35); }
+
+/* ── Where each control shows ──────────────────────────────────────
+   Desktop (≥901px): horizontal selection bars — sports pills on the top
+   tier, tournament tiles below — exactly as before; the dropdowns are
+   hidden. Mobile/tablet (≤900px): the reverse, dropdowns only, since the
+   bars don't fit a phone width. */
+@media(min-width:901px) {
+  .smo-sel-wrap { display: none !important; }
+  .smo-sport-tabs { display: flex !important; }
+  .smo-game-tabs { display: grid !important; }
+}
+@media(max-width:900px) {
+  .smo-sport-tabs, .smo-game-tabs { display: none !important; }
+  .smo-sel-wrap { display: flex !important; }
+}
 @media(max-width:900px) {
   .smo-toolbar { padding: 8px 14px 0; }
 }
@@ -1964,6 +1986,46 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
 /* Shown at the top of the server list when the match hasn't kicked off
    yet — deliberately red so it reads as a "not yet" warning rather than
    another playable option. */
+/* Before kickoff EVERY server in the list (not just FanCode) is locked:
+   greyed out, non-playable, and it shakes with a red flash when tapped. */
+.mws-server-btn.mws-server-locked {
+  filter: grayscale(1);
+  opacity: 0.42;
+  cursor: not-allowed;
+  border-color: rgba(255,255,255,0.06) !important;
+  box-shadow: none !important;
+}
+.mws-server-btn.mws-server-locked:hover { transform: none !important; }
+.mws-server-btn.mws-server-locked .mws-server-play { color: #ff5b5b; }
+.mws-server-btn.mws-shake {
+  animation: mwsShake 0.42s cubic-bezier(.36,.07,.19,.97) both;
+  border-color: rgba(255,59,59,0.75) !important;
+  box-shadow: 0 0 0 1px rgba(255,59,59,0.45), 0 0 22px rgba(255,59,59,0.35) !important;
+}
+@keyframes mwsShake {
+  10%,90% { transform: translateX(-2px); }
+  20%,80% { transform: translateX(4px); }
+  30%,50%,70% { transform: translateX(-7px); }
+  40%,60% { transform: translateX(7px); }
+}
+/* Red toast that pops up over the watch screen on a locked tap. */
+.mws-lock-toast {
+  position: fixed; left: 50%; bottom: 40px; transform: translateX(-50%) translateY(16px);
+  z-index: 2147483000;
+  display: flex; align-items: center; gap: 9px;
+  max-width: min(440px, calc(100vw - 32px));
+  background: linear-gradient(135deg,#c2172c,#8d0f1f);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 10px; padding: 13px 18px;
+  font-family: var(--font-display); font-weight: 800; font-size: 12px;
+  letter-spacing: 0.5px; color: #fff; text-transform: uppercase;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6), 0 0 26px rgba(255,59,59,0.35);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.22s var(--ease), transform 0.22s var(--spring);
+}
+.mws-lock-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+@media(max-width:600px){ .mws-lock-toast { bottom: 24px; font-size: 11px; padding: 11px 14px; } }
+
 .mws-notlive {
   display: block; width: 100%;
   background: rgba(255,59,59,0.12);
@@ -1975,6 +2037,27 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
   margin-bottom: 4px;
 }
 .mws-server-play { font-size: 13px; color: rgba(240,79,140,0.6); flex-shrink: 0; }
+
+/* Full-screen banner fallback (no team logos available) — the banner
+   image fills the whole left panel edge-to-edge, with a bottom scrim so
+   the badge/details/date/timer stack stays readable sitting over it. */
+.mws-left.mws-left-banner {
+  padding: 0; justify-content: flex-end; align-items: stretch;
+  position: relative; overflow: hidden;
+}
+.mws-fallback-banner {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; z-index: 0;
+}
+.mws-fallback-scrim {
+  position: absolute; inset: 0; z-index: 1;
+  background: linear-gradient(180deg, rgba(10,10,13,0) 0%, rgba(10,10,13,0.35) 45%, rgba(10,10,13,0.94) 100%);
+}
+.mws-fallback-content {
+  position: relative; z-index: 2;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  text-align: center; padding: 32px 28px;
+}
 
 /* ── Ribbon accent + motion ──────────────────────────────────────────
    A slow-flowing gradient "ribbon" line runs along the top edge of
@@ -2110,7 +2193,7 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
   .match-overlay-section { display: block !important; padding: 6px 0 0; }
   .slider-match-overlay { flex-direction: column; overflow-x: visible; padding: 0 14px; gap: 8px; }
   .smo-card { min-width: 0 !important; max-width: 100% !important; flex-shrink: unset; width: 100%; }
-  .smo-section { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .smo-section { display: grid !important; grid-template-columns: 1fr !important; gap: 8px; }
   .smo-section-label { display: flex !important; grid-column: 1 / -1; }
   .smo-name { font-size: 16px; }
   .smo-logo { width: 36px; height: 36px; }
@@ -2141,7 +2224,7 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
   .match-overlay-section { display: block !important; padding: 6px 0 4px; }
   .slider-match-overlay { padding: 0 12px; gap: 8px; }
   .smo-card { width: 100% !important; min-width: 0 !important; padding: 10px 10px 9px; }
-  .smo-section { display: grid !important; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .smo-section { display: grid !important; grid-template-columns: 1fr !important; gap: 8px; }
   .smo-section-label { display: flex !important; grid-column: 1 / -1; align-items: center; gap: 8px; font-family: var(--font-display); font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--lavender); padding: 2px 0; }
   .smo-section + .smo-section { border-top: 1px solid rgba(255,255,255,0.05); padding-top: 4px; }
   .smo-name { font-size: 14px; }
@@ -2698,7 +2781,7 @@ body::before{ display:none !important; }
 <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
 <div class="side-drawer" id="sideDrawer">
   <div class="drawer-header">
-    <img class="drawer-logo" id="drawer-logo" src="" alt="Logo" style="display:none">
+    <img class="drawer-logo" id="drawer-logo" src="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/magenta.png" alt="EV SPORTS">
     <button class="drawer-close" onclick="closeDrawer()">✕</button>
   </div>
   <nav class="drawer-nav" id="drawer-nav"></nav>
@@ -2714,7 +2797,7 @@ body::before{ display:none !important; }
   <div class="header-bg-logo" id="header-bg-logo" aria-hidden="true"></div>
   <div class="header-inner">
     <a class="logo-wrap" href="#">
-      <img class="logo-img" id="nav-logo-img" src="" alt="Logo" style="display:none">
+      <img class="logo-img" id="nav-logo-img" src="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/magenta.png" alt="EV SPORTS">
     </a>
     <nav class="nav-links-desktop" id="nav-desktop"></nav>
     <!-- Quick nav pills mirroring mobile tab bar -->
@@ -3490,14 +3573,18 @@ window.sxSwitchTab = sxSwitchTab;
   <div class="smo-sport-tabs" id="smo-sport-tabs"></div>
   <div class="smo-sel-wrap">
     <label class="smo-sel-label" for="smo-sport-select">Select Sports</label>
-    <select class="smo-game-select smo-sport-select" id="smo-sport-select" aria-label="Select sports"></select>
+    <span class="smo-sel-field is-sport">
+      <select class="smo-game-select smo-sport-select" id="smo-sport-select" aria-label="Select sports"></select>
+    </span>
   </div>
 </div>
 <div class="smo-toolbar" id="smo-toolbar" style="display:none;">
   <div class="smo-game-tabs" id="smo-game-tabs"></div>
   <div class="smo-sel-wrap">
     <label class="smo-sel-label" for="smo-game-select">Select Tournament</label>
-    <select class="smo-game-select" id="smo-game-select" aria-label="Select tournament"></select>
+    <span class="smo-sel-field">
+      <select class="smo-game-select" id="smo-game-select" aria-label="Select tournament"></select>
+    </span>
   </div>
 </div>
 <div class="smo-empty-box" id="smo-sport-prompt" style="display:none;margin:14px 20px 0;">SELECT A SPORT ABOVE TO VIEW MATCHES</div>
@@ -4511,12 +4598,15 @@ function fcxOpenWatchById(id){
   }];
   openMatchWatchScreen(servers, {
     name: m.title || 'Live Stream',
-    team1_code: '', team1_full_name: '', team1_icon_url: m.image || '',
+    // FanCode events are single-image, not two-team fixtures — no team
+    // icon fields at all, so the banner fallback above always kicks in.
+    team1_code: '', team1_full_name: '', team1_icon_url: '',
     team2_code: '', team2_full_name: '', team2_icon_url: '',
     date_label: fcxFmtMatchTime(m),
-    details: m.tournament || '',
+    details: m.tournament || m.category || '',
     countdown: (m.time && !isNaN(m.time.getTime())) ? m.time.toISOString() : '',
-    status: isLive ? 'live' : (m.status === 'COMPLETED' ? 'finished' : 'upcoming')
+    status: isLive ? 'live' : (m.status === 'COMPLETED' ? 'finished' : 'upcoming'),
+    banner: m.image || ''
   });
   return false;
 }
@@ -4617,13 +4707,19 @@ function fcxAugmentSheetCards(cards){
 function fcxTournamentGroups(){
   const all = window._fcxMatchesCache || [];
   if (!all.length) return [];
+  // Keyed by category+tournament together — never by tournament alone —
+  // so two matches that both happen to have no tournament name (or the
+  // same tournament name) but different categories can never end up in
+  // the same group/section. See the block comment above this function.
   const groups = new Map();
   all.forEach(m => {
-    const g = (m.tournament || '').trim() || 'FanCode';
-    if (!groups.has(g)) groups.set(g, []);
-    groups.get(g).push(m);
+    const cat = (m.category || '').trim() || 'Other';
+    const label = (m.tournament || '').trim() || cat;
+    const key = cat + '||' + label;
+    if (!groups.has(key)) groups.set(key, { label, cards: [] });
+    groups.get(key).cards.push(m);
   });
-  const entries = Array.from(groups.entries());
+  const entries = Array.from(groups.values()).map(g => [g.label, g.cards]);
   entries.forEach(([, cards]) => cards.sort((a,b) => fcxStatusRank(a) - fcxStatusRank(b)));
   entries.sort((a,b) => {
     const aLive = a[1].some(m => m.status === 'LIVE') ? 0 : 1;
@@ -4880,7 +4976,7 @@ window.fcxAppendHeroSlides = function(){
     <div class="footer-top" id="footer-top">
       <div class="footer-brand">
         <div class="footer-brand-row">
-          <img id="footer-logo" src="" alt="Logo">
+          <img id="footer-logo" src="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/magenta.png" alt="EV SPORTS">
           <span class="footer-wordmark">EV SPORTS</span>
         </div>
         <p id="footer-tagline"></p>
@@ -5146,22 +5242,17 @@ function renderSettings(rows) {
   if (s.social_bar_text) { setText('social-text', s.social_bar_text); }
   if (s.footer_tagline)  { setText('footer-tagline', s.footer_tagline); }
   if (s.footer_copy)     { setText('footer-copy', s.footer_copy); }
-  if (s.footer_icon_url) { setAttr('footer-logo', 'src', s.footer_icon_url); }
+  /* footer logo is a fixed site asset now — no sheet override */
   if (s.qr_title)        { setText('qr-title', s.qr_title); }
   if (s.qr_sub)          { setText('qr-sub', s.qr_sub); }
   if (s.qr_image_url)    { setAttr('qr-img', 'src', s.qr_image_url); }
   if (s.qr_btn_text)     { const b = document.getElementById('qr-btn'); if (b) { b.textContent = s.qr_btn_text; b.href = s.qr_btn_url||'#'; } }
   if (s.watch_popup_footer){ setText('watch-modal-footer', s.watch_popup_footer); }
 
-  // logo
-  if (s.icon_url) {
-    const navLogo = document.getElementById('nav-logo-img');
-    if (navLogo) { navLogo.src = s.icon_url; navLogo.alt = s.logo_alt||'Logo'; navLogo.style.display = ''; }
-    const drawerLogo = document.getElementById('drawer-logo');
-    if (drawerLogo) { drawerLogo.src = s.icon_url; drawerLogo.style.display = ''; }
-    const headerBgLogo = document.getElementById('header-bg-logo');
-    if (headerBgLogo) { headerBgLogo.style.backgroundImage = `url('${s.icon_url}')`; }
-  }
+  // Logo — nav bar, drawer, header watermark and footer all use the same
+  // fixed asset as the loading screen. Deliberately NOT sheet-driven: the
+  // icon_url / footer_icon_url columns are ignored so the brand mark can
+  // never go missing or change from a CMS edit.
 }
 
 function renderTicker(rows) {
@@ -5500,7 +5591,8 @@ function sxMatchInfoEnc(m, name) {
     team2_code: m.team2_code || '', team2_full_name: m.team2_full_name || '', team2_icon_url: m.team2_icon_url || '',
     date_label: m.date_label || '', details: m.details || '',
     countdown: m.countdown_to_iso_datetime || m.countdown_to || '',
-    status: matchStatusText(m).toLowerCase()
+    status: matchStatusText(m).toLowerCase(),
+    banner: m.banner_image_url || m._fcxBanner || ''
   };
   return encodeURIComponent(JSON.stringify(info));
 }
@@ -5581,27 +5673,48 @@ function openMatchWatchScreen(servers, info) {
   const timerId = 'mws-timer-' + uid;
   const timerWrapId = 'mws-timerwrap-' + uid;
 
+  // No team logos to show (common for FanCode matches, which are single-
+  // image events, not two-team fixtures) — fall back to a full-screen
+  // banner image instead of the empty team-vs-team layout, with the
+  // badge/details/date/timer block kept exactly as-is underneath it.
+  const noTeamLogos = !info.team1_icon_url && !info.team2_icon_url;
+  const bannerSrc = info.banner || '';
   const leftEl = document.getElementById('mwsLeft');
   if (leftEl) {
-    leftEl.innerHTML = `
+    const infoBlock = `
       <div class="mws-badge-row">${badgeHtml}</div>
       ${info.details ? `<div class="mws-details">${info.details}</div>` : ''}
       ${info.date_label ? `<div class="mws-date">${info.date_label}</div>` : ''}
-      <div class="mws-teams">
-        <div class="mws-team">
-          ${img(info.team1_icon_url, '', 'mws-team-logo', '')}
-          <div class="mws-team-code">${info.team1_code || ''}</div>
-          <div class="mws-team-full">${info.team1_full_name || ''}</div>
-        </div>
-        <div class="mws-vs">VS</div>
-        <div class="mws-team">
-          ${img(info.team2_icon_url, '', 'mws-team-logo', '')}
-          <div class="mws-team-code">${info.team2_code || ''}</div>
-          <div class="mws-team-full">${info.team2_full_name || ''}</div>
-        </div>
-      </div>
       ${showTimer ? `<div id="${timerWrapId}"><div class="mws-timer-label">Starts in</div><div class="mws-timer" id="${timerId}">--:--:--</div></div>` : ''}
     `;
+    if (noTeamLogos && bannerSrc) {
+      leftEl.classList.add('mws-left-banner');
+      leftEl.innerHTML = `
+        <img class="mws-fallback-banner" src="${bannerSrc}" alt="${label}" onerror="this.style.display='none'">
+        <div class="mws-fallback-scrim"></div>
+        <div class="mws-fallback-content">
+          ${infoBlock}
+        </div>
+      `;
+    } else {
+      leftEl.classList.remove('mws-left-banner');
+      leftEl.innerHTML = `
+        ${infoBlock}
+        <div class="mws-teams">
+          <div class="mws-team">
+            ${img(info.team1_icon_url, '', 'mws-team-logo', '')}
+            <div class="mws-team-code">${info.team1_code || ''}</div>
+            <div class="mws-team-full">${info.team1_full_name || ''}</div>
+          </div>
+          <div class="mws-vs">VS</div>
+          <div class="mws-team">
+            ${img(info.team2_icon_url, '', 'mws-team-logo', '')}
+            <div class="mws-team-code">${info.team2_code || ''}</div>
+            <div class="mws-team-full">${info.team2_full_name || ''}</div>
+          </div>
+        </div>
+      `;
+    }
   }
   if (showTimer) {
     setTimeout(() => {
@@ -5610,7 +5723,8 @@ function openMatchWatchScreen(servers, info) {
   }
 
   const bgEl = document.getElementById('mwsBg');
-  if (bgEl) bgEl.style.backgroundImage = info.team1_icon_url ? `url('${info.team1_icon_url}')` : '';
+  const bgSrc = info.team1_icon_url || bannerSrc || '';
+  if (bgEl) bgEl.style.backgroundImage = bgSrc ? `url('${bgSrc}')` : '';
 
   const titleEl = document.getElementById('mwsRightTitle');
   if (titleEl) titleEl.textContent = label;
@@ -5625,38 +5739,47 @@ function openMatchWatchScreen(servers, info) {
     const sortedServers = (servers || []).slice().sort((a, b) => (isFcxServer(a) ? 0 : 1) - (isFcxServer(b) ? 0 : 1));
     // Match hasn't started yet — the server list still opens, topped with a
     // red notice telling the visitor exactly when it goes live.
-    const notLiveNotice = (!isLive && !isFinished)
-      ? `<div class="mws-notlive">⏰ Match will be live at ${sxFmtMatchStartTime(info)}</div>`
+    // Kickoff gate — applies to the WHOLE list, FanCode and sheet servers
+    // alike. Until the match actually starts, nothing here is playable.
+    const matchNotStarted = !isLive && !isFinished;
+    const startText = sxFmtMatchStartTime(info);
+    window._mwsLockMsg = 'Match will be live at ' + startText;
+    const notLiveNotice = matchNotStarted
+      ? `<div class="mws-notlive">⏰ Match will be live at ${startText}</div>`
       : '';
     body.innerHTML = notLiveNotice + sortedServers.map((s, i) => {
       const isFcx = isFcxServer(s);
       if (isFcx) {
-        const fcxReady = !!s.fcxLive;
+        const fcxReady = !!s.fcxLive && !matchNotStarted;
         const priorityBadge = `<span style="display:inline-block;background:#F5C518;color:#111;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;margin-left:8px;vertical-align:middle;">High Priority</span>`;
-        const tag = fcxReady ? 'button' : 'div';
-        const clickAttr = fcxReady ? ` type="button" onclick="closeMatchWatchScreen();sxGoToMatchUrl(null,'${escJs(s.url)}','${escJs(label)}')"` : '';
+        const clickAttr = fcxReady
+          ? ` type="button" onclick="closeMatchWatchScreen();sxGoToMatchUrl(null,'${escJs(s.url)}','${escJs(label)}')"`
+          : ` type="button" onclick="mwsLockedServerTap(this)"`;
         return `
-        <${tag} class="mws-server-btn mws-server-btn-fcx"${clickAttr}${fcxReady ? '' : ' style="cursor:default;opacity:.85;"'}>
+        <button class="mws-server-btn mws-server-btn-fcx${fcxReady ? '' : ' mws-server-locked'}"${clickAttr}>
           <img class="mws-server-logo-lg" src="${FCX_LOGO}" alt="FanCode" onerror="this.style.display='none'">
           <span class="mws-server-info">
             <span class="mws-server-label">${s.text || 'FanCode'}${priorityBadge}</span>
             <span class="mws-server-sub">${fcxReady ? 'Tap to play this stream' : (s.fcxTime ? 'Starts ' + s.fcxTime : 'Not live yet')}</span>
           </span>
           <span class="mws-server-play">${fcxReady ? '▶' : '⏰'}</span>
-        </${tag}>`;
+        </button>`;
       }
       const chLogo = sxFindLiveTvLogoForLabel(s.text);
       const iconHtml = chLogo
         ? `<img class="mws-server-logo" src="${chLogo}" alt="" onerror="this.outerHTML='<span class=\\'mws-server-num\\'>${i + 1}</span>'">`
         : `<span class="mws-server-num">${i + 1}</span>`;
+      const srvClick = matchNotStarted
+        ? `onclick="mwsLockedServerTap(this)"`
+        : `onclick="closeMatchWatchScreen();sxGoToMatchUrl(null,'${escJs(s.url)}','${escJs(label)}')"`;
       return `
-      <button type="button" class="mws-server-btn" onclick="closeMatchWatchScreen();sxGoToMatchUrl(null,'${escJs(s.url)}','${escJs(label)}')">
+      <button type="button" class="mws-server-btn${matchNotStarted ? ' mws-server-locked' : ''}" ${srvClick}>
         ${iconHtml}
         <span class="mws-server-info">
           <span class="mws-server-label">${s.text || ('Server ' + (i + 1))}</span>
-          <span class="mws-server-sub">Tap to play this stream</span>
+          <span class="mws-server-sub">${matchNotStarted ? 'Locked until ' + startText : 'Tap to play this stream'}</span>
         </span>
-        <span class="mws-server-play">▶</span>
+        <span class="mws-server-play">${matchNotStarted ? '🔒' : '▶'}</span>
       </button>`;
     }).join('');
   }
@@ -5664,6 +5787,40 @@ function openMatchWatchScreen(servers, info) {
   const overlay = document.getElementById('mwsOverlay');
   if (overlay) overlay.classList.add('open');
 }
+// Tapping any locked (pre-kickoff) server: shake the row red, buzz the
+// device where that's supported, and pop the red "not live yet" toast.
+// Nothing navigates — the stream genuinely isn't up yet.
+let _mwsToastTimer = null;
+function mwsShowLockToast(msg) {
+  let el = document.getElementById('mwsLockToast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'mwsLockToast';
+    el.className = 'mws-lock-toast';
+    document.body.appendChild(el);
+  }
+  el.innerHTML = `<span>⏰</span><span>${msg}</span>`;
+  // restart the transition cleanly if it's already showing
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+  clearTimeout(_mwsToastTimer);
+  _mwsToastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+}
+function mwsLockedServerTap(btn) {
+  const msg = window._mwsLockMsg || 'This match has not started yet';
+  if (btn) {
+    btn.classList.remove('mws-shake');
+    void btn.offsetWidth;
+    btn.classList.add('mws-shake');
+    setTimeout(() => btn.classList.remove('mws-shake'), 500);
+  }
+  try { if (navigator.vibrate) navigator.vibrate([35, 45, 35]); } catch (e) {}
+  mwsShowLockToast(msg);
+  return false;
+}
+window.mwsLockedServerTap = mwsLockedServerTap;
+
 function closeMatchWatchScreen() {
   const overlay = document.getElementById('mwsOverlay');
   if (overlay) overlay.classList.remove('open');
