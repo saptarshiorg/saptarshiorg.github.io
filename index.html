@@ -1057,14 +1057,14 @@ header.scrolled {
    tier, tournament tiles below — exactly as before; the dropdowns are
    hidden. Mobile/tablet (≤900px): the reverse, dropdowns only, since the
    bars don't fit a phone width. */
+/* Both tiers are dropdown-only on EVERY screen size — the pill/tab strips
+   stay in the DOM (other code queries them) but are never displayed. */
+.smo-sport-tabs, .smo-game-tabs { display: none !important; }
+.smo-sel-wrap { display: flex !important; }
 @media(min-width:901px) {
-  .smo-sel-wrap { display: none !important; }
-  .smo-sport-tabs { display: flex !important; }
-  .smo-game-tabs { display: grid !important; }
-}
-@media(max-width:900px) {
-  .smo-sport-tabs, .smo-game-tabs { display: none !important; }
-  .smo-sel-wrap { display: flex !important; }
+  /* Side-by-side on desktop: sport picker and tournament picker in one row. */
+  .smo-sport-toolbar, .smo-toolbar { flex-direction: row; align-items: flex-end; gap: 14px; }
+  .smo-sel-wrap { max-width: 420px; }
 }
 @media(max-width:900px) {
   .smo-toolbar { padding: 8px 14px 0; }
@@ -4718,6 +4718,16 @@ function fcxAugmentSheetCards(cards){
 // first) and within each group — shared by the Matches-tab sections
 // below and by renderMatchCards() when it folds "FanCode" into the top
 // sport selector.
+// Case/space-insensitive lookup of a tournament name against a list of
+// game/event names already on the page. Returns the EXISTING spelling so
+// FanCode and the sheet always land on one shared label.
+function smoMatchExistingGame(list, name){
+  const n = (name || '').trim().toLowerCase();
+  if (!n) return '';
+  return (list || []).find(g => (g || '').trim().toLowerCase() === n) || '';
+}
+window.smoMatchExistingGame = smoMatchExistingGame;
+
 function fcxTournamentGroups(){
   const all = window._fcxMatchesCache || [];
   if (!all.length) return [];
@@ -4754,13 +4764,19 @@ window.fcxAppendHomeSections = function(){
   const el = document.getElementById('match-overlay');
   if (!el) return;
   el.querySelectorAll('.fcx-smo-section').forEach(s => s.remove());
+  el.querySelectorAll('.fcx-smo-card').forEach(c => c.remove());
   const entries = fcxTournamentGroups();
   if (!entries.length) return;
 
   const timers = [];
-  entries.forEach(([tournament, cards]) => {
-    let html = `<div class="smo-section fcx-smo-section">`;
-    html += `<div class="smo-section-label">${tournament}</div>`;
+  entries.forEach(([tournamentRaw, cards]) => {
+    // If the sheet already rendered a section for this exact tournament,
+    // these FanCode cards belong INSIDE it — one tournament, one section,
+    // one dropdown entry — rather than in a duplicate section below it.
+    const existingSec = Array.from(el.querySelectorAll(':scope > .smo-section'))
+      .find(sec => (sec.dataset.game || '').trim().toLowerCase() === (tournamentRaw || '').trim().toLowerCase());
+    const tournament = existingSec ? (existingSec.dataset.game || tournamentRaw) : tournamentRaw;
+    let cardsHtml = '';
     cards.forEach(m => {
       const isLive = m.status === 'LIVE';
       const isFinished = m.status === 'COMPLETED';
@@ -4779,8 +4795,8 @@ window.fcxAppendHomeSections = function(){
       // reserves the exact same vertical space as the sheet-driven cards,
       // whether or not this particular match has a countdown to show.
       const timerBlock = `<div class="smo-timer" id="${timerWrapId}" style="visibility:${countdown ? 'visible' : 'hidden'}"><div class="timer-label">STARTS IN</div><div class="timer-display" id="${timerId}">--:--:--</div></div>`;
-      html += `
-      <div class="smo-card fx2-card" data-live="${isLive?'1':'0'}">
+      cardsHtml += `
+      <div class="smo-card fx2-card${existingSec ? ' fcx-smo-card' : ''}" data-live="${isLive?'1':'0'}">
         <div class="fx2-thumb">
           <img src="${m.image}" alt="${escJs(m.title)}" class="fx2-thumb-img" onerror="this.style.display='none'">
           ${badge}
@@ -4800,21 +4816,29 @@ window.fcxAppendHomeSections = function(){
       </div>`;
       if (countdown) timers.push({ timerDisplayId: timerId, timerWrapId, badgeId, liveBadgeHtml, target: countdown });
     });
-    html += '</div>';
-    el.insertAdjacentHTML('beforeend', html);
-    // Tag via the DOM property (not an HTML attribute string) — same
-    // convention renderMatchCards uses for its own sections — so a
-    // tournament name with a quote in it can't break the markup, and the
-    // sport/game toolbars (which read these two properties) can filter it.
-    const secs = el.querySelectorAll('.fcx-smo-section');
-    const sec = secs[secs.length - 1];
-    if (sec) { sec.dataset.game = tournament; sec.dataset.sport = fcxResolveSport(fcxGroupCategory(cards)); }
+    if (existingSec) {
+      // Merge: drop the cards straight into the sheet's own section.
+      existingSec.insertAdjacentHTML('beforeend', cardsHtml);
+    } else {
+      el.insertAdjacentHTML('beforeend',
+        `<div class="smo-section fcx-smo-section"><div class="smo-section-label">${tournament}</div>${cardsHtml}</div>`);
+      // Tag via the DOM property (not an HTML attribute string) — same
+      // convention renderMatchCards uses for its own sections — so a
+      // tournament name with a quote in it can't break the markup, and the
+      // sport/game toolbars (which read these two properties) can filter it.
+      const secs = el.querySelectorAll('.fcx-smo-section');
+      const sec = secs[secs.length - 1];
+      if (sec) { sec.dataset.game = tournament; sec.dataset.sport = fcxResolveSport(fcxGroupCategory(cards)); }
+    }
   });
   timers.forEach(({ timerDisplayId, timerWrapId, badgeId, liveBadgeHtml, target }) => {
     setTimeout(() => {
       wireAutoLiveCountdown(target, { timerDisplayId, timerWrapId, badgeId, liveBadgeHtml });
     }, 100);
   });
+  // These sections were added after the last filter pass — re-apply the
+  // current sport/tournament selection so they respect it too.
+  if (typeof smoApplyFilter === 'function') smoApplyFilter();
 };
 
 // Re-appends live + soonest-upcoming FanCode matches into the homescreen
@@ -6175,7 +6199,10 @@ window._smoActiveSport = window._smoActiveSport || 'ALL';
 // the game/event toolbar and match cards stay hidden — replaced by a
 // "select a sport above" prompt — until the visitor taps a sport tab.
 // Persisted on window so it survives the 30s auto re-render.
-window._smoSportChosen = window._smoSportChosen || false;
+// "All Sports" is the default view from the very first render — no click
+// needed before matches show. (Still tracked so smoSelectSport()'s own
+// picks keep working exactly as before.)
+window._smoSportChosen = true;
 
 function smoBuildToolbar(gameNames) {
   const wrap = document.getElementById('smo-toolbar');
@@ -6579,8 +6606,15 @@ function renderMatchCards(rows) {
   fcxGroups.forEach(([tournament, fcxCards]) => {
     const sport = fcxResolveSport(fcxGroupCategory(fcxCards));
     if (!sportOrder.includes(sport)) sportOrder.push(sport);
-    if (!gameOrder.includes(tournament)) gameOrder.push(tournament);
-    window._smoGameToSport[tournament] = sport;
+    // A FanCode tournament whose name already exists as a sheet game/event
+    // (compared case- and space-insensitively) is the SAME tournament —
+    // it reuses that entry instead of adding a second, near-identical one
+    // to the dropdown.
+    const merged = smoMatchExistingGame(gameOrder, tournament);
+    if (!merged) {
+      gameOrder.push(tournament);
+      window._smoGameToSport[tournament] = sport;
+    }
   });
 
   // ── Build/refresh the sport-selector toolbar (parent tier) ──
@@ -6594,7 +6628,7 @@ function renderMatchCards(rows) {
   const promptEl = document.getElementById('smo-sport-prompt');
   const smoToolbarWrap = document.getElementById('smo-toolbar');
   const overlaySection = document.getElementById('match-overlay-section');
-  const needsSportPick = sportOrder.length >= 2 && !window._smoSportChosen;
+  const needsSportPick = false; // matches show immediately — "All Sports" by default
 
   if (needsSportPick) {
     if (smoToolbarWrap) smoToolbarWrap.style.display = 'none';
