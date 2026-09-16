@@ -2062,10 +2062,47 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
   .match-overlay-section { display: block !important; padding: 6px 0 0; }
   .slider-match-overlay { flex-direction: column; overflow-x: visible; padding: 0 14px; gap: 8px; }
   .smo-card { min-width: 0 !important; max-width: 100% !important; flex-shrink: unset; width: 100%; }
-  .smo-section { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .smo-section { display: grid !important; grid-template-columns: 1fr; gap: 8px; }
   .smo-section-label { display: flex !important; grid-column: 1 / -1; }
   .smo-name { font-size: 16px; }
   .smo-logo { width: 36px; height: 36px; }
+
+  /* Matches tab on mobile: one match per row (compact horizontal card —
+     thumb/teams on the left, title + tag + Watch Now on the right) instead
+     of two squeezed poster cards per row. */
+  #match-overlay .smo-card{
+    display: flex !important; flex-direction: row !important; align-items: center;
+    position: relative; padding: 0 !important; border-radius: 10px; overflow: hidden;
+  }
+  #match-overlay .smo-card .fx2-thumb{ width: 84px !important; flex: 0 0 84px !important; aspect-ratio: 1/1 !important; align-self: stretch; height: auto !important; }
+  #match-overlay .smo-card .fx2-thumb-teams{ gap: 5px; }
+  #match-overlay .smo-card .fx2-thumb-team img{ width: 26px; height: 26px; }
+  #match-overlay .smo-card .fx2-thumb-vs{ font-size: 8px; }
+  #match-overlay .smo-card .fx2-badge{ top: 5px; left: 5px; padding: 2px 6px; font-size: 7.5px; }
+  /* Everything to the right of the thumb collapses to one readable line:
+     "TEAM1 vs TEAM2 — Tournament", with the Watch Now control pinned to
+     the far right, vertically centered, instead of stacked underneath. */
+  #match-overlay .smo-card .fx2-body{
+    display: flex !important; flex-direction: row !important; align-items: center; gap: 8px;
+    padding: 8px 78px 8px 10px !important; flex: 1; min-width: 0; overflow: hidden;
+  }
+  #match-overlay .smo-card .fx2-title-row{ display: contents; }
+  #match-overlay .smo-card .fx2-title{
+    font-size: 12.5px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    flex: 0 1 auto; min-width: 0;
+  }
+  #match-overlay .smo-card .fx2-free{ display: none; }
+  #match-overlay .smo-card .smo-details{ display: none; }
+  #match-overlay .smo-card .fx2-meta{ flex: 0 1 auto; min-width: 0; overflow: hidden; flex-wrap: nowrap; }
+  #match-overlay .smo-card .fx2-tag{
+    display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;
+  }
+  #match-overlay .smo-card .fx2-date{ display: none; }
+  #match-overlay .smo-card .smo-timer{ display: none !important; }
+  #match-overlay .smo-card .smo-btn{
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    padding: 6px 11px !important; font-size: 10.5px !important; white-space: nowrap;
+  }
 
   #ch-browser .ch-tabs { flex-direction: row !important; overflow-x: auto; gap: 6px; }
   #ch-browser .ch-tab { width: auto !important; }
@@ -2092,14 +2129,22 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
   .slides-container { display: block !important; }
   .match-overlay-section { display: block !important; padding: 6px 0 4px; }
   .slider-match-overlay { padding: 0 12px; gap: 8px; }
-  .smo-card { width: 100% !important; min-width: 0 !important; padding: 10px 10px 9px; }
-  .smo-section { display: grid !important; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .smo-card { width: 100% !important; min-width: 0 !important; }
+  .smo-section { display: grid !important; grid-template-columns: 1fr; gap: 6px; }
   .smo-section-label { display: flex !important; grid-column: 1 / -1; align-items: center; gap: 8px; font-family: var(--font-display); font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--lavender); padding: 2px 0; }
   .smo-section + .smo-section { border-top: 1px solid rgba(255,255,255,0.05); padding-top: 4px; }
   .smo-name { font-size: 14px; }
   .smo-logo { width: 32px; height: 32px; }
   .smo-btn { font-size: 11px; padding: 7px 12px; }
   .timer-display { font-size: 12px !important; }
+
+  #match-overlay .smo-card{ padding: 0 !important; border-radius: 9px; }
+  #match-overlay .smo-card .fx2-thumb{ width: 72px !important; flex: 0 0 72px !important; }
+  #match-overlay .smo-card .fx2-thumb-team img{ width: 22px; height: 22px; }
+  #match-overlay .smo-card .fx2-body{ padding: 7px 70px 7px 9px !important; }
+  #match-overlay .smo-card .fx2-title{ font-size: 11.5px !important; }
+  #match-overlay .smo-card .fx2-tag{ max-width: 90px; font-size: 9.5px; }
+  #match-overlay .smo-card .smo-btn{ right: 8px; padding: 6px 9px !important; font-size: 9.5px !important; }
 
   .section-inner { padding: 0 12px; }
   .section { padding: 20px 0; }
@@ -4430,6 +4475,17 @@ function fcxFmtMatchTime(m){
   h=h%12; if(h===0)h=12;
   return `${dp}, ${h}:${mm} ${ap}`;
 }
+// True if a FanCode match's kickoff (m.time, a Date) falls on today's
+// calendar date locally — used to keep the home screen's FanCode fixture
+// preview to today's matches only (same rule as the sheet-driven home
+// preview). A match with no parseable time is kept.
+function fcxIsToday(m){
+  if (!m.time || isNaN(m.time.getTime())) return true;
+  const now = new Date();
+  return m.time.getFullYear() === now.getFullYear() &&
+         m.time.getMonth() === now.getMonth() &&
+         m.time.getDate() === now.getDate();
+}
 
 // Shared "Watch Now" control for every FanCode card (Matches tab, home
 // fixtures preview, hero slides) — before kickoff it just shows the date/
@@ -4462,16 +4518,48 @@ function fcxTitleHasTeam(title, code, fullName){
   return false;
 }
 
-// Finds the best FanCode match for a sheet MATCH CARDS row, by checking
-// that BOTH its teams (short code or full name, either field) are
-// mentioned in the FanCode match's title. Prefers a live one, then
-// whatever's not finished, then just the first hit.
+// True if the sheet row's series/tournament/cup name (its "details" column,
+// falling back to "game") and FanCode's own tournament name for a match
+// are the same event — required in addition to the team-name check below
+// so two same-named teams playing in unrelated tournaments never get
+// cross-wired. Matching is tolerant of wording differences ("IPL 2026"
+// vs "Indian Premier League 2026", "T20 World Cup" vs "ICC Men's T20
+// World Cup 2026") by comparing normalized, stripped-down word sets:
+// one name counts as a match for the other if it's a substring either
+// way, or if every "significant" word (4+ letters, so short connector
+// words like "of"/"the"/"cup" don't cause false positives on their own)
+// in the shorter name also appears in the longer one.
+function fcxNormSeriesName(s){
+  return (s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+}
+function fcxSeriesNamesMatch(sheetName, fcxName){
+  const a = fcxNormSeriesName(sheetName);
+  const b = fcxNormSeriesName(fcxName);
+  if (!a || !b) return false; // no series/cup name to compare — treat as no match
+  if (a.includes(b) || b.includes(a)) return true;
+  const words = s => s.split(' ').filter(w => w.length >= 4);
+  const [shortWords, longWords] = words(a).length <= words(b).length
+    ? [words(a), words(b)]
+    : [words(b), words(a)];
+  if (!shortWords.length) return false;
+  return shortWords.every(w => longWords.includes(w));
+}
+
+// Finds the best FanCode match for a sheet MATCH CARDS row. Connects the
+// two ONLY when both its teams (short code or full name, either field)
+// are mentioned in the FanCode match's title AND the row's series/cup
+// name matches FanCode's tournament name for that match — team names
+// alone aren't enough, since the same two team codes can show up in
+// completely different competitions. Prefers a live one, then whatever's
+// not finished, then just the first hit.
 function fcxFindSheetMatch(card){
   const list = window._fcxMatchesCache || [];
+  const seriesName = card.details || card.game || '';
   const cand = list.filter(m => {
     const title = m.title || '';
     return fcxTitleHasTeam(title, card.team1_code, card.team1_full_name) &&
-           fcxTitleHasTeam(title, card.team2_code, card.team2_full_name);
+           fcxTitleHasTeam(title, card.team2_code, card.team2_full_name) &&
+           fcxSeriesNamesMatch(seriesName, m.tournament);
   });
   if (!cand.length) return null;
   return cand.find(m => m.status === 'LIVE') || cand.find(m => m.status !== 'COMPLETED') || cand[0];
@@ -4611,7 +4699,7 @@ window.fcxAppendFixturesPreview = function(){
   if (!grid) return;
   grid.querySelectorAll('.fcx-fixture-card').forEach(c => c.remove());
   const list = (window._fcxMatchesCache || [])
-    .filter(m => m.status !== 'COMPLETED')
+    .filter(m => m.status !== 'COMPLETED' && fcxIsToday(m))
     .slice()
     .sort((a,b) => fcxStatusRank(a) - fcxStatusRank(b))
     .slice(0, 4);
@@ -4667,7 +4755,7 @@ window.fcxAppendHeroSlides = function(){
   container.querySelectorAll('.fcx-hero-slide').forEach(s => s.remove());
   container.querySelectorAll('.fcx-hero-dot').forEach(d => d.remove());
   const picks = (window._fcxMatchesCache || [])
-    .filter(m => m.status !== 'COMPLETED')
+    .filter(m => m.status !== 'COMPLETED' && fcxIsToday(m))
     .slice()
     .sort((a,b) => fcxStatusRank(a) - fcxStatusRank(b))
     .slice(0, 3);
@@ -6350,6 +6438,22 @@ function renderChannelsPreview() {
   grid.innerHTML = channelCards + viewAllCard;
 }
 
+// True if a match card's scheduled start (countdown_to_iso_datetime, or
+// countdown_to) falls on today's calendar date, in the visitor's local
+// timezone. A card with no parseable date at all is kept — there's no
+// date to judge it by, and a manually-live sheet row with a blank
+// schedule shouldn't disappear from the home screen because of that.
+function isMatchToday(c) {
+  const iso = (c.countdown_to_iso_datetime || c.countdown_to || '').trim();
+  if (!iso) return true;
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return true;
+  const now = new Date();
+  return d.getFullYear() === now.getFullYear() &&
+         d.getMonth() === now.getMonth() &&
+         d.getDate() === now.getDate();
+}
+
 function renderFixtures(rows) {
   // Homepage "Matches" preview now pulls from the same MATCH CARDS data
   // as the full Matches page / hero cards, instead of the old FIXTURES
@@ -6362,9 +6466,11 @@ function renderFixtures(rows) {
   //   2) Any other LIVE match
   //   3) Any category branded "WORLD CUP" that's UPCOMING
   //   4) Any other UPCOMING match
-  // Finished matches never appear on the home preview. If nothing is
-  // live or upcoming, the section shows a "NO MATCHES LISTED" message
-  // instead of an empty grid.
+  // Finished matches never appear on the home preview, and — home screen
+  // only — neither does anything not scheduled for today. Full past/
+  // future fixtures still live on the full Matches page. If nothing is
+  // left, the section shows a "NO MATCHES LISTED" message instead of an
+  // empty grid.
   const isWorldCup = c => /worl/i.test(c.game || '');
   const isLiveCard = c => matchStatusText(c).toLowerCase() === 'live';
   const fixtureRank = c => {
@@ -6372,7 +6478,7 @@ function renderFixtures(rows) {
     return isWorldCup(c) ? 2 : 3;
   };
   const source = (window._matchCardsData || [])
-    .filter(c => !isMatchFinished(c))
+    .filter(c => !isMatchFinished(c) && isMatchToday(c))
     .slice()
     .sort((a, b) => fixtureRank(a) - fixtureRank(b));
   const fx = source.slice(0, 11);
