@@ -1,0 +1,1144 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Google Sheets JSON Fetcher</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        background: #0b0b0f;
+        color: #f5f5f5;
+    }
+
+    .app {
+        max-width: 1200px;
+        margin: auto;
+        padding: 24px;
+    }
+
+    header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 24px;
+        padding: 20px;
+        border: 1px solid #24242d;
+        border-radius: 16px;
+        background: #111116;
+    }
+
+    h1 {
+        margin: 0;
+        font-size: 24px;
+    }
+
+    .subtitle {
+        color: #8f8f9b;
+        margin-top: 6px;
+        font-size: 14px;
+    }
+
+    .status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: #19191f;
+        color: #aaa;
+        font-size: 13px;
+        white-space: nowrap;
+    }
+
+    .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #777;
+    }
+
+    .dot.online {
+        background: #45d483;
+    }
+
+    .dot.error {
+        background: #ff5555;
+    }
+
+    .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    button,
+    select {
+        border: 1px solid #30303a;
+        background: #17171d;
+        color: white;
+        padding: 10px 14px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    button:hover {
+        background: #22222a;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .info-card {
+        background: #111116;
+        border: 1px solid #24242d;
+        border-radius: 14px;
+        padding: 16px;
+    }
+
+    .info-label {
+        color: #777783;
+        font-size: 12px;
+        margin-bottom: 7px;
+    }
+
+    .info-value {
+        font-size: 17px;
+        font-weight: 600;
+    }
+
+    .panel {
+        background: #111116;
+        border: 1px solid #24242d;
+        border-radius: 16px;
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+
+    .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        padding: 15px 18px;
+        border-bottom: 1px solid #24242d;
+    }
+
+    .panel-title {
+        font-weight: 600;
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 600px;
+    }
+
+    th,
+    td {
+        padding: 12px 14px;
+        border-bottom: 1px solid #202028;
+        text-align: left;
+        font-size: 13px;
+        white-space: nowrap;
+    }
+
+    th {
+        color: #aaa;
+        background: #15151b;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+
+    td {
+        color: #e5e5e8;
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+
+    .json-box {
+        width: 100%;
+        min-height: 400px;
+        resize: vertical;
+        border: 0;
+        outline: none;
+        padding: 18px;
+        background: #09090d;
+        color: #d8d8df;
+        font-family: Consolas, Monaco, monospace;
+        font-size: 13px;
+        line-height: 1.6;
+    }
+
+    .error-box {
+        display: none;
+        margin-bottom: 20px;
+        padding: 14px 16px;
+        border-radius: 12px;
+        border: 1px solid #552525;
+        background: #211212;
+        color: #ff9b9b;
+        font-size: 14px;
+    }
+
+    footer {
+        color: #666672;
+        text-align: center;
+        padding: 15px;
+        font-size: 12px;
+    }
+
+    @media (max-width: 800px) {
+        .info-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        header {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+    }
+
+    @media (max-width: 500px) {
+        .app {
+            padding: 12px;
+        }
+
+        .info-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        h1 {
+            font-size: 20px;
+        }
+    }
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <header>
+        <div>
+            <h1>Google Sheets JSON Fetcher</h1>
+            <div class="subtitle">
+                Live data bridge from Google Sheets to JSON
+            </div>
+        </div>
+
+        <div class="status">
+            <span class="dot" id="statusDot"></span>
+            <span id="statusText">Connecting...</span>
+        </div>
+    </header>
+
+
+    <div class="controls">
+
+        <button onclick="fetchSheetJSON()">
+            ↻ Refresh
+        </button>
+
+        <button onclick="copyJSON()">
+            Copy JSON
+        </button>
+
+        <button onclick="downloadJSON()">
+            Download JSON
+        </button>
+
+        <select id="refreshInterval" onchange="changeRefreshInterval()">
+            <option value="0">Auto Refresh: Off</option>
+            <option value="30">Every 30 seconds</option>
+            <option value="60" selected>Every 1 minute</option>
+            <option value="300">Every 5 minutes</option>
+            <option value="600">Every 10 minutes</option>
+        </select>
+
+    </div>
+
+
+    <div class="error-box" id="errorBox"></div>
+
+
+    <div class="info-grid">
+
+        <div class="info-card">
+            <div class="info-label">Rows</div>
+            <div class="info-value" id="rowCount">0</div>
+        </div>
+
+        <div class="info-card">
+            <div class="info-label">Columns</div>
+            <div class="info-value" id="columnCount">0</div>
+        </div>
+
+        <div class="info-card">
+            <div class="info-label">Last Updated</div>
+            <div class="info-value" id="lastUpdated">—</div>
+        </div>
+
+        <div class="info-card">
+            <div class="info-label">Refresh</div>
+            <div class="info-value" id="refreshStatus">1 min</div>
+        </div>
+
+    </div>
+
+
+    <div class="panel">
+
+        <div class="panel-header">
+            <div class="panel-title">
+                Sheet Data
+            </div>
+
+            <div id="sheetName">
+                Google Sheet
+            </div>
+        </div>
+
+        <div class="table-wrapper">
+
+            <table id="dataTable">
+
+                <thead>
+                    <tr id="tableHead"></tr>
+                </thead>
+
+                <tbody id="tableBody"></tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+
+    <div class="panel">
+
+        <div class="panel-header">
+            <div class="panel-title">
+                Generated JSON
+            </div>
+
+            <button onclick="copyJSON()">
+                Copy
+            </button>
+        </div>
+
+        <textarea
+            id="jsonOutput"
+            class="json-box"
+            readonly
+            spellcheck="false"
+        ></textarea>
+
+    </div>
+
+
+    <footer>
+        Google Sheets → JSON • Automatic browser-side fetcher
+    </footer>
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   CONFIGURATION
+   ========================================================= */
+
+const SHEET_ID =
+    "1UcPVLGxSTJmAdtfPHsA_f5VCtbABwVdwef-va512HQU";
+
+const GID =
+    "1351440723";
+
+
+/* =========================================================
+   GLOBAL VARIABLES
+   ========================================================= */
+
+let sheetData = [];
+
+let refreshTimer = null;
+
+
+/* =========================================================
+   GOOGLE SHEETS URL
+   ========================================================= */
+
+function getSheetURL() {
+
+    return (
+        "https://docs.google.com/spreadsheets/d/" +
+        SHEET_ID +
+        "/gviz/tq" +
+        "?gid=" +
+        GID +
+        "&tqx=out:json"
+    );
+
+}
+
+
+/* =========================================================
+   FETCH GOOGLE SHEET
+   ========================================================= */
+
+async function fetchSheetJSON() {
+
+    setStatus("Loading...", "normal");
+
+    hideError();
+
+    try {
+
+        const response =
+            await fetch(getSheetURL(), {
+                cache: "no-store"
+            });
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Google Sheets returned HTTP " +
+                response.status
+            );
+
+        }
+
+
+        const text =
+            await response.text();
+
+
+        /*
+         Google GViz returns:
+
+         google.visualization.Query.setResponse({...});
+
+         Remove the wrapper.
+        */
+
+        const jsonText =
+            text
+                .replace(
+                    /^\s*google\.visualization\.Query\.setResponse\(/,
+                    ""
+                )
+                .replace(
+                    /\);\s*$/,
+                    ""
+                );
+
+
+        const data =
+            JSON.parse(jsonText);
+
+
+        if (
+            !data ||
+            !data.table
+        ) {
+
+            throw new Error(
+                "Invalid Google Sheets response."
+            );
+
+        }
+
+
+        const table =
+            data.table;
+
+
+        /*
+         Get column names.
+        */
+
+        const columns =
+            table.cols.map(
+                (column, index) => {
+
+                    let name =
+                        column.label ||
+                        column.id ||
+                        `column_${index + 1}`;
+
+                    return cleanKey(name);
+
+                }
+            );
+
+
+        /*
+         Prevent duplicate keys.
+        */
+
+        const uniqueColumns =
+            makeUniqueKeys(columns);
+
+
+        /*
+         Convert rows to objects.
+        */
+
+        sheetData =
+            table.rows.map(
+                row => {
+
+                    const object = {};
+
+                    uniqueColumns.forEach(
+                        (key, index) => {
+
+                            const cell =
+                                row.c &&
+                                row.c[index];
+
+                            object[key] =
+                                cell &&
+                                cell.v !== undefined
+                                    ? cell.v
+                                    : "";
+
+                        }
+                    );
+
+                    return object;
+
+                }
+            );
+
+
+        /*
+         Remove completely empty rows.
+        */
+
+        sheetData =
+            sheetData.filter(
+                row =>
+                    Object.values(row).some(
+                        value =>
+                            String(value).trim() !== ""
+                    )
+            );
+
+
+        /*
+         Update UI.
+        */
+
+        updateInfo(
+            sheetData.length,
+            uniqueColumns.length
+        );
+
+
+        renderTable(
+            uniqueColumns,
+            sheetData
+        );
+
+
+        renderJSON(
+            sheetData
+        );
+
+
+        setStatus(
+            "Connected",
+            "online"
+        );
+
+
+        updateTime();
+
+
+        console.log(
+            "Google Sheets JSON:",
+            sheetData
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "JSON fetch error:",
+            error
+        );
+
+
+        setStatus(
+            "Error",
+            "error"
+        );
+
+
+        showError(
+            error.message
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   CLEAN COLUMN NAME
+   ========================================================= */
+
+function cleanKey(value) {
+
+    let key =
+        String(value)
+            .trim()
+            .toLowerCase()
+            .replace(
+                /[^a-z0-9_]+/g,
+                "_"
+            )
+            .replace(
+                /^_+|_+$/g,
+                ""
+            );
+
+
+    if (!key) {
+
+        key = "column";
+
+    }
+
+
+    if (
+        /^[0-9]/.test(key)
+    ) {
+
+        key =
+            "column_" +
+            key;
+
+    }
+
+
+    return key;
+
+}
+
+
+/* =========================================================
+   UNIQUE COLUMN NAMES
+   ========================================================= */
+
+function makeUniqueKeys(keys) {
+
+    const used = {};
+
+    return keys.map(
+        key => {
+
+            if (
+                !used[key]
+            ) {
+
+                used[key] = 1;
+
+                return key;
+
+            }
+
+
+            used[key]++;
+
+            return (
+                key +
+                "_" +
+                used[key]
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   RENDER TABLE
+   ========================================================= */
+
+function renderTable(
+    columns,
+    rows
+) {
+
+    const head =
+        document.getElementById(
+            "tableHead"
+        );
+
+    const body =
+        document.getElementById(
+            "tableBody"
+        );
+
+
+    head.innerHTML = "";
+    body.innerHTML = "";
+
+
+    columns.forEach(
+        column => {
+
+            const th =
+                document.createElement(
+                    "th"
+                );
+
+            th.textContent =
+                column;
+
+            head.appendChild(
+                th
+            );
+
+        }
+    );
+
+
+    rows.forEach(
+        row => {
+
+            const tr =
+                document.createElement(
+                    "tr"
+                );
+
+
+            columns.forEach(
+                column => {
+
+                    const td =
+                        document.createElement(
+                            "td"
+                        );
+
+                    const value =
+                        row[column];
+
+
+                    td.textContent =
+                        value === null ||
+                        value === undefined
+                            ? ""
+                            : value;
+
+
+                    tr.appendChild(
+                        td
+                    );
+
+                }
+            );
+
+
+            body.appendChild(
+                tr
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   RENDER JSON
+   ========================================================= */
+
+function renderJSON(data) {
+
+    document.getElementById(
+        "jsonOutput"
+    ).value =
+        JSON.stringify(
+            data,
+            null,
+            2
+        );
+
+}
+
+
+/* =========================================================
+   UPDATE INFORMATION
+   ========================================================= */
+
+function updateInfo(
+    rows,
+    columns
+) {
+
+    document.getElementById(
+        "rowCount"
+    ).textContent =
+        rows;
+
+
+    document.getElementById(
+        "columnCount"
+    ).textContent =
+        columns;
+
+}
+
+
+/* =========================================================
+   LAST UPDATED
+   ========================================================= */
+
+function updateTime() {
+
+    const now =
+        new Date();
+
+
+    document.getElementById(
+        "lastUpdated"
+    ).textContent =
+        now.toLocaleTimeString();
+
+}
+
+
+/* =========================================================
+   STATUS
+   ========================================================= */
+
+function setStatus(
+    text,
+    type
+) {
+
+    const statusText =
+        document.getElementById(
+            "statusText"
+        );
+
+    const dot =
+        document.getElementById(
+            "statusDot"
+        );
+
+
+    statusText.textContent =
+        text;
+
+
+    dot.className =
+        "dot";
+
+
+    if (
+        type === "online"
+    ) {
+
+        dot.classList.add(
+            "online"
+        );
+
+    }
+
+
+    if (
+        type === "error"
+    ) {
+
+        dot.classList.add(
+            "error"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   ERROR
+   ========================================================= */
+
+function showError(
+    message
+) {
+
+    const box =
+        document.getElementById(
+            "errorBox"
+        );
+
+
+    box.textContent =
+        "Error: " +
+        message;
+
+
+    box.style.display =
+        "block";
+
+}
+
+
+function hideError() {
+
+    document.getElementById(
+        "errorBox"
+    ).style.display =
+        "none";
+
+}
+
+
+/* =========================================================
+   COPY JSON
+   ========================================================= */
+
+async function copyJSON() {
+
+    const output =
+        document.getElementById(
+            "jsonOutput"
+        );
+
+
+    try {
+
+        await navigator.clipboard.writeText(
+            output.value
+        );
+
+
+        alert(
+            "JSON copied to clipboard."
+        );
+
+    } catch {
+
+        output.select();
+
+        document.execCommand(
+            "copy"
+        );
+
+
+        alert(
+            "JSON copied."
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   DOWNLOAD JSON
+   ========================================================= */
+
+function downloadJSON() {
+
+    const json =
+        JSON.stringify(
+            sheetData,
+            null,
+            2
+        );
+
+
+    const blob =
+        new Blob(
+            [json],
+            {
+                type:
+                    "application/json"
+            }
+        );
+
+
+    const url =
+        URL.createObjectURL(
+            blob
+        );
+
+
+    const link =
+        document.createElement(
+            "a"
+        );
+
+
+    link.href =
+        url;
+
+
+    link.download =
+        "data.json";
+
+
+    document.body.appendChild(
+        link
+    );
+
+
+    link.click();
+
+
+    link.remove();
+
+
+    URL.revokeObjectURL(
+        url
+    );
+
+}
+
+
+/* =========================================================
+   AUTO REFRESH
+   ========================================================= */
+
+function changeRefreshInterval() {
+
+    const seconds =
+        Number(
+            document.getElementById(
+                "refreshInterval"
+            ).value
+        );
+
+
+    if (
+        refreshTimer
+    ) {
+
+        clearInterval(
+            refreshTimer
+        );
+
+        refreshTimer =
+            null;
+
+    }
+
+
+    if (
+        seconds > 0
+    ) {
+
+        refreshTimer =
+            setInterval(
+                fetchSheetJSON,
+                seconds * 1000
+            );
+
+
+        document.getElementById(
+            "refreshStatus"
+        ).textContent =
+            formatInterval(
+                seconds
+            );
+
+    } else {
+
+        document.getElementById(
+            "refreshStatus"
+        ).textContent =
+            "Off";
+
+    }
+
+}
+
+
+/* =========================================================
+   FORMAT REFRESH TIME
+   ========================================================= */
+
+function formatInterval(
+    seconds
+) {
+
+    if (
+        seconds < 60
+    ) {
+
+        return (
+            seconds +
+            " sec"
+        );
+
+    }
+
+
+    const minutes =
+        seconds / 60;
+
+
+    if (
+        minutes < 60
+    ) {
+
+        return (
+            minutes +
+            " min"
+        );
+
+    }
+
+
+    return (
+        minutes / 60 +
+        " hr"
+    );
+
+}
+
+
+/* =========================================================
+   START
+   ========================================================= */
+
+fetchSheetJSON();
+
+changeRefreshInterval();
+
+</script>
+
+</body>
+</html>
+
