@@ -11,139 +11,126 @@
 <title>EV Streams Live Player</title>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-G5NE717HVD"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-G5NE717HVD');</script>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Acme&family=Amaranth:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/shaka-player.ui.min.js"></script>
 <script src="https://pl31053757.profitableratecpmnetwork.com/ac/7a/82/ac7a8279de9743729ea0cb7ecd52684b.js"></script>
 <style>
-/* ══════════════════════════════════════════════════════════
-   EV SPORTS PLAYER — minimal magenta, matches the main site.
-   Flat solid surfaces throughout — no backdrop-filter / blur
-   / glassmorphism anywhere in this file.
-   ══════════════════════════════════════════════════════════ */
+/* ── EV Streams player — flat, minimal, magenta. No glass, no blur. ── */
 :root{
-  --mg:#F04F8C;            /* core magenta — same as the site's --diamond */
-  --mg-light:#FF8FBB;
-  --mg-dark:#4A0A2C;
-  --grad-mg:linear-gradient(135deg,#FF8FBB 0%,#F04F8C 55%,#4A0A2C 100%);
-  --panel:#0c0c10;         /* flat control-row / card surface, no blur */
-  --panel-2:#16161b;       /* flat circular-button surface */
-  --panel-2-h:#1e1e26;
+  --mg:#F04F8C;            /* magenta accent            */
+  --mg-deep:#c22f6c;       /* pressed / darker magenta  */
+  --mg-ink:#1b0710;        /* near-black magenta base   */
+  --mg-ink-2:#2a0c1a;      /* hover surface             */
+  --bg:#000;
+  --surface:#111114;
   --line:rgba(255,255,255,.10);
-  --txt-dim:rgba(255,255,255,.42);
-  --ease:cubic-bezier(0.25,0.46,0.45,0.94);
+  --line-mg:rgba(240,79,140,.45);
+  --txt:#fff;
+  --dim:rgba(255,255,255,.55);
+  --dim-2:rgba(255,255,255,.36);
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html{height:100%;height:-webkit-fill-available;-webkit-text-size-adjust:100%;}
-body{width:100%;height:100%;min-height:100dvh;background:#000;overflow:hidden;font-family:'Poppins',-apple-system,BlinkMacSystemFont,sans-serif;}
-#player{position:fixed;inset:0;background:#000;user-select:none;-webkit-user-select:none;overflow:hidden;}
+body{width:100%;height:100%;min-height:100dvh;background:var(--bg);overflow:hidden;font-family:'Poppins',-apple-system,BlinkMacSystemFont,sans-serif;}
+#player{position:fixed;inset:0;background:var(--bg);user-select:none;-webkit-user-select:none;overflow:hidden;}
 #vid{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transform-origin:center center;transition:transform .3s ease;}
-#overlay{position:absolute;inset:0;z-index:10;background:#050506;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .4s;}
+
+/* ── Loading ─────────────────────────────────────────────────────── */
+#overlay{position:absolute;inset:0;z-index:10;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .4s;}
 #overlay.gone{opacity:0;pointer-events:none;}
-.load-ring{position:relative;width:44px;height:44px;}
+.load-ring{position:relative;width:42px;height:42px;}
 .load-ring::before,.load-ring::after{content:'';position:absolute;border-radius:50%;}
-.load-ring::before{inset:0;border:3px solid rgba(255,255,255,.08);}
-.load-ring::after{inset:0;border:3px solid transparent;border-top-color:var(--mg);animation:rot .7s linear infinite;}
+.load-ring::before{inset:0;border:2px solid rgba(240,79,140,.18);}
+.load-ring::after{inset:0;border:2px solid transparent;border-top-color:var(--mg);animation:rot .7s linear infinite;}
 @keyframes rot{to{transform:rotate(360deg)}}
-.load-label{font-size:12px;color:var(--txt-dim);letter-spacing:.4px;}
+.load-label{font-size:11px;font-weight:500;color:var(--dim-2);letter-spacing:.8px;text-transform:uppercase;}
 #bufspin{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:8;pointer-events:none;display:none;}
-#bufspin div{width:30px;height:30px;border:2.5px solid rgba(255,255,255,.12);border-top-color:var(--mg);border-radius:50%;animation:rot .65s linear infinite;}
-#err-ov{position:absolute;inset:0;z-index:11;background:#08080a;display:none;align-items:center;justify-content:center;padding:24px;}
+#bufspin div{width:30px;height:30px;border:2px solid rgba(240,79,140,.18);border-top-color:var(--mg);border-radius:50%;animation:rot .65s linear infinite;}
+
+/* ── Error ───────────────────────────────────────────────────────── */
+#err-ov{position:absolute;inset:0;z-index:11;background:var(--bg);display:none;align-items:center;justify-content:center;padding:24px;}
 #err-ov.show{display:flex;}
-.ec{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:40px 26px 32px;max-width:380px;width:100%;text-align:center;}
-.ec .ei-wrap{width:58px;height:58px;border-radius:50%;border:1px solid rgba(240,79,140,.35);background:rgba(240,79,140,.08);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;}
-.ec .ei-wrap svg{width:28px;height:28px;stroke:var(--mg-light);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
-.ec .etxt{font-size:18px;font-weight:700;color:#f2f2f2;margin-bottom:8px;}
-.ec .emsg{font-size:13px;color:var(--txt-dim);line-height:1.75;margin-bottom:22px;}
-.ec .eretry{display:flex;align-items:center;justify-content:center;gap:7px;font-size:12px;color:rgba(255,255,255,.32);margin-bottom:22px;}
+.ec{background:var(--surface);border:1px solid var(--line);border-top:2px solid var(--mg);border-radius:4px;padding:34px 26px 28px;max-width:360px;width:100%;text-align:center;}
+.ec .ei-wrap{width:52px;height:52px;border-radius:50%;border:1px solid var(--line-mg);background:var(--mg-ink);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;}
+.ec .ei-wrap svg{width:26px;height:26px;stroke:var(--mg);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.ec .etxt{font-size:17px;font-weight:700;color:var(--txt);margin-bottom:8px;letter-spacing:.2px;}
+.ec .emsg{font-size:12.5px;color:var(--dim-2);line-height:1.7;margin-bottom:20px;}
+.ec .eretry{display:flex;align-items:center;justify-content:center;gap:7px;font-size:11px;color:var(--dim-2);margin-bottom:18px;letter-spacing:.4px;text-transform:uppercase;}
 .retdot{width:6px;height:6px;border-radius:50%;background:var(--mg);animation:rpulse 1.4s ease-in-out infinite;}
-@keyframes rpulse{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1.1)}}
-.ec .elink{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px 20px;border-radius:8px;background:var(--panel-2);border:1px solid var(--line);color:#fff;font-size:13px;font-weight:600;text-decoration:none;transition:background .15s,border-color .15s;}
-.ec .elink:hover{background:var(--panel-2-h);}
-.ec .elink svg{width:14px;height:14px;fill:#fff;flex-shrink:0;}
-.ec .retrybtn{background:var(--grad-mg);border:none;color:#fff;font-family:inherit;cursor:pointer;margin-bottom:10px;
-  box-shadow:0 1px 0 rgba(255,255,255,.4) inset, 0 6px 16px rgba(240,79,140,.30);}
-.ec .retrybtn:hover{filter:brightness(1.08);}
-.ec .retrybtn svg{fill:none;stroke:#fff;}
+@keyframes rpulse{0%,100%{opacity:.3}50%{opacity:1}}
+.ec .elink{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px 18px;border-radius:4px;background:transparent;border:1px solid var(--line);color:var(--txt);font-size:12.5px;font-weight:600;text-decoration:none;}
+.ec .elink svg{width:14px;height:14px;fill:currentColor;flex-shrink:0;}
+.ec .retrybtn{background:var(--mg);border-color:var(--mg);color:#fff;font-family:inherit;cursor:pointer;margin-bottom:10px;}
+.ec .retrybtn:hover{background:var(--mg-deep);border-color:var(--mg-deep);}
+.ec .retrybtn svg{fill:none;stroke:currentColor;}
+
+/* ── Center play ─────────────────────────────────────────────────── */
 #bigplay{position:absolute;inset:0;z-index:16;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0;transition:opacity .22s;}
-#bigplay.shown{pointer-events:none;opacity:1;}
+#bigplay.shown{opacity:1;}
 #bigplay.gone{opacity:0;pointer-events:none;}
-.bpbtn{position:relative;width:52px;height:52px;border-radius:50%;
-  background:var(--grad-mg);
-  border:none;
-  box-shadow:0 6px 20px rgba(240,79,140,.35),0 1px 0 rgba(255,255,255,.35) inset;
+.bpbtn{width:56px;height:56px;border-radius:50%;background:var(--mg);border:none;
   display:flex;align-items:center;justify-content:center;cursor:pointer;pointer-events:auto;
-  transition:transform .18s,box-shadow .18s;}
-.bpbtn:hover{transform:scale(1.07);box-shadow:0 8px 26px rgba(240,79,140,.5),0 1px 0 rgba(255,255,255,.4) inset;}
-.bpbtn:active{transform:scale(.9);}
-.bpbtn svg{width:19px;height:19px;margin-left:2px;}
-#ctrls{position:absolute;bottom:0;left:0;right:0;z-index:20;transition:opacity .28s;}
+  transition:transform .16s ease,background .16s ease;}
+.bpbtn:hover{background:var(--mg-deep);transform:scale(1.06);}
+.bpbtn:active{transform:scale(.94);}
+.bpbtn svg{width:20px;height:20px;margin-left:3px;fill:#fff;}
+
+/* ── Controls ────────────────────────────────────────────────────── */
+#ctrls{position:absolute;bottom:0;left:0;right:0;z-index:20;transition:opacity .28s;background:var(--mg-ink);border-top:2px solid var(--mg);}
 #ctrls.gone{opacity:0;pointer-events:none;}
-#prog{margin:0 12px 6px;height:18px;display:flex;align-items:center;cursor:pointer;position:relative;}
-.pt{position:relative;height:3px;width:100%;background:rgba(255,255,255,.16);border-radius:2px;transition:height .13s;overflow:visible;}
+#prog{margin:0 12px;height:16px;display:flex;align-items:center;cursor:pointer;position:relative;}
+.pt{position:relative;height:3px;width:100%;background:rgba(255,255,255,.16);border-radius:0;transition:height .12s;}
 #prog:hover .pt,#prog.drag .pt{height:5px;}
-.pbf{position:absolute;left:0;top:0;height:100%;background:rgba(255,255,255,.30);border-radius:2px;width:0;}
-.ppl{position:absolute;left:0;top:0;height:100%;background:var(--mg);border-radius:2px;width:0;}
-.pth{position:absolute;top:50%;left:0;width:12px;height:12px;background:var(--mg);border:2px solid #fff;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 3px rgba(240,79,140,.25),0 0 8px rgba(240,79,140,.4);pointer-events:none;transition:transform .12s;}
-#prog:hover .pth,#prog.drag .pth{transform:translate(-50%,-50%) scale(1.3);}
-#crow{
-  display:flex;align-items:center;padding:6px 10px 12px;gap:6px;
-  background:var(--panel);
-  border-top:1px solid var(--line);
-}
-.cb{
-  width:34px;height:34px;border-radius:50%;
-  background:var(--panel-2);
-  border:1px solid var(--line);
-  display:flex;align-items:center;justify-content:center;
-  cursor:pointer;color:#fff;
-  transition:background .15s,transform .12s,border-color .15s;
-  flex-shrink:0;padding:0;outline:none;
-}
-.cb:hover{background:var(--panel-2-h);border-color:rgba(240,79,140,.35);}
-.cb:active{transform:scale(.88);}
+.pbf{position:absolute;left:0;top:0;height:100%;background:rgba(240,79,140,.32);width:0;}
+.ppl{position:absolute;left:0;top:0;height:100%;background:var(--mg);width:0;}
+.pth{position:absolute;top:50%;left:0;width:11px;height:11px;background:var(--mg);border:none;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;transition:transform .12s;}
+#prog:hover .pth,#prog.drag .pth{transform:translate(-50%,-50%) scale(1.25);}
+#crow{display:flex;align-items:center;padding:6px 8px 10px;gap:4px;background:transparent;}
+.cb{width:34px;height:34px;border-radius:4px;background:transparent;border:none;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;
+  transition:background .14s ease,color .14s ease;flex-shrink:0;padding:0;outline:none;}
+.cb:hover{background:var(--mg-ink-2);color:var(--mg);}
+.cb:active{background:var(--mg-deep);color:#fff;}
 .cb svg{display:block;}
+#bplay{background:var(--mg);color:#fff;}
+#bplay:hover{background:var(--mg-deep);color:#fff;}
 .csp{flex:1;}
-.live-pill{display:flex;align-items:center;gap:5px;padding:4px 9px 4px 7px;border-radius:20px;background:rgba(240,79,140,.14);border:1px solid rgba(240,79,140,.35);font-size:10.5px;font-weight:700;letter-spacing:.6px;color:var(--mg-light);cursor:default;flex-shrink:0;white-space:nowrap;}
-.ldot{width:5px;height:5px;border-radius:50%;background:var(--mg);animation:lblink 1.3s infinite;flex:none;}
-@keyframes lblink{0%,100%{opacity:1}50%{opacity:.3}}
-@keyframes mutePulse{0%,100%{opacity:.5}50%{opacity:1}}
-#bvol.is-muted{animation:mutePulse 1.8s ease-in-out infinite;}
-#bvol.is-muted{border-color:rgba(240,79,140,.4);background:rgba(240,79,140,.14);}
-.qwrap{position:relative;display:none;align-items:center;}
-.qwrap.show{display:flex;}
-#bq{border-radius:8px !important;width:auto !important;padding:0 11px !important;height:34px !important;gap:5px;}
-#bq.open{background:var(--panel-2-h);border-color:rgba(240,79,140,.4);}
-#qlbl{font-size:11.5px;font-weight:700;letter-spacing:.3px;}
-.qchev{flex-shrink:0;transition:transform .18s;}
+.live-pill{display:flex;align-items:center;gap:6px;padding:0 10px;height:26px;border-radius:3px;background:var(--mg);border:none;font-size:10px;font-weight:700;letter-spacing:1px;color:#fff;cursor:default;flex-shrink:0;white-space:nowrap;}
+.ldot{width:5px;height:5px;border-radius:50%;background:#fff;animation:lblink 1.3s infinite;flex:none;}
+@keyframes lblink{0%,100%{opacity:1}50%{opacity:.25}}
+#bvol.is-muted{color:var(--mg);background:var(--mg-ink-2);}
+
+/* ── Quality selector ────────────────────────────────────────────── */
+#bq{width:auto !important;height:30px !important;padding:0 10px !important;gap:6px;border-radius:3px;
+  border:1px solid var(--line-mg);color:var(--mg);background:transparent;}
+#bq:hover{background:var(--mg-ink-2);color:var(--mg);}
+#bq.open{background:var(--mg);border-color:var(--mg);color:#fff;}
+#qlbl{font-size:11px;font-weight:700;letter-spacing:.6px;}
+.qchev{flex-shrink:0;transition:transform .16s ease;}
 #bq.open .qchev{transform:rotate(180deg);}
-/* ── Quality menu — a properly integrated custom dropdown, not a
-   hidden native <select> hack. Flat panel, no blur, anchored
-   directly above the quality button. ── */
-#qmenu{
-  position:absolute; bottom:46px; right:0; z-index:26;
-  min-width:104px;
-  background:var(--panel-2);
-  border:1px solid var(--line);
-  border-radius:10px;
-  overflow:hidden;
-  box-shadow:0 10px 28px rgba(0,0,0,.55);
-  opacity:0; transform:translateY(6px) scale(.97); transform-origin:bottom right;
-  pointer-events:none;
-  transition:opacity .16s var(--ease),transform .16s var(--ease);
-}
-#qmenu.open{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;}
-.qopt{
-  display:flex; align-items:center; justify-content:space-between; gap:10px;
-  width:100%; padding:10px 13px; background:transparent; border:none;
-  color:rgba(255,255,255,.82); font-family:inherit; font-size:12.5px; font-weight:600;
-  cursor:pointer; text-align:left; transition:background .12s;
-}
-.qopt + .qopt{border-top:1px solid var(--line);}
-.qopt:hover{background:rgba(240,79,140,.12);}
-.qopt.active{color:#fff;background:rgba(240,79,140,.16);}
-.qopt .qtick{color:var(--mg-light);font-size:11px;opacity:0;}
+#qmenu{position:absolute;right:8px;bottom:calc(100% + 6px);z-index:30;min-width:136px;
+  background:var(--surface);border:1px solid var(--line);border-top:2px solid var(--mg);
+  border-radius:4px;padding:4px;display:none;}
+#qmenu.open{display:block;}
+.qmenu-head{font-size:9.5px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--dim-2);padding:8px 10px 6px;}
+.qopt{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;
+  padding:9px 10px;border:none;background:transparent;color:var(--dim);
+  font-family:inherit;font-size:12.5px;font-weight:600;letter-spacing:.3px;
+  cursor:pointer;text-align:left;border-radius:3px;transition:background .13s ease,color .13s ease;}
+.qopt:hover{background:var(--mg-ink-2);color:#fff;}
+.qopt.active{background:var(--mg);color:#fff;}
+.qopt .qtick{width:13px;height:13px;flex-shrink:0;opacity:0;}
 .qopt.active .qtick{opacity:1;}
-.credit-tag{position:fixed;top:10px;left:10px;z-index:50;font-family:'Poppins',sans-serif;font-size:10.5px;font-weight:600;letter-spacing:.3px;color:rgba(255,255,255,.6);background:var(--panel);padding:5px 10px;border-radius:20px;border:1px solid var(--line);pointer-events:none;}
+
+/* ── Credit ──────────────────────────────────────────────────────── */
+.credit-tag{position:fixed;top:0;left:0;z-index:50;font-family:'Poppins',sans-serif;font-size:10px;font-weight:600;letter-spacing:.4px;color:var(--dim-2);background:var(--mg-ink);padding:5px 10px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);border-left:2px solid var(--mg);pointer-events:none;}
+
+@media (max-width:520px){
+  #crow{padding:6px 6px 9px;gap:2px;}
+  .cb{width:32px;height:32px;}
+  .live-pill{font-size:9.5px;padding:0 8px;height:24px;}
+  #qmenu{right:6px;}
+}
 </style>
 </head>
 <body>
@@ -206,13 +193,10 @@ body{width:100%;height:100%;min-height:100dvh;background:#000;overflow:hidden;fo
       </button>
       <div class="live-pill" id="livepill"><span class="ldot"></span><span id="lpitext">LIVE</span></div>
       <div class="csp"></div>
-      <div class="qwrap" id="qwrap" style="position:relative;display:none">
-        <button class="cb" id="bq" title="Quality" aria-label="Change video quality" aria-haspopup="listbox" aria-expanded="false">
-          <span id="qlbl">–</span>
-          <svg class="qchev" width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="2,3 5,7 8,3"/></svg>
-        </button>
-        <div id="qmenu" role="listbox" aria-label="Video quality"></div>
-      </div>
+      <button class="cb" id="bq" title="Quality" aria-label="Change video quality" aria-haspopup="true" aria-expanded="false" style="display:none">
+        <span id="qlbl">–</span>
+        <svg class="qchev" width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="2,3 5,7 8,3"/></svg>
+      </button>
       <button class="cb" id="bfill" title="Fill / Fit" aria-label="Change video fit mode">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" id="fillico">
           <path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/>
@@ -229,6 +213,10 @@ body{width:100%;height:100%;min-height:100dvh;background:#000;overflow:hidden;fo
           <path d="M9 4H4v5"/><path d="M15 4h5v5"/><path d="M9 20H4v-5"/><path d="M15 20h5v-5"/>
         </svg>
       </button>
+    </div>
+    <div id="qmenu" role="menu" aria-label="Video quality">
+      <div class="qmenu-head">Quality</div>
+      <div id="qlist"></div>
     </div>
   </div>
 </div>
@@ -265,10 +253,10 @@ var bvol     = document.getElementById('bvol');
 var vico     = document.getElementById('vico');
 var livepill = document.getElementById('livepill');
 var lpitext  = document.getElementById('lpitext');
-var qwrap    = document.getElementById('qwrap');
 var bq       = document.getElementById('bq');
-var qlbl     = document.getElementById('qlbl');
 var qmenu    = document.getElementById('qmenu');
+var qlist    = document.getElementById('qlist');
+var qlbl     = document.getElementById('qlbl');
 var bfill    = document.getElementById('bfill');
 var fillico  = document.getElementById('fillico');
 var bpip     = document.getElementById('bpip');
@@ -371,6 +359,7 @@ function showCtrls(){
   clearTimeout(hideTimer);
   if(!vid.paused){
     hideTimer=setTimeout(function(){
+      if(qmenu && qmenu.classList.contains('open')) return; // menu open — keep the bar up
       ctrls.classList.add('gone');
     },3200);
   }
@@ -464,56 +453,65 @@ document.addEventListener('touchmove',  function(e){if(isDragging){e.preventDefa
 document.addEventListener('mouseup',    function(){if(isDragging){isDragging=false;prog.classList.remove('drag');}});
 document.addEventListener('touchend',   function(){if(isDragging){isDragging=false;prog.classList.remove('drag');}});
 
-// ── Quality menu — a real themed dropdown panel anchored above the
-// quality button, built from the actual available renditions each time
-// a stream loads. No native <select> hijacking involved.
+// ── Quality selector ──────────────────────────────────────────────
+// A real in-player menu (flat panel above the control bar) instead of the
+// old hidden native <select>: every available rendition is listed, the
+// active one is highlighted, and picking one swaps the stream in place.
+var TICK_SVG = '<svg class="qtick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+
 function buildQMenu(){
-  var avail=Q_ORDER.filter(function(q){return qStreams[q];});
-  qmenu.innerHTML='';
-  avail.forEach(function(q){
-    var b=document.createElement('button');
-    b.type='button';
-    b.className='qopt'+(q===currentQ?' active':'');
-    b.setAttribute('role','option');
-    b.setAttribute('aria-selected', q===currentQ ? 'true' : 'false');
-    b.innerHTML='<span>'+q+'</span><span class="qtick">✓</span>';
-    b.addEventListener('click', function(e){
-      e.stopPropagation();
-      closeQMenu();
-      if(q!==currentQ) switchQ(q);
-    });
-    qmenu.appendChild(b);
-  });
+  var avail = Q_ORDER.filter(function(q){ return qStreams[q]; });
+  qlist.innerHTML = avail.map(function(q){
+    return '<button type="button" role="menuitem" class="qopt' + (q === currentQ ? ' active' : '') +
+           '" data-q="' + q + '"><span>' + q + '</span>' + TICK_SVG + '</button>';
+  }).join('');
+  return avail.length;
 }
-function openQMenu(){
-  if(!qmenu.children.length) return;
-  qmenu.classList.add('open');
-  bq.classList.add('open');
-  bq.setAttribute('aria-expanded','true');
-}
+
 function closeQMenu(){
   qmenu.classList.remove('open');
   bq.classList.remove('open');
   bq.setAttribute('aria-expanded','false');
-  qCooldown=true;
-  setTimeout(function(){ qCooldown=false; playerActivated=true; }, 300);
 }
+
+function openQMenu(){
+  if(!buildQMenu()) return;
+  qmenu.classList.add('open');
+  bq.classList.add('open');
+  bq.setAttribute('aria-expanded','true');
+  showCtrls();
+}
+
 bq.addEventListener('click', function(e){
   e.stopPropagation();
   e.preventDefault();
-  if(qmenu.classList.contains('open')){ closeQMenu(); return; }
-  if(!Q_ORDER.some(function(q){return qStreams[q];})) return;
-  buildQMenu();
-  openQMenu();
+  if(qmenu.classList.contains('open')) closeQMenu();
+  else openQMenu();
 });
+
+qlist.addEventListener('click', function(e){
+  var btn = e.target.closest('.qopt');
+  if(!btn) return;
+  e.stopPropagation();
+  var q = btn.getAttribute('data-q');
+  closeQMenu();
+  playerActivated = true;
+  if(q && q !== currentQ) switchQ(q);
+});
+
+qmenu.addEventListener('click', function(e){ e.stopPropagation(); });
 document.addEventListener('click', function(e){
-  if(qmenu.classList.contains('open') && !e.target.closest('#qwrap')) closeQMenu();
+  if(!qmenu.classList.contains('open')) return;
+  if(e.target.closest('#qmenu') || e.target.closest('#bq')) return;
+  closeQMenu();
 });
+document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeQMenu(); });
 
 function switchQ(q){
   if(!qStreams[q]) return;
   currentQ=q; qlbl.textContent=q;
   buildQMenu();
+  showLoad();
   loadStream(qStreams[q],[]);
 }
 
@@ -701,11 +699,10 @@ function start(){
       if(!url){showErr('No stream URL','All quality URLs empty for this match',true);return;}
       currentQ=Q_ORDER.find(function(q){return r.streams[q]===url;})||DEFAULT_Q;
       qlbl.textContent=currentQ;
-      qwrap.style.display='';
-      buildQMenu();
+      bq.style.display='';
       loadStream(url,r.fallbacks);
     } else {
-      qwrap.style.display='none';
+      bq.style.display='none';
       loadStream(r.url,r.fallbacks);
     }
   }).catch(function(e){showErr('Could not load data',e.message,true);retryTimer=setTimeout(start,8000);});
