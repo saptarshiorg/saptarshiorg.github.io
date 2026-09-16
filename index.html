@@ -871,7 +871,9 @@ header.scrolled {
 }
 .slider-match-overlay::-webkit-scrollbar { display: none; }
 .smo-section {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  /* Mobile: ONE match per line (single column). Desktop widens to 3
+     columns in the min-width:901px block further down. */
+  display: grid; grid-template-columns: 1fr; gap: 8px;
 }
 .smo-section-label { grid-column: 1 / -1; }
 .smo-section + .smo-section { border-top: 1px solid rgba(255,255,255,0.05); padding-top: 4px; }
@@ -922,6 +924,20 @@ header.scrolled {
   transition: transform 0.2s var(--spring), box-shadow 0.2s var(--ease);
 }
 .smo-btn:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 -2px 0 rgba(122,10,62,0.4) inset, 0 6px 0 -1px rgba(122,10,62,0.5), 0 10px 26px rgba(240,79,140,0.45); }
+
+/* Home screen "nothing on today" state — the message plus a shortcut
+   through to the full Matches page for whatever is coming up next. */
+.smo-empty-today { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.smo-next-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--grad-gold); color: #FFFFFF; border: none; cursor: pointer;
+  font-family: var(--font-display); font-weight: 800; font-size: 11px;
+  letter-spacing: 1px; text-transform: uppercase;
+  padding: 10px 18px; border-radius: 8px; text-decoration: none;
+  box-shadow: 0 4px 16px rgba(240,79,140,0.32);
+  transition: transform 0.2s var(--spring), box-shadow 0.2s var(--ease);
+}
+.smo-next-btn:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 8px 24px rgba(240,79,140,0.45); }
 
 .smo-empty-box {
   width: 100%; text-align: center;
@@ -1009,6 +1025,25 @@ header.scrolled {
   width: 100%;
 }
 .smo-game-select option { background: #1A0A14; color: var(--white); }
+
+/* ── Dropdown-only selectors (PC + mobile) ──────────────────────────
+   The old pill/tab strips are retired site-wide: both tiers (sport and
+   tournament) are now plain <select> dropdowns with a caret, on every
+   screen size. The tab containers stay in the DOM (other code still
+   queries them) but are never shown. */
+.smo-game-tabs, .smo-sport-tabs { display: none !important; }
+.smo-sel-wrap { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+.smo-sel-label {
+  font-family: var(--font-display); font-weight: 800; font-size: 9px;
+  letter-spacing: 1.6px; text-transform: uppercase; color: var(--text-muted);
+}
+/* Sport tier keeps its Diamond Blue accent so it still reads as the
+   parent selector above the gold tournament one. */
+.smo-sport-select {
+  border-color: rgba(63,198,255,0.30);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M0 0L5 6L10 0Z' fill='%233FC6FF'/></svg>");
+}
+.smo-sport-select:focus, .smo-game-select:focus { outline: none; border-color: rgba(255,255,255,0.35); }
 @media(max-width:900px) {
   .smo-toolbar { padding: 8px 14px 0; }
 }
@@ -1926,6 +1961,19 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
 .mws-server-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .mws-server-label { font-size: 14px; font-weight: 700; letter-spacing: 0.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mws-server-sub { font-size: 10px; color: rgba(255,255,255,0.4); letter-spacing: 0.04em; }
+/* Shown at the top of the server list when the match hasn't kicked off
+   yet — deliberately red so it reads as a "not yet" warning rather than
+   another playable option. */
+.mws-notlive {
+  display: block; width: 100%;
+  background: rgba(255,59,59,0.12);
+  border: 1px solid rgba(255,59,59,0.45);
+  border-left: 3px solid #ff3b3b;
+  border-radius: 8px; padding: 12px 14px;
+  font-family: var(--font-display); font-weight: 800; font-size: 12px;
+  letter-spacing: 0.6px; color: #ff5b5b; text-transform: uppercase;
+  margin-bottom: 4px;
+}
 .mws-server-play { font-size: 13px; color: rgba(240,79,140,0.6); flex-shrink: 0; }
 
 /* ── Ribbon accent + motion ──────────────────────────────────────────
@@ -3440,10 +3488,17 @@ window.sxSwitchTab = sxSwitchTab;
 </div>
 <div class="smo-sport-toolbar" id="smo-sport-toolbar" style="display:none;">
   <div class="smo-sport-tabs" id="smo-sport-tabs"></div>
+  <div class="smo-sel-wrap">
+    <label class="smo-sel-label" for="smo-sport-select">Select Sports</label>
+    <select class="smo-game-select smo-sport-select" id="smo-sport-select" aria-label="Select sports"></select>
+  </div>
 </div>
 <div class="smo-toolbar" id="smo-toolbar" style="display:none;">
   <div class="smo-game-tabs" id="smo-game-tabs"></div>
-  <select class="smo-game-select" id="smo-game-select" aria-label="Select event"></select>
+  <div class="smo-sel-wrap">
+    <label class="smo-sel-label" for="smo-game-select">Select Tournament</label>
+    <select class="smo-game-select" id="smo-game-select" aria-label="Select tournament"></select>
+  </div>
 </div>
 <div class="smo-empty-box" id="smo-sport-prompt" style="display:none;margin:14px 20px 0;">SELECT A SPORT ABOVE TO VIEW MATCHES</div>
 <div class="match-overlay-section" id="match-overlay-section">
@@ -4319,6 +4374,7 @@ window.sxSwitchTab = sxSwitchTab;
         id: m.match_id,
         title: m.title||'Match',
         tournament: m.tournament||'',
+        category: (m.category||'').trim(),
         image: m.image||'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22800%22 height=%22300%22%3E%3Crect fill=%22%23222%22 width=%22800%22 height=%22300%22/%3E%3C/svg%3E',
         status: String(m.status||'').toUpperCase(),
         time: fcxParseTime(m.startTime)
@@ -4416,6 +4472,54 @@ window._fcxMatchesCache = [];
 function fcxJsUrl(m){
   return `play.html?id=${encodeURIComponent(m.id)}_eng&s=0`;
 }
+
+// ── FanCode category → sport (cross-merge with the sheet) ─────────────
+// The Matches page never shows "FanCode" as a sport any more. Each FanCode
+// match carries its own "category" in the JSON feed (e.g. "Cricket",
+// "Football"); that's what gets used as the sport. If that category matches
+// a sport already coming from the MATCH CARDS sheet — compared
+// case-insensitively, so "CRICKET" / "Cricket" / "cricket" are all one —
+// the FanCode tournaments are merged INTO that existing sheet sport instead
+// of creating a duplicate entry next to it.
+window._smoSheetSports = window._smoSheetSports || [];
+function fcxGroupCategory(cards){
+  const hit = (cards || []).find(m => (m.category || '').trim());
+  return hit ? hit.category.trim() : 'Other';
+}
+function fcxResolveSport(category){
+  const cat = (category || '').trim();
+  if (!cat) return 'Other';
+  const sheetSports = window._smoSheetSports || [];
+  const merged = sheetSports.find(sp => (sp || '').trim().toLowerCase() === cat.toLowerCase());
+  return merged || cat; // merged → use the sheet's exact spelling
+}
+// Look a cached FanCode match back up by id (used by the watch-screen
+// handlers wired into inline onclick attributes).
+function fcxFindById(id){
+  return (window._fcxMatchesCache || []).find(m => String(m.id) === String(id)) || null;
+}
+// Opens the same full-screen server selector the sheet matches use, for a
+// FanCode match — including before kickoff, where it shows the red
+// "Match will be live at …" notice instead of a playable stream.
+function fcxOpenWatchById(id){
+  const m = fcxFindById(id);
+  if (!m) return false;
+  const isLive = m.status === 'LIVE';
+  const servers = [{
+    url: fcxJsUrl(m), text: 'FanCode',
+    fcxLive: isLive, fcxTime: fcxFmtMatchTime(m)
+  }];
+  openMatchWatchScreen(servers, {
+    name: m.title || 'Live Stream',
+    team1_code: '', team1_full_name: '', team1_icon_url: m.image || '',
+    team2_code: '', team2_full_name: '', team2_icon_url: '',
+    date_label: fcxFmtMatchTime(m),
+    details: m.tournament || '',
+    countdown: (m.time && !isNaN(m.time.getTime())) ? m.time.toISOString() : '',
+    status: isLive ? 'live' : (m.status === 'COMPLETED' ? 'finished' : 'upcoming')
+  });
+  return false;
+}
 function fcxStatusRank(m){
   if (m.status === 'LIVE') return 0;
   if (m.status === 'COMPLETED') return 2;
@@ -4444,7 +4548,9 @@ function fcxWatchBtnHtml(m, cls){
   if (m.status === 'COMPLETED') {
     return `<span class="${cls}" style="opacity:.5;pointer-events:none;">MATCH OVER</span>`;
   }
-  return `<span class="${cls}" style="opacity:.75;pointer-events:none;">${fcxFmtMatchTime(m)}</span>`;
+  // Not started yet — still clickable: opens the server selector, which
+  // shows the red "Match will be live at …" notice.
+  return `<a class="${cls}" href="javascript:void(0)" onclick="event.stopPropagation();return fcxOpenWatchById('${escJs(String(m.id))}')">⏰ ${fcxFmtMatchTime(m)}</a>`;
 }
 
 // True if `title` mentions this team — either its short code as a whole
@@ -4592,7 +4698,7 @@ window.fcxAppendHomeSections = function(){
     // sport/game toolbars (which read these two properties) can filter it.
     const secs = el.querySelectorAll('.fcx-smo-section');
     const sec = secs[secs.length - 1];
-    if (sec) { sec.dataset.game = tournament; sec.dataset.sport = 'FanCode'; }
+    if (sec) { sec.dataset.game = tournament; sec.dataset.sport = fcxResolveSport(fcxGroupCategory(cards)); }
   });
   timers.forEach(({ timerDisplayId, timerWrapId, badgeId, liveBadgeHtml, target }) => {
     setTimeout(() => {
@@ -4610,8 +4716,10 @@ window.fcxAppendFixturesPreview = function(){
   const grid = document.getElementById('fixtures-grid');
   if (!grid) return;
   grid.querySelectorAll('.fcx-fixture-card').forEach(c => c.remove());
+  // Same "today only" rule as the sheet-driven preview above.
   const list = (window._fcxMatchesCache || [])
     .filter(m => m.status !== 'COMPLETED')
+    .filter(m => (typeof fcxIsTodayMatch === 'function') ? fcxIsTodayMatch(m) : true)
     .slice()
     .sort((a,b) => fcxStatusRank(a) - fcxStatusRank(b))
     .slice(0, 4);
@@ -4631,10 +4739,12 @@ window.fcxAppendFixturesPreview = function(){
   }
   const cardsHtml = list.map(m => {
     const isLive = m.status === 'LIVE';
-    const tag = isLive ? 'a' : 'div';
-    const clickAttr = isLive ? ` href="javascript:void(0)" onclick="openStreamPlayer('${fcxJsUrl(m)}','${escJs(m.title)}','match')"` : '';
+    const tag = 'a';
+    const clickAttr = isLive
+      ? ` href="javascript:void(0)" onclick="openStreamPlayer('${fcxJsUrl(m)}','${escJs(m.title)}','match')"`
+      : ` href="javascript:void(0)" onclick="return fcxOpenWatchById('${escJs(String(m.id))}')"`;
     return `
-    <${tag} class="fx2-card fcx-fixture-card"${clickAttr}${isLive ? '' : ' style="cursor:default;"'}>
+    <${tag} class="fx2-card fcx-fixture-card"${clickAttr}>
       <div class="fx2-thumb">
         <img src="${m.image}" alt="${escJs(m.title)}" class="fx2-thumb-img" onerror="this.style.display='none'">
         ${isLive ? '<span class="fx2-badge fx2-badge-live"><span class="fx2-live-dot"></span>LIVE</span>' : ''}
@@ -4645,7 +4755,7 @@ window.fcxAppendFixturesPreview = function(){
           <span class="fx2-free">FREE</span>
         </div>
         <div class="fx2-meta">
-          <span class="fx2-tag">${m.tournament||'FanCode'}</span>
+          <span class="fx2-tag">${m.tournament||m.category||'Live Sports'}</span>
           <span class="fx2-date">${fcxFmtMatchTime(m)}</span>
         </div>
       </div>
@@ -4689,7 +4799,7 @@ window.fcxAppendHeroSlides = function(){
           <span class="slide-sport-badge${isLive?' slide-badge-live':''}">${isLive?'LIVE NOW':'⏰ '+fcxFmtMatchTime(m)}</span>
         </div>
         <div class="slide-title">${m.title}</div>
-        <div class="slide-sub">${m.tournament||'FanCode'}</div>
+        <div class="slide-sub">${m.tournament||m.category||'Live Sports'}</div>
         <div class="slide-btns">
           ${fcxWatchBtnHtml(m, 'btn-slide-watch')}
         </div>
@@ -5410,7 +5520,28 @@ function sxWatchBtnHtml(c, cls) {
   if (isMatchFinished(c)) {
     return `<span class="${cls}" style="opacity:.5;pointer-events:none;">MATCH OVER</span>`;
   }
-  return `<span class="${cls}" style="opacity:.75;pointer-events:none;">${c.date_label || 'UPCOMING'}</span>`;
+  // Not started yet — clicking still opens the server selector; the watch
+  // screen itself carries the red "Match will be live at …" notice.
+  return `<a class="${cls}" href="javascript:void(0)" onclick="return sxHandleMatchWatch(event,'${sxServersEnc(c)}','${escJs(c.btn_url)}','${escJs(label)}','${sxMatchInfoEnc(c,label)}')">⏰ ${c.date_label || 'UPCOMING'}</a>`;
+}
+
+// "Match will be live at …" time string for the watch screen's red notice.
+// Prefers the exact scheduled ISO datetime, falling back to whatever the
+// sheet's date_label says.
+function sxFmtMatchStartTime(info) {
+  const iso = (info && info.countdown || '').trim();
+  if (iso) {
+    const d = new Date(iso);
+    if (!isNaN(d.getTime())) {
+      const dp = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }).toUpperCase();
+      let h = d.getHours();
+      const mm = String(d.getMinutes()).padStart(2, '0');
+      const ap = h >= 12 ? 'PM' : 'AM';
+      h = h % 12; if (h === 0) h = 12;
+      return `${dp}, ${h}:${mm} ${ap}`;
+    }
+  }
+  return (info && info.date_label) || 'the scheduled time';
 }
 
 // Card click / Watch Now handler — routes to the full-screen match watch
@@ -5492,7 +5623,12 @@ function openMatchWatchScreen(servers, info) {
     const FCX_LOGO = 'https://www.fancode.com/skillup-uploads/fc-web-logo/fc_logo_white_bg.svg';
     const isFcxServer = s => (s.text || '').trim().toLowerCase() === 'fancode';
     const sortedServers = (servers || []).slice().sort((a, b) => (isFcxServer(a) ? 0 : 1) - (isFcxServer(b) ? 0 : 1));
-    body.innerHTML = sortedServers.map((s, i) => {
+    // Match hasn't started yet — the server list still opens, topped with a
+    // red notice telling the visitor exactly when it goes live.
+    const notLiveNotice = (!isLive && !isFinished)
+      ? `<div class="mws-notlive">⏰ Match will be live at ${sxFmtMatchStartTime(info)}</div>`
+      : '';
+    body.innerHTML = notLiveNotice + sortedServers.map((s, i) => {
       const isFcx = isFcxServer(s);
       if (isFcx) {
         const fcxReady = !!s.fcxLive;
@@ -5818,6 +5954,35 @@ function smoHideAtMs(c) {
   if (isNaN(t)) return null; // unparsable date — don't silently drop the card
   return t + SMO_HIDE_AFTER_MS;
 }
+// ── Same-day helpers (home screen only) ───────────────────────────────
+// The home screen's Matches preview is limited to TODAY's fixtures. A card
+// counts as today's when its scheduled start (countdown_to_iso_datetime /
+// countdown_to) falls on the current local calendar day — or when it's
+// currently live, since a live match is by definition on right now even if
+// it started just before midnight.
+function sxIsSameLocalDay(d) {
+  if (!d || isNaN(d.getTime())) return false;
+  const now = new Date();
+  return d.getFullYear() === now.getFullYear()
+      && d.getMonth() === now.getMonth()
+      && d.getDate() === now.getDate();
+}
+function sxMatchStartDate(c) {
+  const iso = ((c && (c.countdown_to_iso_datetime || c.countdown_to)) || '').trim();
+  if (!iso) return null;
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? null : d;
+}
+function sxIsTodayMatch(c) {
+  if (matchStatusText(c).toLowerCase() === 'live') return true;
+  return sxIsSameLocalDay(sxMatchStartDate(c));
+}
+function fcxIsTodayMatch(m) {
+  if (!m) return false;
+  if (m.status === 'LIVE') return true;
+  return sxIsSameLocalDay(m.time);
+}
+
 function smoIsExpired(c) {
   const hideAt = smoHideAtMs(c);
   return hideAt !== null && Date.now() >= hideAt;
@@ -5863,7 +6028,7 @@ function smoBuildToolbar(gameNames) {
     window._smoActiveGame = 'ALL';
   }
 
-  selectEl.innerHTML = '<option value="ALL">All Events</option><option value="LIVE_NOW">Live Now</option>';
+  selectEl.innerHTML = '<option value="ALL">All Tournaments</option><option value="LIVE_NOW">Live Now</option>';
   gameNames.forEach(g => {
     const opt = document.createElement('option');
     opt.value = g;
@@ -5920,6 +6085,7 @@ function smoSelectGame(name) {
 function smoBuildSportToolbar(sportNames) {
   const wrap = document.getElementById('smo-sport-toolbar');
   const tabsEl = document.getElementById('smo-sport-tabs');
+  const selectEl = document.getElementById('smo-sport-select');
   if (!wrap || !tabsEl) return;
 
   // Fewer than 2 sports (e.g. the sheet has no sport column filled in yet,
@@ -5936,6 +6102,19 @@ function smoBuildSportToolbar(sportNames) {
   const validSelections = ['ALL'].concat(sportNames);
   if (validSelections.indexOf(window._smoActiveSport) === -1) {
     window._smoActiveSport = 'ALL';
+  }
+
+  // Dropdown (the only visible control on both PC and mobile now).
+  if (selectEl) {
+    selectEl.innerHTML = '<option value="ALL">All Sports</option>';
+    sportNames.forEach(sp => {
+      const opt = document.createElement('option');
+      opt.value = sp;
+      opt.textContent = sp;
+      selectEl.appendChild(opt);
+    });
+    selectEl.value = window._smoActiveSport;
+    selectEl.onchange = () => smoSelectSport(selectEl.value);
   }
 
   tabsEl.innerHTML = '';
@@ -5967,6 +6146,8 @@ function smoSelectSport(name) {
   window._smoActiveSport = name;
   window._smoActiveGame = 'ALL';
   window._smoSportChosen = true; // sport picked — game selector + matches unlock below
+  const sportSelectEl = document.getElementById('smo-sport-select');
+  if (sportSelectEl) sportSelectEl.value = name;
   document.querySelectorAll('.smo-sport-tab').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.sport === name);
   });
@@ -6214,19 +6395,22 @@ function renderMatchCards(rows) {
   window._smoGameToSport = {};
   gameOrder.forEach((g, i) => { window._smoGameToSport[g] = sportPerSection[i]; });
 
-  // Fold FanCode in as its own sport, with its tournaments/series as its
-  // "games" — same top selector, same second-tier dropdown, as any sheet
-  // sport gets. Its own sections (appended by fcxAppendHomeSections, at
-  // the very end of this function) are tagged with matching dataset.game/
-  // dataset.sport values so the filters actually work against them.
+  // Fold FanCode in using each match's own "category" from the JSON feed
+  // (Cricket / Football / …) as its sport — "FanCode" is never shown as a
+  // category here. When that category matches a sport already present in
+  // the MATCH CARDS sheet (case-insensitive), the FanCode tournaments are
+  // merged into that same sheet sport rather than added beside it; only a
+  // genuinely new category creates a new entry in the sport dropdown.
+  // Snapshot the sheet's own sports first so fcxResolveSport() compares
+  // against them and not against categories it just added itself.
+  window._smoSheetSports = sportOrder.slice();
   const fcxGroups = (typeof fcxTournamentGroups === 'function') ? fcxTournamentGroups() : [];
-  if (fcxGroups.length) {
-    if (!sportOrder.includes('FanCode')) sportOrder.push('FanCode');
-    fcxGroups.forEach(([tournament]) => {
-      if (!gameOrder.includes(tournament)) gameOrder.push(tournament);
-      window._smoGameToSport[tournament] = 'FanCode';
-    });
-  }
+  fcxGroups.forEach(([tournament, fcxCards]) => {
+    const sport = fcxResolveSport(fcxGroupCategory(fcxCards));
+    if (!sportOrder.includes(sport)) sportOrder.push(sport);
+    if (!gameOrder.includes(tournament)) gameOrder.push(tournament);
+    window._smoGameToSport[tournament] = sport;
+  });
 
   // ── Build/refresh the sport-selector toolbar (parent tier) ──
   smoBuildSportToolbar(sportOrder);
@@ -6371,15 +6555,22 @@ function renderFixtures(rows) {
     if (isLiveCard(c)) return isWorldCup(c) ? 0 : 1;
     return isWorldCup(c) ? 2 : 3;
   };
+  // Home screen shows TODAY'S matches only — anything scheduled for a
+  // later date is left for the full Matches page ("Watch Next Matches").
   const source = (window._matchCardsData || [])
     .filter(c => !isMatchFinished(c))
+    .filter(sxIsTodayMatch)
     .slice()
     .sort((a, b) => fixtureRank(a) - fixtureRank(b));
   const fx = source.slice(0, 11);
   const grid = document.getElementById('fixtures-grid');
   if (!grid) return;
   if (!fx.length) {
-    grid.innerHTML = `<div class="smo-empty-box">NO MATCHES LISTED NOW</div>`;
+    grid.innerHTML = `
+    <div class="smo-empty-box smo-empty-today">
+      <span>No matches listed today</span>
+      <button type="button" class="smo-next-btn" onclick="openMatches()">▶ Watch Next Matches</button>
+    </div>`;
     if (typeof window.fcxAppendFixturesPreview === 'function') window.fcxAppendFixturesPreview();
     return;
   }
@@ -6392,10 +6583,10 @@ function renderFixtures(rows) {
            <div class="fx2-thumb-vs">VS</div>
            <div class="fx2-thumb-team">${img(c.team2_icon_url,c.team2_code||'','')}</div>
          </div>`;
-    const tag = isLive ? 'a' : 'div';
-    const clickAttr = isLive
-      ? ` href="${matchWatchHref(c.btn_url)}" onclick="return sxHandleMatchWatch(event,'${sxServersEnc(c)}','${escJs(c.btn_url)}','${escJs((c.team1_code||'')+' vs '+(c.team2_code||''))}','${sxMatchInfoEnc(c,(c.team1_code||'')+' vs '+(c.team2_code||''))}')"`
-      : ' style="cursor:default;"';
+    // Upcoming cards are clickable too now — they open the server selector
+    // with the red "Match will be live at …" notice instead of doing nothing.
+    const tag = 'a';
+    const clickAttr = ` href="${isLive ? matchWatchHref(c.btn_url) : 'javascript:void(0)'}" onclick="return sxHandleMatchWatch(event,'${sxServersEnc(c)}','${escJs(c.btn_url)}','${escJs((c.team1_code||'')+' vs '+(c.team2_code||''))}','${sxMatchInfoEnc(c,(c.team1_code||'')+' vs '+(c.team2_code||''))}')"`;
     return `
     <${tag} class="fx2-card"${clickAttr}>
       <div class="fx2-thumb">
