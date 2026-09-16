@@ -9065,6 +9065,10 @@ function closeAdminChatDiscordPopup(){
   background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center;
 }
 .sp-rail-thumb img{ max-width: 100%; max-height: 100%; object-fit: contain; }
+/* FanCode entries (no team logos) show their banner instead — wider, and
+   cropped to fill rather than letterboxed like a small square team icon. */
+.sp-rail-thumb.sp-rail-thumb-banner{ width: 56px; height: 34px; }
+.sp-rail-thumb.sp-rail-thumb-banner img{ width: 100%; height: 100%; max-width: none; max-height: none; object-fit: cover; }
 .sp-rail-vs{ font-size: 8px; color: rgba(255,255,255,0.4); margin: 0 1px; flex-shrink: 0; }
 .sp-rail-info{ min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 2px; }
 .sp-rail-name{ font-size: 12px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -9078,6 +9082,15 @@ function closeAdminChatDiscordPopup(){
   text-transform: uppercase; padding: 11px; cursor: pointer; text-align: center;
 }
 .sp-rail-viewall:hover{ background: #FF5FA0; }
+.sp-ad-box{
+  margin: 10px 10px 14px; flex-shrink: 0;
+  border: 1px dashed rgba(240,79,140,0.35); border-radius: 6px;
+  padding: 16px 12px; text-align: center; background: rgba(240,79,140,0.05);
+}
+.sp-ad-title{ font-family: var(--cu-font,inherit); font-size: 11px; font-weight: 800; letter-spacing: .12em; color: rgba(240,79,140,0.75); margin-bottom: 6px; text-transform: uppercase; }
+.sp-ad-contact{ font-size: 10.5px; color: rgba(255,255,255,0.4); }
+.sp-ad-handle{ color: #F04F8C; font-weight: 700; }
+@media (max-width: 900px){ .sp-ad-box{ flex-shrink: 0; width: 180px; margin: 0 12px 0 0; } }
 @media (max-width: 900px){
   .sp-rail-viewall{ width: 160px; margin-top: 0; flex-shrink: 0; }
 }
@@ -9256,6 +9269,10 @@ function closeAdminChatDiscordPopup(){
       <span id="stream-player-rail-title">MORE CHANNELS</span>
     </div>
     <div id="stream-player-rail-list"></div>
+    <div class="sp-ad-box">
+      <div class="sp-ad-title">YOUR AD HERE</div>
+      <div class="sp-ad-contact">Contact Discord: <span class="sp-ad-handle">rishi.ev</span></div>
+    </div>
   </div>
 </div>
 
@@ -9490,8 +9507,8 @@ function populateStreamPlayerRail(type, currentLabel){
   if (titleEl) titleEl.textContent = isMatch ? 'MORE MATCHES' : 'MORE CHANNELS';
 
   if (isMatch) {
-    const list = (window._matchCardsData || []).filter(c => !isMatchFinished(c) && matchStatusText(c).toLowerCase() === 'live');
-    const items = list.map(c => {
+    const sheetList = (window._matchCardsData || []).filter(c => !isMatchFinished(c) && matchStatusText(c).toLowerCase() === 'live');
+    const sheetItems = sheetList.map(c => {
       const label = (c.team1_code||'') + ' vs ' + (c.team2_code||'');
       return `
       <button type="button" class="sp-rail-item${label===currentLabel?' active':''}" onclick="sxHandleMatchWatch(null,'${sxServersEnc(c)}','${escJs(c.btn_url)}','${escJs(label)}','${sxMatchInfoEnc(c,label)}')">
@@ -9502,6 +9519,28 @@ function populateStreamPlayerRail(type, currentLabel){
         </span>
       </button>`;
     }).join('');
+    // FanCode's own live matches were missing from this rail entirely —
+    // it only ever read window._matchCardsData (sheet rows). Merge in
+    // FanCode's live cache too, skip anything already listed as a sheet
+    // row (fcxHasSheetCard — same fixture-dedup rule used elsewhere), and
+    // skip the match currently playing. FanCode entries have no team
+    // logos, so they get the wide banner thumb instead of the small
+    // square team-icon thumb.
+    const fcxList = (window._fcxMatchesCache || []).filter(m =>
+      m.status === 'LIVE' &&
+      m.title !== currentLabel &&
+      (typeof fcxHasSheetCard !== 'function' || !fcxHasSheetCard(m))
+    );
+    const fcxItems = fcxList.map(m => `
+      <button type="button" class="sp-rail-item${m.title===currentLabel?' active':''}" onclick="fcxOpenWatchById('${escJs(String(m.id))}')">
+        <span class="sp-rail-thumb sp-rail-thumb-banner"><img src="${m.image}" alt="" onerror="this.style.display='none'"></span>
+        <span class="sp-rail-info">
+          <span class="sp-rail-name">${m.title}</span>
+          <span class="sp-rail-meta"><span class="sp-rail-live">LIVE</span>${m.tournament||''}</span>
+        </span>
+      </button>`
+    ).join('');
+    const items = sheetItems + fcxItems;
     const viewAll = `<button type="button" class="sp-rail-viewall" onclick="closeStreamPlayer();openMatches();">View All Matches</button>`;
     rail.innerHTML = (items || `<div class="sp-rail-empty">No other live matches right now</div>`) + viewAll;
   } else {
