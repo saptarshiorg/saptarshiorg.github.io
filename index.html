@@ -4782,6 +4782,20 @@ function sxReorderSectionLiveFirst(sectionEl) {
   live.concat(rest).forEach(c => sectionEl.appendChild(c));
 }
 
+// Generic "live floats to the top" reorder for any flat list of sibling
+// cards, keyed off whichever element actually carries the live indicator
+// (isLiveEl). Used to fix up spots where FanCode cards get merged into an
+// already-rendered list by simple DOM insertion (append/insertBefore)
+// instead of a full re-sort — which on its own could leave a live FanCode
+// card sitting under non-live cards that happened to render first.
+function sxFloatLiveCardsToTop(siblings, isLiveEl, moveFn) {
+  if (!siblings || siblings.length < 2) return;
+  const live = siblings.filter(isLiveEl);
+  if (!live.length || live.length === siblings.length) return;
+  const rest = siblings.filter(el => !isLiveEl(el));
+  live.concat(rest).forEach(moveFn);
+}
+
 function fcxTournamentGroups(){
   const all = window._fcxMatchesCache || [];
   if (!all.length) return [];
@@ -4898,6 +4912,17 @@ window.fcxAppendHomeSections = function(){
       if (sec) { sec.dataset.game = tournament; sec.dataset.sport = fcxResolveSport(fcxGroupCategory(cards)); }
     }
   });
+  // A brand-new FanCode-only section (no matching sheet section to merge
+  // into) was just appended at the very bottom of #match-overlay above —
+  // if it contains a live match, that would leave it stuck below other,
+  // non-live sheet sections. Float any section containing a live card
+  // back up above the ones that don't, same rule renderMatchCards()
+  // applies to its own sections on the initial render.
+  sxFloatLiveCardsToTop(
+    Array.from(el.querySelectorAll(':scope > .smo-section')),
+    sec => !!sec.querySelector(':scope > .smo-card[data-live="1"]'),
+    sec => el.appendChild(sec)
+  );
   timers.forEach(({ timerDisplayId, timerWrapId, badgeId, liveBadgeHtml, target }) => {
     setTimeout(() => {
       wireAutoLiveCountdown(target, { timerDisplayId, timerWrapId, badgeId, liveBadgeHtml });
@@ -4965,6 +4990,17 @@ window.fcxAppendFixturesPreview = function(){
   }).join('');
   if (viewAll) viewAll.insertAdjacentHTML('beforebegin', cardsHtml);
   else grid.insertAdjacentHTML('beforeend', cardsHtml);
+
+  // The FanCode cards just added were inserted right before "View All" —
+  // i.e. at the end of whatever sheet-driven cards render() already put
+  // in the grid — regardless of live status. Float any live card (sheet
+  // or FanCode) back up above the non-live ones so a live FanCode match
+  // never sits under an upcoming sheet match.
+  sxFloatLiveCardsToTop(
+    Array.from(grid.children).filter(c => c !== viewAll && c.classList.contains('fx2-card')),
+    c => !!c.querySelector('.fx2-badge-live'),
+    c => grid.insertBefore(c, viewAll || null)
+  );
 };
 
 // Re-appends the latest 3 FanCode matches as extra slides into the real,
