@@ -3092,129 +3092,65 @@ body::before{ display:none !important; }
     <img src="https://static.vecteezy.com/system/resources/previews/069/146/538/non_2x/fancode-app-icon-on-transparent-background-free-png.png" alt="FanCode" style="height:15px;width:15px;object-fit:contain;display:block;flex-shrink:0;border-radius: 8px;">
     FanCode
   </a>
-  <a class="wcs-btn" id="wcs-prime" data-sxtab="prime" href="#sxTabPanels" onclick="event.preventDefault();openPrime();">
-    <img src="https://static.vecteezy.com/system/resources/thumbnails/046/437/251/small_2x/amazon-prime-logo-free-png.png" alt="Prime Video" style="height:15px;width:15px;object-fit:contain;display:block;flex-shrink:0;border-radius: 8px;">
-    Prime Video
-  </a>
-  <a class="wcs-btn" id="wcs-willow" data-sxtab="willow" href="#sxTabPanels" onclick="event.preventDefault();openWillow();">
-    <img src="https://bobgoldpr.com/wp-content/uploads/2024/05/logo-transparent-cb-1.png" alt="Willow OTT" style="height:15px;width:15px;object-fit:contain;display:block;flex-shrink:0;border-radius: 8px;">
-    Willow OTT
-  </a>
 </div>
 
-<!-- ── Quick-strip buttons: skeuomorphic (raised/glossy) finish ──
-     Matches = saffron / white text. Live TV = white / dark-blue text.
-     News & FanCode keep a neutral dark-glass version of the same finish.
-     ID selectors + !important so this wins over the earlier flat-theme
-     passes regardless of where those rules sit in the stylesheet. -->
+<!-- ── Quick-strip buttons: flat finish (no gradients/inset shadows) ──
+     Matches = saffron flat / black text. Live TV = white flat / dark text.
+     FanCode = orange flat / white text.
+     ID selectors + !important so this wins over any earlier theme passes
+     regardless of where those rules sit in the stylesheet. -->
 <style>
 #watch-ch-strip .wcs-btn{
   border-radius: 999px !important;
   border: 1px solid rgba(255,255,255,0.14) !important;
-  transition: transform 0.15s var(--ease,ease), box-shadow 0.15s var(--ease,ease) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  transition: background-color 0.15s var(--ease,ease), opacity 0.15s var(--ease,ease) !important;
 }
-#watch-ch-strip .wcs-btn:active{ transform: translateY(1px) scale(0.98) !important; }
+#watch-ch-strip .wcs-btn:active{ opacity: 0.85 !important; }
 
 #wcs-matches{
-  background: linear-gradient(180deg,#FF8FBB 0%,#E0155F 45%,#8A0A49 100%) !important;
+  background: #E0155F !important;
   color: #000 !important;
   border-color: rgba(255,255,255,0.35) !important;
-  text-shadow: 0 1px 0 rgba(255,255,255,0.25) !important;
-  box-shadow:
-    0 1px 0 rgba(255,255,255,0.55) inset,
-    0 -3px 6px rgba(122,10,62,0.35) inset,
-    0 4px 10px rgba(224,21,95,0.40) !important;
 }
 #wcs-matches svg{ color:#000 !important; }
 #wcs-matches:hover,#wcs-matches:active{
-  background: linear-gradient(180deg,#FFB3CF 0%,#F04F8C 45%,#A0155B 100%) !important;
+  background: #F04F8C !important;
   color:#000 !important;
-  box-shadow:
-    0 1px 0 rgba(255,255,255,0.6) inset,
-    0 -3px 6px rgba(122,10,62,0.35) inset,
-    0 6px 16px rgba(224,21,95,0.55) !important;
 }
 
 #wcs-all{
-  background: linear-gradient(180deg,#ffffff 0%,#F1F3F8 45%,#E2E6EF 100%) !important;
+  background: #ffffff !important;
   color: #4A0A2C !important;
   border-color: rgba(74,10,44,0.18) !important;
-  box-shadow:
-    0 1px 0 rgba(255,255,255,0.9) inset,
-    0 -3px 6px rgba(180,190,210,0.6) inset,
-    0 4px 10px rgba(74,10,44,0.22) !important;
 }
 #wcs-all svg{ color:#4A0A2C !important; }
 #wcs-all:hover,#wcs-all:active{
-  background: linear-gradient(180deg,#ffffff 0%,#E9ECF4 45%,#D7DCEA 100%) !important;
+  background: #E9ECF4 !important;
   color:#4A0A2C !important;
-  box-shadow:
-    0 1px 0 rgba(255,255,255,0.9) inset,
-    0 -3px 6px rgba(180,190,210,0.6) inset,
-    0 6px 16px rgba(74,10,44,0.32) !important;
 }
 
 #wcs-news{
-  background: linear-gradient(180deg,#E0155F 0%,#B0124E 45%,#7A0A3E 100%) !important;
+  background: #B0124E !important;
   color: #fff !important;
   border-color: rgba(255,255,255,0.30) !important;
-  text-shadow: 0 1px 1px rgba(50,5,25,0.45) !important;
-  box-shadow:
-    0 1px 0 rgba(255,255,255,0.5) inset,
-    0 -3px 6px rgba(90,10,47,0.40) inset,
-    0 4px 10px rgba(224,21,95,0.40) !important;
 }
 #wcs-news svg{ color:#fff !important; }
 #wcs-news:hover,#wcs-news:active{
-  background: linear-gradient(180deg,#FF5FA0 0%,#E0155F 45%,#A0155B 100%) !important;
+  background: #E0155F !important;
   color:#fff !important;
-  box-shadow:
-    0 1px 0 rgba(255,255,255,0.55) inset,
-    0 -3px 6px rgba(90,10,47,0.40) inset,
-    0 6px 16px rgba(224,21,95,0.55) !important;
 }
 
+/* FanCode — flat orange background, white text */
 #wcs-fancode{
-  background: linear-gradient(180deg,#3A3A42 0%,#232328 45%,#000000 100%) !important;
+  background: #FF6B00 !important;
   color: #fff !important;
   border-color: rgba(255,255,255,0.16) !important;
-  box-shadow:
-    0 1px 0 rgba(255,255,255,0.18) inset,
-    0 -3px 6px rgba(0,0,0,0.45) inset,
-    0 4px 10px rgba(0,0,0,0.35) !important;
 }
 #wcs-fancode:hover,#wcs-fancode:active{
-  background: linear-gradient(180deg,#46464F 0%,#2B2B31 45%,#000000 100%) !important;
+  background: #E85F00 !important;
   color:#fff !important;
-  box-shadow:
-    0 1px 0 rgba(255,255,255,0.22) inset,
-    0 -3px 6px rgba(0,0,0,0.45) inset,
-    0 6px 16px rgba(240,79,140,0.30) !important;
-}
-#wcs-prime,#wcs-willow{
-  background: linear-gradient(180deg,#3A3A42 0%,#232328 45%,#000000 100%) !important;
-  color: #fff !important;
-  border-color: rgba(255,255,255,0.16) !important;
-  box-shadow:
-    0 1px 0 rgba(255,255,255,0.18) inset,
-    0 -3px 6px rgba(0,0,0,0.45) inset,
-    0 4px 10px rgba(0,0,0,0.35) !important;
-}
-#wcs-prime:hover,#wcs-prime:active{
-  background: linear-gradient(180deg,#46464F 0%,#2B2B31 45%,#000000 100%) !important;
-  color:#fff !important;
-  box-shadow:
-    0 1px 0 rgba(255,255,255,0.22) inset,
-    0 -3px 6px rgba(0,0,0,0.45) inset,
-    0 6px 16px rgba(0,168,225,0.30) !important;
-}
-#wcs-willow:hover,#wcs-willow:active{
-  background: linear-gradient(180deg,#46464F 0%,#2B2B31 45%,#000000 100%) !important;
-  color:#fff !important;
-  box-shadow:
-    0 1px 0 rgba(255,255,255,0.22) inset,
-    0 -3px 6px rgba(0,0,0,0.45) inset,
-    0 6px 16px rgba(240,79,140,0.30) !important;
 }
 </style>
 
@@ -5742,7 +5678,7 @@ function sxMatchInfoEnc(m, name) {
     date_label: smoCardDateLabel(m), details: m.details || '',
     countdown: m.countdown_to_iso_datetime || m.countdown_to || '',
     status: matchStatusText(m).toLowerCase(),
-    banner: m.banner_image_url || m._fcxBanner || ''
+    banner: m.banner_url || m.banner_image_url || m._fcxBanner || ''
   };
   return encodeURIComponent(JSON.stringify(info));
 }
@@ -6364,6 +6300,34 @@ function sxIsTodayMatch(c) {
   if (matchStatusText(c).toLowerCase() === 'live') return true;
   return sxIsSameLocalDay(sxMatchStartDate(c));
 }
+// A card counts as "tomorrow's" when its scheduled start falls on the
+// calendar day right after today (local time).
+function sxIsNextLocalDay(d) {
+  if (!d || isNaN(d.getTime())) return false;
+  const t = new Date();
+  t.setDate(t.getDate() + 1);
+  return d.getFullYear() === t.getFullYear()
+      && d.getMonth() === t.getMonth()
+      && d.getDate() === t.getDate();
+}
+function sxIsNextDayMatch(c) {
+  return sxIsNextLocalDay(sxMatchStartDate(c));
+}
+// From 10 PM (22:00) local time onward, tomorrow's matches are allowed to
+// start showing on the home screen preview alongside today's — so the
+// home screen "warms up" with next-day fixtures the night before instead
+// of the preview going empty/thin late at night.
+function sxNextDayPreviewUnlocked() {
+  return new Date().getHours() >= 22;
+}
+// Home-screen eligibility: live matches always qualify; same-day matches
+// always qualify; next-day matches only qualify once the 10 PM unlock
+// above has kicked in.
+function sxIsHomeEligibleMatch(c) {
+  if (matchStatusText(c).toLowerCase() === 'live') return true;
+  if (sxIsSameLocalDay(sxMatchStartDate(c))) return true;
+  return sxNextDayPreviewUnlocked() && sxIsNextDayMatch(c);
+}
 function fcxIsTodayMatch(m) {
   if (!m) return false;
   if (m.status === 'LIVE') return true;
@@ -6669,21 +6633,27 @@ function renderMatchCards(rows) {
   const sportOf = c => (c.sport || c.sports || '').trim() || 'Other';
 
   // ── Live-first ordering ──────────────────────────────────────────
-  // 1) Within each game group, live matches sort before upcoming,
-  //    and finished matches sort last.
+  // 1) Within each game/category group: LIVE matches first, then
+  //    today's UPCOMING matches (soonest start first), then tomorrow's
+  //    (and later) UPCOMING matches (also soonest-first), and FINISHED
+  //    matches last.
   // 2) Groups (game categories) that contain at least one live match
   //    are moved ahead of groups that don't — so the category tabs
   //    and the sections on the page both show "what's live" first.
   //    Ties keep their original sheet order (stable sort).
-  const cardRank = c => {
+  const cardDayTier = c => {
     const s = matchStatusText(c).toLowerCase();
     if (s === 'live') return 0;
-    if (isMatchFinished(c)) return 2;
-    return 1;
+    if (isMatchFinished(c)) return 3;
+    return sxIsSameLocalDay(sxMatchStartDate(c)) ? 1 : 2; // 1 = today, 2 = next day+
+  };
+  const cardStartMs = c => {
+    const d = sxMatchStartDate(c);
+    return d ? d.getTime() : Infinity;
   };
   const groupEntries = Array.from(groups.entries());
   groupEntries.forEach(([, groupCards]) => {
-    groupCards.sort((a, b) => cardRank(a) - cardRank(b));
+    groupCards.sort((a, b) => cardDayTier(a) - cardDayTier(b) || cardStartMs(a) - cardStartMs(b));
   });
   groupEntries.sort((a, b) => {
     const aHasLive = a[1].some(c => matchStatusText(c).toLowerCase() === 'live') ? 0 : 1;
@@ -6723,9 +6693,10 @@ function renderMatchCards(rows) {
       const detailsHtml = c.details ? `<div class="smo-details">${c.details}</div>` : '';
       const teamsLine = `${c.team1_full_name||c.team1_code||''} vs ${c.team2_full_name||c.team2_code||''}`;
       // Banner takes priority over the two-team-logo layout when there is
-      // one — either the sheet's own banner_image_url, or (as a fallback)
-      // the banner from a cross-matched FanCode stream for this fixture.
-      const bannerSrc = c.banner_image_url || c._fcxBanner || '';
+      // one — either the sheet's own banner_url/banner_image_url column,
+      // or (as a fallback) the banner from a cross-matched FanCode stream
+      // for this fixture.
+      const bannerSrc = c.banner_url || c.banner_image_url || c._fcxBanner || '';
       const thumbInner = bannerSrc
         ? `<img src="${bannerSrc}" alt="${escJs(teamsLine)}" class="fx2-thumb-img" onerror="this.style.display='none'">`
         : `<div class="fx2-thumb-teams">
@@ -6937,28 +6908,39 @@ function renderFixtures(rows) {
   // sheet — kept short on purpose ("View All" opens the full Matches
   // page). The full list lives in the Matches overlay.
   //
-  // Ordering priority for the home preview (live-first, like the full
-  // Matches page):
-  //   1) Any category branded "WORLD CUP" (or just "WORL") that's LIVE
-  //   2) Any other LIVE match
-  //   3) Any category branded "WORLD CUP" that's UPCOMING
-  //   4) Any other UPCOMING match
-  // Finished matches never appear on the home preview. If nothing is
-  // live or upcoming, the section shows a "NO MATCHES LISTED" message
-  // instead of an empty grid.
+  // Ordering priority for the home preview:
+  //   1) LIVE matches first (WORLD CUP-branded live ahead of other live)
+  //   2) Today's UPCOMING matches next, soonest start time first
+  //   3) Tomorrow's UPCOMING matches last — these only appear at all once
+  //      it's past 10 PM the previous day (see sxNextDayPreviewUnlocked),
+  //      also soonest-start-first
+  // Finished matches never appear on the home preview. If nothing
+  // qualifies, the section shows a "NO MATCHES LISTED" message instead of
+  // an empty grid.
   const isWorldCup = c => /worl/i.test(c.game || '');
   const isLiveCard = c => matchStatusText(c).toLowerCase() === 'live';
-  const fixtureRank = c => {
-    if (isLiveCard(c)) return isWorldCup(c) ? 0 : 1;
-    return isWorldCup(c) ? 2 : 3;
+  const fixtureDayTier = c => {
+    if (isLiveCard(c)) return 0;
+    return sxIsSameLocalDay(sxMatchStartDate(c)) ? 1 : 2; // 1 = today, 2 = tomorrow
   };
-  // Home screen shows TODAY'S matches only — anything scheduled for a
-  // later date is left for the full Matches page ("Watch Next Matches").
+  const fixtureRank = c => {
+    const tier = fixtureDayTier(c);
+    if (tier === 0) return isWorldCup(c) ? 0 : 1; // live
+    if (tier === 1) return isWorldCup(c) ? 2 : 3; // today, upcoming
+    return isWorldCup(c) ? 4 : 5;                 // tomorrow, upcoming
+  };
+  const fixtureStartMs = c => {
+    const d = sxMatchStartDate(c);
+    return d ? d.getTime() : Infinity;
+  };
+  // Home screen shows live + today's matches, plus tomorrow's matches once
+  // the 10 PM unlock has kicked in — anything further out is left for the
+  // full Matches page ("Watch Next Matches").
   const source = (window._matchCardsData || [])
     .filter(c => !isMatchFinished(c))
-    .filter(sxIsTodayMatch)
+    .filter(sxIsHomeEligibleMatch)
     .slice()
-    .sort((a, b) => fixtureRank(a) - fixtureRank(b));
+    .sort((a, b) => fixtureRank(a) - fixtureRank(b) || fixtureStartMs(a) - fixtureStartMs(b));
   const fx = source.slice(0, 11);
   const grid = document.getElementById('fixtures-grid');
   if (!grid) return;
@@ -6973,8 +6955,8 @@ function renderFixtures(rows) {
   }
   grid.innerHTML = fx.map(c => {
     const isLive = matchStatusText(c).toLowerCase() === 'live';
-    const thumb = (c.banner_image_url || c._fcxBanner)
-      ? `<img src="${c.banner_image_url || c._fcxBanner}" alt="" class="fx2-thumb-img" onerror="this.style.display='none'">`
+    const thumb = (c.banner_url || c.banner_image_url || c._fcxBanner)
+      ? `<img src="${c.banner_url || c.banner_image_url || c._fcxBanner}" alt="" class="fx2-thumb-img" onerror="this.style.display='none'">`
       : `<div class="fx2-thumb-teams">
            <div class="fx2-thumb-team">${img(c.team1_icon_url,c.team1_code||'','')}</div>
            <div class="fx2-thumb-vs">VS</div>
