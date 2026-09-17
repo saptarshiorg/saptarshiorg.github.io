@@ -2415,118 +2415,6 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
   .mtab-movies-label { font-family: var(--font-googlesans); font-weight: 700; font-size: 11px; letter-spacing: 0.2px; color: #E0155F; text-transform: uppercase; line-height: 1; animation: moviesGlow 1.8s ease-in-out infinite; }
   .mtab-movies .movies-logo-icon { width: 22px; height: 22px; object-fit: contain; border-radius: 8px; display: block; }
   .mtab-movies.active .movies-logo-icon,.mtab-movies:active .movies-logo-icon { filter: drop-shadow(0 0 8px rgba(240,79,140,0.65)); }
-  /* Video LAN TV Tab — Orange VLC color */
-  .mtab-videolan { color: #FF8700; }
-  .mtab-videolan.active, .mtab-videolan:hover { color: #FFB347; }
-  .mtab-videolan img { filter: drop-shadow(0 0 2px rgba(255,135,0,0.4)); transition: filter 0.2s var(--ease); }
-  .mtab-videolan.active img, .mtab-videolan:hover img { filter: drop-shadow(0 0 8px rgba(255,135,0,0.8)); }
-
-/* ═══════════════════════════════════════════════════════════════════════
-   VIDEO LAN TV PANEL
-═══════════════════════════════════════════════════════════════════════ */
-.videolan-panel {
-  display: none; position: fixed; inset: 0; z-index: 9500;
-  flex-direction: column; background: #0a0a0d;
-}
-.videolan-panel.open { display: flex !important; animation: slideUp 0.25s var(--ease); }
-.videolan-bg {
-  position: absolute; inset: 0; z-index: 0;
-  background: linear-gradient(135deg, rgba(255,135,0,0.05) 0%, rgba(255,135,0,0.02) 100%);
-}
-.videolan-hdr {
-  flex-shrink: 0; padding: 20px 20px 16px; border-bottom: 1px solid rgba(255,135,0,0.15);
-  position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between;
-}
-.videolan-hdr-left {
-  display: flex; align-items: center; gap: 14px;
-}
-.videolan-logo {
-  width: 40px; height: 40px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(255,135,0,0.4));
-}
-.videolan-title {
-  font-family: var(--font-display); font-size: 20px; font-weight: 800; letter-spacing: 0.03em;
-  color: #FFB347; text-transform: uppercase;
-}
-.videolan-content {
-  flex: 1 1 auto; overflow-y: auto; position: relative; z-index: 1;
-}
-.videolan-ch-section { padding: 20px; }
-.videolan-ch-hdr {
-  display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;
-  padding-bottom: 12px; border-bottom: 1px solid rgba(255,135,0,0.1);
-}
-.videolan-ch-hdr-title {
-  font-family: var(--font-display); font-size: 12px; font-weight: 700;
-  letter-spacing: 1px; text-transform: uppercase; color: rgba(255,143,187,0.7);
-}
-.videolan-ch-count {
-  font-size: 12px; color: #FFB347; font-weight: 700;
-}
-.videolan-search {
-  width: 100%; padding: 10px 14px; border: 1px solid rgba(255,135,0,0.2);
-  border-radius: 8px; background: rgba(255,135,0,0.05); color: #fff;
-  font-family: var(--font-body); font-size: 13px;
-  transition: all 0.2s var(--ease);
-}
-.videolan-search::placeholder { color: rgba(255,135,0,0.4); }
-.videolan-search:focus {
-  outline: none; border-color: rgba(255,135,0,0.5); background: rgba(255,135,0,0.1);
-  box-shadow: 0 0 12px rgba(255,135,0,0.2);
-}
-.videolan-ch-list {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px;
-}
-.videolan-ch-card {
-  display: flex; flex-direction: column; padding: 12px; border-radius: 8px;
-  background: rgba(255,135,0,0.08); border: 1px solid rgba(255,135,0,0.15);
-  cursor: pointer; transition: all 0.18s var(--ease); text-decoration: none; color: inherit;
-}
-.videolan-ch-card:hover {
-  background: rgba(255,135,0,0.15); border-color: rgba(255,135,0,0.35);
-  box-shadow: 0 0 12px rgba(255,135,0,0.2); transform: translateY(-2px);
-}
-.videolan-ch-card:active { transform: scale(0.98); }
-.videolan-ch-name {
-  font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 8px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.videolan-ch-category {
-  font-size: 10px; color: #FFB347; text-transform: uppercase; letter-spacing: 0.5px;
-  margin-bottom: 10px; font-weight: 600;
-}
-.videolan-ch-actions {
-  display: flex; gap: 6px; margin-top: auto;
-}
-.videolan-btn {
-  flex: 1; padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(255,135,0,0.3);
-  background: rgba(255,135,0,0.15); color: #FFB347; font-size: 11px; font-weight: 700;
-  cursor: pointer; transition: all 0.15s var(--ease); text-align: center;
-  font-family: var(--font-body); text-transform: uppercase; letter-spacing: 0.4px;
-}
-.videolan-btn:hover {
-  background: #FF8700; color: #fff; border-color: #FF8700;
-}
-.videolan-btn:active { transform: scale(0.95); }
-.videolan-btn-copy { flex: 1.2; }
-.videolan-loading {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 60px 20px; gap: 16px; color: #FFB347; text-align: center;
-  font-size: 14px; font-weight: 600;
-}
-.videolan-empty {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 40px 20px; gap: 12px; color: rgba(255,143,187,0.6); text-align: center;
-}
-.videolan-empty svg { width: 48px; height: 48px; opacity: 0.5; }
-@media(max-width: 900px) {
-  .videolan-ch-list { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
-  .videolan-ch-card { padding: 10px; }
-  .videolan-ch-name { font-size: 12px; }
-  .videolan-btn { font-size: 10px; padding: 7px 8px; }
-}
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
 
   /* Push page content above the fixed bar */
   body { padding-bottom: 60px; }
@@ -3664,7 +3552,6 @@ function sxSwitchTab(name){
   if (name === 'prime') { openPrime(); return; }
   if (name === 'willow') { openWillow(); return; }
   if (name === 'fifa') { openFifa(); return; }
-  if (name === 'videolan') { openVideoLanTV(); return; }
 }
 window.sxSwitchTab = sxSwitchTab;
 </script>
@@ -4901,9 +4788,15 @@ window.smoMatchExistingGame = smoMatchExistingGame;
 // sitting under sheet cards that just happened to render first.
 function sxSortCardsLiveThenTime(cards, moveFn) {
   if (!cards || cards.length < 2) return;
-  const rank = c => c.dataset.live === '1' ? 0 : 1;
+  // 3-tier: LIVE(0) < upcoming(1) < finished(2) — a finished card's start
+  // time is in the past, so without this it would sort AHEAD of upcoming
+  // cards (smaller ms) inside a merged section. data-finished is stamped
+  // on every card (sheet + FanCode) that can carry a FINISHED badge.
+  const rank = c => c.dataset.live === '1' ? 0 : (c.dataset.finished === '1' ? 2 : 1);
   const startMs = c => { const v = c.dataset.startMs; return (v !== undefined && v !== '' && !isNaN(Number(v))) ? Number(v) : Infinity; };
-  cards.slice().sort((a, b) => rank(a) - rank(b) || startMs(a) - startMs(b)).forEach(moveFn);
+  // True tie-break: a FanCode-sourced card wins over a sheet/"iso" card.
+  const isFcx = c => (c.classList.contains('fcx-smo-card') || c.classList.contains('fcx-fixture-card')) ? 0 : 1;
+  cards.slice().sort((a, b) => rank(a) - rank(b) || startMs(a) - startMs(b) || isFcx(a) - isFcx(b)).forEach(moveFn);
 }
 // Section-scoped convenience wrapper (Matches tab: sheet + merged-in
 // FanCode cards inside the same game/category section).
@@ -4925,6 +4818,41 @@ function sxFloatLiveCardsToTop(siblings, isLiveEl, moveFn) {
   if (!live.length || live.length === siblings.length) return;
   const rest = siblings.filter(el => !isLiveEl(el));
   live.concat(rest).forEach(moveFn);
+}
+// Full section-level reorder for the Matches tab ("All" view), combining
+// BOTH sheet-driven ("iso"/MATCH CARDS) sections and FanCode-only sections
+// into ONE ordering — replaces sxFloatLiveCardsToTop's boolean-only pass,
+// which kept sheet sections and appended FanCode sections as two separate
+// blocks and never sorted the non-live ones by how soon they start. Rule
+// (mirrors the per-card rule sxSortCardsLiveThenTime already applies inside
+// each section):
+//   1) any section containing a LIVE match, first
+//   2) sections with at least one still-upcoming (non-live, non-finished)
+//      match — soonest start time across the section, ascending, so e.g.
+//      an Oct 2 tournament lists before an Oct 3 one regardless of source
+//   3) sections that are entirely FINISHED matches — pushed to the bottom
+// A FanCode-only section (.fcx-smo-section) wins a true tie over a sheet
+// section, so an equally-soon FanCode fixture surfaces first.
+function sxReorderAllSectionsLiveThenTime(container) {
+  if (!container) return;
+  const secs = Array.from(container.querySelectorAll(':scope > .smo-section'));
+  if (secs.length < 2) return;
+  const info = secs.map(sec => {
+    const cards = Array.from(sec.querySelectorAll(':scope > .smo-card'));
+    const hasLive = cards.some(c => c.dataset.live === '1');
+    const activeCards = cards.filter(c => c.dataset.finished !== '1');
+    const hasUpcoming = activeCards.some(c => c.dataset.live !== '1');
+    const tier = hasLive ? 0 : (hasUpcoming ? 1 : 2);
+    const relevant = activeCards.length ? activeCards : cards;
+    let soonest = Infinity;
+    relevant.forEach(c => {
+      const v = Number(c.dataset.startMs);
+      if (!isNaN(v)) soonest = Math.min(soonest, v);
+    });
+    return { sec, tier, soonest, isFcx: sec.classList.contains('fcx-smo-section') ? 0 : 1 };
+  });
+  info.sort((a, b) => a.tier - b.tier || a.soonest - b.soonest || a.isFcx - b.isFcx);
+  info.forEach(i => container.appendChild(i.sec));
 }
 
 function fcxTournamentGroups(){
@@ -4951,10 +4879,26 @@ function fcxTournamentGroups(){
     // Within same status: sort UPCOMING matches by date ascending (soonest first)
     return fcxStartMs(a) - fcxStartMs(b); // Secondary sort by time ascending
   }));
-  entries.sort((a,b) => {
-    const aLive = a[1].some(m => m.status === 'LIVE') ? 0 : 1;
-    const bLive = b[1].some(m => m.status === 'LIVE') ? 0 : 1;
-    return aLive - bLive;
+  // Group-level ordering: LIVE groups first; among the rest, groups that
+  // still have an UPCOMING match sort by that match's soonest start time
+  // ascending (not just "has live" true/false); groups that are entirely
+  // COMPLETED sink to the very end. Matches the sheet-side groupEntries
+  // rule in renderMatchCards() so both sources order the same way before
+  // sxReorderAllSectionsLiveThenTime does the final cross-source merge.
+  const groupTier = cards => {
+    if (cards.some(m => m.status === 'LIVE')) return 0;
+    if (cards.some(m => m.status !== 'COMPLETED')) return 1;
+    return 2;
+  };
+  const groupSoonest = cards => {
+    const upcoming = cards.filter(m => m.status !== 'COMPLETED');
+    const pool = upcoming.length ? upcoming : cards;
+    return pool.reduce((min, m) => Math.min(min, fcxStartMs(m)), Infinity);
+  };
+  entries.sort((a, b) => {
+    const tierA = groupTier(a[1]), tierB = groupTier(b[1]);
+    if (tierA !== tierB) return tierA - tierB;
+    return groupSoonest(a[1]) - groupSoonest(b[1]);
   });
   return entries;
 }
@@ -5012,7 +4956,7 @@ window.fcxAppendHomeSections = function(){
       // whether or not this particular match has a countdown to show.
       const timerBlock = `<div class="smo-timer" id="${timerWrapId}" style="visibility:${countdown ? 'visible' : 'hidden'}"><div class="timer-label">STARTS IN</div><div class="timer-display" id="${timerId}">--:--:--</div></div>`;
       cardsHtml += `
-      <div class="smo-card fx2-card${existingSec ? ' fcx-smo-card' : ''}" data-live="${isLive?'1':'0'}" data-start-ms="${fcxStartMs(m)}">
+      <div class="smo-card fx2-card${existingSec ? ' fcx-smo-card' : ''}" data-live="${isLive?'1':'0'}" data-finished="${isFinished?'1':'0'}" data-start-ms="${fcxStartMs(m)}">
         <div class="fx2-thumb">
           <img src="${m.image}" alt="${escJs(m.title)}" class="fx2-thumb-img" onerror="this.style.display='none'">
           ${badge}
@@ -5050,17 +4994,14 @@ window.fcxAppendHomeSections = function(){
       if (sec) { sec.dataset.game = tournament; sec.dataset.sport = fcxResolveSport(fcxGroupCategory(cards)); }
     }
   });
-  // A brand-new FanCode-only section (no matching sheet section to merge
-  // into) was just appended at the very bottom of #match-overlay above —
-  // if it contains a live match, that would leave it stuck below other,
-  // non-live sheet sections. Float any section containing a live card
-  // back up above the ones that don't, same rule renderMatchCards()
-  // applies to its own sections on the initial render.
-  sxFloatLiveCardsToTop(
-    Array.from(el.querySelectorAll(':scope > .smo-section')),
-    sec => !!sec.querySelector(':scope > .smo-card[data-live="1"]'),
-    sec => el.appendChild(sec)
-  );
+  // Every section is now in the DOM — sheet-driven sections (possibly with
+  // FanCode cards merged straight in above) AND brand-new FanCode-only
+  // sections appended just above. Do ONE full reorder across all of them —
+  // live first, then ascending by soonest upcoming start time, finished
+  // last — instead of the old boolean-only float, which only ever floated
+  // live sections up and left the rest (sheet vs FanCode) as two separate,
+  // un-interleaved blocks.
+  sxReorderAllSectionsLiveThenTime(el);
   timers.forEach(({ timerDisplayId, timerWrapId, badgeId, liveBadgeHtml, target }) => {
     setTimeout(() => {
       wireAutoLiveCountdown(target, { timerDisplayId, timerWrapId, badgeId, liveBadgeHtml });
@@ -6929,10 +6870,28 @@ function renderMatchCards(rows) {
       return cardStartMs(a) - cardStartMs(b);
     });
   });
+  // Group-level ordering: LIVE groups first; among the rest, groups that
+  // still have an UPCOMING match sort by that match's soonest start time
+  // ascending (not just "has live" true/false, which left upcoming groups
+  // in arbitrary sheet-row order); groups that are entirely FINISHED sink
+  // to the very end. Final say on the merged (sheet + FanCode) order still
+  // belongs to sxReorderAllSectionsLiveThenTime, called at the end of this
+  // function via fcxAppendHomeSections — this just makes the sheet-only
+  // starting order correct too.
+  const groupTier = groupCards => {
+    if (groupCards.some(c => matchStatusText(c).toLowerCase() === 'live')) return 0;
+    if (groupCards.some(c => !isMatchFinished(c))) return 1;
+    return 2;
+  };
+  const groupSoonest = groupCards => {
+    const upcoming = groupCards.filter(c => !isMatchFinished(c));
+    const pool = upcoming.length ? upcoming : groupCards;
+    return pool.reduce((min, c) => Math.min(min, cardStartMs(c)), Infinity);
+  };
   groupEntries.sort((a, b) => {
-    const aHasLive = a[1].some(c => matchStatusText(c).toLowerCase() === 'live') ? 0 : 1;
-    const bHasLive = b[1].some(c => matchStatusText(c).toLowerCase() === 'live') ? 0 : 1;
-    return aHasLive - bHasLive;
+    const tierA = groupTier(a[1]), tierB = groupTier(b[1]);
+    if (tierA !== tierB) return tierA - tierB;
+    return groupSoonest(a[1]) - groupSoonest(b[1]);
   });
 
   groupEntries.forEach(([gameName, groupCards]) => {
@@ -6980,7 +6939,7 @@ function renderMatchCards(rows) {
           </div>`;
 
       sectionHtml += `
-      <div class="smo-card fx2-card" id="${cardId}" data-live="${isLive ? '1' : '0'}" data-start-ms="${cardStartMs(c)}"${hideAt !== null ? ` data-expire-at="${hideAt}"` : ''}>
+      <div class="smo-card fx2-card" id="${cardId}" data-live="${isLive ? '1' : '0'}" data-finished="${isFinished ? '1' : '0'}" data-start-ms="${cardStartMs(c)}"${hideAt !== null ? ` data-expire-at="${hideAt}"` : ''}>
         <div class="fx2-thumb">
           ${thumbInner}
           ${badge}
@@ -7781,33 +7740,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
-  <!-- VIDEO LAN TV PANEL -->
-  <div id="videolan-panel" class="videolan-panel">
-    <div id="videolan-bg" class="videolan-bg"></div>
-    <div id="videolan-hdr" class="videolan-hdr">
-      <div class="videolan-hdr-left">
-        <img src="https://images.icon-icons.com/1381/PNG/512/vlc_93519.png" alt="Video LAN" class="videolan-logo">
-        <div class="videolan-title">Video LAN TV</div>
-      </div>
-    </div>
-    <div id="videolan-content" class="videolan-content">
-      <div id="videolan-ch-section" class="videolan-ch-section">
-        <div class="videolan-ch-hdr">
-          <span class="videolan-ch-hdr-title">IPTV Channels</span>
-          <span id="videolan-ch-count" class="videolan-ch-count">Loading...</span>
-          <input type="text" id="videolan-search" class="videolan-search" placeholder="Search channels..." />
-        </div>
-        <div id="videolan-ch-list" class="videolan-ch-list">
-          <div class="videolan-loading">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;">
-              <circle cx="12" cy="12" r="1"></circle><path d="M12 2v6M12 16v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24M2 12h6M16 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24"></path>
-            </svg>
-            Loading channels...
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+<!-- MOBILE BOTTOM TAB BAR — Hotstar-style -->
 <nav class="mobile-tabbar" id="mobile-tabbar">
   <a class="mtab active" data-sxtab="matches" href="#sxTabPanels" onclick="event.preventDefault();sxSwitchTab('matches');">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/><circle cx="9" cy="14" r="1"/><circle cx="15" cy="14" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></svg>
@@ -7829,10 +7762,6 @@ document.addEventListener('DOMContentLoaded', () => {
   <a class="mtab mtab-movies" data-sxtab="movies" href="#sxTabPanels" onclick="event.preventDefault();openMoviesOverlay();">
     <img class="movies-logo-icon" src="https://static.vecteezy.com/system/resources/thumbnails/050/699/896/small/movie-night-illustration-cinema-poster-concept-banner-design-for-movie-theater-png.png" alt="Movies">
     <span class="mtab-movies-label">Movies</span>
-  </a>
-  <a class="mtab mtab-videolan" data-sxtab="videolan" href="#sxTabPanels" onclick="event.preventDefault();openVideoLanTV();">
-    <img src="https://images.icon-icons.com/1381/PNG/512/vlc_93519.png" alt="Video LAN TV" style="width:22px;height:22px;object-fit:contain;display:block;margin:0 auto 1px;">
-    Video LAN
   </a>
 </nav>
 <script>
@@ -10647,203 +10576,6 @@ function closeFifa(){
   document.body.style.overflow = '';
   sxHeaderHome();
 }
-
-// ═══════════════════════════════════════════════════════════════════════
-// VIDEO LAN TV — IPTV Channel Browser
-// ═══════════════════════════════════════════════════════════════════════
-window._videolanChannels = []; // Cache fetched channels
-
-async function openVideoLanTV(){
-  const panel = document.getElementById('videolan-panel');
-  if (!panel) return;
-  
-  sxCloseAllOverlays();
-  sxPlayPanelIntro();
-  panel.classList.add('open');
-  document.body.style.overflow = 'hidden';
-  window.scrollTo(0,0);
-  document.querySelectorAll('[data-sxtab]').forEach(el => el.classList.toggle('active', el.dataset.sxtab === 'videolan'));
-  
-  // Load channels if not cached
-  if (window._videolanChannels.length === 0) {
-    await videolanFetchChannels();
-  } else {
-    videolanRenderChannels(window._videolanChannels);
-  }
-}
-
-function closeVideoLanTV(){
-  const panel = document.getElementById('videolan-panel');
-  if (panel) panel.classList.remove('open');
-  document.body.style.overflow = '';
-  sxHeaderHome();
-}
-
-// Fetch and parse m3u8 from IPTV-ORG
-async function videolanFetchChannels(){
-  const listEl = document.getElementById('videolan-ch-list');
-  const countEl = document.getElementById('videolan-ch-count');
-  
-  if (!listEl) return;
-  
-  listEl.innerHTML = '<div class="videolan-loading"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="1"></circle><path d="M12 2v6M12 16v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24M2 12h6M16 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24"></path></svg>Loading channels...</div>';
-  
-  try {
-    const response = await fetch('https://iptv-org.github.io/iptv/index.category.m3u');
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    
-    const m3uText = await response.text();
-    const channels = videolanParseM3U(m3uText);
-    
-    window._videolanChannels = channels;
-    console.log('[VIDEO LAN TV] Loaded', channels.length, 'channels');
-    
-    videolanRenderChannels(channels);
-    if (countEl) countEl.textContent = channels.length + ' CHANNELS';
-  } catch (err) {
-    console.error('[VIDEO LAN TV] Failed to load channels:', err);
-    listEl.innerHTML = '<div class="videolan-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"></circle><line x1="12" y1="2" x2="12" y2="22"></line><line x1="4.22" y1="4.22" x2="19.78" y2="19.78"></line><line x1="19.78" y1="4.22" x2="4.22" y2="19.78"></line></svg><div>Failed to load channels</div><small>Check your internet connection</small></div>';
-  }
-}
-
-// Parse M3U format
-function videolanParseM3U(m3uText) {
-  const channels = [];
-  const lines = m3uText.split('\n');
-  let currentInfo = null;
-  
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    
-    if (line.startsWith('#EXTINF:')) {
-      // Parse channel info: #EXTINF:-1 group-title="Category" tvg-logo="URL",Channel Name
-      const match = line.match(/group-title="([^"]*)"/) || line.match(/tvg-name="([^"]*)"/);
-      const category = match ? match[1] : 'Other';
-      const nameMatch = line.split(',').pop();
-      currentInfo = { category, name: nameMatch ? nameMatch.trim() : 'Unknown' };
-    } else if (line && !line.startsWith('#') && currentInfo) {
-      // This is the stream URL
-      channels.push({
-        ...currentInfo,
-        url: line
-      });
-      currentInfo = null;
-    }
-  }
-  
-  return channels.sort((a, b) => a.name.localeCompare(b.name));
-}
-
-// Render channels in grid
-function videolanRenderChannels(channels) {
-  const listEl = document.getElementById('videolan-ch-list');
-  if (!listEl) return;
-  
-  if (channels.length === 0) {
-    listEl.innerHTML = '<div class="videolan-empty" style="grid-column: 1 / -1;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2m0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8m0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6"></path></svg><div>No channels found</div></div>';
-    return;
-  }
-  
-  listEl.innerHTML = channels.map((ch, idx) => `
-    <a class="videolan-ch-card" href="javascript:void(0);" onclick="event.preventDefault();">
-      <div class="videolan-ch-category">${ch.category}</div>
-      <div class="videolan-ch-name">${ch.name}</div>
-      <div class="videolan-ch-actions">
-        <button class="videolan-btn" onclick="videolanCopyLink('${escJs(ch.url)}')" title="Copy stream URL">📋 Copy</button>
-        <button class="videolan-btn" onclick="videolanOpenStream('${escJs(ch.url)}', '${escJs(ch.name)}')" title="Open in player">▶ Open</button>
-      </div>
-    </a>
-  `).join('');
-}
-
-// Copy stream URL to clipboard
-function videolanCopyLink(url) {
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(url).then(() => {
-      // Show toast feedback
-      const toast = document.createElement('div');
-      toast.style.cssText = 'position:fixed;bottom:20px;right:20px;padding:12px 20px;background:#FF8700;color:#fff;border-radius:8px;font-size:12px;z-index:10000;animation:slideIn 0.3s ease;';
-      toast.textContent = '✓ Link copied!';
-      document.body.appendChild(toast);
-      setTimeout(() => toast.remove(), 2000);
-    }).catch(() => videolanFallbackCopy(url));
-  } else {
-    videolanFallbackCopy(url);
-  }
-}
-
-function videolanFallbackCopy(url) {
-  const textarea = document.createElement('textarea');
-  textarea.value = url;
-  textarea.style.position = 'fixed';
-  document.body.appendChild(textarea);
-  textarea.select();
-  try {
-    document.execCommand('copy');
-    const toast = document.createElement('div');
-    toast.style.cssText = 'position:fixed;bottom:20px;right:20px;padding:12px 20px;background:#FF8700;color:#fff;border-radius:8px;font-size:12px;z-index:10000;';
-    toast.textContent = '✓ Link copied!';
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 2000);
-  } catch (e) {
-    console.error('Copy failed:', e);
-  }
-  document.body.removeChild(textarea);
-}
-
-// Open stream URL in appropriate player
-function videolanOpenStream(url, name) {
-  const isMobile = /iPhone|iPad|Android|Mobile/.test(navigator.userAgent);
-  
-  if (isMobile) {
-    // Mobile: Try VLC first, fallback to MX Player, then direct open
-    const vlcUri = 'vlc://open?mrl=' + encodeURIComponent(url);
-    const mxUri = 'intent://' + encodeURIComponent(url) + '#Intent;package=com.mxtech.videoplayer.ad;scheme=http;end';
-    
-    // Try VLC
-    window.location.href = vlcUri;
-    
-    // Fallback to MX Player after 1.5s
-    setTimeout(() => {
-      window.location.href = mxUri;
-    }, 1500);
-    
-    // Final fallback to direct stream
-    setTimeout(() => {
-      window.open(url, '_blank');
-    }, 3000);
-  } else {
-    // Desktop: Open with VLC protocol or fallback to default player
-    const vlcUri = 'vlc://open?mrl=' + encodeURIComponent(url);
-    window.location.href = vlcUri;
-    
-    // Fallback to default browser player after 1s
-    setTimeout(() => {
-      window.open(url, '_blank');
-    }, 1000);
-  }
-}
-
-// Search channels
-document.addEventListener('DOMContentLoaded', () => {
-  const searchInput = document.getElementById('videolan-search');
-  if (searchInput) {
-    searchInput.addEventListener('input', (e) => {
-      const query = e.target.value.toLowerCase();
-      const channels = window._videolanChannels;
-      
-      if (!query) {
-        videolanRenderChannels(channels);
-      } else {
-        const filtered = channels.filter(ch => 
-          ch.name.toLowerCase().includes(query) || 
-          ch.category.toLowerCase().includes(query)
-        );
-        videolanRenderChannels(filtered);
-      }
-    });
-  }
-});
 </script>
 
 <!-- ══════════════════════════════════════════════════════════════════════
