@@ -3519,7 +3519,7 @@ window.addEventListener('resize', () => {
 //    keep their own in-page Back button, and sit above the nav bar (so the
 //    nav bar isn't shown while inside them).
 function sxCloseAllOverlays(){
-  const ids = ['livetv-overlay','movies-overlay','fifa-overlay','ott-overlay','fancode-overlay','prime-overlay','willow-overlay','adminchat-overlay'];
+  const ids = ['livetv-overlay','movies-overlay','fifa-overlay','ott-overlay','iptv-overlay','fancode-overlay','prime-overlay','willow-overlay','adminchat-overlay'];
   ids.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.remove('open');
@@ -3536,7 +3536,7 @@ window.sxCloseAllOverlays = sxCloseAllOverlays;
 //    matter which page or popup is on screen, tapping Home tears every one
 //    of them down — nothing is left stacked above the home page's z-index.
 const SX_ALL_OVERLAY_IDS = [
-  'livetv-overlay','movies-overlay','fifa-overlay','ott-overlay','fancode-overlay',
+  'livetv-overlay','movies-overlay','fifa-overlay','ott-overlay','iptv-overlay','fancode-overlay',
   'prime-overlay','willow-overlay','vip-overlay','vip-player-overlay',
   'stream-player-overlay','adminchat-overlay','adminchat-discord-popup',
   'va-tv-modal','sx-cast-help-overlay','dmca-overlay'
@@ -3598,6 +3598,7 @@ window.addEventListener('resize', function(){
 function sxSwitchTab(name){
   if (name === 'matches') { openMatches(); return; }
   if (name === 'ott') { openOTT(); return; }
+  if (name === 'iptv') { openIPTV(); return; }
   if (name === 'fancode') { openFanCode(); return; }
   if (name === 'prime') { openPrime(); return; }
   if (name === 'willow') { openWillow(); return; }
@@ -4261,11 +4262,429 @@ window.sxSwitchTab = sxSwitchTab;
             <div class="ott-desc">Sports & Cricket</div>
             <button class="ott-btn" onclick="event.stopPropagation();openFanCode();">Open</button>
           </div>
+          <!-- VIDEO LAN IPTV -->
+          <div class="ott-card-full" role="button" onclick="openIPTV();">
+            <div class="ott-logo-wrap">
+              <img src="https://images.icon-icons.com/70/PNG/512/vlc_14079.png" alt="VIDEO LAN IPTV">
+            </div>
+            <div class="ott-name">VIDEO LAN IPTV</div>
+            <div class="ott-desc">Global live channels — VLC & MX Player</div>
+            <button class="ott-btn" onclick="event.stopPropagation();openIPTV();">Open</button>
+          </div>
         </div>
       </div>
     </section>
   </div>
 </div><!-- /ott-overlay -->
+
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   VIDEO LAN IPTV — full-screen in-site tab (own UI, not ev-iptv's page).
+   Pulls the same IPTV-ORG master playlist, but styled with the site's
+   own black/magenta theme + font-display, and opened/closed exactly like
+   the other section overlays (Live TV / OTT) via sxHeaderInto so the
+   normal site header + nav stay pinned at the top.
+═══════════════════════════════════════════════════════════════════════ */
+#iptv-overlay{
+  display: none; position: fixed; inset: 0; z-index: 1220;
+  background: #000000; overflow-y: auto; -webkit-overflow-scrolling: touch;
+}
+#iptv-overlay.open{ display: block; }
+#iptv-topbar{ display: none; }
+#iptv-page-inner{ padding: 0 0 40px; }
+@media(max-width:900px){
+  #iptv-page-inner{ padding-bottom: calc(60px + env(safe-area-inset-bottom, 0)); }
+}
+
+.iptv-head{ padding: 28px 20px 18px; }
+.iptv-head h2{ font-family:var(--font-display); font-weight:900; font-size:clamp(22px,5vw,34px); color:#fff; letter-spacing:0.02em; margin:0; }
+.iptv-head p{ font-size:13px; color:rgba(255,255,255,0.65); margin:8px 0 0; }
+
+.iptv-controls{
+  display:flex; gap:10px; flex-wrap:wrap;
+  padding: 0 20px 18px;
+  position: sticky; top: 0; z-index: 8;
+  background: linear-gradient(180deg,#000 78%,transparent);
+}
+.iptv-controls input[type="text"]{
+  flex:1; min-width:180px;
+  background: var(--s2,rgba(255,255,255,0.06));
+  border: 1px solid var(--s3,rgba(255,255,255,0.08));
+  color:#fff; font-family:var(--font-body,inherit); font-size:13px;
+  padding:11px 14px; border-radius:8px; outline:none;
+}
+.iptv-controls input[type="text"]:focus{ border-color: var(--cu-accent,#F04F8C); }
+.iptv-controls select{
+  background: var(--s2,rgba(255,255,255,0.06));
+  border: 1px solid var(--s3,rgba(255,255,255,0.08));
+  color:#fff; font-family:var(--font-body,inherit); font-size:13px;
+  padding:11px 14px; border-radius:8px; outline:none; min-width:170px;
+}
+.iptv-controls select:focus{ border-color: var(--cu-accent,#F04F8C); }
+
+#iptv-status{ padding: 50px 20px; text-align:center; color:rgba(255,255,255,0.55); font-size:13px; }
+#iptv-status .iptv-spinner{
+  width:26px; height:26px; margin:0 auto 14px;
+  border:3px solid rgba(255,255,255,0.12); border-top-color: var(--cu-accent,#F04F8C);
+  border-radius:50%; animation: iptvSpin .8s linear infinite;
+}
+@keyframes iptvSpin{ to{ transform:rotate(360deg); } }
+#iptv-status.error{ color:#FF6B6B; }
+#iptv-status button.iptv-retry{
+  margin-top:14px; background: var(--cu-accent,#F04F8C); color:#fff; border:none;
+  font-family:var(--font-display); font-weight:800; font-size:12px; letter-spacing:0.03em;
+  padding:10px 20px; border-radius:8px; cursor:pointer;
+}
+
+#iptv-grid-wrap{ display:none; padding: 0 20px; }
+.iptv-cat-section{ margin-bottom:30px; }
+.iptv-cat-heading{
+  display:flex; align-items:baseline; gap:10px;
+  padding:8px 0 12px; border-bottom:2px solid var(--cu-accent,#F04F8C);
+  margin-bottom:14px; position:sticky; top:58px; background:#000; z-index:5;
+}
+.iptv-cat-heading h3{ font-family:var(--font-display); font-weight:900; font-size:13px; text-transform:uppercase; letter-spacing:0.05em; color: var(--cu-accent,#F04F8C); }
+.iptv-cat-heading span{ font-size:11px; color:rgba(255,255,255,0.45); font-weight:700; }
+
+.iptv-chan-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(190px,1fr)); gap:12px; }
+.iptv-chan-card{
+  background: var(--glass,rgba(255,255,255,0.03));
+  border:1px solid var(--s3,rgba(255,255,255,0.08));
+  border-radius:10px; overflow:hidden; display:flex; flex-direction:column;
+  box-shadow: 0 6px 22px rgba(0,0,0,0.6);
+  transition: all 0.25s var(--spring,ease);
+}
+.iptv-chan-card:hover{ transform: translateY(-3px); border-color: rgba(240,79,140,0.35); box-shadow: 0 14px 36px rgba(0,0,0,0.75); }
+.iptv-chan-logo{
+  height:74px; background:#0a0a0a; display:flex; align-items:center; justify-content:center;
+  border-bottom:1px solid var(--s3,rgba(255,255,255,0.08));
+}
+.iptv-chan-logo img{ max-width:78%; max-height:50px; object-fit:contain; }
+.iptv-chan-body{ padding:10px 12px 12px; display:flex; flex-direction:column; gap:7px; flex:1; }
+.iptv-chan-group{ font-size:9.5px; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color: var(--cu-accent,#F04F8C); }
+.iptv-chan-name{ font-family:var(--font-body,inherit); font-size:12.5px; font-weight:700; color:#fff; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.iptv-chan-actions{ margin-top:auto; display:flex; flex-wrap:wrap; gap:6px; }
+.iptv-btn{
+  flex:1 1 auto; min-width:0;
+  display:flex; align-items:center; justify-content:center; gap:5px;
+  border:1px solid var(--s3,rgba(255,255,255,0.08)); background:transparent; color:#fff;
+  font-family:var(--font-display); font-weight:700; font-size:10.5px; letter-spacing:0.02em;
+  padding:8px 6px; border-radius:6px; cursor:pointer; white-space:nowrap;
+}
+.iptv-btn img{ width:12px; height:12px; object-fit:contain; flex-shrink:0; }
+.iptv-btn.iptv-vlc{ background: var(--cu-accent,#F04F8C); border-color: var(--cu-accent,#F04F8C); }
+.iptv-btn.iptv-vlc:active{ filter:brightness(1.15); }
+.iptv-btn.iptv-mx{ border-color: rgba(255,255,255,0.18); }
+.iptv-btn.iptv-mx:active{ border-color: var(--cu-accent,#F04F8C); }
+.iptv-btn.iptv-copy{ flex-basis:100%; }
+.iptv-btn.iptv-copy.copied{ background: var(--cu-accent,#F04F8C); border-color: var(--cu-accent,#F04F8C); }
+
+#iptv-no-results{ display:none; text-align:center; padding:50px 20px; color:rgba(255,255,255,0.5); font-size:13px; }
+
+#iptv-toast{
+  position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px);
+  background: var(--cu-accent,#F04F8C); color:#fff; font-family:var(--font-display); font-weight:800;
+  font-size:12px; letter-spacing:0.02em; padding:12px 22px; border-radius:8px;
+  opacity:0; transition:opacity .2s, transform .2s; pointer-events:none; z-index:1400;
+}
+#iptv-toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+@media(max-width:480px){
+  .iptv-head{ padding:20px 16px 14px; }
+  .iptv-controls{ padding:0 16px 14px; }
+  #iptv-grid-wrap{ padding:0 16px; }
+}
+</style>
+
+<div id="iptv-overlay">
+  <div id="iptv-topbar">
+    <span id="iptv-topbar-title">VIDEO LAN IPTV</span>
+  </div>
+  <div id="iptv-page-inner">
+    <div class="iptv-head">
+      <h2>📡 VIDEO LAN IPTV</h2>
+      <p>Live global channels via the IPTV-ORG playlist — open in VLC, MX Player, or copy the stream link.</p>
+    </div>
+    <div class="iptv-controls">
+      <input type="text" id="iptvSearch" placeholder="Search channels..." autocomplete="off">
+      <select id="iptvCategoryFilter"><option value="">All Categories</option></select>
+    </div>
+    <div id="iptv-status">
+      <div class="iptv-spinner"></div>
+      Fetching channels — this may take a moment for the full playlist…
+    </div>
+    <div id="iptv-grid-wrap">
+      <div id="iptv-sections"></div>
+      <div id="iptv-no-results">No channels match your search.</div>
+    </div>
+  </div>
+</div><!-- /iptv-overlay -->
+<div id="iptv-toast"></div>
+
+<script>
+(function(){
+  var IPTV_M3U_URL = "https://iptv-org.github.io/iptv/index.category.m3u";
+  var IPTV_VLC_ICON = "https://images.icon-icons.com/70/PNG/512/vlc_14079.png";
+  var IPTV_FALLBACK_LOGO = "data:image/svg+xml;utf8," + encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23F04F8C" stroke-width="1.5"><rect x="2" y="5" width="20" height="14" rx="0"/><path d="M8 2l4 3 4-3"/></svg>'
+  );
+
+  var iptvChannels = [];
+  var iptvGroupOrder = [];
+  var iptvLoaded = false;
+  window.__iptvInit = function(){
+    if (iptvLoaded) return;
+    iptvLoaded = true;
+    iptvFetchPlaylist();
+  };
+
+  function iptvEl(id){ return document.getElementById(id); }
+
+  function iptvFetchPlaylist(){
+    var statusEl = iptvEl('iptv-status');
+    statusEl.classList.remove('error');
+    statusEl.innerHTML = '<div class="iptv-spinner"></div>Fetching channels — this may take a moment for the full playlist…';
+    fetch(IPTV_M3U_URL, {cache:"force-cache"})
+      .then(function(res){
+        if(!res.ok) throw new Error('HTTP ' + res.status);
+        return res.text();
+      })
+      .then(function(text){
+        iptvChannels = iptvParseM3U(text);
+        if(iptvChannels.length === 0) throw new Error('No channels parsed from playlist');
+        iptvOnLoaded();
+      })
+      .catch(function(err){
+        statusEl.classList.add('error');
+        statusEl.innerHTML = 'Could not load the playlist (' + iptvEscapeHtml(err.message) +
+          ').<br>This can happen if the source is temporarily unreachable or blocked.<br>' +
+          '<button class="iptv-retry" id="iptvRetryBtn">Retry</button>';
+        iptvEl('iptvRetryBtn').onclick = function(){ iptvLoaded = false; window.__iptvInit(); };
+      });
+  }
+
+  function iptvParseM3U(text){
+    var lines = text.split(/\r?\n/);
+    var channels = [];
+    var current = null;
+    for(var i = 0; i < lines.length; i++){
+      var line = lines[i].trim();
+      if(!line) continue;
+      if(line.indexOf('#EXTINF') === 0){
+        current = { name: 'Unknown Channel', logo: '', group: 'Uncategorized', url: '' };
+        var logoMatch = line.match(/tvg-logo="([^"]*)"/i);
+        if(logoMatch) current.logo = logoMatch[1];
+        var groupMatch = line.match(/group-title="([^"]*)"/i);
+        if(groupMatch && groupMatch[1]) current.group = groupMatch[1];
+        var commaIdx = line.lastIndexOf(',');
+        if(commaIdx !== -1){
+          current.name = line.substring(commaIdx + 1).trim() || 'Unknown Channel';
+        }
+      } else if(line.indexOf('#') === 0){
+        continue;
+      } else {
+        if(current){ current.url = line; channels.push(current); current = null; }
+      }
+    }
+    return channels;
+  }
+
+  function iptvOnLoaded(){
+    iptvEl('iptv-status').style.display = 'none';
+    iptvEl('iptv-grid-wrap').style.display = 'block';
+
+    var byGroup = {};
+    iptvChannels.forEach(function(c){
+      if(!byGroup[c.group]) byGroup[c.group] = [];
+      byGroup[c.group].push(c);
+    });
+    iptvGroupOrder = Object.keys(byGroup).sort(function(a,b){ return a.localeCompare(b); });
+    var sel = iptvEl('iptvCategoryFilter');
+    sel.innerHTML = '<option value="">All Categories</option>';
+    iptvGroupOrder.forEach(function(g){
+      var opt = document.createElement('option');
+      opt.value = g;
+      opt.textContent = g + ' (' + byGroup[g].length + ')';
+      sel.appendChild(opt);
+    });
+    iptvChannels._byGroup = byGroup;
+    iptvRenderAll();
+  }
+
+  function iptvRenderAll(){
+    var q = iptvEl('iptvSearch').value.trim().toLowerCase();
+    var cat = iptvEl('iptvCategoryFilter').value;
+    var byGroup = iptvChannels._byGroup || {};
+    var groupsToRender = cat ? [cat] : iptvGroupOrder;
+
+    var frag = document.createDocumentFragment();
+    var totalShown = 0;
+
+    groupsToRender.forEach(function(g){
+      var list = byGroup[g] || [];
+      var matches = q ? list.filter(function(c){ return c.name.toLowerCase().indexOf(q) !== -1; }) : list;
+      if(matches.length === 0) return;
+      totalShown += matches.length;
+
+      var section = document.createElement('div');
+      section.className = 'iptv-cat-section';
+
+      var heading = document.createElement('div');
+      heading.className = 'iptv-cat-heading';
+      var h3 = document.createElement('h3');
+      h3.textContent = g;
+      var span = document.createElement('span');
+      span.textContent = matches.length.toLocaleString() + ' channels';
+      heading.appendChild(h3);
+      heading.appendChild(span);
+
+      var chanGrid = document.createElement('div');
+      chanGrid.className = 'iptv-chan-grid';
+      var cardFrag = document.createDocumentFragment();
+      matches.forEach(function(c){ cardFrag.appendChild(iptvBuildCard(c)); });
+      chanGrid.appendChild(cardFrag);
+
+      section.appendChild(heading);
+      section.appendChild(chanGrid);
+      frag.appendChild(section);
+    });
+
+    var sectionsEl = iptvEl('iptv-sections');
+    sectionsEl.innerHTML = '';
+    sectionsEl.appendChild(frag);
+    iptvEl('iptv-no-results').style.display = (totalShown === 0) ? 'block' : 'none';
+  }
+
+  // MX Player (Android) is opened via its documented intent/view-url
+  // scheme, falling back to a plain video-url open for iOS/desktop where
+  // MX Player doesn't exist — VLC's own vlc:// scheme is used unchanged.
+  function iptvIsAndroid(){ return /Android/i.test(navigator.userAgent); }
+
+  function iptvBuildCard(c){
+    var card = document.createElement('div');
+    card.className = 'iptv-chan-card';
+
+    var logoBox = document.createElement('div');
+    logoBox.className = 'iptv-chan-logo';
+    var img = document.createElement('img');
+    img.src = c.logo || IPTV_FALLBACK_LOGO;
+    img.loading = 'lazy';
+    img.alt = c.name;
+    img.onerror = function(){ this.onerror = null; this.src = IPTV_FALLBACK_LOGO; };
+    logoBox.appendChild(img);
+
+    var body = document.createElement('div');
+    body.className = 'iptv-chan-body';
+
+    var group = document.createElement('div');
+    group.className = 'iptv-chan-group';
+    group.textContent = c.group;
+
+    var name = document.createElement('div');
+    name.className = 'iptv-chan-name';
+    name.title = c.name;
+    name.textContent = c.name;
+
+    var actions = document.createElement('div');
+    actions.className = 'iptv-chan-actions';
+
+    var vlcBtn = document.createElement('button');
+    vlcBtn.className = 'iptv-btn iptv-vlc';
+    var coneImg = document.createElement('img');
+    coneImg.src = IPTV_VLC_ICON;
+    coneImg.alt = '';
+    coneImg.onerror = function(){ this.style.display = 'none'; };
+    vlcBtn.appendChild(coneImg);
+    vlcBtn.appendChild(document.createTextNode('VLC'));
+    vlcBtn.onclick = function(){ window.location.href = 'vlc://' + c.url; };
+
+    var mxBtn = document.createElement('button');
+    mxBtn.className = 'iptv-btn iptv-mx';
+    mxBtn.textContent = 'MX Player';
+    mxBtn.onclick = function(){
+      if (iptvIsAndroid()){
+        var intentUrl = 'intent:' + c.url +
+          '#Intent;package=com.mxtech.videoplayer.ad;S.title=' + encodeURIComponent(c.name) +
+          ';scheme=' + (c.url.indexOf('https') === 0 ? 'https' : 'http') + ';end';
+        window.location.href = intentUrl;
+        // If MX Player (or the ad-free build) isn't installed, fall back
+        // to the free variant's package after a short delay.
+        setTimeout(function(){
+          window.location.href = 'intent:' + c.url +
+            '#Intent;package=com.mxtech.videoplayer.pro;S.title=' + encodeURIComponent(c.name) +
+            ';scheme=' + (c.url.indexOf('https') === 0 ? 'https' : 'http') + ';end';
+        }, 800);
+      } else {
+        iptvShowToast('MX Player opens on Android — copying the link instead');
+        iptvCopyToClipboard(c.url);
+      }
+    };
+
+    var copyBtn = document.createElement('button');
+    copyBtn.className = 'iptv-btn iptv-copy';
+    copyBtn.textContent = 'Copy Link';
+    copyBtn.onclick = function(){
+      iptvCopyToClipboard(c.url);
+      var original = copyBtn.textContent;
+      copyBtn.textContent = 'Copied!';
+      copyBtn.classList.add('copied');
+      setTimeout(function(){ copyBtn.textContent = original; copyBtn.classList.remove('copied'); }, 1200);
+      iptvShowToast('Link copied to clipboard');
+    };
+
+    actions.appendChild(vlcBtn);
+    actions.appendChild(mxBtn);
+    actions.appendChild(copyBtn);
+
+    body.appendChild(group);
+    body.appendChild(name);
+    body.appendChild(actions);
+
+    card.appendChild(logoBox);
+    card.appendChild(body);
+    return card;
+  }
+
+  function iptvCopyToClipboard(text){
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).catch(function(){ iptvFallbackCopy(text); });
+    } else {
+      iptvFallbackCopy(text);
+    }
+  }
+  function iptvFallbackCopy(text){
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try{ document.execCommand('copy'); }catch(e){}
+    document.body.removeChild(ta);
+  }
+
+  function iptvShowToast(msg){
+    var toast = iptvEl('iptv-toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(iptvShowToast._t);
+    iptvShowToast._t = setTimeout(function(){ toast.classList.remove('show'); }, 1800);
+  }
+
+  function iptvEscapeHtml(s){
+    var d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  var iptvDebounce;
+  iptvEl('iptvSearch').addEventListener('input', function(){
+    clearTimeout(iptvDebounce);
+    iptvDebounce = setTimeout(iptvRenderAll, 200);
+  });
+  iptvEl('iptvCategoryFilter').addEventListener('change', iptvRenderAll);
+})();
+</script>
 
 <style>
 #fancode-overlay{
@@ -5563,6 +5982,7 @@ function renderNav(rows) {
     { label:'Live TV',  href:'#sxTabPanels', sxtab:'livetv', onclick:"openLiveTV();return false;" },
     { label:'Matches',  href:'#sxTabPanels', sxtab:'matches', onclick:"sxSwitchTab('matches');return false;" },
     { label:'OTT',      href:'#sxTabPanels', sxtab:'ott', onclick:"openOTT();return false;" },
+    { label:'IPTV',     href:'#sxTabPanels', sxtab:'iptv', onclick:"openIPTV();return false;" },
   ];
   let dHtml = '', mHtml = '';
   NAV_ITEMS.forEach((r, i) => {
@@ -10666,6 +11086,21 @@ function openOTT(){
 }
 function closeOTT(){
   document.getElementById('ott-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  sxHeaderHome();
+}
+function openIPTV(){
+  sxCloseAllOverlays();
+  sxPlayPanelIntro();
+  document.getElementById('iptv-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  window.scrollTo(0,0);
+  document.querySelectorAll('[data-sxtab]').forEach(el => el.classList.toggle('active', el.dataset.sxtab === 'iptv'));
+  sxHeaderInto('iptv-overlay', 'iptv-topbar');
+  if (typeof window.__iptvInit === 'function') window.__iptvInit();
+}
+function closeIPTV(){
+  document.getElementById('iptv-overlay').classList.remove('open');
   document.body.style.overflow = '';
   sxHeaderHome();
 }
