@@ -2030,8 +2030,12 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
 .mws-server-thumb img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; transition: transform 0.3s var(--ease); }
 .mws-server-btn:hover .mws-server-thumb img { transform: scale(1.08); }
 @media (max-width: 480px) { .mws-server-thumb { width: 78px; } }
-.mws-server-btn-fcx { padding: 14px 16px; border-left-color: #F5C518; }
+.mws-server-btn-fcx { padding: 14px 18px; border-left-color: #F5C518; min-height: 76px; }
 .mws-server-btn-fcx:hover { border-left-color: #F5C518; }
+.mws-server-logo-lg {
+  height: 56px; width: auto; max-width: 150px; flex-shrink: 0;
+  object-fit: contain; background: transparent; padding: 0; border-radius: 0;
+}
 .mws-server-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .mws-server-label { font-size: 14px; font-weight: 700; letter-spacing: 0.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mws-server-sub { font-size: 10px; color: rgba(255,255,255,0.4); letter-spacing: 0.04em; }
@@ -6180,7 +6184,7 @@ function openMatchWatchScreen(servers, info) {
           : ` type="button" onclick="mwsLockedServerTap(this)"`;
         return `
         <button class="mws-server-btn mws-server-btn-fcx${fcxReady ? '' : ' mws-server-locked'}"${clickAttr}>
-          <span class="mws-server-thumb"><img src="${FCX_LOGO}" alt="FanCode" onerror="this.parentElement.style.display='none'"></span>
+          <img class="mws-server-logo-lg" src="${FCX_LOGO}" alt="FanCode" onerror="this.style.display='none'">
           <span class="mws-server-info">
             <span class="mws-server-label">${s.text || 'FanCode'}${priorityBadge}</span>
             <span class="mws-server-sub">${fcxReady ? 'Tap to play this stream' : (s.fcxTime ? 'Starts ' + s.fcxTime : 'Not live yet')}</span>
