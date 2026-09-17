@@ -4308,7 +4308,7 @@ window.sxSwitchTab = sxSwitchTab;
    now the full match-listing UI lives inline in the page). Every class
    and id is "fcx-" prefixed so nothing collides with the rest of the
    site's generic .card/.btn/.grid/.badge/.meta selectors. Cards route to
-   play.html — that player page is already set up separately.
+   slivplay.html — that player page is already set up separately.
 ═══════════════════════════════════════════════════════════════════════ */
 #fcx-root{ max-width: 1400px; margin: 0 auto; padding: 76px 20px 60px; }
 .fcx-search-wrap{ position: relative; width: 100%; max-width: 320px; margin: 0 0 20px; }
@@ -4446,10 +4446,10 @@ window.sxSwitchTab = sxSwitchTab;
     return `${dp}, ${h}:${mm} ${ap}`;
   }
 
-  // Cards/slides link straight into the existing play.html player — that
+  // Cards/slides link straight into the existing slivplay.html player — that
   // page is already set up separately and just needs the match id.
   function fcxPlayUrl(m){
-    return `play.html?id=${encodeURIComponent(m.id)}_eng&s=0`;
+    return `slivplay.html?id=${encodeURIComponent(m.id)}_eng&s=0`;
   }
 
   function fcxBuildSlide(m){
@@ -4623,7 +4623,7 @@ window.sxSwitchTab = sxSwitchTab;
 window._fcxMatchesCache = [];
 
 function fcxJsUrl(m){
-  return `play.html?id=${encodeURIComponent(m.id)}_eng&s=0`;
+  return `slivplay.html?id=${encodeURIComponent(m.id)}_eng&s=0`;
 }
 
 // ── FanCode category → sport (cross-merge with the sheet) ─────────────
@@ -5058,6 +5058,272 @@ window.fcxAppendHeroSlides = function(){
       dot.className = 'dot fcx-hero-dot';
       dot.onclick = () => { goSlide(idx); startSlider(); };
       // Keep the trailing "all channels" banner dot last.
+      if (dotsWrap.lastElementChild) dotsWrap.insertBefore(dot, dotsWrap.lastElementChild);
+      else dotsWrap.appendChild(dot);
+    }
+  });
+  totalSlides += picks.length;
+};
+
+// ══════════════════════════════════════════════════════════════════════
+// SONYLIV BRIDGE — same pattern as the FCX bridge above: a lightweight
+// live-events JSON feed (no dedicated browsing panel of its own), merged
+// into the Matches tab / hero slides / fixtures preview as its own source.
+// The feed has no per-match date/time field at all (unlike FanCode), so
+// there's no countdown timer for SonyLIV cards — just LIVE/UPCOMING state.
+// ══════════════════════════════════════════════════════════════════════
+const SONY_JSON_URL = 'https://raw.githubusercontent.com/kajju027/SonyLiv-Events-Json/refs/heads/main/sonyliv.json';
+window._sonyMatchesCache = [];
+let sonyRefreshTimer = null;
+
+// The feed's event_name is a free-text string like "Upcoming - 20th Asian
+// Games Aichi-Nagoya 2026 - India vs Japan" or, just as often, one with no
+// specific fixture at all ("Upcoming - India Tour of New Zealand"). Splits
+// off a trailing "TeamA vs TeamB" segment as the match title when present,
+// otherwise the whole cleaned string serves as both the tournament label
+// and the card title.
+function sonyParseName(eventName){
+  const cleaned = (eventName || '').replace(/^\s*(upcoming|live|completed)\s*-\s*/i, '').trim() || 'Match';
+  const parts = cleaned.split(' - ');
+  const last = parts[parts.length - 1] || '';
+  if (parts.length > 1 && /\bvs?\.?\b/i.test(last)) {
+    return { tournament: parts.slice(0, -1).join(' - ').trim() || cleaned, title: last.trim() };
+  }
+  return { tournament: cleaned, title: cleaned };
+}
+function sonyStatusMap(raw){
+  const s = (raw || '').trim().toLowerCase();
+  if (s === 'live') return 'LIVE';
+  if (s === 'completed' || s === 'finished' || s === 'over') return 'COMPLETED';
+  return 'UPCOMING';
+}
+function sonyLoad(){
+  fetch(SONY_JSON_URL).then(r => r.json()).then(data => {
+    window._sonyMatchesCache = (data.matches || []).map(m => {
+      const { tournament, title } = sonyParseName(m.event_name);
+      return {
+        id: m.match_id, title, tournament,
+        category: (m.category || '').trim(),
+        image: m.poster || '',
+        status: sonyStatusMap(m.status)
+      };
+    });
+    if (window._matchCardsRawRows && typeof renderMatchCards === 'function') {
+      renderMatchCards(window._matchCardsRawRows);
+    } else if (typeof window.sonyAppendHomeSections === 'function') {
+      window.sonyAppendHomeSections();
+    }
+    if (typeof window.sonyAppendHeroSlides === 'function') window.sonyAppendHeroSlides();
+    if (typeof window.sonyAppendFixturesPreview === 'function') window.sonyAppendFixturesPreview();
+  }).catch(err => console.error('SonyLIV load error:', err));
+}
+sonyLoad();
+sonyRefreshTimer = setInterval(sonyLoad, 30000);
+
+function sonyResolveSport(category){
+  const cat = (category || '').trim();
+  if (!cat) return 'Other';
+  const sheetSports = window._smoSheetSports || [];
+  const merged = sheetSports.find(sp => (sp || '').trim().toLowerCase() === cat.toLowerCase());
+  return merged || cat;
+}
+function sonyFindById(id){
+  return (window._sonyMatchesCache || []).find(m => String(m.id) === String(id)) || null;
+}
+function sonyJsUrl(m){
+  return `slivplay.html?id=sony_${encodeURIComponent(m.id)}_eng&s=0`;
+}
+// Opens the same full-screen server selector every other source uses.
+// SonyLIV events carry no team-icon fields at all — like FanCode, the
+// banner fallback layout always applies — and no date/time field either,
+// so there's no countdown to pass through.
+function sonyOpenWatchById(id){
+  const m = sonyFindById(id);
+  if (!m) return false;
+  const isLive = m.status === 'LIVE';
+  const servers = [{ url: sonyJsUrl(m), text: 'SonyLIV', fcxLive: isLive, fcxTime: '' }];
+  openMatchWatchScreen(servers, {
+    name: m.title || 'Live Stream',
+    fcxId: 'sony-' + m.id,
+    team1_code: '', team1_full_name: '', team1_icon_url: '',
+    team2_code: '', team2_full_name: '', team2_icon_url: '',
+    date_label: '', details: m.tournament || m.category || '',
+    countdown: '',
+    status: isLive ? 'live' : (m.status === 'COMPLETED' ? 'finished' : 'upcoming'),
+    banner: m.image || ''
+  });
+  return false;
+}
+function sonyStatusRank(m){
+  if (m.status === 'LIVE') return 0;
+  if (m.status === 'COMPLETED') return 2;
+  return 1;
+}
+function sonyWatchBtnHtml(m, cls){
+  cls = cls || 'smo-btn';
+  if (m.status === 'LIVE') {
+    return `<a class="${cls}" href="javascript:void(0)" onclick="event.stopPropagation();return sonyOpenWatchById('${escJs(String(m.id))}')">▶ Watch Now</a>`;
+  }
+  if (m.status === 'COMPLETED') {
+    return `<span class="${cls}" style="opacity:.5;pointer-events:none;">MATCH OVER</span>`;
+  }
+  return `<a class="${cls}" href="javascript:void(0)" onclick="event.stopPropagation();return sonyOpenWatchById('${escJs(String(m.id))}')">UPCOMING</a>`;
+}
+// Same fixture-dedup rule as fcxHasSheetCard — only fires when the parsed
+// title actually contains a "TeamA vs TeamB" pattern (most SonyLIV entries
+// are tour/series promos with no single fixture, so there's nothing to
+// dedup against for those; they just show as their own card).
+function sonyHasSheetCard(m){
+  const title = m.title || '';
+  if (!/\bvs?\.?\b/i.test(title)) return false;
+  const rows = window._matchCardsRawRows || [];
+  return rows.some(c =>
+    fcxTitleHasTeam(title, c.team1_code, c.team1_full_name) &&
+    fcxTitleHasTeam(title, c.team2_code, c.team2_full_name)
+  );
+}
+function sonyTournamentGroups(){
+  const all = window._sonyMatchesCache || [];
+  if (!all.length) return [];
+  const groups = new Map();
+  all.forEach(m => {
+    const cat = (m.category || '').trim() || 'Other';
+    const label = (m.tournament || '').trim() || cat;
+    const key = cat + '||' + label;
+    if (!groups.has(key)) groups.set(key, { label, cards: [] });
+    groups.get(key).cards.push(m);
+  });
+  const entries = Array.from(groups.values()).map(g => [g.label, g.cards]);
+  entries.forEach(([, cards]) => cards.sort((a,b) => sonyStatusRank(a) - sonyStatusRank(b)));
+  entries.sort((a,b) => {
+    const aLive = a[1].some(m => m.status === 'LIVE') ? 0 : 1;
+    const bLive = b[1].some(m => m.status === 'LIVE') ? 0 : 1;
+    return aLive - bLive;
+  });
+  return entries;
+}
+window.sonyAppendHomeSections = function(){
+  const el = document.getElementById('match-overlay');
+  if (!el) return;
+  el.querySelectorAll('.sony-smo-section').forEach(s => s.remove());
+  el.querySelectorAll('.sony-smo-card').forEach(c => c.remove());
+  const entries = sonyTournamentGroups();
+  if (!entries.length) return;
+
+  entries.forEach(([tournamentRaw, cardsAll]) => {
+    const cards = cardsAll.filter(m => !sonyHasSheetCard(m));
+    if (!cards.length) return;
+    const existingGameName = smoMatchExistingGame(
+      Array.from(el.querySelectorAll(':scope > .smo-section')).map(sec => sec.dataset.game || ''),
+      tournamentRaw
+    );
+    const existingSec = existingGameName
+      ? Array.from(el.querySelectorAll(':scope > .smo-section')).find(sec => sec.dataset.game === existingGameName)
+      : null;
+    const tournament = existingSec ? (existingSec.dataset.game || tournamentRaw) : tournamentRaw;
+    let cardsHtml = '';
+    cards.forEach(m => {
+      const isLive = m.status === 'LIVE';
+      const isFinished = m.status === 'COMPLETED';
+      const badge = isLive
+        ? `<span class="fx2-badge fx2-badge-live"><span class="fx2-live-dot"></span>LIVE</span>`
+        : isFinished
+        ? `<span class="fx2-badge">FINISHED</span>`
+        : `<span class="fx2-badge">UPCOMING</span>`;
+      cardsHtml += `
+      <div class="smo-card fx2-card${existingSec ? ' sony-smo-card' : ''}" data-live="${isLive?'1':'0'}">
+        <div class="fx2-thumb">
+          <img src="${m.image}" alt="${escJs(m.title)}" class="fx2-thumb-img" onerror="this.style.display='none'">
+          ${badge}
+        </div>
+        <div class="fx2-body">
+          <div class="fx2-title-row">
+            <div class="fx2-title">${m.title}</div>
+            <span class="fx2-free">FREE</span>
+          </div>
+          <div class="fx2-meta">
+            <span class="fx2-tag">${tournament}</span>
+          </div>
+          ${sonyWatchBtnHtml(m, 'smo-btn')}
+        </div>
+      </div>`;
+    });
+    if (existingSec) {
+      existingSec.insertAdjacentHTML('beforeend', cardsHtml);
+    } else {
+      el.insertAdjacentHTML('beforeend',
+        `<div class="smo-section sony-smo-section"><div class="smo-section-label">${tournament}</div>${cardsHtml}</div>`);
+      const secs = el.querySelectorAll('.sony-smo-section');
+      const sec = secs[secs.length - 1];
+      if (sec) { sec.dataset.game = tournament; sec.dataset.sport = sonyResolveSport(fcxGroupCategory(cards)); }
+    }
+  });
+  if (typeof smoApplyFilter === 'function') smoApplyFilter();
+};
+window.sonyAppendFixturesPreview = function(){
+  const grid = document.getElementById('fixtures-grid');
+  if (!grid) return;
+  grid.querySelectorAll('.sony-fx2-card').forEach(c => c.remove());
+  const list = (window._sonyMatchesCache || [])
+    .filter(m => m.status !== 'COMPLETED')
+    .filter(m => !sonyHasSheetCard(m))
+    .slice()
+    .sort((a,b) => sonyStatusRank(a) - sonyStatusRank(b))
+    .slice(0, 2);
+  list.forEach(m => {
+    const isLive = m.status === 'LIVE';
+    const badge = isLive
+      ? `<span class="fx2-badge fx2-badge-live"><span class="fx2-live-dot"></span>LIVE</span>`
+      : `<span class="fx2-badge">UPCOMING</span>`;
+    grid.insertAdjacentHTML('beforeend', `
+      <a href="javascript:void(0)" class="fx2-card sony-fx2-card" onclick="sonyOpenWatchById('${escJs(String(m.id))}')">
+        <div class="fx2-thumb">
+          <img src="${m.image}" alt="${escJs(m.title)}" class="fx2-thumb-img" onerror="this.style.display='none'">
+          ${badge}
+        </div>
+        <div class="fx2-body">
+          <div class="fx2-title-row"><div class="fx2-title">${m.title}</div><span class="fx2-free">FREE</span></div>
+          <div class="fx2-meta"><span class="fx2-tag">${m.tournament||''}</span></div>
+        </div>
+      </a>`);
+  });
+};
+window.sonyAppendHeroSlides = function(){
+  const container = document.getElementById('slides-container');
+  if (!container || typeof totalSlides === 'undefined') return;
+  container.querySelectorAll('.sony-hero-slide').forEach(s => s.remove());
+  container.querySelectorAll('.sony-hero-dot').forEach(d => d.remove());
+  const picks = (window._sonyMatchesCache || [])
+    .filter(m => m.status === 'LIVE')
+    .filter(m => !sonyHasSheetCard(m))
+    .slice(0, 2);
+  if (!picks.length) return;
+  const slides = container.querySelectorAll(':scope > .slide');
+  const bannerSlide = slides.length ? slides[slides.length - 1] : null;
+  const dotsWrap = container.querySelector('.slide-dots');
+  picks.forEach((m, j) => {
+    const idx = totalSlides + j;
+    const slide = document.createElement('div');
+    slide.className = 'slide sony-hero-slide';
+    slide.dataset.origTitle = '';
+    slide.innerHTML = `
+      <div class="slide-bg" style="background-image:url('${m.image}')"></div>
+      <div class="slide-overlay"></div>
+      <div class="slide-content">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;">
+          <span class="slide-sport-badge slide-badge-live">LIVE NOW</span>
+        </div>
+        <div class="slide-title">${m.title}</div>
+        <div class="slide-sub">${m.tournament||m.category||'Live Sports'}</div>
+        <div class="slide-btns">${sonyWatchBtnHtml(m, 'btn-slide-watch')}</div>
+      </div>`;
+    if (bannerSlide) container.insertBefore(slide, bannerSlide);
+    else if (dotsWrap) container.insertBefore(slide, dotsWrap);
+    else container.appendChild(slide);
+    if (dotsWrap) {
+      const dot = document.createElement('div');
+      dot.className = 'dot sony-hero-dot';
+      dot.onclick = () => { goSlide(idx); startSlider(); };
       if (dotsWrap.lastElementChild) dotsWrap.insertBefore(dot, dotsWrap.lastElementChild);
       else dotsWrap.appendChild(dot);
     }
@@ -6808,6 +7074,17 @@ function renderMatchCards(rows) {
       window._smoGameToSport[tournament] = sport;
     }
   });
+  // Same merge, same rules, for SonyLIV's tournaments.
+  const sonyGroups = (typeof sonyTournamentGroups === 'function') ? sonyTournamentGroups() : [];
+  sonyGroups.forEach(([tournament, sonyCards]) => {
+    const sport = sonyResolveSport(fcxGroupCategory(sonyCards));
+    if (!sportOrder.includes(sport)) sportOrder.push(sport);
+    const merged = smoMatchExistingGame(gameOrder, tournament);
+    if (!merged) {
+      gameOrder.push(tournament);
+      window._smoGameToSport[tournament] = sport;
+    }
+  });
 
   // ── Build/refresh the sport-selector toolbar (parent tier) ──
   smoBuildSportToolbar(sportOrder);
@@ -6859,9 +7136,10 @@ function renderMatchCards(rows) {
   smoApplyFilter();
 
   // This render just rebuilt #match-overlay from scratch (wiping any
-  // previously-appended FanCode section) — put it back using whatever FCX
-  // data is currently cached, so it survives this 30s cycle too.
+  // previously-appended FanCode/SonyLIV sections) — put them back using
+  // whatever data is currently cached, so they survive this 30s cycle too.
   if (typeof window.fcxAppendHomeSections === 'function') window.fcxAppendHomeSections();
+  if (typeof window.sonyAppendHomeSections === 'function') window.sonyAppendHomeSections();
 }
 
 function renderChannels(rows) {
