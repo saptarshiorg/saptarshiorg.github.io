@@ -1995,49 +1995,46 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
 .mws-timer-label { font-size: 9px; letter-spacing: 0.24em; text-transform: uppercase; color: rgba(255,255,255,0.4); }
 .mws-timer { font-family: var(--font-display); font-size: 22px; font-weight: 800; color: var(--cu-accent,#F04F8C); letter-spacing: 0.02em; }
 
-/* ── Server selector rows are now full-size CARDS: the channel logo fills
-   the whole card as its background image (cover), a bottom-to-top dark
-   scrim sits over it for legibility, and the channel name/sub-label is
-   overlaid as text at the bottom of the card — instead of the old small
-   left-hand icon + text row. Cards with no matching logo fall back to a
-   plain dark card with a large faint server number watermark. ── */
+/* ── Server rows: only a server whose name actually MATCHES a LIVE
+   CHANNELS entry gets a real thumbnail — a 16:9 box on one side of the
+   row holding that channel's logo (cropped to fill, not stretched full
+   width). Anything that doesn't match a live channel (keyword-guessed
+   logo, or no logo at all) stays as the small square icon / number
+   chip — the plain "normal" row look. ── */
 .mws-server-btn {
-  position: relative;
-  display: flex; align-items: flex-end; width: 100%;
-  min-height: 108px; padding: 16px 18px;
-  border: 1px solid rgba(255,255,255,0.09); border-left: 3px solid rgba(240,79,140,0.35); border-radius: 10px;
-  background-color: #131318;
-  overflow: hidden;
+  display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px 16px;
+  border: 1px solid rgba(255,255,255,0.09); border-left: 3px solid rgba(240,79,140,0.35); border-radius: 8px;
+  background: #131318;
   text-decoration: none; color: var(--white);
   transition: all 0.18s var(--ease); cursor: pointer; font-family: var(--font-body); text-align: left; box-shadow: none;
+  position: relative; overflow: hidden;
 }
-.mws-server-btn:hover { background-color: #171c22; border-color: rgba(240,79,140,0.35); border-left-color: var(--cu-accent,#F04F8C); }
-.mws-server-card-bg {
-  position: absolute; inset: 0; z-index: 0;
-  width: 100%; height: 100%; object-fit: cover; object-position: center;
+.mws-server-btn:hover { background: #171c22; border-color: rgba(240,79,140,0.35); border-left-color: var(--cu-accent,#F04F8C); }
+.mws-server-num {
+  width: 32px; height: 32px; flex-shrink: 0; border-radius: 8px;
+  background: var(--cu-accent,#F04F8C);
+  color: #04141a; font-family: var(--font-display); font-size: 13px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
 }
-.mws-server-card-scrim {
-  position: absolute; inset: 0; z-index: 1; pointer-events: none;
-  background: linear-gradient(180deg, rgba(10,10,13,0.10) 0%, rgba(10,10,13,0.42) 55%, rgba(10,10,13,0.92) 100%);
+.mws-server-icon {
+  width: 32px; height: 32px; flex-shrink: 0; border-radius: 8px;
+  object-fit: contain; background: rgba(255,255,255,0.06);
+  padding: 3px; box-sizing: border-box;
 }
-.mws-server-card-num {
-  position: absolute; top: 12px; left: 14px; z-index: 2;
-  font-family: var(--font-display); font-size: 11px; font-weight: 800;
-  color: rgba(255,255,255,0.65); letter-spacing: 0.06em;
-  background: rgba(0,0,0,0.45); padding: 2px 8px; border-radius: 6px;
+/* 16:9 thumbnail — only for logos matched against LIVE CHANNELS. */
+.mws-server-thumb {
+  position: relative; flex-shrink: 0; overflow: hidden; border-radius: 6px;
+  width: 96px; aspect-ratio: 16 / 9;
+  background: rgba(255,255,255,0.06);
 }
-/* No logo matched — flat gradient card, number becomes a big faint
-   watermark instead of the small corner chip. */
-.mws-server-btn.mws-server-card-nologo { background: linear-gradient(135deg,#1b1b21,#0e0e12); }
-.mws-server-btn.mws-server-card-nologo .mws-server-card-num {
-  position: static; display: block; font-size: 30px; font-weight: 800;
-  color: rgba(255,255,255,0.14); background: none; padding: 0; margin-bottom: 6px;
-}
-.mws-server-btn-fcx { padding: 16px 18px; border-left-color: #F5C518; min-height: 108px; }
+.mws-server-thumb img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; transition: transform 0.3s var(--ease); }
+.mws-server-btn:hover .mws-server-thumb img { transform: scale(1.08); }
+@media (max-width: 480px) { .mws-server-thumb { width: 78px; } }
+.mws-server-btn-fcx { padding: 14px 16px; border-left-color: #F5C518; }
 .mws-server-btn-fcx:hover { border-left-color: #F5C518; }
-.mws-server-info { position: relative; z-index: 2; flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.mws-server-label { font-size: 14px; font-weight: 700; letter-spacing: 0.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 1px 5px rgba(0,0,0,0.7); }
-.mws-server-sub { font-size: 10px; color: rgba(255,255,255,0.6); letter-spacing: 0.04em; text-shadow: 0 1px 4px rgba(0,0,0,0.7); }
+.mws-server-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.mws-server-label { font-size: 14px; font-weight: 700; letter-spacing: 0.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mws-server-sub { font-size: 10px; color: rgba(255,255,255,0.4); letter-spacing: 0.04em; }
 /* Visual enhancement for auto-connected servers from LIVE CHANNELS */
 .mws-server-btn:has(.mws-auto-badge) {
   border-left-color: #667eea;
@@ -2116,13 +2113,12 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
   vertical-align: middle;
   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.35);
 }
-.mws-server-play { position: relative; z-index: 2; font-size: 13px; color: rgba(240,79,140,0.6); flex-shrink: 0; display: flex; align-items: center; margin-left: 10px; }
+.mws-server-play { font-size: 13px; color: rgba(240,79,140,0.6); flex-shrink: 0; display: flex; align-items: center; }
 .mws-play-disc {
   display: flex; align-items: center; justify-content: center;
   width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
   background: rgba(240,79,140,0.14); color: #F04F8C;
   transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
-  backdrop-filter: blur(2px);
 }
 .mws-play-disc svg { margin-left: 1px; } /* optical centering for the triangle */
 .mws-server-btn:hover .mws-play-disc { background: #F04F8C; color: #fff; transform: scale(1.06); }
@@ -2246,8 +2242,8 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
 }
 .mws-server-btn:hover::after { left: 130%; }
 .mws-server-btn:hover { transform: translateX(2px); }
-.mws-server-card-bg { transition: transform 0.3s var(--ease); }
-.mws-server-btn:hover .mws-server-card-bg { transform: scale(1.05); }
+.mws-server-num { transition: transform 0.25s var(--spring); }
+.mws-server-btn:hover .mws-server-num { transform: scale(1.1); }
 
 /* ── Raw HLS/DASH stream cards (channel rows + match servers) — orange
    accent instead of the usual magenta, plus a VLC badge, to mark links
@@ -6184,8 +6180,7 @@ function openMatchWatchScreen(servers, info) {
           : ` type="button" onclick="mwsLockedServerTap(this)"`;
         return `
         <button class="mws-server-btn mws-server-btn-fcx${fcxReady ? '' : ' mws-server-locked'}"${clickAttr}>
-          <img class="mws-server-card-bg" src="${FCX_LOGO}" alt="FanCode" onerror="var b=this.closest('.mws-server-btn');this.remove();if(b)b.classList.add('mws-server-card-nologo')">
-          <span class="mws-server-card-scrim"></span>
+          <span class="mws-server-thumb"><img src="${FCX_LOGO}" alt="FanCode" onerror="this.parentElement.style.display='none'"></span>
           <span class="mws-server-info">
             <span class="mws-server-label">${s.text || 'FanCode'}${priorityBadge}</span>
             <span class="mws-server-sub">${fcxReady ? 'Tap to play this stream' : (s.fcxTime ? 'Starts ' + s.fcxTime : 'Not live yet')}</span>
@@ -6193,11 +6188,16 @@ function openMatchWatchScreen(servers, info) {
           <span class="mws-server-play">${fcxReady ? MWS_PLAY_SVG : MWS_LOCK_SVG}</span>
         </button>`;
       }
-      const chLogo = sxFindLiveTvLogoForLabel(s.text) || sxServerKeywordLogo(s.text);
-      const cardBgHtml = chLogo
-        ? `<img class="mws-server-card-bg" src="${chLogo}" alt="" onerror="var b=this.closest('.mws-server-btn');this.remove();if(b)b.classList.add('mws-server-card-nologo')">`
-        : '';
-      const cardNumHtml = `<span class="mws-server-card-num">${i + 1}</span>`;
+      // Only a name that actually matches a LIVE CHANNELS row gets the
+      // 16:9 thumbnail treatment. A keyword-guessed logo (no real match)
+      // or no logo at all falls back to the plain small icon/number.
+      const liveChannelLogo = sxFindLiveTvLogoForLabel(s.text);
+      const keywordLogo = liveChannelLogo ? null : sxServerKeywordLogo(s.text);
+      const iconHtml = liveChannelLogo
+        ? `<span class="mws-server-thumb"><img src="${liveChannelLogo}" alt="" onerror="this.outerHTML='<span class=\\'mws-server-num\\'>${i + 1}</span>'"></span>`
+        : keywordLogo
+          ? `<img class="mws-server-icon" src="${keywordLogo}" alt="" onerror="this.outerHTML='<span class=\\'mws-server-num\\'>${i + 1}</span>'">`
+          : `<span class="mws-server-num">${i + 1}</span>`;
       const isRawStream = !matchNotStarted && sxIsRawStreamUrl(s.url);
       const vlcIcon = isRawStream ? `<img class="mws-vlc-icon" src="https://images.icon-icons.com/1381/PNG/512/vlc_93519.png" alt="VLC" title="Direct stream \u2014 plays in VLC" onerror="this.style.display='none'">` : '';
       // Auto-connected badge for servers linked from LIVE CHANNELS
@@ -6208,10 +6208,8 @@ function openMatchWatchScreen(servers, info) {
           ? `onclick="closeMatchWatchScreen();sxOpenVlcPopup('${escJs(s.url)}','${escJs(label)}')"`
           : `onclick="closeMatchWatchScreen();sxGoToMatchUrl(null,'${escJs(s.url)}','${escJs(label)}')"`;
       return `
-      <button type="button" class="mws-server-btn${chLogo ? '' : ' mws-server-card-nologo'}${matchNotStarted ? ' mws-server-locked' : ''}${isRawStream ? ' mws-server-btn-raw' : ''}" ${srvClick}>
-        ${cardBgHtml}
-        <span class="mws-server-card-scrim"></span>
-        ${cardNumHtml}
+      <button type="button" class="mws-server-btn${matchNotStarted ? ' mws-server-locked' : ''}${isRawStream ? ' mws-server-btn-raw' : ''}" ${srvClick}>
+        ${iconHtml}
         <span class="mws-server-info">
           <span class="mws-server-label">${s.text || ('Server ' + (i + 1))}${vlcIcon}${autoConnectBadge}</span>
           <span class="mws-server-sub">${matchNotStarted ? 'Locked until ' + startText : 'Tap to play this stream'}</span>
