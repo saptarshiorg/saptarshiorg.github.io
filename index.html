@@ -2178,6 +2178,56 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
 .mws-server-num { transition: transform 0.25s var(--spring); }
 .mws-server-btn:hover .mws-server-num { transform: scale(1.1); }
 
+/* ── Raw HLS/DASH stream cards (channel rows + match servers) — orange
+   accent instead of the usual magenta, plus a VLC badge, to mark links
+   that open externally in VLC/MX Player rather than our own player. ── */
+.epg-vlc-icon, .mws-vlc-icon {
+  width: 18px; height: 18px; object-fit: contain; vertical-align: middle;
+  filter: drop-shadow(0 0 2px rgba(0,0,0,0.4));
+}
+.epg-row.epg-row-raw-stream {
+  border-left: 3px solid #FF7A1A;
+  background: linear-gradient(90deg, rgba(255,122,26,0.14), rgba(255,122,26,0.02));
+}
+.epg-row.epg-row-raw-stream:hover { border-color: rgba(255,122,26,0.5); }
+.epg-row.epg-row-raw-stream .epg-badges { display: flex; align-items: center; gap: 6px; }
+.mws-server-btn.mws-server-btn-raw {
+  border-left-color: #FF7A1A !important;
+  background: linear-gradient(90deg, rgba(255,122,26,0.14), rgba(255,122,26,0.02));
+}
+.mws-server-btn.mws-server-btn-raw:hover { border-color: rgba(255,122,26,0.5); border-left-color: #FF7A1A; }
+.mws-server-btn.mws-server-btn-raw .mws-server-label { display: flex; align-items: center; gap: 6px; }
+
+/* ── VLC / MX Player external-play popup ── */
+.sx-vlc-popup-overlay {
+  position: fixed; inset: 0; z-index: 10050; display: none;
+  align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.72); backdrop-filter: blur(4px);
+}
+.sx-vlc-popup-overlay.open { display: flex; }
+.sx-vlc-popup-box {
+  position: relative; width: min(340px, 88vw); text-align: center;
+  background: #12151a; border: 1px solid rgba(255,122,26,0.35);
+  border-radius: 16px; padding: 28px 22px 22px; box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+.sx-vlc-popup-close {
+  position: absolute; top: 10px; right: 12px; background: none; border: none;
+  color: rgba(255,255,255,0.55); font-size: 22px; line-height: 1; cursor: pointer;
+}
+.sx-vlc-popup-close:hover { color: #fff; }
+.sx-vlc-popup-icon { width: 56px; height: 56px; margin: 0 auto 12px; display: block; }
+.sx-vlc-popup-title { font-family: var(--cu-font); font-weight: 800; font-size: 15px; color: #fff; margin-bottom: 4px; }
+.sx-vlc-popup-sub { font-family: var(--cu-font); font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 18px; }
+.sx-vlc-popup-actions { display: flex; flex-direction: column; gap: 10px; }
+.sx-vlc-popup-btn {
+  display: block; width: 100%; padding: 11px 14px; border-radius: 10px;
+  font-family: var(--cu-font); font-weight: 700; font-size: 13px; text-decoration: none;
+  border: 1px solid rgba(255,255,255,0.14); color: #fff; background: rgba(255,255,255,0.06);
+  cursor: pointer; box-sizing: border-box;
+}
+.sx-vlc-popup-btn-primary { background: #FF7A1A; border-color: #FF7A1A; color: #111; }
+.sx-vlc-popup-btn:hover { filter: brightness(1.08); }
+
 @media (max-width: 900px) {
   .mws-left, .mws-right { animation: mwsFadeUp 0.4s var(--ease) both; }
 }
@@ -4794,9 +4844,9 @@ function sxSortCardsLiveThenTime(cards, moveFn) {
   // on every card (sheet + FanCode) that can carry a FINISHED badge.
   const rank = c => c.dataset.live === '1' ? 0 : (c.dataset.finished === '1' ? 2 : 1);
   const startMs = c => { const v = c.dataset.startMs; return (v !== undefined && v !== '' && !isNaN(Number(v))) ? Number(v) : Infinity; };
-  // True tie-break: a FanCode-sourced card wins over a sheet/"iso" card.
-  const isFcx = c => (c.classList.contains('fcx-smo-card') || c.classList.contains('fcx-fixture-card')) ? 0 : 1;
-  cards.slice().sort((a, b) => rank(a) - rank(b) || startMs(a) - startMs(b) || isFcx(a) - isFcx(b)).forEach(moveFn);
+  // FanCode and sheet/"iso" cards are equal power — no source-based
+  // tiebreak. Whichever actually starts sooner sorts first, full stop.
+  cards.slice().sort((a, b) => rank(a) - rank(b) || startMs(a) - startMs(b)).forEach(moveFn);
 }
 // Section-scoped convenience wrapper (Matches tab: sheet + merged-in
 // FanCode cards inside the same game/category section).
@@ -4831,8 +4881,9 @@ function sxFloatLiveCardsToTop(siblings, isLiveEl, moveFn) {
 //      match — soonest start time across the section, ascending, so e.g.
 //      an Oct 2 tournament lists before an Oct 3 one regardless of source
 //   3) sections that are entirely FINISHED matches — pushed to the bottom
-// A FanCode-only section (.fcx-smo-section) wins a true tie over a sheet
-// section, so an equally-soon FanCode fixture surfaces first.
+// FanCode and sheet sections are equal power — no source-based tiebreak.
+// If a sheet section's soonest match is earlier than a FanCode section's,
+// the sheet section sorts first (and vice versa), purely on time.
 function sxReorderAllSectionsLiveThenTime(container) {
   if (!container) return;
   const secs = Array.from(container.querySelectorAll(':scope > .smo-section'));
@@ -4849,9 +4900,9 @@ function sxReorderAllSectionsLiveThenTime(container) {
       const v = Number(c.dataset.startMs);
       if (!isNaN(v)) soonest = Math.min(soonest, v);
     });
-    return { sec, tier, soonest, isFcx: sec.classList.contains('fcx-smo-section') ? 0 : 1 };
+    return { sec, tier, soonest };
   });
-  info.sort((a, b) => a.tier - b.tier || a.soonest - b.soonest || a.isFcx - b.isFcx);
+  info.sort((a, b) => a.tier - b.tier || a.soonest - b.soonest);
   info.forEach(i => container.appendChild(i.sec));
 }
 
@@ -6056,14 +6107,18 @@ function openMatchWatchScreen(servers, info) {
       const iconHtml = chLogo
         ? `<img class="mws-server-logo" src="${chLogo}" alt="" onerror="this.outerHTML='<span class=\\'mws-server-num\\'>${i + 1}</span>'">`
         : `<span class="mws-server-num">${i + 1}</span>`;
+      const isRawStream = !matchNotStarted && sxIsRawStreamUrl(s.url);
+      const vlcIcon = isRawStream ? `<img class="mws-vlc-icon" src="https://images.icon-icons.com/1381/PNG/512/vlc_93519.png" alt="VLC" title="Direct stream \u2014 plays in VLC" onerror="this.style.display='none'">` : '';
       const srvClick = matchNotStarted
         ? `onclick="mwsLockedServerTap(this)"`
-        : `onclick="closeMatchWatchScreen();sxGoToMatchUrl(null,'${escJs(s.url)}','${escJs(label)}')"`;
+        : isRawStream
+          ? `onclick="closeMatchWatchScreen();sxOpenVlcPopup('${escJs(s.url)}','${escJs(label)}')"`
+          : `onclick="closeMatchWatchScreen();sxGoToMatchUrl(null,'${escJs(s.url)}','${escJs(label)}')"`;
       return `
-      <button type="button" class="mws-server-btn${matchNotStarted ? ' mws-server-locked' : ''}" ${srvClick}>
+      <button type="button" class="mws-server-btn${matchNotStarted ? ' mws-server-locked' : ''}${isRawStream ? ' mws-server-btn-raw' : ''}" ${srvClick}>
         ${iconHtml}
         <span class="mws-server-info">
-          <span class="mws-server-label">${s.text || ('Server ' + (i + 1))}</span>
+          <span class="mws-server-label">${s.text || ('Server ' + (i + 1))}${vlcIcon}</span>
           <span class="mws-server-sub">${matchNotStarted ? 'Locked until ' + startText : 'Tap to play this stream'}</span>
         </span>
         <span class="mws-server-play">${matchNotStarted ? MWS_LOCK_SVG : MWS_PLAY_SVG}</span>
@@ -7604,7 +7659,11 @@ function countryFlagHTML(rawCountry){
       a.setAttribute('role', 'button');
       a.setAttribute('tabindex', '0');
       const streamUrl = c.watch_url || '#';
-      a.onclick = () => openStreamPlayer(streamUrl, c.channel_name || 'Live Stream', 'channel');
+      const isRawStream = sxIsRawStreamUrl(streamUrl);
+      if (isRawStream) a.className += ' epg-row-raw-stream';
+      a.onclick = () => isRawStream
+        ? sxOpenVlcPopup(streamUrl, c.channel_name || 'Live Stream')
+        : openStreamPlayer(streamUrl, c.channel_name || 'Live Stream', 'channel');
       a.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); a.onclick(); } };
       const isHD = (c.quality||'').toUpperCase() === 'HD' || (c.quality||'').toUpperCase() === '4K';
       const hdBadge = isHD ? `<span class="epg-badge epg-badge-hd">${(c.quality||'HD').toUpperCase()}</span>` : '';
@@ -7612,6 +7671,7 @@ function countryFlagHTML(rawCountry){
         ? '<span class="epg-badge epg-badge-live"><span class="epg-live-blip"></span>LIVE</span>'
         : '<span class="epg-badge epg-badge-off">OFF AIR</span>';
       const premiumBadge = isFanCode ? '<span class="epg-premium-icon" title="FanCode Premium"></span>' : '';
+      const vlcBadge = isRawStream ? '<img class="epg-vlc-icon" src="https://images.icon-icons.com/1381/PNG/512/vlc_93519.png" alt="VLC" title="Direct stream \u2014 plays in VLC" onerror="this.style.display=\'none\'">' : '';
       const indiaAlert = (isStarSports || isSony || isZee) ? '<div class="epg-india-alert">Outside India/Sri Lanka? Use VPN</div>' : '';
       a.innerHTML = `
         <div class="epg-thumb">
@@ -7628,7 +7688,7 @@ function countryFlagHTML(rawCountry){
           <div class="epg-desc">Watch endless programming on this 24/7 channel broadcast.</div>
           <div class="epg-now">24/7 Channel</div>
         </div>
-        <div class="epg-badges">${liveBadge}${hdBadge}</div>
+        <div class="epg-badges">${liveBadge}${hdBadge}${vlcBadge}</div>
         <div class="epg-watch">
           <span>Watch</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 18 6-6-6-6"/></svg>
@@ -9545,6 +9605,88 @@ function sxUpdateCastButtonState(){
 
 function sxIsHlsUrl(u){
   return /\.m3u8(\?|#|$)/i.test(u) || /[?&](format|type)=m3u8/i.test(u);
+}
+
+// Broader "is this a direct, playable stream link rather than a page/embed"
+// check — DASH (.mpd) and plain .m3u playlists count too, not just .m3u8.
+// Used to flag channel rows / match servers as "external player" cards
+// (orange styling + VLC icon) instead of routing them through our own
+// in-page iframe player, which can't play a raw manifest URL anyway.
+function sxIsRawStreamUrl(u){
+  if (!u) return false;
+  return /\.(m3u8|m3u|mpd)(\?|#|$)/i.test(u) || /[?&](format|type)=(m3u8|m3u|mpd|dash)/i.test(u);
+}
+
+// vlc://<url> is the scheme VLC's own installer/app registers on desktop
+// (Windows/macOS) and mobile (iOS/Android) alike — handing it a raw
+// manifest URL launches VLC directly with that stream loaded.
+function sxVlcSchemeUrl(rawUrl){
+  return 'vlc://' + rawUrl;
+}
+
+// MX Player (Android) intent link — only meaningful on Android, so this is
+// only offered in the mobile branch of the popup below.
+function sxMxPlayerUrl(rawUrl, title){
+  return 'intent:' + rawUrl + '#Intent;package=com.mxtech.videoplayer.ad;S.title=' + encodeURIComponent(title || 'Live Stream') + ';end';
+}
+
+function sxCopyStreamLink(text){
+  const done = () => sxCastToast('Stream link copied.');
+  const fail = () => {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { sxCastToast('Could not copy the link.'); }
+    document.body.removeChild(ta);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(fail);
+  } else {
+    fail();
+  }
+}
+
+// Full-screen popup offered for any raw HLS/DASH stream link (channel rows
+// and match servers alike) instead of loading it in our own iframe player.
+// Auto-attempts to hand the stream straight to VLC via the vlc:// scheme on
+// both mobile and desktop; the popup itself stays open underneath with a
+// manual retry plus a platform-appropriate fallback (MX Player on mobile,
+// Copy Link on desktop) in case the OS has nothing registered for vlc://.
+function sxOpenVlcPopup(rawUrl, name){
+  name = name || 'Live Stream';
+  let ov = document.getElementById('sx-vlc-popup-overlay');
+  if (!ov){
+    ov = document.createElement('div');
+    ov.id = 'sx-vlc-popup-overlay';
+    ov.className = 'sx-vlc-popup-overlay';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', e => { if (e.target === ov) sxCloseVlcPopup(); });
+  }
+  const isMobile = sxIsMobileDevice();
+  const vlcUrl = sxVlcSchemeUrl(rawUrl);
+  const mxUrl = sxMxPlayerUrl(rawUrl, name);
+  const fallbackBtn = isMobile
+    ? `<a class="sx-vlc-popup-btn" href="${mxUrl}">Open in MX Player</a>`
+    : `<button type="button" class="sx-vlc-popup-btn" onclick="sxCopyStreamLink('${escJs(rawUrl)}')">Copy Link</button>`;
+  ov.innerHTML = `
+    <div class="sx-vlc-popup-box">
+      <button type="button" class="sx-vlc-popup-close" onclick="sxCloseVlcPopup()" aria-label="Close">&times;</button>
+      <img class="sx-vlc-popup-icon" src="https://images.icon-icons.com/1381/PNG/512/vlc_93519.png" alt="VLC" onerror="this.style.display='none'">
+      <div class="sx-vlc-popup-title">${name}</div>
+      <div class="sx-vlc-popup-sub">Direct stream link \u2014 plays best in an external player.</div>
+      <div class="sx-vlc-popup-actions">
+        <a class="sx-vlc-popup-btn sx-vlc-popup-btn-primary" href="${vlcUrl}">\u25B6 Open in VLC</a>
+        ${fallbackBtn}
+      </div>
+    </div>`;
+  ov.classList.add('open');
+  // Auto-open VLC right away on both mobile and desktop; the popup and its
+  // manual buttons stay up in case nothing is registered for vlc://.
+  setTimeout(() => { window.location.href = vlcUrl; }, 60);
+}
+function sxCloseVlcPopup(){
+  const ov = document.getElementById('sx-vlc-popup-overlay');
+  if (ov) ov.classList.remove('open');
 }
 
 function sxCastToast(msg){
