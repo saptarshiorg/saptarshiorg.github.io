@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#000">
 <meta name="referrer" content="no-referrer">
-<title>EV Streams Live Player</title>
+<title>Live Player</title>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-G5NE717HVD"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-G5NE717HVD');</script>
 <link rel="preconnect" href="https://api.fontshare.com">
@@ -70,6 +70,11 @@ body{width:100%;height:100%;min-height:100dvh;background:var(--bg);overflow:hidd
 .esoc-discord:hover{background:rgba(88,101,242,.12);border-color:rgba(88,101,242,.6);}
 .esoc-telegram{border-color:rgba(41,182,246,.35);color:#4fc3f7;}
 .esoc-telegram:hover{background:rgba(41,182,246,.12);border-color:rgba(41,182,246,.6);}
+.ext-box{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+.ext-box:empty{display:none;margin-bottom:0;}
+.ext-link,.ext-copy{border-color:rgba(240,79,140,.35);color:var(--mg);font-family:inherit;cursor:pointer;}
+.ext-link:hover,.ext-copy:hover{background:rgba(240,79,140,.12);border-color:var(--mg);}
+.ext-hint{font-size:10.5px;color:var(--dim-2);margin-top:-2px;}
 
 /* ── Center play ─────────────────────────────────────────────────── */
 #bigplay{position:absolute;inset:0;z-index:16;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0;transition:opacity .22s;}
@@ -130,7 +135,6 @@ body{width:100%;height:100%;min-height:100dvh;background:var(--bg);overflow:hidd
 .qopt.active .qtick{opacity:1;}
 
 /* ── Credit ──────────────────────────────────────────────────────── */
-.credit-tag{position:fixed;top:0;left:0;z-index:50;font-family:'Satoshi',sans-serif;font-size:10px;font-weight:600;letter-spacing:.4px;color:var(--dim-2);background:var(--mg-ink);padding:5px 10px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);border-left:2px solid var(--mg);pointer-events:none;}
 
 @media (max-width:520px){
   #crow{padding:6px 6px 9px;gap:2px;}
@@ -142,7 +146,6 @@ body{width:100%;height:100%;min-height:100dvh;background:var(--bg);overflow:hidd
 </head>
 <body>
 
-<div class="credit-tag">EV Streams — Evolution X Technologies Limited</div>
 
 <div id="player">
   <video id="vid" autoplay muted playsinline preload="metadata"></video>
@@ -164,6 +167,7 @@ body{width:100%;height:100%;min-height:100dvh;background:var(--bg);overflow:hidd
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
         Retry Now
       </button>
+      <div class="ext-box" id="extBox"></div>
       <div class="esoc">
         <a href="https://discord.gg/w46C6mQgrY" target="_blank" rel="noopener noreferrer" class="elink esoc-discord" aria-label="Join EV Streams Discord">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.07.07 0 0 0-.075.035c-.211.375-.445.865-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.07.07 0 0 0-.075-.035A19.74 19.74 0 0 0 3.68 4.37a.064.064 0 0 0-.03.027C.533 9.046-.32 13.58.099 18.057a.08.08 0 0 0 .031.055 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.1 13.1 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .077-.01c3.927 1.793 8.18 1.793 12.061 0a.073.073 0 0 1 .078.01c.12.099.246.197.373.291a.077.077 0 0 1-.006.128c-.598.35-1.22.645-1.873.892a.076.076 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.418 2.157-2.418 1.21 0 2.176 1.094 2.157 2.418 0 1.334-.955 2.419-2.157 2.419zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.418 2.157-2.418 1.21 0 2.176 1.094 2.157 2.418 0 1.334-.947 2.419-2.157 2.419z"/></svg>
@@ -239,13 +243,25 @@ body{width:100%;height:100%;min-height:100dvh;background:var(--bg);overflow:hidd
 'use strict';
 
 var JSON_URL  = 'https://raw.githubusercontent.com/kajju027/Fancode-Events-Json/refs/heads/main/fancode.json';
+// SonyLIV's own live-events feed — a much lighter schema than FanCode's
+// (no quality/language variants, just a single URL field per match), used
+// when the id is prefixed "sony_" (see SOURCE detection below).
+var SONY_JSON_URL = 'https://raw.githubusercontent.com/kajju027/SonyLiv-Events-Json/refs/heads/main/sonyliv.json';
 var LANG_MAP  = {eng:'ENGLISH',hin:'HINDI',tam:'TAMIL',tel:'TELUGU',ben:'BENGALI',mar:'MARATHI'};
 var Q_ORDER   = ['1080p','720p','540p','480p','360p','240p'];
 var DEFAULT_Q = '540p';
 
 var sp = new URLSearchParams(location.search);
-var idp = sp.get('id')||'';
+var idpRaw = sp.get('id')||'';
 var si  = parseInt(sp.get('s')||'0',10);
+// ?vlc=1 skips the on-page player entirely — resolve the stream as usual,
+// then hand it straight to VLC (see goVlc() near start()).
+var vlcMode = sp.get('vlc')==='1';
+// "sony_<matchId>_<lang>" routes to the SonyLIV resolver below; anything
+// else keeps the original FanCode "<matchId>_<lang>" format untouched.
+var SOURCE = 'fcx';
+var idp = idpRaw;
+if (idp.indexOf('sony_') === 0) { SOURCE = 'sony'; idp = idp.slice(5); }
 var ui  = idp.indexOf('_');
 var matchId  = ui>-1 ? idp.slice(0,ui) : idp;
 var langCode = ui>-1 ? idp.slice(ui+1) : 'eng';
@@ -333,7 +349,117 @@ function showErr(title,msg,retry){
   document.getElementById('emsg').textContent=toFriendlyMessage(msg);
   document.getElementById('eretry').style.display=retry?'flex':'none';
   errOv.classList.add('show');
+  renderExtBox();
 }
+
+// ── Open-in-external-player fallback ────────────────────────────────
+// Shown whenever a stream URL exists (populated the moment loadStream()
+// is called, before we even know if it'll succeed) so it's ready the
+// instant the error card appears — VLC + MX Player intent links on
+// Android, VLC's x-callback scheme on iOS, and a best-effort vlc:// link
+// plus a manual "copy the link" fallback on desktop (VLC has no
+// universally-registered protocol handler across Windows/Mac/Linux, so
+// the click can silently do nothing there — the copy button is the
+// actually-reliable path on desktop).
+var lastStreamUrl = '';
+var EXT_ICON = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5.14v13.72a1 1 0 0 0 1.5.87l11-6.86a1 1 0 0 0 0-1.72L9.5 4.27A1 1 0 0 0 8 5.14z"/></svg>';
+function isAndroidUA(){ return /android/i.test(navigator.userAgent); }
+function isIOSUA(){ return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1); }
+// Single-source VLC deep link, shared by the error-card button AND the
+// ?vlc=1 auto-redirect (goVlc(), used by the server selector's own VLC
+// row) so both paths build the exact same link.
+function vlcHrefFor(url){
+  var title=encodeURIComponent(document.title||'Live Stream');
+  if(isAndroidUA()) return 'intent:'+url+'#Intent;action=android.intent.action.VIEW;type=video/*;package=org.videolan.vlc;S.title='+title+';S.browser_fallback_url=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3Dorg.videolan.vlc;end';
+  if(isIOSUA()) return 'vlc-x-callback://x-callback-url/stream?url='+encodeURIComponent(url)+'&filename='+title;
+  return 'vlc://'+url;
+}
+
+function renderExtBox(){
+  var box=document.getElementById('extBox');
+  if(!box) return;
+  if(!lastStreamUrl){ box.innerHTML=''; return; }
+  var url=lastStreamUrl;
+  var title=encodeURIComponent(document.title||'Live Stream');
+  if(isAndroidUA()){
+    var mxHref='intent:'+url+'#Intent;action=android.intent.action.VIEW;type=video/*;package=com.mxtech.videoplayer.ad;S.title='+title+';S.browser_fallback_url=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3Dcom.mxtech.videoplayer.ad;end';
+    box.innerHTML=
+      '<a href="'+vlcHrefFor(url)+'" class="elink ext-link">'+EXT_ICON+'Open in VLC</a>'+
+      '<a href="'+mxHref+'" class="elink ext-link">'+EXT_ICON+'Open in MX Player</a>';
+  } else if(isIOSUA()){
+    box.innerHTML='<a href="'+vlcHrefFor(url)+'" class="elink ext-link">'+EXT_ICON+'Open in VLC</a>';
+  } else {
+    box.innerHTML=
+      '<a href="'+vlcHrefFor(url)+'" class="elink ext-link">'+EXT_ICON+'Open in VLC</a>'+
+      '<button type="button" class="elink ext-copy" id="extCopy">Copy Stream Link</button>'+
+      '<div class="ext-hint">If VLC doesn\'t open, copy the link → VLC → Media → Open Network Stream.</div>';
+    var copyBtn=document.getElementById('extCopy');
+    if(copyBtn){
+      copyBtn.addEventListener('click', function(){
+        (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject())
+          .then(function(){ copyBtn.textContent='Copied!'; setTimeout(function(){ copyBtn.textContent='Copy Stream Link'; },1600); })
+          .catch(function(){});
+      });
+    }
+  }
+}
+
+// ?vlc=1 entry point — used by the server selector's dedicated "VLC" row,
+// which skips the on-page player and sends the resolved stream straight to
+// the external app. Shows a plain "opening…" state; if the page is still
+// visible a beat later (app not installed, or desktop with no vlc://
+// handler registered), falls back to the same error-card VLC/copy button
+// so the visitor isn't stuck looking at a spinner forever.
+function goVlc(url){
+  lastStreamUrl=url;
+  var lbl=document.querySelector('.load-label');
+  if(lbl) lbl.textContent='Opening in VLC…';
+  location.href=vlcHrefFor(url);
+  setTimeout(function(){
+    if(document.hidden) return;
+    showErr('Opening VLC…','Tap below if it didn\'t open automatically.',false);
+  },1600);
+}
+
+shaka.polyfill.installAll();
+function start(){
+  clearTimeout(retryTimer);
+  showLoad();
+  if(!matchId){showErr('Missing match ID','URL: ?id=MATCHID_LANG&s=0',false);return;}
+  if(SOURCE === 'sony'){
+    bq.style.display='none';
+    fetchJSON(SONY_JSON_URL).then(function(data){
+      var r;
+      try{r=resolveSony(data);}
+      catch(e){showErr('Stream Unavailable',e.message,true);retryTimer=setTimeout(start,8000);return;}
+      if(vlcMode){ goVlc(r.url); return; }
+      loadStream(r.url,r.fallbacks);
+    }).catch(function(e){showErr('Could not load data',e.message,true);retryTimer=setTimeout(start,8000);});
+    return;
+  }
+  fetchJSON(JSON_URL).then(function(data){
+    var r;
+    try{r=resolve(data);}
+    catch(e){showErr('Stream Unavailable',e.message,true);retryTimer=setTimeout(start,8000);return;}
+    if(r.type==='multi'){
+      var url=r.streams[DEFAULT_Q]||r.streams['720p']||r.streams['480p']||r.streams['1080p']||r.streams['360p']||r.streams['240p'];
+      if(!url){showErr('No stream URL','All quality URLs empty for this match',true);return;}
+      if(vlcMode){ goVlc(url); return; }
+      qStreams=r.streams;
+      currentQ=Q_ORDER.find(function(q){return r.streams[q]===url;})||DEFAULT_Q;
+      qlbl.textContent=currentQ;
+      bq.style.display='';
+      loadStream(url,r.fallbacks);
+    } else {
+      if(vlcMode){ goVlc(r.url); return; }
+      bq.style.display='none';
+      loadStream(r.url,r.fallbacks);
+    }
+  }).catch(function(e){showErr('Could not load data',e.message,true);retryTimer=setTimeout(start,8000);});
+}
+document.getElementById('retryNow').addEventListener('click', function(){ start(); });
+start();
+})();
 
 vid.addEventListener('waiting', function(){ bufspin.style.display='block'; });
 vid.addEventListener('playing', function(){ bufspin.style.display='none'; });
@@ -637,6 +763,8 @@ function tryNativeCascade(all, lastShakaErr){
 
 async function loadStream(url,fallbacks){
   hasError=false;
+  lastStreamUrl = url;
+  renderExtBox();
   var all=[url].concat((fallbacks||[]).filter(function(u){return u&&u!==url;}));
   var lastErr=null;
 
@@ -708,11 +836,38 @@ function resolve(data){
   return{type:'single',url:u,fallbacks:fb};
 }
 
+// SonyLIV resolver — mirrors resolve(data)'s shape (throws a descriptive
+// Error on anything missing) but the feed is far simpler: one URL field
+// per match, no quality or language variants, and no auto_streams map.
+// Field priority (dai_url first) is a best guess pending a real LIVE
+// sample to confirm against — pub_url/video_url are tried as fallbacks.
+function resolveSony(data){
+  var list = Array.isArray(data) ? data : (Array.isArray(data.matches) ? data.matches : []);
+  if(!list.length) throw new Error('No matches in JSON');
+  var m = null;
+  for(var i=0;i<list.length;i++) if(String(list[i].match_id)===String(matchId)){m=list[i];break;}
+  if(!m) throw new Error('Match "'+matchId+'" not found ('+list.length+' total)');
+  if((m.status||'').toLowerCase() !== 'live') throw new Error('This match is not live yet');
+  var url = m.dai_url || m.pub_url || m.video_url;
+  if(!url) throw new Error('Stream URL not published for this match yet');
+  return { type:'single', url:url, fallbacks:[m.pub_url,m.video_url].filter(Boolean).filter(function(u){return u!==url;}) };
+}
+
 shaka.polyfill.installAll();
 function start(){
   clearTimeout(retryTimer);
   showLoad();
   if(!matchId){showErr('Missing match ID','URL: ?id=MATCHID_LANG&s=0',false);return;}
+  if(SOURCE === 'sony'){
+    bq.style.display='none';
+    fetchJSON(SONY_JSON_URL).then(function(data){
+      var r;
+      try{r=resolveSony(data);}
+      catch(e){showErr('Stream Unavailable',e.message,true);retryTimer=setTimeout(start,8000);return;}
+      loadStream(r.url,r.fallbacks);
+    }).catch(function(e){showErr('Could not load data',e.message,true);retryTimer=setTimeout(start,8000);});
+    return;
+  }
   fetchJSON(JSON_URL).then(function(data){
     var r;
     try{r=resolve(data);}
