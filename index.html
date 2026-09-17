@@ -2023,6 +2023,14 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
 .mws-server-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .mws-server-label { font-size: 14px; font-weight: 700; letter-spacing: 0.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mws-server-sub { font-size: 10px; color: rgba(255,255,255,0.4); letter-spacing: 0.04em; }
+/* Visual enhancement for auto-connected servers from LIVE CHANNELS */
+.mws-server-btn:has(.mws-auto-badge) {
+  border-left-color: #667eea;
+}
+.mws-server-btn:has(.mws-auto-badge):hover {
+  border-left-color: #764ba2;
+  box-shadow: 0 0 0 1px rgba(102, 126, 234, 0.4);
+}
 /* Shown at the top of the server list when the match hasn't kicked off
    yet — deliberately red so it reads as a "not yet" warning rather than
    another playable option. */
@@ -2075,6 +2083,23 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
   font-family: var(--font-display); font-weight: 800; font-size: 12px;
   letter-spacing: 0.6px; color: #ff5b5b; text-transform: uppercase;
   margin-bottom: 4px;
+}
+/* ════════════════════════════════════════════════════════════════════════
+   AUTO-CONNECTED BADGE — shown when a server was auto-linked from LIVE TV
+═════════════════════════════════════════════════════════════════════════ */
+.mws-auto-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  margin-left: 8px;
+  border-radius: 4px;
+  vertical-align: middle;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.35);
 }
 .mws-server-play { font-size: 13px; color: rgba(240,79,140,0.6); flex-shrink: 0; display: flex; align-items: center; }
 .mws-play-disc {
@@ -5862,6 +5887,24 @@ function sxGetMatchServers(m) {
     { url: m.btn_url_4, text: m.btn_text_4 || 'Server 4' },
     { url: m.btn_url_5, text: m.btn_text_5 || 'Server 5' }
   ];
+  
+  // AUTO-CONNECT LOGIC: If a server name matches LIVE CHANNELS but has no URL,
+  // auto-fill it with the channel's watch_url
+  const liveChannels = window._cmsChannels || [];
+  raw.forEach(server => {
+    const serverName = (server.text || '').trim().toLowerCase();
+    // If server has no URL, try to find matching LIVE CHANNELS entry
+    if ((!server.url || !String(server.url).trim() || String(server.url).trim() === '#') && serverName) {
+      const matchedChannel = liveChannels.find(c => 
+        (c.channel_name || '').trim().toLowerCase() === serverName
+      );
+      if (matchedChannel && matchedChannel.watch_url) {
+        server.url = matchedChannel.watch_url;
+        server.auto_connected = true; // Mark as auto-connected
+      }
+    }
+  });
+  
   const servers = raw.filter(s => s.url && String(s.url).trim() && String(s.url).trim() !== '#');
   // The FanCode entry (see fcxAugmentSheetCards) was filled in from
   // whatever FanCode's feed said up to 30s ago — re-check its live status
@@ -6139,6 +6182,8 @@ function openMatchWatchScreen(servers, info) {
         : `<span class="mws-server-num">${i + 1}</span>`;
       const isRawStream = !matchNotStarted && sxIsRawStreamUrl(s.url);
       const vlcIcon = isRawStream ? `<img class="mws-vlc-icon" src="https://images.icon-icons.com/1381/PNG/512/vlc_93519.png" alt="VLC" title="Direct stream \u2014 plays in VLC" onerror="this.style.display='none'">` : '';
+      // Auto-connected badge for servers linked from LIVE CHANNELS
+      const autoConnectBadge = s.auto_connected ? `<span class="mws-auto-badge" title="Auto-connected from LIVE TV">📡 LIVE TV</span>` : '';
       const srvClick = matchNotStarted
         ? `onclick="mwsLockedServerTap(this)"`
         : isRawStream
@@ -6148,7 +6193,7 @@ function openMatchWatchScreen(servers, info) {
       <button type="button" class="mws-server-btn${matchNotStarted ? ' mws-server-locked' : ''}${isRawStream ? ' mws-server-btn-raw' : ''}" ${srvClick}>
         ${iconHtml}
         <span class="mws-server-info">
-          <span class="mws-server-label">${s.text || ('Server ' + (i + 1))}${vlcIcon}</span>
+          <span class="mws-server-label">${s.text || ('Server ' + (i + 1))}${vlcIcon}${autoConnectBadge}</span>
           <span class="mws-server-sub">${matchNotStarted ? 'Locked until ' + startText : 'Tap to play this stream'}</span>
         </span>
         <span class="mws-server-play">${matchNotStarted ? MWS_LOCK_SVG : MWS_PLAY_SVG}</span>
