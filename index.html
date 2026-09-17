@@ -3369,7 +3369,9 @@ async function renderPanelsFromRegistry(panelRows) {
      Sheet tab "MATCH CARDS" needs a "game" column (e.g. Cricket, Football,
      FIFA World Cup, Tennis) — cards are grouped/labelled by this GAME name
      instead of by btn_url now. Leave it blank and the card falls back to
-     a "Live Matches" section.
+     an "Other Matches" section (live/upcoming/finished cards can all land
+     there — the section name is just the game/category label, it doesn't
+     mean the cards inside are live).
      ▸ New "details" column: put the tournament/series name here (e.g.
        "ICC T20 World Cup 2026", "Indian Premier League — Match 42").
        It renders as a small line under the date, above the teams, on
@@ -4764,6 +4766,22 @@ function smoMatchExistingGame(list, name){
 }
 window.smoMatchExistingGame = smoMatchExistingGame;
 
+// Re-sorts a rendered .smo-section's cards so any LIVE card (data-live="1")
+// — sheet-driven or FanCode-merged alike — sits above every non-live card
+// in that section, without disturbing the relative order within either
+// group. Needed because FanCode cards get merged into an existing sheet
+// section by simple append (see fcxAppendHomeSections below), which on its
+// own could leave a live FanCode match sitting under upcoming sheet cards.
+function sxReorderSectionLiveFirst(sectionEl) {
+  if (!sectionEl) return;
+  const cards = Array.from(sectionEl.querySelectorAll(':scope > .smo-card'));
+  if (cards.length < 2) return;
+  const live = cards.filter(c => c.dataset.live === '1');
+  if (!live.length || live.length === cards.length) return; // nothing to move
+  const rest = cards.filter(c => c.dataset.live !== '1');
+  live.concat(rest).forEach(c => sectionEl.appendChild(c));
+}
+
 function fcxTournamentGroups(){
   const all = window._fcxMatchesCache || [];
   if (!all.length) return [];
@@ -4863,8 +4881,11 @@ window.fcxAppendHomeSections = function(){
       if (countdown) timers.push({ timerDisplayId: timerId, timerWrapId, badgeId, liveBadgeHtml, target: countdown });
     });
     if (existingSec) {
-      // Merge: drop the cards straight into the sheet's own section.
+      // Merge: drop the cards straight into the sheet's own section, then
+      // re-sort so a live FanCode match jumps above any non-live sheet
+      // cards already sitting there (and vice versa).
       existingSec.insertAdjacentHTML('beforeend', cardsHtml);
+      sxReorderSectionLiveFirst(existingSec);
     } else {
       el.insertAdjacentHTML('beforeend',
         `<div class="smo-section fcx-smo-section"><div class="smo-section-label">${tournament}</div>${cardsHtml}</div>`);
@@ -6676,7 +6697,7 @@ function renderMatchCards(rows) {
   // ── Group cards by GAME (sport name column) ──────────────
   const groups = new Map();
   cards.forEach(c => {
-    const key = (c.game || 'Live Matches').trim() || 'Live Matches';
+    const key = (c.game || 'Other Matches').trim() || 'Other Matches';
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(c);
   });
