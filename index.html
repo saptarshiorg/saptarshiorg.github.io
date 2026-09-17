@@ -5666,6 +5666,24 @@ function sxFindLiveTvLogoForLabel(label) {
   return (hit && hit.icon_url) || '';
 }
 
+// Keyword-based server-logo fallback: when a server's label (btn_text /
+// FanCode title) mentions a known broadcaster — even loosely, not an exact
+// LIVE TV channel-name match — swap in that broadcaster's logo instead of
+// the plain numbered badge. Checked in this order: SonyLIV / Sony first,
+// then Star Sports / Hotstar / Star.
+const SX_SERVER_KEYWORD_LOGOS = [
+  { re: /sony|sliv/i,              url: 'https://upload.wikimedia.org/wikipedia/commons/f/f7/SonyLIV_2020.png' },
+  { re: /star|hotstar/i,           url: 'https://i.pinimg.com/originals/3d/65/03/3d650388af374546ea7341abb6d57f00.png' }
+];
+function sxServerKeywordLogo(label) {
+  const n = (label || '').trim();
+  if (!n) return '';
+  for (const { re, url } of SX_SERVER_KEYWORD_LOGOS) {
+    if (re.test(n)) return url;
+  }
+  return '';
+}
+
 // URI-encoded JSON of the match-detail fields shown on the left panel of
 // the full-screen watch screen. Same encodeURIComponent trick so it can
 // sit inside an inline onclick="" attribute without breaking on quotes.
@@ -5885,7 +5903,7 @@ function openMatchWatchScreen(servers, info) {
           <span class="mws-server-play">${fcxReady ? MWS_PLAY_SVG : MWS_LOCK_SVG}</span>
         </button>`;
       }
-      const chLogo = sxFindLiveTvLogoForLabel(s.text);
+      const chLogo = sxFindLiveTvLogoForLabel(s.text) || sxServerKeywordLogo(s.text);
       const iconHtml = chLogo
         ? `<img class="mws-server-logo" src="${chLogo}" alt="" onerror="this.outerHTML='<span class=\\'mws-server-num\\'>${i + 1}</span>'">`
         : `<span class="mws-server-num">${i + 1}</span>`;
@@ -6065,7 +6083,23 @@ function injectMatchInfoIntoHeroCards(matchCards) {
     const infoEl = card.querySelector('.hsc-info');
     if (!infoEl) return;
 
-    infoEl.innerHTML = `
+    const teamsLine = `${m.team1_full_name||m.team1_code||''} vs ${m.team2_full_name||m.team2_code||''}`;
+    // Same banner takeover as the mobile slides / match cards: a row's own
+    // banner_url/banner_image_url (or a cross-matched FanCode banner) wins
+    // and the two-team-logo layout is dropped.
+    const bannerSrc = m.banner_url || m.banner_image_url || m._fcxBanner || '';
+    const bgEl = card.querySelector('.hsc-banner-bg');
+    if (bannerSrc && bgEl) bgEl.style.backgroundImage = `url('${bannerSrc}')`;
+
+    infoEl.innerHTML = bannerSrc ? `
+      <div style="flex:1;min-height:0;overflow:hidden;">
+        ${badge}
+        <div class="smo-name" style="font-size:12px;line-height:1.2;text-align:center;margin-top:2px;">${teamsLine}</div>
+        ${timerBlock}
+      </div>
+      <div class="hsc-btn-row" style="margin-top:6px;flex-shrink:0;">
+        <a href="${matchWatchHref(m.btn_url)}" class="hsc-btn-watch" style="font-size:10px;padding:6px 8px;" onclick="event.stopPropagation();return sxHandleMatchWatch(event,'${sxServersEnc(m)}','${escJs(m.btn_url)}','${escJs((m.team1_code||'')+' vs '+(m.team2_code||''))}','${sxMatchInfoEnc(m,(m.team1_code||'')+' vs '+(m.team2_code||''))}')">▶ Watch Now</a>
+      </div>` : `
       <div style="flex:1;min-height:0;overflow:hidden;">
         ${badge}
         <div style="display:flex;align-items:center;justify-content:space-between;gap:3px;">
@@ -6121,15 +6155,24 @@ function injectMatchInfoIntoHeroCards(matchCards) {
     const div = document.createElement('div');
     div.className = 'hero-slide-card';
     div.setAttribute('onclick', `return sxHandleMatchWatch(event,'${sxServersEnc(m)}','${escJs(m.btn_url)}','${escJs((m.team1_code||'')+' vs '+(m.team2_code||''))}','${sxMatchInfoEnc(m,(m.team1_code||'')+' vs '+(m.team2_code||''))}')`);
+    const teamsLine = `${m.team1_full_name||m.team1_code||''} vs ${m.team2_full_name||m.team2_code||''}`;
+    const bannerSrc = m.banner_url || m.banner_image_url || m._fcxBanner || '';
+    const bgImg = bannerSrc || fallbackBanner;
     div.innerHTML = `
       <div class="hsc-banner">
-        <div class="hsc-banner-bg" style="background-image:url('${fallbackBanner}')"></div>
+        <div class="hsc-banner-bg" style="background-image:url('${bgImg}')"></div>
         <div class="hsc-banner-overlay"></div>
         <div class="hsc-badge-row">
           <span class="hsc-sport-badge">${m.sport_badge||m.sport||''}</span>
         </div>
       </div>
       <div class="hsc-info">
+        ${bannerSrc ? `
+        <div style="flex:1;min-height:0;overflow:hidden;">
+          ${badge}
+          <div class="smo-name" style="font-size:12px;line-height:1.2;text-align:center;margin-top:2px;">${teamsLine}</div>
+          ${timerBlock}
+        </div>` : `
         <div style="flex:1;min-height:0;overflow:hidden;">
           ${badge}
           <div style="display:flex;align-items:center;justify-content:space-between;gap:3px;">
@@ -6146,7 +6189,7 @@ function injectMatchInfoIntoHeroCards(matchCards) {
             </div>
           </div>
           ${timerBlock}
-        </div>
+        </div>`}
         <div class="hsc-btn-row" style="margin-top:6px;flex-shrink:0;">
           <a href="${matchWatchHref(m.btn_url)}" class="hsc-btn-watch" style="font-size:10px;padding:6px 8px;" onclick="event.stopPropagation();return sxHandleMatchWatch(event,'${sxServersEnc(m)}','${escJs(m.btn_url)}','${escJs((m.team1_code||'')+' vs '+(m.team2_code||''))}','${sxMatchInfoEnc(m,(m.team1_code||'')+' vs '+(m.team2_code||''))}')">▶ Watch Now</a>
         </div>
@@ -6204,7 +6247,22 @@ function injectMatchInfoIntoSlides(matchCards) {
     const contentEl = slide.querySelector('.slide-content');
     if (!contentEl) return;
 
-    contentEl.innerHTML = `
+    const teamsLine = `${m.team1_full_name||m.team1_code||''} vs ${m.team2_full_name||m.team2_code||''}`;
+    // A row's own banner_url/banner_image_url (or a cross-matched FanCode
+    // banner) takes over the whole slide background and drops the
+    // two-team-logo layout, matching the FanCode-style banner slides —
+    // same as the match cards themselves.
+    const bannerSrc = m.banner_url || m.banner_image_url || m._fcxBanner || '';
+    const bgEl = slide.querySelector('.slide-bg');
+    if (bannerSrc && bgEl) bgEl.style.backgroundImage = `url('${bannerSrc}')`;
+
+    contentEl.innerHTML = bannerSrc ? `
+      <div style="margin-bottom:10px;">${badge}</div>
+      <div class="slide-title">${teamsLine}</div>
+      <div class="slide-sub">${m.game||''}</div>
+      ${timerBlock}
+      <div class="slide-btns">${watchBtn}</div>
+    ` : `
       <div style="margin-bottom:10px;">${badge}</div>
       <div style="display:flex;align-items:center;justify-content:center;gap:18px;margin-bottom:6px;">
         <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:0;max-width:110px;">
