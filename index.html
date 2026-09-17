@@ -4620,6 +4620,13 @@ function fcxStatusRank(m){
   if (m.status === 'COMPLETED') return 2;
   return 1; // UPCOMING / unknown
 }
+// Start time in ms for a FanCode match — used as the tiebreak inside a
+// status tier so upcoming matches sort soonest-first (same rule the sheet
+// side applies via countdown_to_iso_datetime), instead of just keeping
+// feed order.
+function fcxStartMs(m){
+  return (m && m.time instanceof Date && !isNaN(m.time.getTime())) ? m.time.getTime() : Infinity;
+}
 function fcxFmtMatchTime(m){
   if (!m.time) return 'TBA';
   const dp = m.time.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}).toUpperCase();
@@ -4766,28 +4773,39 @@ function smoMatchExistingGame(list, name){
 }
 window.smoMatchExistingGame = smoMatchExistingGame;
 
-// Re-sorts a rendered .smo-section's cards so any LIVE card (data-live="1")
-// — sheet-driven or FanCode-merged alike — sits above every non-live card
-// in that section, without disturbing the relative order within either
-// group. Needed because FanCode cards get merged into an existing sheet
-// section by simple append (see fcxAppendHomeSections below), which on its
-// own could leave a live FanCode match sitting under upcoming sheet cards.
+// Full "live first, then soonest-upcoming first" sort for any flat list of
+// sibling card elements, read off the data-live / data-start-ms attributes
+// every match card (sheet-driven or FanCode) now carries. This is the one
+// ordering rule used everywhere a match list is rendered or merged:
+//   1) LIVE cards first
+//   2) everything else by start time ascending (countdown_to_iso_datetime
+//      for sheet cards, FanCode's own start time for FanCode cards) — so
+//      e.g. an Oct 2, 7 AM match lists before an Oct 3 match regardless of
+//      which source it came from.
+// Needed because FanCode cards get merged into already-rendered lists by
+// simple DOM insertion (append/insertBefore) rather than a full re-sort,
+// which on its own could leave a live or soon-starting FanCode match
+// sitting under sheet cards that just happened to render first.
+function sxSortCardsLiveThenTime(cards, moveFn) {
+  if (!cards || cards.length < 2) return;
+  const rank = c => c.dataset.live === '1' ? 0 : 1;
+  const startMs = c => { const v = c.dataset.startMs; return (v !== undefined && v !== '' && !isNaN(Number(v))) ? Number(v) : Infinity; };
+  cards.slice().sort((a, b) => rank(a) - rank(b) || startMs(a) - startMs(b)).forEach(moveFn);
+}
+// Section-scoped convenience wrapper (Matches tab: sheet + merged-in
+// FanCode cards inside the same game/category section).
 function sxReorderSectionLiveFirst(sectionEl) {
   if (!sectionEl) return;
-  const cards = Array.from(sectionEl.querySelectorAll(':scope > .smo-card'));
-  if (cards.length < 2) return;
-  const live = cards.filter(c => c.dataset.live === '1');
-  if (!live.length || live.length === cards.length) return; // nothing to move
-  const rest = cards.filter(c => c.dataset.live !== '1');
-  live.concat(rest).forEach(c => sectionEl.appendChild(c));
+  sxSortCardsLiveThenTime(
+    Array.from(sectionEl.querySelectorAll(':scope > .smo-card')),
+    c => sectionEl.appendChild(c)
+  );
 }
-
-// Generic "live floats to the top" reorder for any flat list of sibling
-// cards, keyed off whichever element actually carries the live indicator
-// (isLiveEl). Used to fix up spots where FanCode cards get merged into an
-// already-rendered list by simple DOM insertion (append/insertBefore)
-// instead of a full re-sort — which on its own could leave a live FanCode
-// card sitting under non-live cards that happened to render first.
+// Whole-category-section-level "does it contain a live card at all" check —
+// used only to decide which game/category SECTION floats to the top when a
+// brand-new FanCode-only section is appended after the sheet-driven render
+// (see fcxAppendHomeSections below). This is a coarser, boolean version of
+// the per-card sort above — it moves a whole section, not individual cards.
 function sxFloatLiveCardsToTop(siblings, isLiveEl, moveFn) {
   if (!siblings || siblings.length < 2) return;
   const live = siblings.filter(isLiveEl);
@@ -4812,7 +4830,7 @@ function fcxTournamentGroups(){
     groups.get(key).cards.push(m);
   });
   const entries = Array.from(groups.values()).map(g => [g.label, g.cards]);
-  entries.forEach(([, cards]) => cards.sort((a,b) => fcxStatusRank(a) - fcxStatusRank(b)));
+  entries.forEach(([, cards]) => cards.sort((a,b) => fcxStatusRank(a) - fcxStatusRank(b) || fcxStartMs(a) - fcxStartMs(b)));
   entries.sort((a,b) => {
     const aLive = a[1].some(m => m.status === 'LIVE') ? 0 : 1;
     const bLive = b[1].some(m => m.status === 'LIVE') ? 0 : 1;
@@ -4874,7 +4892,7 @@ window.fcxAppendHomeSections = function(){
       // whether or not this particular match has a countdown to show.
       const timerBlock = `<div class="smo-timer" id="${timerWrapId}" style="visibility:${countdown ? 'visible' : 'hidden'}"><div class="timer-label">STARTS IN</div><div class="timer-display" id="${timerId}">--:--:--</div></div>`;
       cardsHtml += `
-      <div class="smo-card fx2-card${existingSec ? ' fcx-smo-card' : ''}" data-live="${isLive?'1':'0'}">
+      <div class="smo-card fx2-card${existingSec ? ' fcx-smo-card' : ''}" data-live="${isLive?'1':'0'}" data-start-ms="${fcxStartMs(m)}">
         <div class="fx2-thumb">
           <img src="${m.image}" alt="${escJs(m.title)}" class="fx2-thumb-img" onerror="this.style.display='none'">
           ${badge}
@@ -4948,7 +4966,7 @@ window.fcxAppendFixturesPreview = function(){
     .filter(m => !fcxHasSheetCard(m)) // already shown as a sheet card — don't duplicate it here
     .filter(m => (typeof fcxIsTodayMatch === 'function') ? fcxIsTodayMatch(m) : true)
     .slice()
-    .sort((a,b) => fcxStatusRank(a) - fcxStatusRank(b))
+    .sort((a,b) => fcxStatusRank(a) - fcxStatusRank(b) || fcxStartMs(a) - fcxStartMs(b))
     .slice(0, 4);
   if (!list.length) return;
   // Sheet had zero fixtures (just the empty-state box) — clear it and make
@@ -4971,7 +4989,7 @@ window.fcxAppendFixturesPreview = function(){
       ? ` href="javascript:void(0)" onclick="return fcxOpenWatchById('${escJs(String(m.id))}')"`
       : ` href="javascript:void(0)" onclick="return fcxOpenWatchById('${escJs(String(m.id))}')"`;
     return `
-    <${tag} class="fx2-card fcx-fixture-card"${clickAttr}>
+    <${tag} class="fx2-card fcx-fixture-card" data-live="${isLive?'1':'0'}" data-start-ms="${fcxStartMs(m)}"${clickAttr}>
       <div class="fx2-thumb">
         <img src="${m.image}" alt="${escJs(m.title)}" class="fx2-thumb-img" onerror="this.style.display='none'">
         ${isLive ? '<span class="fx2-badge fx2-badge-live"><span class="fx2-live-dot"></span>LIVE</span>' : ''}
@@ -4993,12 +5011,13 @@ window.fcxAppendFixturesPreview = function(){
 
   // The FanCode cards just added were inserted right before "View All" —
   // i.e. at the end of whatever sheet-driven cards render() already put
-  // in the grid — regardless of live status. Float any live card (sheet
-  // or FanCode) back up above the non-live ones so a live FanCode match
-  // never sits under an upcoming sheet match.
-  sxFloatLiveCardsToTop(
+  // in the grid — regardless of live/start-time. Fully re-sort the whole
+  // grid now that both sources are present: live first, then soonest
+  // upcoming first (by countdown_to_iso_datetime for sheet cards / start
+  // time for FanCode cards alike), same rule as the initial sheet-only
+  // render.
+  sxSortCardsLiveThenTime(
     Array.from(grid.children).filter(c => c !== viewAll && c.classList.contains('fx2-card')),
-    c => !!c.querySelector('.fx2-badge-live'),
     c => grid.insertBefore(c, viewAll || null)
   );
 };
@@ -5018,7 +5037,7 @@ window.fcxAppendHeroSlides = function(){
     .filter(m => m.status !== 'COMPLETED')
     .filter(m => !fcxHasSheetCard(m)) // already shown as a sheet card — don't duplicate it here
     .slice()
-    .sort((a,b) => fcxStatusRank(a) - fcxStatusRank(b))
+    .sort((a,b) => fcxStatusRank(a) - fcxStatusRank(b) || fcxStartMs(a) - fcxStartMs(b))
     .slice(0, 3);
   if (!picks.length) return;
   const slides = container.querySelectorAll(':scope > .slide');
@@ -6821,7 +6840,7 @@ function renderMatchCards(rows) {
           </div>`;
 
       sectionHtml += `
-      <div class="smo-card fx2-card" id="${cardId}" data-live="${isLive ? '1' : '0'}"${hideAt !== null ? ` data-expire-at="${hideAt}"` : ''}>
+      <div class="smo-card fx2-card" id="${cardId}" data-live="${isLive ? '1' : '0'}" data-start-ms="${cardStartMs(c)}"${hideAt !== null ? ` data-expire-at="${hideAt}"` : ''}>
         <div class="fx2-thumb">
           ${thumbInner}
           ${badge}
@@ -7082,7 +7101,7 @@ function renderFixtures(rows) {
     const tag = 'a';
     const clickAttr = ` href="${isLive ? matchWatchHref(c.btn_url) : 'javascript:void(0)'}" onclick="return sxHandleMatchWatch(event,'${sxServersEnc(c)}','${escJs(c.btn_url)}','${escJs((c.team1_code||'')+' vs '+(c.team2_code||''))}','${sxMatchInfoEnc(c,(c.team1_code||'')+' vs '+(c.team2_code||''))}')"`;
     return `
-    <${tag} class="fx2-card"${clickAttr}>
+    <${tag} class="fx2-card" data-live="${isLive?'1':'0'}" data-start-ms="${fixtureStartMs(c)}"${clickAttr}>
       <div class="fx2-thumb">
         ${thumb}
         ${isLive ? '<span class="fx2-badge fx2-badge-live"><span class="fx2-live-dot"></span>LIVE</span>' : ''}
