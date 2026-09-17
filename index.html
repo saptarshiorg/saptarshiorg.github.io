@@ -4830,7 +4830,14 @@ function fcxTournamentGroups(){
     groups.get(key).cards.push(m);
   });
   const entries = Array.from(groups.values()).map(g => [g.label, g.cards]);
-  entries.forEach(([, cards]) => cards.sort((a,b) => fcxStatusRank(a) - fcxStatusRank(b) || fcxStartMs(a) - fcxStartMs(b)));
+  // Sort FanCode matches: LIVE first, then UPCOMING by date (ascending/soonest first), then COMPLETED
+  entries.forEach(([, cards]) => cards.sort((a,b) => {
+    const statusA = fcxStatusRank(a); // 0=LIVE, 1=UPCOMING, 2=COMPLETED
+    const statusB = fcxStatusRank(b);
+    if (statusA !== statusB) return statusA - statusB; // Primary sort by status
+    // Within same status: sort UPCOMING matches by date ascending (soonest first)
+    return fcxStartMs(a) - fcxStartMs(b); // Secondary sort by time ascending
+  }));
   entries.sort((a,b) => {
     const aLive = a[1].some(m => m.status === 'LIVE') ? 0 : 1;
     const bLive = b[1].some(m => m.status === 'LIVE') ? 0 : 1;
@@ -4966,7 +4973,13 @@ window.fcxAppendFixturesPreview = function(){
     .filter(m => !fcxHasSheetCard(m)) // already shown as a sheet card — don't duplicate it here
     .filter(m => (typeof fcxIsTodayMatch === 'function') ? fcxIsTodayMatch(m) : true)
     .slice()
-    .sort((a,b) => fcxStatusRank(a) - fcxStatusRank(b) || fcxStartMs(a) - fcxStartMs(b))
+    // Sort FanCode matches: LIVE first, then UPCOMING by date (ascending/soonest first)
+    .sort((a,b) => {
+      const statusA = fcxStatusRank(a); // 0=LIVE, 1=UPCOMING, 2=COMPLETED
+      const statusB = fcxStatusRank(b);
+      if (statusA !== statusB) return statusA - statusB; // Primary sort by status
+      return fcxStartMs(a) - fcxStartMs(b); // Secondary sort by time ascending
+    })
     .slice(0, 4);
   if (!list.length) return;
   // Sheet had zero fixtures (just the empty-state box) — clear it and make
@@ -5037,7 +5050,13 @@ window.fcxAppendHeroSlides = function(){
     .filter(m => m.status !== 'COMPLETED')
     .filter(m => !fcxHasSheetCard(m)) // already shown as a sheet card — don't duplicate it here
     .slice()
-    .sort((a,b) => fcxStatusRank(a) - fcxStatusRank(b) || fcxStartMs(a) - fcxStartMs(b))
+    // Sort FanCode matches: LIVE first, then UPCOMING by date (ascending/soonest first)
+    .sort((a,b) => {
+      const statusA = fcxStatusRank(a); // 0=LIVE, 1=UPCOMING, 2=COMPLETED
+      const statusB = fcxStatusRank(b);
+      if (statusA !== statusB) return statusA - statusB; // Primary sort by status
+      return fcxStartMs(a) - fcxStartMs(b); // Secondary sort by time ascending
+    })
     .slice(0, 3);
   if (!picks.length) return;
   const slides = container.querySelectorAll(':scope > .slide');
@@ -6724,9 +6743,10 @@ setInterval(smoSweepExpiredCards, 60000);
 // "live" via matchIsAutoLive() purely from the ISO datetime, with no
 // manual sheet edit — actually move to the front and count as live
 // everywhere, not just in the cosmetic per-card countdown badge.
+// Updated to 60s to sync with sheet fetch interval
 setInterval(() => {
   if (window._matchCardsRawRows) renderMatchCards(window._matchCardsRawRows);
-}, 30000);
+}, 60000);
 
 function renderMatchCards(rows) {
   if (!rows) { console.warn('[MATCH CARDS] fetchSheet returned null — check the tab name is exactly "MATCH CARDS" and the sheet is shared ("Anyone with the link can view").'); return; }
@@ -6787,7 +6807,14 @@ function renderMatchCards(rows) {
   };
   const groupEntries = Array.from(groups.entries());
   groupEntries.forEach(([, groupCards]) => {
-    groupCards.sort((a, b) => cardDayTier(a) - cardDayTier(b) || cardStartMs(a) - cardStartMs(b));
+    // Sort matches: LIVE first, then UPCOMING by date (ascending/soonest first), then COMPLETED
+    groupCards.sort((a, b) => {
+      const tierA = cardDayTier(a); // 0=LIVE, 1/2=UPCOMING (by day), 3=COMPLETED
+      const tierB = cardDayTier(b);
+      if (tierA !== tierB) return tierA - tierB; // Primary sort by day tier
+      // Within same tier: sort by start time ascending (soonest first for UPCOMING)
+      return cardStartMs(a) - cardStartMs(b);
+    });
   });
   groupEntries.sort((a, b) => {
     const aHasLive = a[1].some(c => matchStatusText(c).toLowerCase() === 'live') ? 0 : 1;
@@ -7608,6 +7635,20 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(() => {
         clearTimeout(quickTimer);
         hideLoader();
+        
+        // ── AUTO-REFRESH MATCH CARDS SHEET every 60 seconds ──
+        // Fetches the latest MATCH CARDS data and re-renders to reflect live updates
+        setInterval(async () => {
+          try {
+            const matchCardsData = await fetchSheet('MATCH CARDS');
+            if (matchCardsData) {
+              renderMatchCards(matchCardsData);
+              console.log('[AUTO-REFRESH] MATCH CARDS sheet updated at', new Date().toLocaleTimeString());
+            }
+          } catch (e) {
+            console.warn('[AUTO-REFRESH] MATCH CARDS fetch failed:', e);
+          }
+        }, 60000); // 60 seconds = 60,000 milliseconds
       })
       .catch(e => {
         console.warn('init() error (ignored):', e);
