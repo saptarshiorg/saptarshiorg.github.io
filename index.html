@@ -6174,10 +6174,24 @@ function openMatchWatchScreen(servers, info) {
     const notLiveNotice = matchNotStarted
       ? `<div class="mws-notlive">⏰ Match will be live at ${startText}</div>`
       : '';
+    // Sheet/Live-TV servers unlock 30 minutes before kickoff (or once the
+    // match is live/finished) — they don't need the actual live signal
+    // FanCode's own row still requires. FanCode itself only ever unlocks
+    // via its own API status (s.fcxLive, checked below), never early.
+    const MWS_PREMATCH_UNLOCK_MS = 30 * 60 * 1000; // 30 minutes
+    const mwsStartMs = (() => {
+      const d = new Date((info && info.countdown) || '');
+      return isNaN(d.getTime()) ? null : d.getTime();
+    })();
+    const sheetServersLocked = !isLive && !isFinished &&
+      !(mwsStartMs !== null && Date.now() >= mwsStartMs - MWS_PREMATCH_UNLOCK_MS);
     body.innerHTML = notLiveNotice + sortedServers.map((s, i) => {
       const isFcx = isFcxServer(s);
       if (isFcx) {
-        const fcxReady = !!s.fcxLive && !matchNotStarted;
+        // FanCode only ever unlocks once its own API says the match is
+        // actually live (s.fcxLive) — never early, unlike the sheet/Live-TV
+        // servers below which get a 30-minute pre-match head start.
+        const fcxReady = !!s.fcxLive;
         const priorityBadge = `<span style="display:inline-block;background:#F5C518;color:#111;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;margin-left:8px;vertical-align:middle;">High Priority</span>`;
         const clickAttr = fcxReady
           ? ` type="button" onclick="closeMatchWatchScreen();sxGoToMatchUrl(null,'${escJs(s.url)}','${escJs(label)}')"`
@@ -6202,23 +6216,23 @@ function openMatchWatchScreen(servers, info) {
         : keywordLogo
           ? `<img class="mws-server-icon" src="${keywordLogo}" alt="" onerror="this.outerHTML='<span class=\\'mws-server-num\\'>${i + 1}</span>'">`
           : `<span class="mws-server-num">${i + 1}</span>`;
-      const isRawStream = !matchNotStarted && sxIsRawStreamUrl(s.url);
+      const isRawStream = !sheetServersLocked && sxIsRawStreamUrl(s.url);
       const vlcIcon = isRawStream ? `<img class="mws-vlc-icon" src="https://images.icon-icons.com/1381/PNG/512/vlc_93519.png" alt="VLC" title="Direct stream \u2014 plays in VLC" onerror="this.style.display='none'">` : '';
       // Auto-connected badge for servers linked from LIVE CHANNELS
       const autoConnectBadge = s.auto_connected ? `<span class="mws-auto-badge" title="Auto-connected from LIVE TV">📡 LIVE TV</span>` : '';
-      const srvClick = matchNotStarted
+      const srvClick = sheetServersLocked
         ? `onclick="mwsLockedServerTap(this)"`
         : isRawStream
           ? `onclick="closeMatchWatchScreen();sxOpenVlcPopup('${escJs(s.url)}','${escJs(label)}')"`
           : `onclick="closeMatchWatchScreen();sxGoToMatchUrl(null,'${escJs(s.url)}','${escJs(label)}')"`;
       return `
-      <button type="button" class="mws-server-btn${matchNotStarted ? ' mws-server-locked' : ''}${isRawStream ? ' mws-server-btn-raw' : ''}" ${srvClick}>
+      <button type="button" class="mws-server-btn${sheetServersLocked ? ' mws-server-locked' : ''}${isRawStream ? ' mws-server-btn-raw' : ''}" ${srvClick}>
         ${iconHtml}
         <span class="mws-server-info">
           <span class="mws-server-label">${s.text || ('Server ' + (i + 1))}${vlcIcon}${autoConnectBadge}</span>
-          <span class="mws-server-sub">${matchNotStarted ? 'Locked until ' + startText : 'Tap to play this stream'}</span>
+          <span class="mws-server-sub">${sheetServersLocked ? 'Locked until ' + startText : 'Tap to play this stream'}</span>
         </span>
-        <span class="mws-server-play">${matchNotStarted ? MWS_LOCK_SVG : MWS_PLAY_SVG}</span>
+        <span class="mws-server-play">${sheetServersLocked ? MWS_LOCK_SVG : MWS_PLAY_SVG}</span>
       </button>`;
     }).join('');
   }
