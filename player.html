@@ -122,7 +122,7 @@
 <script>
   const loader = document.getElementById('loader');
   const unmuteBtn = document.getElementById('unmute-overlay');
-  const JSON_URL = "https://sonujson-devloper.vercel.app/Data/prime.json";
+  const DEFAULT_JSON_URL = "https://raw.githubusercontent.com/kajju027/SonyLiv-Events-Json/refs/heads/main/sonyliv.json";
 
   function toggleLoader(show, text = "LOADING STREAM...") {
     if (show) {
@@ -156,34 +156,51 @@
   async function resolveMatch() {
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id') || '';
+    const jsonUrl = params.get('src') || DEFAULT_JSON_URL;
 
     let data = null;
     try {
-      const res = await fetch(JSON_URL, { cache: 'no-store' });
+      const res = await fetch(jsonUrl, { cache: 'no-store' });
       data = await res.json();
     } catch (err) {
       console.error("Failed to load match data:", err);
       return null;
     }
 
-    const matches = (data && data.Matches) || [];
-    let selected = matches.find(m => String(m.id) === String(id));
+    // Supports both schemas:
+    //  - legacy: { Matches: [{ id, CnpTV:{amazon_server,cloudfront_server,akamai_server}, drm_key, event_name, image }] }
+    //  - sonyliv-style: { matches: [{ match_id, event_name, poster, dai_url, pub_url, video_url }] }
+    const matches = (data && (data.Matches || data.matches)) || [];
+
+    const getId = m => m.id ?? m.match_id;
+    let selected = matches.find(m => String(getId(m)) === String(id));
     if (!selected && matches.length > 0) {
       selected = matches[0];
     }
     return selected || null;
   }
 
+  function normalizeMatch(selected) {
+    if (!selected) return null;
+    const cnp = selected.CnpTV || {};
+    const streamUrl =
+      cnp.amazon_server || cnp.cloudfront_server || cnp.akamai_server ||
+      selected.dai_url || selected.pub_url || selected.video_url || '';
+    return {
+      streamUrl,
+      drmKey: selected.drm_key || '',
+      eventName: selected.event_name || 'Live Stream',
+      logoImg: selected.image || selected.poster || ''
+    };
+  }
+
   document.addEventListener("DOMContentLoaded", async () => {
     toggleLoader(true, "LOADING STREAM...");
 
     const selected = await resolveMatch();
-
-    const cnp = (selected && selected.CnpTV) || {};
-    const streamUrl = cnp.amazon_server || cnp.cloudfront_server || cnp.akamai_server || '';
-    const drmKey = (selected && selected.drm_key) || '';
-    const eventName = (selected && selected.event_name) || 'Live Stream';
-    const logoImg = (selected && selected.image) || '';
+    const { streamUrl, drmKey, eventName, logoImg } = normalizeMatch(selected) || {
+      streamUrl: '', drmKey: '', eventName: 'Live Stream', logoImg: ''
+    };
 
     document.title = eventName + " | Stream Player";
 
