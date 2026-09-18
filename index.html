@@ -33,7 +33,7 @@
      whose watch_url is a third-party embed page (not a raw stream URL)
      cannot be handed to a Cast receiver, since the SDK can only cast an
      actual media URL, not the contents of a cross-origin iframe. ── -->
-<script defer src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
+<script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
 
 <!-- SX SPORTS -->
 
@@ -3195,10 +3195,25 @@ body::before{ display:none !important; }
   <!-- MOBILE FULL-WIDTH SLIDES (hidden on desktop via CSS) -->
   <div class="slides-container" id="slides-container"><div class="sk sk-hero"></div></div>
 </section>
-<!-- QUICK TAB SWITCHER STRIP — removed on purpose: Matches / Live TV / FanCode
-     (and FIFA, already hidden via SX_FIFA_ENABLED) all live in the mobile
-     bottom tab bar now, so this duplicate row of buttons on the home
-     screen was dropped to cut clutter + a bit of load weight on mobile. -->
+<!-- QUICK TAB SWITCHER STRIP (Live TV / Matches / FIFA / News / FanCode) -->
+<div id="watch-ch-strip">
+  <a class="wcs-btn active" id="wcs-matches" data-sxtab="matches" href="#sxTabPanels" onclick="event.preventDefault();sxSwitchTab('matches');">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>
+    Matches
+  </a>
+  <a class="wcs-btn" id="wcs-all" data-sxtab="livetv" href="#sxTabPanels" onclick="event.preventDefault();openLiveTV();">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+    Live TV
+  </a>
+  <a class="wcs-btn" id="wcs-fifa" data-sxtab="fifa" href="#sxTabPanels" onclick="event.preventDefault();openFifa();">
+    <img src="https://upload.wikimedia.org/wikipedia/en/1/17/2026_FIFA_World_Cup_emblem.svg" alt="FIFA" style="height:15px;width:15px;object-fit:contain;display:block;flex-shrink:0;">
+    FIFA
+  </a>
+  <a class="wcs-btn" id="wcs-fancode" data-sxtab="fancode" href="#sxTabPanels" onclick="event.preventDefault();openFanCode();">
+    <img src="https://static.vecteezy.com/system/resources/previews/069/146/538/non_2x/fancode-app-icon-on-transparent-background-free-png.png" alt="FanCode" style="height:15px;width:15px;object-fit:contain;display:block;flex-shrink:0;border-radius: 8px;">
+    FanCode
+  </a>
+</div>
 
 <!-- ── Quick-strip buttons: flat finish (no gradients/inset shadows) ──
      Matches = saffron flat / black text. Live TV = white flat / dark text.
@@ -5424,7 +5439,7 @@ function toObj(rows) {
   });
 }
 
-const CMS_CACHE_TTL_MS = 300000; // reuse CMS data for 5 minutes within the same tab session
+const CMS_CACHE_TTL_MS = 60000; // reuse a sheet's data for 60s within the same tab session
 
 async function fetchSheet(name) {
   if (!SHEET_ID || SHEET_ID === 'YOUR_SPREADSHEET_ID_HERE') {
@@ -7498,8 +7513,8 @@ async function init() {
     ['TICKER',       renderTicker,     22, 'Loading live ticker…'],
     ['NAVBAR',       renderNav,        30, 'Building navigation…'],
     ['HERO SLIDES',  renderSlides,     38, 'Loading featured slides…'],
-    ['LIVE CHANNELS',renderChannels,   46, 'Loading live channels…'],
-    ['MATCH CARDS',  renderMatchCards, 54, 'Loading match cards…'],
+    ['MATCH CARDS',  renderMatchCards, 46, 'Loading match cards…'],
+    ['LIVE CHANNELS',renderChannels,   54, 'Loading live channels…'],
     ['CATEGORIES',   renderCategories, 68, 'Loading categories…'],
     ['BROADCAST',    renderBroadcast,  74, 'Loading broadcast partners…'],
     ['SCHEDULE',     renderSchedule,   80, 'Loading schedule…'],
@@ -7510,21 +7525,12 @@ async function init() {
 
   setProgress(40, 'Fetching CMS data…');
 
-  // Low-end/mobile friendly: use a small request pool instead of starting
-  // every CMS request simultaneously. Cached sheets still return immediately.
-  const results = new Array(steps.length);
-  let nextStep = 0;
-  const worker = async () => {
-    while (nextStep < steps.length) {
-      const i = nextStep++;
-      const [sheet] = steps[i];
-      results[i] = await fetchSheet(sheet).catch(e => {
-        console.warn(`Sheet "${sheet}" failed:`, e);
-        return null;
-      });
-    }
-  };
-  await Promise.all([worker(), worker(), worker()]);
+  // Fire every sheet fetch in parallel instead of one-by-one — this is the
+  // single biggest speed win, since 13 sequential round-trips become 1 wait
+  // for the slowest of them, run together.
+  const results = await Promise.all(
+    steps.map(([sheet]) => fetchSheet(sheet).catch(e => { console.warn(`Sheet "${sheet}" failed:`, e); return null; }))
+  );
 
   // Render in the original, correct visual order once all data is back.
   const liveChannelsIdx = steps.findIndex(([sheet]) => sheet === 'LIVE CHANNELS');
@@ -7928,14 +7934,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
-<!-- MOBILE BOTTOM TAB BAR — Hotstar-style
-     Home first, Search last. FIFA + Movies dropped from here (still
-     reachable elsewhere) to make room without crowding the bar. -->
+<!-- MOBILE BOTTOM TAB BAR — Hotstar-style -->
 <nav class="mobile-tabbar" id="mobile-tabbar">
-  <a class="mtab" data-sxtab="home" href="#" onclick="event.preventDefault();goHome();">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg>
-    Home
-  </a>
   <a class="mtab active" data-sxtab="matches" href="#sxTabPanels" onclick="event.preventDefault();sxSwitchTab('matches');">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/><circle cx="9" cy="14" r="1"/><circle cx="15" cy="14" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></svg>
     Matches
@@ -7949,9 +7949,13 @@ document.addEventListener('DOMContentLoaded', () => {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="10" rx="2"/><path d="M12 12v2M8 12v2M16 12v2"/></svg>
     OTT
   </a>
-  <a class="mtab" data-sxtab="search" href="#" onclick="event.preventDefault();sxOpenSearch();">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-    Search
+  <a class="mtab" data-sxtab="fifa" href="#sxTabPanels" onclick="event.preventDefault();openFifa();">
+    <img src="https://upload.wikimedia.org/wikipedia/en/1/17/2026_FIFA_World_Cup_emblem.svg" alt="FIFA 2026" style="width:22px;height:22px;object-fit:contain;display:block;margin:0 auto 1px;filter:drop-shadow(0 0 3px rgba(0,160,255,0.6));">
+    FIFA
+  </a>
+  <a class="mtab mtab-movies" data-sxtab="movies" href="#sxTabPanels" onclick="event.preventDefault();openMoviesOverlay();">
+    <img class="movies-logo-icon" src="https://static.vecteezy.com/system/resources/thumbnails/050/699/896/small/movie-night-illustration-cinema-poster-concept-banner-design-for-movie-theater-png.png" alt="Movies">
+    <span class="mtab-movies-label">Movies</span>
   </a>
 </nav>
 <script>
@@ -7959,17 +7963,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Bottom tabs get their active state synced by sxSwitchTab() via data-sxtab.
   window.__mtabSetActive = function(el){
     document.querySelectorAll('.mtab[data-sxtab]').forEach(t => t.classList.toggle('active', t === el));
-  };
-  // Search tab: reuses the movie/TV search already built into the OTT
-  // Movies panel (biggest title index on the site) instead of building a
-  // brand-new search UI — opens that panel and focuses its search box.
-  window.sxOpenSearch = function(){
-    if (typeof window.openMoviesOverlay === 'function') window.openMoviesOverlay();
-    document.querySelectorAll('.mtab[data-sxtab]').forEach(t => t.classList.toggle('active', t.dataset.sxtab === 'search'));
-    setTimeout(function(){
-      const input = document.getElementById('vaMovieSearchInput');
-      if (input) input.focus();
-    }, 350);
   };
 })();
 </script>
@@ -12236,338 +12229,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
   -webkit-mask-position:center !important; mask-position:center !important;
 }
 .btn-slide-watch:hover{ background:var(--pm-magenta-hover,#C21764) !important; }
-
-/* ══════════════════════════════════════════════════════════════════════
-   FULL-WIDTH BOTTOM NAV (mobile only) — Outlined icons on black bar.
-   Very narrow design with Matches, TV, Search, Favourites, Movies tabs.
-   Icon-only (labels hidden); icons have white borders, fill on active.
-═══════════════════════════════════════════════════════════════════════ */
-@media(max-width:900px){
-  .mobile-tabbar{
-    left:0 !important; right:0 !important;
-    transform:none !important;
-    bottom:0 !important;
-    width:100% !important; max-width:100% !important;
-    height:48px !important; padding:0 !important;
-    border-radius:0 !important;
-    background:#000 !important;
-    backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
-    box-shadow:0 -2px 8px rgba(0,0,0,0.3) !important;
-    justify-content:space-around !important;
-    border-top:1px solid #222 !important;
-  }
-  .mtab{
-    flex:1 !important;
-    width:auto !important; height:48px !important;
-    padding:0 !important; margin:0 !important;
-    border-radius:8px !important;
-    color:#fff !important;
-    font-size:0 !important; line-height:0 !important; gap:0 !important;
-    display:flex !important; align-items:center !important; justify-content:center !important;
-    transition:all 0.18s var(--ease) !important;
-    border:2px solid #fff !important;
-    background:transparent !important;
-    width:32px !important; height:32px !important;
-    margin:0 8px !important;
-  }
-  .mtab svg{ width:18px !important; height:18px !important; filter:brightness(0) invert(1) !important; }
-  .mtab.active{
-    background:#fff !important;
-    color:#000 !important;
-    transform:none !important;
-    border:2px solid #fff !important;
-  }
-  .mtab.active svg{ filter:brightness(0) invert(0) !important; }
-  .mtab-live-dot{ display:none !important; }
-  .mtab-movies-label{ display:none !important; }
-  .mtab-movies .movies-logo-icon{ width:18px !important; height:18px !important; border-radius:0 !important; filter:brightness(0) invert(1) !important; }
-  .mtab-movies.active .movies-logo-icon{ filter:brightness(0) invert(0) !important; }
-
-  body{ padding-bottom:48px !important; }
-  footer{ padding-bottom:calc(24px + 48px + env(safe-area-inset-bottom,0)) !important; }
-}
 </style>
-
-
-<!-- EV SPORTS — MOBILE / LOW-END / SEARCH FINAL FIX -->
-<style>
-/* Keep low-end phones responsive: remove expensive visual effects only. */
-html.sx-low-end *,
-html.sx-low-end *::before,
-html.sx-low-end *::after{
-  animation-duration:0.001ms !important;
-  animation-iteration-count:1 !important;
-  transition-duration:0.001ms !important;
-  scroll-behavior:auto !important;
-}
-html.sx-low-end header,
-html.sx-low-end .mobile-tabbar,
-html.sx-low-end .hero,
-html.sx-low-end .ch-card,
-html.sx-low-end .ott-card-full{
-  backdrop-filter:none !important;
-  -webkit-backdrop-filter:none !important;
-  box-shadow:none !important;
-}
-
-/* Home screen: remove the old duplicate quick buttons on mobile. */
-@media(max-width:900px){
-  #watch-ch-strip{display:none !important;}
-}
-
-/* Whole-site search. Movie catalogue is intentionally excluded. */
-#sx-site-search{
-  position:fixed;inset:0;z-index:5000;display:none;
-  background:#000;color:#fff;
-  padding:calc(18px + env(safe-area-inset-top,0)) 18px
-           calc(24px + env(safe-area-inset-bottom,0));
-}
-#sx-site-search.open{display:block}
-.sx-search-shell{max-width:760px;margin:0 auto;height:100%;display:flex;flex-direction:column}
-.sx-search-head{display:flex;align-items:center;gap:10px;margin-bottom:16px}
-.sx-search-title{font-size:18px;font-weight:800;flex:1}
-.sx-search-close{border:0;background:#181818;color:#fff;width:38px;height:38px;border-radius:10px;font-size:22px;cursor:pointer}
-.sx-search-input-wrap{display:flex;align-items:center;gap:10px;background:#111;border:1px solid #2a2a2a;border-radius:12px;padding:0 13px}
-#sx-site-search-input{width:100%;height:48px;border:0;outline:0;background:transparent;color:#fff;font:600 15px inherit}
-#sx-site-search-input::placeholder{color:rgba(255,255,255,.42)}
-#sx-site-search-status{font-size:11px;color:rgba(255,255,255,.48);padding:12px 2px 8px}
-#sx-site-search-results{overflow:auto;-webkit-overflow-scrolling:touch;contain:content;padding-bottom:20px}
-.sx-search-result{
-  display:flex;align-items:center;gap:12px;width:100%;text-align:left;
-  border:0;border-bottom:1px solid #171717;background:transparent;color:#fff;
-  padding:13px 4px;cursor:pointer;
-}
-.sx-search-result:active{background:#111}
-.sx-search-result-icon{width:34px;height:34px;display:grid;place-items:center;border-radius:9px;background:#171717;flex:0 0 auto}
-.sx-search-result-main{min-width:0}
-.sx-search-result-title{font-size:13px;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sx-search-result-meta{font-size:10px;color:rgba(255,255,255,.45);margin-top:3px}
-.sx-search-empty{padding:40px 8px;text-align:center;color:rgba(255,255,255,.48);font-size:13px}
-</style>
-
-<div id="sx-site-search" aria-hidden="true">
-  <div class="sx-search-shell">
-    <div class="sx-search-head">
-      <div class="sx-search-title">Search EV SPORTS</div>
-      <button class="sx-search-close" type="button" onclick="sxCloseSiteSearch()" aria-label="Close search">×</button>
-    </div>
-    <div class="sx-search-input-wrap">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>
-      </svg>
-      <input id="sx-site-search-input" type="search" autocomplete="off" spellcheck="false"
-             placeholder="Search channels, matches, sports, TV, OTT…">
-    </div>
-    <div id="sx-site-search-status">Search the whole site — Movies are excluded.</div>
-    <div id="sx-site-search-results"></div>
-  </div>
-</div>
-
-<script>
-(function(){
-  'use strict';
-
-  /* ---------- Reliable Home button ---------- */
-  window.__mtabSetActive = function(target){
-    document.querySelectorAll('.mtab[data-sxtab]').forEach(function(t){
-      t.classList.toggle('active', !!target && t.dataset.sxtab === target);
-    });
-  };
-
-  var originalGoHome = window.goHome;
-  if (typeof originalGoHome === 'function' && !window.__sxGoHomeFixed){
-    window.__sxGoHomeFixed = true;
-    window.goHome = function(){
-      originalGoHome.apply(this, arguments);
-      window.__mtabSetActive('home');
-    };
-  }
-
-  /* Capture the mobile Home tap so another handler cannot interfere. */
-  document.addEventListener('click', function(e){
-    var home = e.target.closest && e.target.closest('.mobile-tabbar [data-sxtab="home"]');
-    if (!home) return;
-    e.preventDefault();
-    e.stopPropagation();
-    if (typeof window.goHome === 'function') window.goHome();
-  }, true);
-
-  /* ---------- Whole-site search, not movie search ---------- */
-  var overlay, input, results, status;
-  var index = [], indexBuiltAt = 0, timer = 0;
-
-  function clean(v){ return (v || '').replace(/\s+/g,' ').trim(); }
-
-  function buildIndex(){
-    var now = Date.now();
-    if (index.length && now - indexBuiltAt < 15000) return;
-
-    var nodes = document.body.querySelectorAll(
-      'main section,.section,.epg,.epg-card,.ch-card,.watch-ch-card,' +
-      '.match-card,.smo-card,.ott-card,.ott-card-full,.schedule-card,' +
-      '[data-sxtab],#footer-nav a,.nav-links-desktop a,.drawer-nav a,' +
-      'button[onclick],a[onclick]'
-    );
-
-    var seen = new Set(), out = [];
-    nodes.forEach(function(el){
-      if (!el || el.closest('#sx-site-search,#movies-overlay,script,style,noscript')) return;
-
-      var title = clean(el.innerText || el.getAttribute('aria-label') || el.title || '');
-      if (!title || title.length < 2 || title.length > 180) return;
-
-      var lower = title.toLowerCase();
-      if (['home','search','open','close','back','more','view all','play'].includes(lower)) return;
-
-      var key = lower + '|' + String(el.className || '');
-      if (seen.has(key)) return;
-      seen.add(key);
-
-      var cls = String(el.className || '');
-      var meta = /ch-|channel/i.test(cls) ? 'Live TV / Channel' :
-                 /match|smo/i.test(cls) ? 'Matches / Sports' :
-                 /schedule/i.test(cls) ? 'Schedule' :
-                 /ott|tv/i.test(cls) ? 'OTT / TV' :
-                 /news/i.test(lower) ? 'News' : 'EV SPORTS';
-
-      var clickable = el.closest('[onclick],a[href],button') || el;
-      out.push({title:title, meta:meta, el:clickable});
-      if (out.length >= 1200) return;
-    });
-
-    index = out;
-    indexBuiltAt = now;
-  }
-
-  function openSearchResult(item){
-    window.sxCloseSiteSearch();
-    if (!item || !item.el) return;
-    try { item.el.click(); } catch(err) { console.warn('Search navigation failed:', err); }
-  }
-
-  function renderSearch(){
-    if (!input || !results || !status) return;
-
-    var q = clean(input.value).toLowerCase();
-    if (!q){
-      status.textContent = 'Search the whole site — Movies are excluded.';
-      results.innerHTML = '<div class="sx-search-empty">Search channels, matches, sports, TV, OTT and other site content.</div>';
-      return;
-    }
-
-    buildIndex();
-    var words = q.split(/\s+/).filter(Boolean);
-
-    var hits = index.map(function(item){
-      var hay = item.title.toLowerCase(), score = 0;
-      words.forEach(function(w){
-        if (hay === w) score += 20;
-        else if (hay.startsWith(w)) score += 10;
-        else if (hay.includes(w)) score += 5;
-      });
-      return {item:item, score:score};
-    }).filter(function(x){return x.score > 0;})
-      .sort(function(a,b){return b.score-a.score || a.item.title.length-b.item.title.length;})
-      .slice(0,50);
-
-    status.textContent = hits.length + (hits.length === 1 ? ' result' : ' results') + ' found across EV SPORTS.';
-    if (!hits.length){
-      results.innerHTML = '<div class="sx-search-empty">No matching site content found.</div>';
-      return;
-    }
-
-    var frag = document.createDocumentFragment();
-    hits.forEach(function(hit){
-      var b = document.createElement('button');
-      b.type='button';
-      b.className='sx-search-result';
-      b.innerHTML =
-        '<span class="sx-search-result-icon">⌕</span>' +
-        '<span class="sx-search-result-main">' +
-        '<span class="sx-search-result-title"></span>' +
-        '<span class="sx-search-result-meta"></span></span>';
-      b.querySelector('.sx-search-result-title').textContent = hit.item.title;
-      b.querySelector('.sx-search-result-meta').textContent = hit.item.meta;
-      b.addEventListener('click',function(){openSearchResult(hit.item);});
-      frag.appendChild(b);
-    });
-    results.replaceChildren(frag);
-  }
-
-  window.sxOpenSiteSearch = function(){
-    overlay = overlay || document.getElementById('sx-site-search');
-    input = input || document.getElementById('sx-site-search-input');
-    results = results || document.getElementById('sx-site-search-results');
-    status = status || document.getElementById('sx-site-search-status');
-    if (!overlay) return;
-
-    overlay.classList.add('open');
-    overlay.setAttribute('aria-hidden','false');
-    document.body.style.overflow='hidden';
-    buildIndex();
-    renderSearch();
-    setTimeout(function(){
-      if(input){input.focus();input.select();}
-    },30);
-  };
-
-  window.sxCloseSiteSearch = function(){
-    overlay = overlay || document.getElementById('sx-site-search');
-    if (!overlay) return;
-    overlay.classList.remove('open');
-    overlay.setAttribute('aria-hidden','true');
-    document.body.style.overflow='';
-  };
-
-  /* The bottom Search tab now opens the whole-site index. */
-  window.sxOpenSearch = window.sxOpenSiteSearch;
-
-  document.addEventListener('DOMContentLoaded',function(){
-    overlay = document.getElementById('sx-site-search');
-    input = document.getElementById('sx-site-search-input');
-    results = document.getElementById('sx-site-search-results');
-    status = document.getElementById('sx-site-search-status');
-
-    if(input) input.addEventListener('input',function(){
-      clearTimeout(timer);
-      timer = setTimeout(renderSearch,60);
-    });
-
-    if(overlay) overlay.addEventListener('click',function(e){
-      if(e.target === overlay) window.sxCloseSiteSearch();
-    });
-
-    document.addEventListener('keydown',function(e){
-      if(e.key === 'Escape') window.sxCloseSiteSearch();
-      if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k'){
-        e.preventDefault();
-        window.sxOpenSiteSearch();
-      }
-    });
-
-    /* Disable the old movie-search binding if any later script tries to use it. */
-    var searchTab = document.querySelector('.mtab[data-sxtab="search"]');
-    if(searchTab) searchTab.onclick = function(e){
-      e.preventDefault();
-      window.sxOpenSiteSearch();
-      return false;
-    };
-
-    /* Remove any dynamically-created duplicate home quick strip. */
-    var strip = document.getElementById('watch-ch-strip');
-    if(strip) strip.style.display='none';
-
-    /* Detect low-end / Save-Data connections and only disable costly effects. */
-    var c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-    var lowEnd =
-      (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) ||
-      (navigator.deviceMemory && navigator.deviceMemory <= 4) ||
-      (c && (c.saveData || /(^|-)2g$|slow-2g/i.test(c.effectiveType || '')));
-
-    if(lowEnd) document.documentElement.classList.add('sx-low-end');
-  });
-})();
-</script>
 
 </body>
 </html>
