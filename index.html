@@ -3195,25 +3195,10 @@ body::before{ display:none !important; }
   <!-- MOBILE FULL-WIDTH SLIDES (hidden on desktop via CSS) -->
   <div class="slides-container" id="slides-container"><div class="sk sk-hero"></div></div>
 </section>
-<!-- QUICK TAB SWITCHER STRIP (Live TV / Matches / FIFA / News / FanCode) -->
-<div id="watch-ch-strip">
-  <a class="wcs-btn active" id="wcs-matches" data-sxtab="matches" href="#sxTabPanels" onclick="event.preventDefault();sxSwitchTab('matches');">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>
-    Matches
-  </a>
-  <a class="wcs-btn" id="wcs-all" data-sxtab="livetv" href="#sxTabPanels" onclick="event.preventDefault();openLiveTV();">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-    Live TV
-  </a>
-  <a class="wcs-btn" id="wcs-fifa" data-sxtab="fifa" href="#sxTabPanels" onclick="event.preventDefault();openFifa();">
-    <img src="https://upload.wikimedia.org/wikipedia/en/1/17/2026_FIFA_World_Cup_emblem.svg" alt="FIFA" style="height:15px;width:15px;object-fit:contain;display:block;flex-shrink:0;">
-    FIFA
-  </a>
-  <a class="wcs-btn" id="wcs-fancode" data-sxtab="fancode" href="#sxTabPanels" onclick="event.preventDefault();openFanCode();">
-    <img src="https://static.vecteezy.com/system/resources/previews/069/146/538/non_2x/fancode-app-icon-on-transparent-background-free-png.png" alt="FanCode" style="height:15px;width:15px;object-fit:contain;display:block;flex-shrink:0;border-radius: 8px;">
-    FanCode
-  </a>
-</div>
+<!-- QUICK TAB SWITCHER STRIP — removed on purpose: Matches / Live TV / FanCode
+     (and FIFA, already hidden via SX_FIFA_ENABLED) all live in the mobile
+     bottom tab bar now, so this duplicate row of buttons on the home
+     screen was dropped to cut clutter + a bit of load weight on mobile. -->
 
 <!-- ── Quick-strip buttons: flat finish (no gradients/inset shadows) ──
      Matches = saffron flat / black text. Live TV = white flat / dark text.
@@ -7513,8 +7498,8 @@ async function init() {
     ['TICKER',       renderTicker,     22, 'Loading live ticker…'],
     ['NAVBAR',       renderNav,        30, 'Building navigation…'],
     ['HERO SLIDES',  renderSlides,     38, 'Loading featured slides…'],
-    ['MATCH CARDS',  renderMatchCards, 46, 'Loading match cards…'],
-    ['LIVE CHANNELS',renderChannels,   54, 'Loading live channels…'],
+    ['LIVE CHANNELS',renderChannels,   46, 'Loading live channels…'],
+    ['MATCH CARDS',  renderMatchCards, 54, 'Loading match cards…'],
     ['CATEGORIES',   renderCategories, 68, 'Loading categories…'],
     ['BROADCAST',    renderBroadcast,  74, 'Loading broadcast partners…'],
     ['SCHEDULE',     renderSchedule,   80, 'Loading schedule…'],
@@ -7934,8 +7919,14 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
-<!-- MOBILE BOTTOM TAB BAR — Hotstar-style -->
+<!-- MOBILE BOTTOM TAB BAR — Hotstar-style
+     Home first, Search last. FIFA + Movies dropped from here (still
+     reachable elsewhere) to make room without crowding the bar. -->
 <nav class="mobile-tabbar" id="mobile-tabbar">
+  <a class="mtab" data-sxtab="home" href="#" onclick="event.preventDefault();goHome();">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg>
+    Home
+  </a>
   <a class="mtab active" data-sxtab="matches" href="#sxTabPanels" onclick="event.preventDefault();sxSwitchTab('matches');">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/><circle cx="9" cy="14" r="1"/><circle cx="15" cy="14" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></svg>
     Matches
@@ -7949,13 +7940,9 @@ document.addEventListener('DOMContentLoaded', () => {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="10" rx="2"/><path d="M12 12v2M8 12v2M16 12v2"/></svg>
     OTT
   </a>
-  <a class="mtab" data-sxtab="fifa" href="#sxTabPanels" onclick="event.preventDefault();openFifa();">
-    <img src="https://upload.wikimedia.org/wikipedia/en/1/17/2026_FIFA_World_Cup_emblem.svg" alt="FIFA 2026" style="width:22px;height:22px;object-fit:contain;display:block;margin:0 auto 1px;filter:drop-shadow(0 0 3px rgba(0,160,255,0.6));">
-    FIFA
-  </a>
-  <a class="mtab mtab-movies" data-sxtab="movies" href="#sxTabPanels" onclick="event.preventDefault();openMoviesOverlay();">
-    <img class="movies-logo-icon" src="https://static.vecteezy.com/system/resources/thumbnails/050/699/896/small/movie-night-illustration-cinema-poster-concept-banner-design-for-movie-theater-png.png" alt="Movies">
-    <span class="mtab-movies-label">Movies</span>
+  <a class="mtab" data-sxtab="search" href="#" onclick="event.preventDefault();sxOpenSearch();">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+    Search
   </a>
 </nav>
 <script>
@@ -7963,6 +7950,17 @@ document.addEventListener('DOMContentLoaded', () => {
   // Bottom tabs get their active state synced by sxSwitchTab() via data-sxtab.
   window.__mtabSetActive = function(el){
     document.querySelectorAll('.mtab[data-sxtab]').forEach(t => t.classList.toggle('active', t === el));
+  };
+  // Search tab: reuses the movie/TV search already built into the OTT
+  // Movies panel (biggest title index on the site) instead of building a
+  // brand-new search UI — opens that panel and focuses its search box.
+  window.sxOpenSearch = function(){
+    if (typeof window.openMoviesOverlay === 'function') window.openMoviesOverlay();
+    document.querySelectorAll('.mtab[data-sxtab]').forEach(t => t.classList.toggle('active', t.dataset.sxtab === 'search'));
+    setTimeout(function(){
+      const input = document.getElementById('vaMovieSearchInput');
+      if (input) input.focus();
+    }, 350);
   };
 })();
 </script>
@@ -12229,6 +12227,56 @@ button, a.btn, [class*="btn-"], input, select, textarea{
   -webkit-mask-position:center !important; mask-position:center !important;
 }
 .btn-slide-watch:hover{ background:var(--pm-magenta-hover,#C21764) !important; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   FULL-WIDTH BOTTOM NAV (mobile only) — Outlined icons on black bar.
+   Very narrow design with Matches, TV, Search, Favourites, Movies tabs.
+   Icon-only (labels hidden); icons have white borders, fill on active.
+═══════════════════════════════════════════════════════════════════════ */
+@media(max-width:900px){
+  .mobile-tabbar{
+    left:0 !important; right:0 !important;
+    transform:none !important;
+    bottom:0 !important;
+    width:100% !important; max-width:100% !important;
+    height:48px !important; padding:0 !important;
+    border-radius:0 !important;
+    background:#000 !important;
+    backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+    box-shadow:0 -2px 8px rgba(0,0,0,0.3) !important;
+    justify-content:space-around !important;
+    border-top:1px solid #222 !important;
+  }
+  .mtab{
+    flex:1 !important;
+    width:auto !important; height:48px !important;
+    padding:0 !important; margin:0 !important;
+    border-radius:8px !important;
+    color:#fff !important;
+    font-size:0 !important; line-height:0 !important; gap:0 !important;
+    display:flex !important; align-items:center !important; justify-content:center !important;
+    transition:all 0.18s var(--ease) !important;
+    border:2px solid #fff !important;
+    background:transparent !important;
+    width:32px !important; height:32px !important;
+    margin:0 8px !important;
+  }
+  .mtab svg{ width:18px !important; height:18px !important; filter:brightness(0) invert(1) !important; }
+  .mtab.active{
+    background:#fff !important;
+    color:#000 !important;
+    transform:none !important;
+    border:2px solid #fff !important;
+  }
+  .mtab.active svg{ filter:brightness(0) invert(0) !important; }
+  .mtab-live-dot{ display:none !important; }
+  .mtab-movies-label{ display:none !important; }
+  .mtab-movies .movies-logo-icon{ width:18px !important; height:18px !important; border-radius:0 !important; filter:brightness(0) invert(1) !important; }
+  .mtab-movies.active .movies-logo-icon{ filter:brightness(0) invert(0) !important; }
+
+  body{ padding-bottom:48px !important; }
+  footer{ padding-bottom:calc(24px + 48px + env(safe-area-inset-bottom,0)) !important; }
+}
 </style>
 
 </body>
