@@ -2353,6 +2353,7 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
    RESPONSIVE
 ──────────────────────────────────────────── */
 @media(max-width:900px) {
+  header { display: none !important; }
   .nav-links-desktop { display: none; }
   .hamburger { display: flex; }
   .header-actions .btn-yt { display: none; }
@@ -2505,41 +2506,69 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
 .schedule-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
 /* ────────────────────────────────────────────
-   MOBILE BOTTOM TAB BAR — Hotstar-style
-   Fixed, borderless, glass + gold glow on active.
+   MOBILE BOTTOM NAV — narrow single-line strip, solid black,
+   transparent icon-only buttons, outline → fill on tap.
+   5 items: Home / Live Matches / Search / Live TV / Favourites.
    Desktop: hidden entirely.
 ──────────────────────────────────────────── */
 .mobile-tabbar { display: none; }
 @media(max-width:900px) {
   .mobile-tabbar {
-    display: flex; align-items: stretch; justify-content: space-around;
+    display: flex; align-items: center; justify-content: space-around;
+    flex-wrap: nowrap;
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 1220;
-    height: 60px; padding-bottom: env(safe-area-inset-bottom, 0);
-    background: rgba(7,9,15,0.88);
-    backdrop-filter: blur(22px) saturate(1.6);
-    -webkit-backdrop-filter: blur(22px) saturate(1.6);
-    box-shadow: 0 -1px 0 rgba(240,79,140,0.08), 0 -8px 32px rgba(0,0,0,0.55);
+    height: 38px; padding-bottom: env(safe-area-inset-bottom, 0);
+    background: #000;
   }
   .mtab {
-    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 3px; color: rgba(255,255,255,0.45); text-decoration: none;
-    font-family: var(--font-display); font-size: 9.5px; font-weight: 700; letter-spacing: 0.04em;
-    background: none; border: none; cursor: pointer;
-    transition: color 0.18s var(--ease), transform 0.18s var(--spring);
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    height: 100%; color: rgba(255,255,255,0.68); text-decoration: none;
+    background: transparent; border: none; cursor: pointer; padding: 0;
     -webkit-tap-highlight-color: transparent;
+    transition: color 0.16s ease, transform 0.16s ease;
   }
-  .mtab svg { width: 21px; height: 21px; transition: filter 0.18s var(--ease); }
-  .mtab.active { color: var(--gold); transform: translateY(-1px); }
-  .mtab.active svg { filter: drop-shadow(0 0 8px rgba(240,79,140,0.65)); }
-  .mtab:active { transform: scale(0.92); }
-  .mtab-live-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--live-red); box-shadow: 0 0 6px var(--live-red); position: absolute; margin-top: -16px; margin-left: 14px; animation: livePulse 1.5s ease-in-out infinite; }
-  .mtab-movies-label { font-family: var(--font-googlesans); font-weight: 700; font-size: 11px; letter-spacing: 0.2px; color: #E0155F; text-transform: uppercase; line-height: 1; animation: moviesGlow 1.8s ease-in-out infinite; }
-  .mtab-movies .movies-logo-icon { width: 22px; height: 22px; object-fit: contain; border-radius: 8px; display: block; }
-  .mtab-movies.active .movies-logo-icon,.mtab-movies:active .movies-logo-icon { filter: drop-shadow(0 0 8px rgba(240,79,140,0.65)); }
+  .mtab svg { width: 19px; height: 19px; display: block; }
+  .mtab .mtab-fill-part { transition: fill 0.15s ease; }
+  .mtab.active { color: #fff; }
+  .mtab.active .mtab-fill-part { fill: currentColor; }
+  .mtab.mtab-fav.active { color: #F04F8C; }
+  .mtab:active { transform: scale(0.86); }
 
   /* Push page content above the fixed bar */
-  body { padding-bottom: 60px; }
-  footer { padding-bottom: calc(24px + 60px + env(safe-area-inset-bottom, 0)); }
+  body { padding-bottom: 38px; }
+  footer { padding-bottom: calc(24px + 38px + env(safe-area-inset-bottom, 0)); }
+}
+
+/* ────────────────────────────────────────────
+   MOBILE TOP STRIP — very narrow bar, just the hamburger menu.
+   Replaces the full header on mobile (see header{display:none} above).
+   Desktop: hidden entirely.
+──────────────────────────────────────────── */
+.mobile-topstrip { display: none; }
+@media(max-width:900px) {
+  .mobile-topstrip {
+    display: flex; align-items: center; justify-content: flex-start;
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1210;
+    height: 30px; padding: 0 12px;
+    background: #000;
+  }
+  .mts-hamburger {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px; width: 30px; height: 100%; padding: 0;
+    background: transparent; border: none; cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mts-hamburger span {
+    display: block; width: 18px; height: 1.6px; border-radius: 1px;
+    background: rgba(255,255,255,0.85);
+    transition: transform 0.22s ease, opacity 0.22s ease;
+  }
+  .mts-hamburger.open span:nth-child(1) { transform: translateY(5.6px) rotate(45deg); }
+  .mts-hamburger.open span:nth-child(2) { opacity: 0; }
+  .mts-hamburger.open span:nth-child(3) { transform: translateY(-5.6px) rotate(-45deg); }
+
+  /* Push page content below the fixed top strip */
+  body { padding-top: 30px; }
 }
 
 /* Ensure watch-strip doesn't duplicate style (override from body style tag) */
@@ -3590,7 +3619,7 @@ window.addEventListener('resize', () => {
 //    keep their own in-page Back button, and sit above the nav bar (so the
 //    nav bar isn't shown while inside them).
 function sxCloseAllOverlays(){
-  const ids = ['livetv-overlay','movies-overlay','fifa-overlay','ott-overlay','fancode-overlay','prime-overlay','willow-overlay','adminchat-overlay'];
+  const ids = ['livetv-overlay','movies-overlay','fifa-overlay','ott-overlay','fancode-overlay','prime-overlay','willow-overlay','adminchat-overlay','sx-search-overlay','sx-fav-overlay'];
   ids.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.remove('open');
@@ -3610,7 +3639,7 @@ const SX_ALL_OVERLAY_IDS = [
   'livetv-overlay','movies-overlay','fifa-overlay','ott-overlay','fancode-overlay',
   'prime-overlay','willow-overlay','vip-overlay','vip-player-overlay',
   'stream-player-overlay','adminchat-overlay','adminchat-discord-popup',
-  'va-tv-modal','sx-cast-help-overlay','dmca-overlay'
+  'va-tv-modal','sx-cast-help-overlay','dmca-overlay','sx-search-overlay','sx-fav-overlay'
 ];
 function goHome(){
   SX_ALL_OVERLAY_IDS.forEach(id => {
@@ -3675,6 +3704,240 @@ function sxSwitchTab(name){
   if (name === 'fifa') { openFifa(); return; }
 }
 window.sxSwitchTab = sxSwitchTab;
+
+// ══════════════════════════════════════════════════════════════════════
+// FAVOURITES — heart button on any match card / channel card saves it
+// here (localStorage, survives reloads). SEARCH — one box that filters
+// both MATCH CARDS and LIVE CHANNELS together.
+// ══════════════════════════════════════════════════════════════════════
+const SX_FAV_KEY = 'sx_favourites_v1';
+function sxLoadFavs(){
+  try { const v = JSON.parse(localStorage.getItem(SX_FAV_KEY)); return v && v.matches && v.channels ? v : {matches:{},channels:{}}; }
+  catch(e){ return {matches:{},channels:{}}; }
+}
+function sxSaveFavs(favs){ try { localStorage.setItem(SX_FAV_KEY, JSON.stringify(favs)); } catch(e){} }
+function sxIsFav(type, key){ const f = sxLoadFavs(); return !!(f[type] && f[type][key]); }
+function sxMatchFavKey(c){
+  return ((c.team1_full_name||c.team1_code||'')+'|'+(c.team2_full_name||c.team2_code||'')+'|'+(c.game||'')+'|'+(c.countdown_to_iso_datetime||c.countdown_to||c.date_label||'')).toLowerCase().trim();
+}
+function sxChanFavKey(c){ return (c.channel_name||'').toLowerCase().trim(); }
+window.sxMatchFavKey = sxMatchFavKey;
+window.sxChanFavKey = sxChanFavKey;
+
+// Safely round-trips a data object through an HTML attribute (base64 of a
+// UTF-8 JSON string) — sidesteps every quote-escaping issue that comes
+// from embedding a whole match/channel row inside an onclick="" string.
+function sxEncPayload(obj){ try { return btoa(unescape(encodeURIComponent(JSON.stringify(obj)))); } catch(e){ return ''; } }
+function sxDecPayload(str){ try { return JSON.parse(decodeURIComponent(escape(atob(str)))); } catch(e){ return null; } }
+
+function sxHeartBtnHtml(type, key, rowObj){
+  const active = sxIsFav(type, key) ? ' is-fav' : '';
+  const enc = sxEncPayload(rowObj);
+  return `<button type="button" class="sx-heart-btn${active}" data-fav-type="${type}" data-fav-key="${escJs(key)}" onclick="event.stopPropagation();event.preventDefault();sxToggleFav('${type}','${escJs(key)}','${enc}');" aria-label="Favourite"><svg viewBox="0 0 24 24"><path d="M12 21s-6.7-4.35-9.33-8.2C1.02 10.28 1.7 6.86 4.6 5.3c2.2-1.18 4.6-.5 6 1.2.4.48.75 1 1.4 1 .65 0 1-.52 1.4-1 1.4-1.7 3.8-2.38 6-1.2 2.9 1.56 3.58 4.98 1.93 7.5C18.7 16.65 12 21 12 21z"/></svg></button>`;
+}
+window.sxHeartBtnHtml = sxHeartBtnHtml;
+
+function sxToggleFav(type, key, enc){
+  const favs = sxLoadFavs();
+  if (!favs[type]) favs[type] = {};
+  if (favs[type][key]) {
+    delete favs[type][key];
+  } else {
+    const payload = sxDecPayload(enc);
+    if (payload) favs[type][key] = payload;
+  }
+  sxSaveFavs(favs);
+  const nowFav = !!favs[type][key];
+  document.querySelectorAll('.sx-heart-btn[data-fav-type="'+type+'"]').forEach(b => {
+    if (b.getAttribute('data-fav-key') === key) b.classList.toggle('is-fav', nowFav);
+  });
+  const favOverlay = document.getElementById('sx-fav-overlay');
+  if (favOverlay && favOverlay.classList.contains('open') && typeof sxRenderFavouritesOverlay === 'function') sxRenderFavouritesOverlay();
+}
+window.sxToggleFav = sxToggleFav;
+
+// Builds one full clickable channel row (thumb/meta/badges/watch + heart),
+// reused by the Live TV browser, Search results and the Favourites page.
+function sxChannelRowOuterHtml(c, favKeyOverride){
+  const isLive = (c.status_live_off||'').toUpperCase() === 'LIVE';
+  const grp = c.group || 'Other';
+  const rowClassMap = {'FanCode':'fancode-row','Star Sports':'star-row','Sony Sports':'sony-row','fox':'fox-row','International':'intl-row','ZEE':'zee-row','News':'news-row','sky':'sky-row','espn':'espn-row','tnt':'tnt-row','willow':'willow-row'};
+  let rowClass = 'epg-row' + (rowClassMap[grp] ? ' '+rowClassMap[grp] : '');
+  const streamUrl = c.watch_url || '#';
+  const isRawStream = (typeof sxIsRawStreamUrl === 'function') && sxIsRawStreamUrl(streamUrl);
+  if (isRawStream) rowClass += ' epg-row-raw-stream';
+  const playEnc = sxEncPayload({url: streamUrl, name: c.channel_name || 'Live Stream', raw: !!isRawStream});
+  const isHD = (c.quality||'').toUpperCase() === 'HD' || (c.quality||'').toUpperCase() === '4K';
+  const hdBadge = isHD ? `<span class="epg-badge epg-badge-hd">${(c.quality||'HD').toUpperCase()}</span>` : '';
+  const liveBadge = isLive
+    ? '<span class="epg-badge epg-badge-live"><span class="epg-live-blip"></span>LIVE</span>'
+    : '<span class="epg-badge epg-badge-off">OFF AIR</span>';
+  const premiumBadge = grp === 'FanCode' ? '<span class="epg-premium-icon" title="FanCode Premium"></span>' : '';
+  const vlcBadge = isRawStream ? '<img class="epg-vlc-icon" src="https://images.icon-icons.com/1381/PNG/512/vlc_93519.png" alt="VLC" title="Direct stream \u2014 plays in VLC" onerror="this.style.display=\'none\'">' : '';
+  const indiaAlert = (grp === 'Star Sports' || grp === 'Sony Sports' || grp === 'ZEE') ? '<div class="epg-india-alert">Outside India/Sri Lanka? Use VPN</div>' : '';
+  const favKey = favKeyOverride || sxChanFavKey(c);
+  const flagHtml = (typeof countryFlagHTML === 'function') ? countryFlagHTML(c.country) : '';
+  const logoHtml = (typeof window.chLogoHTML === 'function') ? window.chLogoHTML(c) : `<div class="epg-logo-box"><img src="${c.icon_url||''}" alt=""></div>`;
+  return `
+    <div class="${rowClass}" role="button" tabindex="0" onclick="sxOpenChannelPayload('${playEnc}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();sxOpenChannelPayload('${playEnc}');}">
+      <div class="epg-thumb">
+        ${flagHtml}
+        ${logoHtml}
+        ${sxHeartBtnHtml('channels', favKey, c)}
+      </div>
+      <div class="epg-meta">
+        <div class="epg-group-tag">${grp}</div>
+        <div class="epg-name-row">
+          <div class="epg-name">${c.channel_name||''}${premiumBadge}</div>
+          <span class="epg-free-badge">FREE</span>
+        </div>
+        ${indiaAlert}
+        <div class="epg-desc">Watch endless programming on this 24/7 channel broadcast.</div>
+        <div class="epg-now">24/7 Channel</div>
+      </div>
+      <div class="epg-badges">${liveBadge}${hdBadge}${vlcBadge}</div>
+      <div class="epg-watch">
+        <span>Watch</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 18 6-6-6-6"/></svg>
+      </div>
+    </div>`;
+}
+window.sxChannelRowOuterHtml = sxChannelRowOuterHtml;
+
+function sxOpenChannelPayload(enc){
+  const p = sxDecPayload(enc);
+  if (!p) return;
+  if (p.raw && typeof sxOpenVlcPopup === 'function') sxOpenVlcPopup(p.url, p.name);
+  else if (typeof openStreamPlayer === 'function') openStreamPlayer(p.url, p.name, 'channel');
+}
+window.sxOpenChannelPayload = sxOpenChannelPayload;
+
+// Builds one match card (thumb/body + heart), reused by Search and Favourites.
+function sxMatchCardHtml(c, favKeyOverride){
+  const teamsLine = `${c.team1_full_name||c.team1_code||''} vs ${c.team2_full_name||c.team2_code||''}`;
+  const isLive = (typeof matchStatusText === 'function') && matchStatusText(c).toLowerCase() === 'live';
+  const isFinished = (typeof isMatchFinished === 'function') && isMatchFinished(c);
+  const badge = isLive
+    ? '<span class="fx2-badge fx2-badge-live"><span class="fx2-live-dot"></span>LIVE</span>'
+    : isFinished ? '<span class="fx2-badge">FINISHED</span>' : '<span class="fx2-badge">⏰ UPCOMING</span>';
+  const bannerSrc = c.banner_url || c.banner_image_url || c._fcxBanner || '';
+  const thumbInner = bannerSrc
+    ? `<img src="${bannerSrc}" alt="" class="fx2-thumb-img" onerror="this.style.display='none'">`
+    : `<div class="fx2-thumb-teams">
+        <div class="fx2-thumb-team">${img(c.team1_icon_url,c.team1_code||'','')}</div>
+        <div class="fx2-thumb-vs">VS</div>
+        <div class="fx2-thumb-team">${img(c.team2_icon_url,c.team2_code||'','')}</div>
+      </div>`;
+  const favKey = favKeyOverride || sxMatchFavKey(c);
+  return `
+  <div class="smo-card fx2-card">
+    <div class="fx2-thumb">
+      ${thumbInner}
+      ${badge}
+      ${sxHeartBtnHtml('matches', favKey, c)}
+    </div>
+    <div class="fx2-body">
+      <div class="fx2-title-row">
+        <div class="fx2-title">${teamsLine}</div>
+        <span class="fx2-free">FREE</span>
+      </div>
+      <div class="fx2-meta">
+        <span class="fx2-tag">${c.game||''}</span>
+        <span class="fx2-date">${(typeof smoCardDateLabel==='function')?smoCardDateLabel(c):''}</span>
+      </div>
+      ${(typeof sxWatchBtnHtml==='function')?sxWatchBtnHtml(c,'smo-btn'):''}
+    </div>
+  </div>`;
+}
+window.sxMatchCardHtml = sxMatchCardHtml;
+
+// ── Search: filters MATCH CARDS + LIVE CHANNELS together ──
+function openSxSearch(){
+  sxCloseAllOverlays();
+  document.getElementById('sx-search-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  window.scrollTo(0,0);
+  document.querySelectorAll('[data-sxtab]').forEach(el => el.classList.toggle('active', el.dataset.sxtab === 'search'));
+  sxHeaderInto('sx-search-overlay', null);
+  const inp = document.getElementById('sx-search-input');
+  if (inp) setTimeout(() => inp.focus(), 60);
+  sxRunSearch(inp ? inp.value : '');
+}
+function closeSxSearch(){
+  document.getElementById('sx-search-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  sxHeaderHome();
+}
+window.openSxSearch = openSxSearch;
+window.closeSxSearch = closeSxSearch;
+
+function sxRunSearch(qRaw){
+  const q = (qRaw||'').toLowerCase().trim();
+  const resultsEl = document.getElementById('sx-search-results');
+  if (!resultsEl) return;
+  const matches = (window._matchCardsData || []).filter(c => {
+    if (!q) return true;
+    const hay = `${c.team1_full_name||''} ${c.team2_full_name||''} ${c.team1_code||''} ${c.team2_code||''} ${c.game||''}`.toLowerCase();
+    return hay.includes(q);
+  }).slice(0, 40);
+  const channels = (window._cmsChannels || []).filter(c => {
+    if (!q) return true;
+    return (c.channel_name||'').toLowerCase().includes(q) || (c.group||'').toLowerCase().includes(q);
+  }).slice(0, 40);
+
+  let html = '';
+  if (!q) { html += `<div class="sx-search-hint">Search live channels and matches…</div>`; }
+  if (matches.length) {
+    html += `<div class="epg-cat-heading">MATCHES</div>` + matches.map(c => sxMatchCardHtml(c)).join('');
+  }
+  if (channels.length) {
+    html += `<div class="epg-cat-heading">LIVE CHANNELS</div>` + channels.map(c => sxChannelRowOuterHtml(c)).join('');
+  }
+  if (q && !matches.length && !channels.length) {
+    html += `<div class="epg-no-results">No matches or channels found.</div>`;
+  }
+  resultsEl.innerHTML = html;
+}
+window.sxRunSearch = sxRunSearch;
+
+// ── Favourites: matches + channels saved via any heart button ──
+function openFavourites(){
+  sxCloseAllOverlays();
+  document.getElementById('sx-fav-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  window.scrollTo(0,0);
+  document.querySelectorAll('[data-sxtab]').forEach(el => el.classList.toggle('active', el.dataset.sxtab === 'favourites'));
+  sxHeaderInto('sx-fav-overlay', null);
+  sxRenderFavouritesOverlay();
+}
+function closeFavourites(){
+  document.getElementById('sx-fav-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  sxHeaderHome();
+}
+window.openFavourites = openFavourites;
+window.closeFavourites = closeFavourites;
+
+function sxRenderFavouritesOverlay(){
+  const wrap = document.getElementById('sx-fav-results');
+  if (!wrap) return;
+  const favs = sxLoadFavs();
+  const matchEntries = Object.entries(favs.matches||{});
+  const chanEntries = Object.entries(favs.channels||{});
+  if (!matchEntries.length && !chanEntries.length) {
+    wrap.innerHTML = `<div class="epg-no-results">No favourites yet. Tap the heart on any match or channel card to save it here.</div>`;
+    return;
+  }
+  let html = '';
+  if (matchEntries.length) {
+    html += `<div class="epg-cat-heading">MATCHES</div>` + matchEntries.map(([key,c]) => sxMatchCardHtml(c, key)).join('');
+  }
+  if (chanEntries.length) {
+    html += `<div class="epg-cat-heading">LIVE CHANNELS</div>` + chanEntries.map(([key,c]) => sxChannelRowOuterHtml(c, key)).join('');
+  }
+  wrap.innerHTML = html;
+}
+window.sxRenderFavouritesOverlay = sxRenderFavouritesOverlay;
 </script>
 
 <div id="sxTabPanels">
@@ -3716,6 +3979,24 @@ window.sxSwitchTab = sxSwitchTab;
 <div class="match-overlay-section" id="match-overlay-section">
   <div class="slider-match-overlay" id="match-overlay"><div class="smo-section"><div class="sk sk-match-card"></div><div class="sk sk-match-card"></div><div class="sk sk-match-card"></div><div class="sk sk-match-card"></div></div></div>
 </div>
+</div>
+
+<!-- SEARCH — searches both MATCH CARDS and LIVE CHANNELS together -->
+<div id="sx-search-overlay">
+  <div class="sx-search-bar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.3" y1="15.3" x2="20" y2="20"/></svg>
+    <input id="sx-search-input" type="text" placeholder="Search matches & live channels" autocomplete="off" oninput="sxRunSearch(this.value)">
+  </div>
+  <div id="sx-search-results"></div>
+</div>
+
+<!-- FAVOURITES — matches & channels saved via the heart button on any card -->
+<div id="sx-fav-overlay">
+  <div class="epg-hero" style="padding:6px 2px 2px;">
+    <div class="epg-hero-title">FAVOURITES</div>
+    <div class="epg-hero-sub">Matches and channels you've saved.</div>
+  </div>
+  <div id="sx-fav-results"></div>
 </div>
 
 <!-- ══════════════════════════════════════════════════════════════════════
@@ -7109,6 +7390,7 @@ function renderMatchCards(rows) {
         <div class="fx2-thumb">
           ${thumbInner}
           ${badge}
+          ${(typeof sxHeartBtnHtml === 'function') ? sxHeartBtnHtml('matches', sxMatchFavKey(c), c) : ''}
         </div>
         <div class="fx2-body">
           <div class="fx2-title-row">
@@ -7299,6 +7581,7 @@ function renderChannelsPreview() {
       <div class="fx2-thumb">
         <img src="${c.icon_url || OTHERS_LOGO}" alt="" class="fx2-thumb-img" onerror="this.src='${OTHERS_LOGO}'">
         ${live ? '<span class="fx2-badge fx2-badge-live"><span class="fx2-live-dot"></span>LIVE</span>' : ''}
+        ${(typeof sxHeartBtnHtml === 'function') ? sxHeartBtnHtml('channels', sxChanFavKey(c), c) : ''}
       </div>
       <div class="fx2-body">
         <div class="fx2-title-row">
@@ -7391,6 +7674,7 @@ function renderFixtures(rows) {
       <div class="fx2-thumb">
         ${thumb}
         ${isLive ? '<span class="fx2-badge fx2-badge-live"><span class="fx2-live-dot"></span>LIVE</span>' : ''}
+        ${(typeof sxHeartBtnHtml === 'function') ? sxHeartBtnHtml('matches', sxMatchFavKey(c), c) : ''}
       </div>
       <div class="fx2-body">
         <div class="fx2-title-row">
@@ -7575,6 +7859,8 @@ function toggleDrawer() {
   document.getElementById('sideDrawer').classList.toggle('open');
   document.getElementById('drawerOverlay').classList.toggle('open');
   document.getElementById('hamburger').classList.toggle('open');
+  const mts = document.getElementById('mts-hamburger');
+  if (mts) mts.classList.toggle('open');
   // close QR if open
   document.getElementById('qr-panel').classList.remove('open');
   document.getElementById('nav-qr-btn').classList.remove('active');
@@ -7583,6 +7869,8 @@ function closeDrawer() {
   document.getElementById('sideDrawer').classList.remove('open');
   document.getElementById('drawerOverlay').classList.remove('open');
   document.getElementById('hamburger').classList.remove('open');
+  const mts = document.getElementById('mts-hamburger');
+  if (mts) mts.classList.remove('open');
 }
 function openWatch() { document.getElementById('watchOverlay').classList.add('open'); }
 function closeWatch() { document.getElementById('watchOverlay').classList.remove('open'); }
@@ -7722,6 +8010,7 @@ function countryFlagHTML(rawCountry){
       <img src="${url}" alt="${c.channel_name||''}" onerror="this.parentElement.outerHTML='<div class=\\'epg-logo-ph\\'>${initials}</div>'">
     </div>`;
   }
+  window.chLogoHTML = chLogoHTML;
 
   window.chFilter = function() {
     const qInput = document.getElementById('chSearchInput');
@@ -7761,72 +8050,12 @@ function countryFlagHTML(rawCountry){
     }
 
     function appendRow(c) {
-      const isLive = (c.status_live_off||'').toUpperCase() === 'LIVE';
-      const grp = c.group || 'Other';
-      const isFanCode = grp === 'FanCode';
-      const isStarSports = grp === 'Star Sports';
-      const isSony = grp === 'Sony Sports';
-      const isFox = grp === 'fox';
-      const isIntl = grp === 'International';
-      const isZee = grp === 'ZEE';
-      const isNews = grp === 'News';
-      const isSky = grp === 'sky';
-      const isEspn = grp === 'espn';
-      const isTnt = grp === 'tnt';
-      const isWillow = grp === 'willow';
-      let rowClass = 'epg-row';
-      if (isFanCode) rowClass += ' fancode-row';
-      else if (isStarSports) rowClass += ' star-row';
-      else if (isSony) rowClass += ' sony-row';
-      else if (isFox) rowClass += ' fox-row';
-      else if (isIntl) rowClass += ' intl-row';
-      else if (isZee) rowClass += ' zee-row';
-      else if (isNews) rowClass += ' news-row';
-      else if (isSky) rowClass += ' sky-row';
-      else if (isEspn) rowClass += ' espn-row';
-      else if (isTnt) rowClass += ' tnt-row';
-      else if (isWillow) rowClass += ' willow-row';
-      const a = document.createElement('div');
-      a.className = rowClass;
-      a.setAttribute('role', 'button');
-      a.setAttribute('tabindex', '0');
-      const streamUrl = c.watch_url || '#';
-      const isRawStream = sxIsRawStreamUrl(streamUrl);
-      if (isRawStream) a.className += ' epg-row-raw-stream';
-      a.onclick = () => isRawStream
-        ? sxOpenVlcPopup(streamUrl, c.channel_name || 'Live Stream')
-        : openStreamPlayer(streamUrl, c.channel_name || 'Live Stream', 'channel');
-      a.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); a.onclick(); } };
-      const isHD = (c.quality||'').toUpperCase() === 'HD' || (c.quality||'').toUpperCase() === '4K';
-      const hdBadge = isHD ? `<span class="epg-badge epg-badge-hd">${(c.quality||'HD').toUpperCase()}</span>` : '';
-      const liveBadge = isLive
-        ? '<span class="epg-badge epg-badge-live"><span class="epg-live-blip"></span>LIVE</span>'
-        : '<span class="epg-badge epg-badge-off">OFF AIR</span>';
-      const premiumBadge = isFanCode ? '<span class="epg-premium-icon" title="FanCode Premium"></span>' : '';
-      const vlcBadge = isRawStream ? '<img class="epg-vlc-icon" src="https://images.icon-icons.com/1381/PNG/512/vlc_93519.png" alt="VLC" title="Direct stream \u2014 plays in VLC" onerror="this.style.display=\'none\'">' : '';
-      const indiaAlert = (isStarSports || isSony || isZee) ? '<div class="epg-india-alert">Outside India/Sri Lanka? Use VPN</div>' : '';
-      a.innerHTML = `
-        <div class="epg-thumb">
-          ${countryFlagHTML(c.country)}
-          ${chLogoHTML(c)}
-        </div>
-        <div class="epg-meta">
-          <div class="epg-group-tag">${grp}</div>
-          <div class="epg-name-row">
-            <div class="epg-name">${c.channel_name||''}${premiumBadge}</div>
-            <span class="epg-free-badge">FREE</span>
-          </div>
-          ${indiaAlert}
-          <div class="epg-desc">Watch endless programming on this 24/7 channel broadcast.</div>
-          <div class="epg-now">24/7 Channel</div>
-        </div>
-        <div class="epg-badges">${liveBadge}${hdBadge}${vlcBadge}</div>
-        <div class="epg-watch">
-          <span>Watch</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 18 6-6-6-6"/></svg>
-        </div>
-      `;
-      grid.appendChild(a);
+      // Shared builder also used by Search + Favourites — adds the
+      // tap-to-favourite heart button and keeps the exact same markup/
+      // classes this row always had.
+      const wrap = document.createElement('div');
+      wrap.innerHTML = sxChannelRowOuterHtml(c).trim();
+      grid.appendChild(wrap.firstElementChild);
     }
 
     if (effectiveGrp === 'All') {
@@ -7934,30 +8163,59 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
-<!-- MOBILE BOTTOM TAB BAR — Hotstar-style -->
+<!-- MOBILE TOP STRIP — very narrow, just the hamburger menu -->
+<div class="mobile-topstrip" id="mobile-topstrip">
+  <button class="mts-hamburger" id="mts-hamburger" onclick="toggleDrawer()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</div>
+
+<!-- MOBILE BOTTOM NAV — narrow, icon-only, no labels -->
 <nav class="mobile-tabbar" id="mobile-tabbar">
-  <a class="mtab active" data-sxtab="matches" href="#sxTabPanels" onclick="event.preventDefault();sxSwitchTab('matches');">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/><circle cx="9" cy="14" r="1"/><circle cx="15" cy="14" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></svg>
-    Matches
+  <a class="mtab active" data-sxtab="home" href="#sxTabPanels" onclick="event.preventDefault();goHome();" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"><path class="mtab-fill-part" fill="none" d="M4 11.5 12 4l8 7.5V20a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg>
   </a>
-  <a class="mtab" data-sxtab="livetv" href="#sxTabPanels" style="position:relative;" onclick="event.preventDefault();openLiveTV();">
-    <span class="mtab-live-dot"></span>
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-    Live Channels
+  <a class="mtab" data-sxtab="matches" href="#sxTabPanels" onclick="event.preventDefault();sxSwitchTab('matches');" aria-label="Live Matches">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect class="mtab-fill-part" fill="none" x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/><circle cx="9" cy="14" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="14" r="1" fill="currentColor" stroke="none"/><circle cx="9" cy="18" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="18" r="1" fill="currentColor" stroke="none"/></svg>
   </a>
-  <a class="mtab" data-sxtab="ott" href="#sxTabPanels" onclick="event.preventDefault();openOTT();">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="10" rx="2"/><path d="M12 12v2M8 12v2M16 12v2"/></svg>
-    OTT
+  <a class="mtab" data-sxtab="search" href="#sxTabPanels" onclick="event.preventDefault();openSxSearch();" aria-label="Search">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle class="mtab-fill-part" fill="none" cx="10.5" cy="10.5" r="6.5"/><line x1="15.3" y1="15.3" x2="20" y2="20"/></svg>
   </a>
-  <a class="mtab" data-sxtab="fifa" href="#sxTabPanels" onclick="event.preventDefault();openFifa();">
-    <img src="https://upload.wikimedia.org/wikipedia/en/1/17/2026_FIFA_World_Cup_emblem.svg" alt="FIFA 2026" style="width:22px;height:22px;object-fit:contain;display:block;margin:0 auto 1px;filter:drop-shadow(0 0 3px rgba(0,160,255,0.6));">
-    FIFA
+  <a class="mtab" data-sxtab="livetv" href="#sxTabPanels" onclick="event.preventDefault();openLiveTV();" aria-label="Live TV">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect class="mtab-fill-part" fill="none" x="2.5" y="5" width="19" height="13" rx="2"/><path d="M8 21h8M12 18v3"/></svg>
   </a>
-  <a class="mtab mtab-movies" data-sxtab="movies" href="#sxTabPanels" onclick="event.preventDefault();openMoviesOverlay();">
-    <img class="movies-logo-icon" src="https://static.vecteezy.com/system/resources/thumbnails/050/699/896/small/movie-night-illustration-cinema-poster-concept-banner-design-for-movie-theater-png.png" alt="Movies">
-    <span class="mtab-movies-label">Movies</span>
+  <a class="mtab mtab-fav" data-sxtab="favourites" href="#sxTabPanels" onclick="event.preventDefault();openFavourites();" aria-label="Favourites">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path class="mtab-fill-part" fill="none" d="M12 20.5s-7-4.35-9.5-8.6C.9 9.1 1.7 5.4 5 4a5 5 0 0 1 7 1.2A5 5 0 0 1 19 4c3.3 1.4 4.1 5.1 2.5 7.9C19 16.15 12 20.5 12 20.5z"/></svg>
   </a>
 </nav>
+<style>
+/* ── Favourite-heart buttons on match/channel cards ── */
+.sx-heart-btn{
+  position:absolute; top:6px; right:6px; z-index:6;
+  width:28px; height:28px; border-radius:50%;
+  background:rgba(0,0,0,0.5); -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);
+  border:none; display:flex; align-items:center; justify-content:center;
+  cursor:pointer; padding:0;
+}
+.sx-heart-btn svg{ width:15px; height:15px; fill:none; stroke:#fff; stroke-width:2; transition:fill .15s ease, stroke .15s ease, transform .15s ease; }
+.sx-heart-btn.is-fav svg{ fill:#F04F8C; stroke:#F04F8C; }
+.sx-heart-btn:active svg{ transform:scale(0.8); }
+.epg-row{ position:relative; }
+
+/* ── Search overlay ── */
+#sx-search-overlay{ position:fixed; inset:0; z-index:1200; background:#000; display:none; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:14px 20px calc(60px + env(safe-area-inset-bottom,0)); }
+#sx-search-overlay.open{ display:block; }
+.sx-search-bar{ position:relative; display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:10px 14px; margin-bottom:14px; }
+.sx-search-bar svg{ width:18px; height:18px; flex-shrink:0; opacity:.6; }
+.sx-search-bar input{ flex:1; background:none; border:none; outline:none; color:#fff; font-size:15px; font-family:inherit; }
+.sx-search-hint{ color:rgba(255,255,255,0.4); font-size:13px; padding:20px 4px; text-align:center; }
+@media(max-width:900px){ #sx-search-overlay{ padding:14px 14px calc(60px + env(safe-area-inset-bottom,0)); } }
+
+/* ── Favourites overlay ── */
+#sx-fav-overlay{ position:fixed; inset:0; z-index:1200; background:#000; display:none; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:14px 20px calc(60px + env(safe-area-inset-bottom,0)); }
+#sx-fav-overlay.open{ display:block; }
+@media(max-width:900px){ #sx-fav-overlay{ padding:14px 14px calc(60px + env(safe-area-inset-bottom,0)); } }
+</style>
 <script>
 (function(){
   // Bottom tabs get their active state synced by sxSwitchTab() via data-sxtab.
