@@ -2517,26 +2517,25 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
     display: flex; align-items: center; justify-content: space-around;
     flex-wrap: nowrap;
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 1220;
-    height: 38px; padding-bottom: env(safe-area-inset-bottom, 0);
-    background: #000;
+    height: 30px; padding-bottom: env(safe-area-inset-bottom, 0);
+    background: #000; border: none; box-shadow: none;
   }
   .mtab {
     flex: 1; display: flex; align-items: center; justify-content: center;
-    height: 100%; color: rgba(255,255,255,0.68); text-decoration: none;
-    background: transparent; border: none; cursor: pointer; padding: 0;
+    height: 100%; color: #fff; text-decoration: none;
+    background: transparent; border: none; box-shadow: none; cursor: pointer; padding: 0;
     -webkit-tap-highlight-color: transparent;
     transition: color 0.16s ease, transform 0.16s ease;
   }
-  .mtab svg { width: 19px; height: 19px; display: block; }
+  .mtab svg { width: 16px; height: 16px; display: block; }
   .mtab .mtab-fill-part { transition: fill 0.15s ease; }
   .mtab.active { color: #fff; }
   .mtab.active .mtab-fill-part { fill: currentColor; }
-  .mtab.mtab-fav.active { color: #F04F8C; }
   .mtab:active { transform: scale(0.86); }
 
   /* Push page content above the fixed bar */
-  body { padding-bottom: 38px; }
-  footer { padding-bottom: calc(24px + 38px + env(safe-area-inset-bottom, 0)); }
+  body { padding-bottom: 30px; }
+  footer { padding-bottom: calc(24px + 30px + env(safe-area-inset-bottom, 0)); }
 }
 
 /* ────────────────────────────────────────────
@@ -2549,26 +2548,26 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
   .mobile-topstrip {
     display: flex; align-items: center; justify-content: flex-start;
     position: fixed; top: 0; left: 0; right: 0; z-index: 1210;
-    height: 30px; padding: 0 12px;
-    background: #000;
+    height: 34px; padding: 0 12px;
+    background: transparent;
+    pointer-events: none;
   }
   .mts-hamburger {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     gap: 4px; width: 30px; height: 100%; padding: 0;
     background: transparent; border: none; cursor: pointer;
     -webkit-tap-highlight-color: transparent;
+    pointer-events: auto;
   }
   .mts-hamburger span {
     display: block; width: 18px; height: 1.6px; border-radius: 1px;
-    background: rgba(255,255,255,0.85);
+    background: #fff;
+    box-shadow: 0 0 3px rgba(0,0,0,0.9), 0 0 1px rgba(0,0,0,0.9);
     transition: transform 0.22s ease, opacity 0.22s ease;
   }
   .mts-hamburger.open span:nth-child(1) { transform: translateY(5.6px) rotate(45deg); }
   .mts-hamburger.open span:nth-child(2) { opacity: 0; }
   .mts-hamburger.open span:nth-child(3) { transform: translateY(-5.6px) rotate(-45deg); }
-
-  /* Push page content below the fixed top strip */
-  body { padding-top: 30px; }
 }
 
 /* Ensure watch-strip doesn't duplicate style (override from body style tag) */
@@ -3852,6 +3851,7 @@ function sxMatchCardHtml(c, favKeyOverride){
 window.sxMatchCardHtml = sxMatchCardHtml;
 
 // ── Search: filters MATCH CARDS + LIVE CHANNELS together ──
+let SX_SEARCH_FILTER = 'all';
 function openSxSearch(){
   sxCloseAllOverlays();
   document.getElementById('sx-search-overlay').classList.add('open');
@@ -3859,9 +3859,13 @@ function openSxSearch(){
   window.scrollTo(0,0);
   document.querySelectorAll('[data-sxtab]').forEach(el => el.classList.toggle('active', el.dataset.sxtab === 'search'));
   sxHeaderInto('sx-search-overlay', null);
+  SX_SEARCH_FILTER = 'all';
+  document.querySelectorAll('#sx-search-chips .sx-chip').forEach(c => c.classList.toggle('active', c.dataset.filter === 'all'));
   const inp = document.getElementById('sx-search-input');
-  if (inp) setTimeout(() => inp.focus(), 60);
-  sxRunSearch(inp ? inp.value : '');
+  if (inp) { inp.value = ''; setTimeout(() => inp.focus(), 60); }
+  const bar = document.querySelector('.sx-search-bar');
+  if (bar) bar.classList.remove('has-text');
+  sxRunSearch('');
 }
 function closeSxSearch(){
   document.getElementById('sx-search-overlay').classList.remove('open');
@@ -3871,30 +3875,62 @@ function closeSxSearch(){
 window.openSxSearch = openSxSearch;
 window.closeSxSearch = closeSxSearch;
 
+function sxSetSearchFilter(f){
+  SX_SEARCH_FILTER = f;
+  document.querySelectorAll('#sx-search-chips .sx-chip').forEach(c => c.classList.toggle('active', c.dataset.filter === f));
+  const inp = document.getElementById('sx-search-input');
+  sxRunSearch(inp ? inp.value : '');
+}
+window.sxSetSearchFilter = sxSetSearchFilter;
+
+function sxClearSearch(){
+  const inp = document.getElementById('sx-search-input');
+  if (inp) { inp.value = ''; inp.focus(); }
+  const bar = document.querySelector('.sx-search-bar');
+  if (bar) bar.classList.remove('has-text');
+  sxRunSearch('');
+}
+window.sxClearSearch = sxClearSearch;
+
 function sxRunSearch(qRaw){
   const q = (qRaw||'').toLowerCase().trim();
   const resultsEl = document.getElementById('sx-search-results');
   if (!resultsEl) return;
-  const matches = (window._matchCardsData || []).filter(c => {
-    if (!q) return true;
-    const hay = `${c.team1_full_name||''} ${c.team2_full_name||''} ${c.team1_code||''} ${c.team2_code||''} ${c.game||''}`.toLowerCase();
-    return hay.includes(q);
-  }).slice(0, 40);
-  const channels = (window._cmsChannels || []).filter(c => {
-    if (!q) return true;
-    return (c.channel_name||'').toLowerCase().includes(q) || (c.group||'').toLowerCase().includes(q);
-  }).slice(0, 40);
+  const bar = document.querySelector('.sx-search-bar');
+  if (bar) bar.classList.toggle('has-text', !!(qRaw||'').length);
+
+  const wantMatches = SX_SEARCH_FILTER !== 'channels';
+  const wantChannels = SX_SEARCH_FILTER !== 'matches';
+
+  let matches = [];
+  if (wantMatches) {
+    matches = (window._matchCardsData || []).filter(c => {
+      if (!q) return (typeof matchStatusText === 'function') && matchStatusText(c).toLowerCase() === 'live';
+      const hay = `${c.team1_full_name||''} ${c.team2_full_name||''} ${c.team1_code||''} ${c.team2_code||''} ${c.game||''}`.toLowerCase();
+      return hay.includes(q);
+    }).slice(0, 40);
+  }
+  let channels = [];
+  if (wantChannels) {
+    channels = (window._cmsChannels || []).filter(c => {
+      if (!q) return (c.status_live_off||'').toUpperCase() === 'LIVE';
+      return (c.channel_name||'').toLowerCase().includes(q) || (c.group||'').toLowerCase().includes(q);
+    }).slice(0, 40);
+  }
 
   let html = '';
-  if (!q) { html += `<div class="sx-search-hint">Search live channels and matches…</div>`; }
-  if (matches.length) {
-    html += `<div class="epg-cat-heading">MATCHES</div>` + matches.map(c => sxMatchCardHtml(c)).join('');
-  }
-  if (channels.length) {
-    html += `<div class="epg-cat-heading">LIVE CHANNELS</div>` + channels.map(c => sxChannelRowOuterHtml(c)).join('');
-  }
-  if (q && !matches.length && !channels.length) {
-    html += `<div class="epg-no-results">No matches or channels found.</div>`;
+  if (!q) {
+    if (matches.length || channels.length) {
+      html += `<div class="epg-cat-heading">LIVE NOW</div>`;
+      if (matches.length) html += matches.map(c => sxMatchCardHtml(c)).join('');
+      if (channels.length) html += channels.map(c => sxChannelRowOuterHtml(c)).join('');
+    } else {
+      html += `<div class="sx-search-hint">Search live channels and matches…</div>`;
+    }
+  } else {
+    if (matches.length) html += `<div class="epg-cat-heading">MATCHES</div>` + matches.map(c => sxMatchCardHtml(c)).join('');
+    if (channels.length) html += `<div class="epg-cat-heading">LIVE CHANNELS</div>` + channels.map(c => sxChannelRowOuterHtml(c)).join('');
+    if (!matches.length && !channels.length) html += `<div class="epg-no-results">No matches or channels found.</div>`;
   }
   resultsEl.innerHTML = html;
 }
@@ -3983,9 +4019,20 @@ window.sxRenderFavouritesOverlay = sxRenderFavouritesOverlay;
 
 <!-- SEARCH — searches both MATCH CARDS and LIVE CHANNELS together -->
 <div id="sx-search-overlay">
-  <div class="sx-search-bar">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.3" y1="15.3" x2="20" y2="20"/></svg>
-    <input id="sx-search-input" type="text" placeholder="Search matches & live channels" autocomplete="off" oninput="sxRunSearch(this.value)">
+  <div class="sx-search-topline">
+    <div class="sx-search-bar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.3" y1="15.3" x2="20" y2="20"/></svg>
+      <input id="sx-search-input" type="text" placeholder="Search matches & live channels" autocomplete="off" oninput="sxRunSearch(this.value)">
+      <button type="button" class="sx-search-clear" onclick="sxClearSearch()" aria-label="Clear">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <button type="button" class="sx-search-cancel" onclick="closeSxSearch()">Cancel</button>
+  </div>
+  <div class="sx-search-chips" id="sx-search-chips">
+    <button type="button" class="sx-chip active" data-filter="all" onclick="sxSetSearchFilter('all')">All</button>
+    <button type="button" class="sx-chip" data-filter="matches" onclick="sxSetSearchFilter('matches')">Matches</button>
+    <button type="button" class="sx-chip" data-filter="channels" onclick="sxSetSearchFilter('channels')">Channels</button>
   </div>
   <div id="sx-search-results"></div>
 </div>
@@ -8205,9 +8252,17 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ── Search overlay ── */
 #sx-search-overlay{ position:fixed; inset:0; z-index:1200; background:#000; display:none; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:14px 20px calc(60px + env(safe-area-inset-bottom,0)); }
 #sx-search-overlay.open{ display:block; }
-.sx-search-bar{ position:relative; display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:10px 14px; margin-bottom:14px; }
+.sx-search-topline{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+.sx-search-bar{ position:relative; flex:1; display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:10px 14px; }
 .sx-search-bar svg{ width:18px; height:18px; flex-shrink:0; opacity:.6; }
-.sx-search-bar input{ flex:1; background:none; border:none; outline:none; color:#fff; font-size:15px; font-family:inherit; }
+.sx-search-bar input{ flex:1; min-width:0; background:none; border:none; outline:none; color:#fff; font-size:15px; font-family:inherit; }
+.sx-search-clear{ display:none; align-items:center; justify-content:center; background:none; border:none; padding:2px; margin:0; cursor:pointer; color:rgba(255,255,255,0.55); flex-shrink:0; -webkit-tap-highlight-color:transparent; }
+.sx-search-clear svg{ width:14px; height:14px; opacity:1; }
+.sx-search-bar.has-text .sx-search-clear{ display:flex; }
+.sx-search-cancel{ background:none; border:none; color:#fff; font-size:14px; font-weight:600; white-space:nowrap; cursor:pointer; padding:6px 2px; flex-shrink:0; -webkit-tap-highlight-color:transparent; }
+.sx-search-chips{ display:flex; gap:8px; margin-bottom:14px; }
+.sx-chip{ background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); color:rgba(255,255,255,0.6); font-size:12px; font-weight:700; padding:6px 15px; border-radius:999px; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:background .15s ease, color .15s ease; }
+.sx-chip.active{ background:#fff; border-color:#fff; color:#000; }
 .sx-search-hint{ color:rgba(255,255,255,0.4); font-size:13px; padding:20px 4px; text-align:center; }
 @media(max-width:900px){ #sx-search-overlay{ padding:14px 14px calc(60px + env(safe-area-inset-bottom,0)); } }
 
@@ -8649,6 +8704,7 @@ header{
 * {
   scrollbar-width: thin;
   scrollbar-color: #F04F8C #000000;
+  -webkit-tap-highlight-color: transparent;
 }
 *::-webkit-scrollbar { width: 6px; height: 6px; }
 *::-webkit-scrollbar-track { background: #000000; }
@@ -11520,7 +11576,11 @@ function closeVip(){
 (function(){
   // PC/desktop (fine pointer = mouse/trackpad) never gets D-pad nav or the
   // remote focus outline — that's strictly for Smart TV remotes / D-pad input.
+  // Touchscreens (phones/tablets) are also excluded: they report the same
+  // "coarse" pointer as a TV remote, but taps still focus buttons/links,
+  // which was wrongly painting the pink remote-focus ring on every tap.
   if (window.matchMedia && window.matchMedia('(pointer: fine)').matches) return;
+  if (('ontouchstart' in window) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0)) return;
 
   var CLICKABLE_SEL = '[onclick], a[href]:not([href="#"]), button';
   var focusedEl = null;
