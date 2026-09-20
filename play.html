@@ -16,133 +16,216 @@
 <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/shaka-player.ui.min.js"></script>
 <script src="https://pl31053757.profitableratecpmnetwork.com/ac/7a/82/ac7a8279de9743729ea0cb7ecd52684b.js"></script>
 <style>
-/* ── EV Streams player — flat, minimal, magenta. No glass, no blur. ── */
+/* ── EV Streams player — minimal liquid glass ─────────────────────────
+   One floating glass bar carries every control; the picture stays clear.
+   Accent (magenta) is reserved for the live dot, seek fill and spinners. */
 :root{
-  --mg:#F04F8C;            /* magenta accent            */
-  --mg-deep:#c22f6c;       /* pressed / darker magenta  */
-  --mg-ink:#1b0710;        /* near-black magenta base   */
-  --mg-ink-2:#2a0c1a;      /* hover surface             */
+  --mg:#F04F8C;
+  --amber:#ffb020;
   --bg:#000;
-  --surface:#111114;
-  --line:rgba(255,255,255,.10);
-  --line-mg:rgba(240,79,140,.45);
   --txt:#fff;
-  --dim:rgba(255,255,255,.55);
-  --dim-2:rgba(255,255,255,.36);
+  --dim:rgba(255,255,255,.66);
+  --dim-2:rgba(255,255,255,.52);
+  --tint:rgba(14,14,22,.34);
+  --ease:cubic-bezier(.22,.61,.36,1);
+  --spring:cubic-bezier(.34,1.56,.64,1);
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html{height:100%;height:-webkit-fill-available;-webkit-text-size-adjust:100%;}
-body{width:100%;height:100%;min-height:100dvh;background:var(--bg);overflow:hidden;font-family:'Satoshi',-apple-system,BlinkMacSystemFont,sans-serif;}
+body{width:100%;height:100%;min-height:100dvh;background:var(--bg);overflow:hidden;font-family:'Satoshi',-apple-system,BlinkMacSystemFont,sans-serif;color:var(--txt);}
 #player{position:fixed;inset:0;background:var(--bg);user-select:none;-webkit-user-select:none;overflow:hidden;}
 #vid{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transform-origin:center center;transition:transform .3s ease;}
+
+/* ── Glass surface ───────────────────────────────────────────────────
+   Blur + saturation for the frosted body, layered gradients for the curved
+   highlight, and a masked 1px rim that is bright on the top-left edge and
+   fades away — that rim is what reads as "liquid". */
+.glass{
+  position:relative;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.20) 0%,rgba(255,255,255,.04) 46%,rgba(255,255,255,.10) 100%),
+    var(--tint);
+  -webkit-backdrop-filter:blur(20px) saturate(1.7) brightness(.9);
+          backdrop-filter:blur(20px) saturate(1.7) brightness(.9);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.36),
+    inset 0 -1px 0 rgba(255,255,255,.07),
+    inset 0 0 24px rgba(255,255,255,.05),
+    0 14px 34px rgba(0,0,0,.40),
+    0 1px 3px rgba(0,0,0,.32);
+}
+.glass::before{
+  content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:radial-gradient(140px 56px at var(--hx,28%) 0%,rgba(255,255,255,.26),transparent 72%);
+}
+.glass::after{
+  content:'';position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;
+  background:linear-gradient(155deg,rgba(255,255,255,.60),rgba(255,255,255,.08) 34%,rgba(255,255,255,.02) 62%,rgba(255,255,255,.26));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+          mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+          mask-composite:exclude;
+}
+.glass > *{position:relative;}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .glass{background:linear-gradient(180deg,rgba(60,60,72,.92),rgba(28,28,36,.94));}
+}
 
 /* ── Loading ─────────────────────────────────────────────────────── */
 #overlay{position:absolute;inset:0;z-index:10;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .4s;}
 #overlay.gone{opacity:0;pointer-events:none;}
-.load-ring{position:relative;width:42px;height:42px;}
-.load-ring::before,.load-ring::after{content:'';position:absolute;border-radius:50%;}
-.load-ring::before{inset:0;border:2px solid rgba(240,79,140,.18);}
-.load-ring::after{inset:0;border:2px solid transparent;border-top-color:var(--mg);animation:rot .7s linear infinite;}
+.load-ring{position:relative;width:40px;height:40px;}
+.load-ring::before,.load-ring::after{content:'';position:absolute;inset:0;border-radius:50%;}
+.load-ring::before{border:2px solid rgba(255,255,255,.10);}
+.load-ring::after{border:2px solid transparent;border-top-color:var(--mg);animation:rot .8s linear infinite;}
 @keyframes rot{to{transform:rotate(360deg)}}
-.load-label{font-size:11px;font-weight:500;color:var(--dim-2);letter-spacing:.8px;text-transform:uppercase;}
-#bufspin{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:8;pointer-events:none;display:none;}
-#bufspin div{width:30px;height:30px;border:2px solid rgba(240,79,140,.18);border-top-color:var(--mg);border-radius:50%;animation:rot .65s linear infinite;}
+.load-label{font-size:13px;font-weight:500;color:var(--dim-2);}
+#bufspin{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:8;pointer-events:none;display:none;width:54px;height:54px;border-radius:50%;}
+#bufspin div{position:absolute;inset:0;margin:auto;width:22px;height:22px;border:2px solid rgba(255,255,255,.22);border-top-color:#fff;border-radius:50%;animation:rot .7s linear infinite;}
 
 /* ── Error ───────────────────────────────────────────────────────── */
-#err-ov{position:absolute;inset:0;z-index:11;background:var(--bg);display:none;align-items:center;justify-content:center;padding:24px;}
+#err-ov{position:absolute;inset:0;z-index:11;background:rgba(0,0,0,.72);display:none;padding:16px;overflow-y:auto;}
 #err-ov.show{display:flex;}
-.ec{background:var(--surface);border:1px solid var(--line);border-top:2px solid var(--mg);border-radius:4px;padding:34px 26px 28px;max-width:360px;width:100%;text-align:center;}
-.ec .ei-wrap{width:52px;height:52px;border-radius:50%;border:1px solid var(--line-mg);background:var(--mg-ink);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;}
-.ec .ei-wrap svg{width:26px;height:26px;stroke:var(--mg);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
-.ec .etxt{font-size:17px;font-weight:700;color:var(--txt);margin-bottom:8px;letter-spacing:.2px;}
-.ec .emsg{font-size:12.5px;color:var(--dim-2);line-height:1.7;margin-bottom:20px;}
-.ec .eretry{display:flex;align-items:center;justify-content:center;gap:7px;font-size:11px;color:var(--dim-2);margin-bottom:18px;letter-spacing:.4px;text-transform:uppercase;}
+/* While the error card is up the bar stays out of the way. */
+#err-ov.show ~ #ctrls{display:none;}
+.ec{margin:auto;width:100%;max-width:356px;border-radius:28px;padding:30px 22px 22px;text-align:center;}
+.ec .ei-wrap{width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 0 0 1px rgba(255,255,255,.10);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;}
+.ec .ei-wrap svg{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.ec .etxt{font-size:18px;font-weight:700;color:var(--txt);margin-bottom:8px;}
+.ec .emsg{font-size:13.5px;color:var(--dim);line-height:1.6;margin-bottom:20px;}
+.ec .eretry{display:flex;align-items:center;justify-content:center;gap:8px;font-size:12.5px;color:var(--dim);margin-bottom:16px;}
 .retdot{width:6px;height:6px;border-radius:50%;background:var(--mg);animation:rpulse 1.4s ease-in-out infinite;}
 @keyframes rpulse{0%,100%{opacity:.3}50%{opacity:1}}
-.ec .elink{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px 18px;border-radius:4px;background:transparent;border:1px solid var(--line);color:var(--txt);font-size:12.5px;font-weight:600;text-decoration:none;}
-.ec .elink svg{width:14px;height:14px;fill:currentColor;flex-shrink:0;}
-.ec .retrybtn{background:var(--mg);border-color:var(--mg);color:#fff;font-family:inherit;cursor:pointer;margin-bottom:10px;}
-.ec .retrybtn:hover{background:var(--mg-deep);border-color:var(--mg-deep);}
+.ec .elink{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;height:44px;padding:0 18px;border:0;border-radius:999px;
+  background:rgba(255,255,255,.10);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 0 0 1px rgba(255,255,255,.10);
+  color:var(--txt);font-family:inherit;font-size:13.5px;font-weight:600;text-decoration:none;cursor:pointer;
+  transition:background .2s var(--ease),transform .25s var(--spring);}
+.ec .elink:hover{background:rgba(255,255,255,.17);}
+.ec .elink:active{transform:scale(.96);}
+.ec .elink svg{width:15px;height:15px;fill:currentColor;flex-shrink:0;}
+.ec .retrybtn{margin-bottom:10px;background:linear-gradient(180deg,rgba(255,112,168,.94),rgba(212,50,114,.88));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 8px 22px rgba(240,79,140,.28);}
+.ec .retrybtn:hover{background:linear-gradient(180deg,rgba(255,126,178,.98),rgba(222,58,122,.92));}
 .ec .retrybtn svg{fill:none;stroke:currentColor;}
 .esoc{display:flex;gap:8px;}
-.esoc .elink{padding:11px 14px;}
-.esoc-discord{border-color:rgba(88,101,242,.35);color:#8b93ff;}
-.esoc-discord:hover{background:rgba(88,101,242,.12);border-color:rgba(88,101,242,.6);}
-.esoc-telegram{border-color:rgba(41,182,246,.35);color:#4fc3f7;}
-.esoc-telegram:hover{background:rgba(41,182,246,.12);border-color:rgba(41,182,246,.6);}
+.esoc .elink{padding:0 14px;}
+.esoc-discord{color:#b3b9ff;}
+.esoc-telegram{color:#86d6fb;}
 
-/* ── Center play ─────────────────────────────────────────────────── */
-#bigplay{position:absolute;inset:0;z-index:16;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0;transition:opacity .22s;}
-#bigplay.shown{opacity:1;}
-#bigplay.gone{opacity:0;pointer-events:none;}
-.bpbtn{width:56px;height:56px;border-radius:50%;background:var(--mg);border:none;
-  display:flex;align-items:center;justify-content:center;cursor:pointer;pointer-events:auto;
-  transition:transform .16s ease,background .16s ease;}
-.bpbtn:hover{background:var(--mg-deep);transform:scale(1.06);}
-.bpbtn:active{transform:scale(.94);}
-.bpbtn svg{width:20px;height:20px;margin-left:3px;fill:#fff;}
+/* ── Centre play ─────────────────────────────────────────────────── */
+#bigplay{position:absolute;inset:0;z-index:16;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+.bpbtn{width:68px;height:68px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;
+  opacity:0;transform:scale(.86);pointer-events:none;transition:opacity .25s var(--ease),transform .32s var(--spring);}
+#bigplay.shown .bpbtn{opacity:1;transform:none;pointer-events:auto;}
+#bigplay.shown .bpbtn:active{transform:scale(.92);}
+.bpbtn svg{width:24px;height:24px;margin-left:3px;fill:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));}
 
-/* ── Controls ────────────────────────────────────────────────────── */
-#ctrls{position:absolute;bottom:0;left:0;right:0;z-index:20;transition:opacity .28s;background:transparent;border:none;}
-#ctrls.gone{opacity:0;pointer-events:none;}
-#prog{margin:0 12px;height:16px;display:flex;align-items:center;cursor:pointer;position:relative;}
-.pt{position:relative;height:3px;width:100%;background:rgba(255,255,255,.16);border-radius:0;transition:height .12s;filter:drop-shadow(0 1px 2px rgba(0,0,0,.55));}
-#prog:hover .pt,#prog.drag .pt{height:5px;}
-.pbf{position:absolute;left:0;top:0;height:100%;background:rgba(240,79,140,.32);width:0;}
-.ppl{position:absolute;left:0;top:0;height:100%;background:var(--mg);width:0;}
-.pth{position:absolute;top:50%;left:0;width:11px;height:11px;background:var(--mg);border:none;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;transition:transform .12s;}
-#prog:hover .pth,#prog.drag .pth{transform:translate(-50%,-50%) scale(1.25);}
-#crow{display:flex;align-items:center;padding:6px 8px 10px;gap:4px;background:transparent;filter:drop-shadow(0 1px 3px rgba(0,0,0,.65));}
-.cb{width:30px;height:30px;border-radius:50%;background:transparent;border:none;
-  display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;
-  transition:background .14s ease,color .14s ease;flex-shrink:0;padding:0;outline:none;}
-.cb:hover{background:var(--mg-ink-2);color:var(--mg);}
-.cb:active{background:var(--mg-deep);color:#fff;}
-.cb svg{display:block;}
-#bplay{background:var(--mg);color:#fff;}
-#bplay:hover{background:var(--mg-deep);color:#fff;}
-.csp{flex:1;}
-.live-pill{display:flex;align-items:center;gap:6px;padding:0 10px;height:26px;border-radius:999px;background:var(--mg);border:none;font-size:10px;font-weight:700;letter-spacing:1px;color:#fff;cursor:default;flex-shrink:0;white-space:nowrap;}
-.ldot{width:5px;height:5px;border-radius:50%;background:#fff;animation:lblink 1.3s infinite;flex:none;}
-@keyframes lblink{0%,100%{opacity:1}50%{opacity:.25}}
-#bvol.is-muted{color:var(--mg);background:var(--mg-ink-2);}
+/* ── Control bar ─────────────────────────────────────────────────── */
+#ctrls{position:absolute;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;
+  padding:0 12px max(14px,env(safe-area-inset-bottom));pointer-events:none;}
+#bar{pointer-events:auto;width:min(640px,100%);border-radius:28px;padding:6px;
+  transition:opacity .3s var(--ease),transform .3s var(--ease);}
+/* Fade the glass itself, never a parent — a fading ancestor would switch the blur off mid-transition. */
+#ctrls.gone #bar{opacity:0;transform:translateY(10px) scale(.985);pointer-events:none;}
+#crow{display:flex;align-items:center;gap:2px;}
+.csp{flex:1;min-width:8px;}
+#ctrls:not(.is-live) .csp{display:none;}
 
-/* ── Quality selector ────────────────────────────────────────────── */
-#bq{width:auto !important;height:30px !important;padding:0 10px !important;gap:6px;border-radius:999px;
-  border:1px solid var(--line-mg);color:var(--mg);background:transparent;}
-#bq:hover{background:var(--mg-ink-2);color:var(--mg);}
-#bq.open{background:var(--mg);border-color:var(--mg);color:#fff;}
-#qlbl{font-size:11px;font-weight:700;letter-spacing:.6px;}
-.qchev{flex-shrink:0;transition:transform .16s ease;}
+.cb{width:40px;height:40px;border-radius:50%;border:0;background:transparent;color:#fff;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0;outline:none;
+  transition:background .2s var(--ease),transform .28s var(--spring),color .2s;}
+.cb svg{display:block;width:18px;height:18px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.30));}
+.cb:hover{background:rgba(255,255,255,.14);}
+.cb:active{background:rgba(255,255,255,.22);transform:scale(.88);}
+.cb:focus-visible,#prog:focus-visible,.qopt:focus-visible,.ec .elink:focus-visible,#bigplay .bpbtn:focus-visible,.live-pill.behind:focus-visible{outline:2px solid rgba(255,255,255,.92);outline-offset:2px;}
+#bplay{background:linear-gradient(180deg,rgba(255,255,255,.36),rgba(255,255,255,.12));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.52),inset 0 -1px 0 rgba(255,255,255,.08);}
+#bplay:hover{background:linear-gradient(180deg,rgba(255,255,255,.44),rgba(255,255,255,.18));}
+#bvol.is-muted{background:rgba(255,255,255,.16);}
+
+.live-pill{display:flex;align-items:center;gap:7px;height:30px;margin-left:4px;padding:0 13px 0 11px;border-radius:999px;
+  background:rgba(255,255,255,.10);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);
+  font-size:12.5px;font-weight:600;color:#fff;cursor:default;flex-shrink:0;white-space:nowrap;
+  transition:background .2s var(--ease),box-shadow .2s var(--ease),transform .28s var(--spring);}
+.live-pill.behind{cursor:pointer;background:rgba(255,176,32,.18);box-shadow:inset 0 0 0 1px rgba(255,176,32,.48);}
+.live-pill.behind:active{transform:scale(.94);}
+.ldot{width:6px;height:6px;border-radius:50%;background:var(--mg);box-shadow:0 0 8px var(--mg);animation:lblink 1.6s ease-in-out infinite;flex:none;}
+.live-pill.behind .ldot{background:var(--amber);box-shadow:0 0 8px var(--amber);animation:none;}
+@keyframes lblink{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* Seek bar — on-demand streams only (live has nothing to seek). Sits between the left and right groups. */
+#ctrls.is-live #prog{display:none;}
+#prog{flex:1;min-width:48px;height:40px;margin:0 12px;display:flex;align-items:center;cursor:pointer;position:relative;outline:none;}
+.pt{position:relative;height:4px;width:100%;background:rgba(255,255,255,.22);border-radius:999px;transition:height .15s var(--ease);}
+#prog:hover .pt,#prog.drag .pt{height:6px;}
+.pbf{position:absolute;left:0;top:0;height:100%;background:rgba(255,255,255,.30);border-radius:inherit;width:0;}
+.ppl{position:absolute;left:0;top:0;height:100%;background:var(--mg);border-radius:inherit;width:0;}
+.pth{position:absolute;top:50%;left:0;width:13px;height:13px;background:#fff;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;
+  box-shadow:0 1px 4px rgba(0,0,0,.45);transition:transform .2s var(--spring);}
+#prog:hover .pth,#prog.drag .pth{transform:translate(-50%,-50%) scale(1.2);}
+
+/* ── Quality ─────────────────────────────────────────────────────── */
+#bq{width:auto;height:32px;padding:0 10px 0 13px;gap:6px;margin-right:2px;border-radius:999px;
+  background:rgba(255,255,255,.10);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);}
+#bq:hover{background:rgba(255,255,255,.17);}
+#bq.open{background:rgba(255,255,255,.24);}
+#qlbl{font-size:12.5px;font-weight:600;}
+#bq .qchev{width:9px;height:9px;flex-shrink:0;transition:transform .2s var(--ease);}
 #bq.open .qchev{transform:rotate(180deg);}
-#qmenu{position:absolute;right:8px;bottom:calc(100% + 6px);z-index:30;min-width:136px;
-  background:var(--surface);border:1px solid var(--line);border-top:2px solid var(--mg);
-  border-radius:4px;padding:4px;display:none;}
-#qmenu.open{display:block;}
-.qmenu-head{font-size:9.5px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--dim-2);padding:8px 10px 6px;}
-.qopt{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;
-  padding:9px 10px;border:none;background:transparent;color:var(--dim);
-  font-family:inherit;font-size:12.5px;font-weight:600;letter-spacing:.3px;
-  cursor:pointer;text-align:left;border-radius:3px;transition:background .13s ease,color .13s ease;}
-.qopt:hover{background:var(--mg-ink-2);color:#fff;}
-.qopt.active{background:var(--mg);color:#fff;}
-.qopt .qtick{width:13px;height:13px;flex-shrink:0;opacity:0;}
+#qmenu{position:absolute;z-index:30;min-width:156px;padding:6px;border-radius:22px;display:none;pointer-events:auto;transform-origin:50% 100%;}
+#qmenu.open{display:block;animation:qpop .24s var(--spring);}
+@keyframes qpop{from{opacity:0;transform:translateY(8px) scale(.94);}}
+.qmenu-head{font-size:12px;font-weight:600;color:var(--dim-2);padding:9px 12px 6px;}
+.qopt{display:flex;align-items:center;justify-content:space-between;gap:14px;width:100%;height:38px;padding:0 12px;border:0;border-radius:14px;
+  background:transparent;color:rgba(255,255,255,.78);font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;text-align:left;outline:none;
+  transition:background .16s var(--ease),color .16s var(--ease);}
+.qopt:hover{background:rgba(255,255,255,.10);color:#fff;}
+.qopt.active{background:rgba(255,255,255,.16);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.22);}
+.qopt .qtick{width:14px;height:14px;flex-shrink:0;opacity:0;}
 .qopt.active .qtick{opacity:1;}
 
-/* ── Credit ──────────────────────────────────────────────────────── */
-.credit-tag{position:fixed;top:0;left:0;z-index:50;font-family:'Satoshi',sans-serif;font-size:10px;font-weight:600;letter-spacing:.4px;color:var(--dim-2);background:var(--mg-ink);padding:5px 10px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);border-left:2px solid var(--mg);pointer-events:none;}
+/* ── Credit (renders only when it has content) ───────────────────── */
+.credit-tag{position:fixed;top:12px;left:12px;z-index:50;font-size:11px;font-weight:600;color:var(--dim);padding:6px 12px;border-radius:999px;pointer-events:none;}
+.credit-tag:empty{display:none;}
 
-@media (max-width:520px){
-  #crow{padding:6px 6px 9px;gap:2px;}
-  .cb{width:28px;height:28px;}
-  .live-pill{font-size:9.5px;padding:0 8px;height:24px;}
-  #qmenu{right:6px;}
+/* ── Small screens ───────────────────────────────────────────────── */
+@media (max-width:480px){
+  #ctrls{padding:0 8px max(10px,env(safe-area-inset-bottom));}
+  #bar{padding:5px;border-radius:26px;}
+  .cb{width:36px;height:36px;}
+  .cb svg{width:17px;height:17px;}
+  .live-pill{height:28px;padding:0 11px 0 10px;font-size:12px;margin-left:2px;}
+  #bq{height:30px;padding:0 8px 0 11px;}
+  .bpbtn{width:60px;height:60px;}
+  /* on-demand: seek bar gets its own row above the buttons */
+  #ctrls:not(.is-live) #crow{flex-wrap:wrap;}
+  #ctrls:not(.is-live) .csp{display:block;}
+  #ctrls:not(.is-live) #prog{order:-1;flex:1 0 calc(100% - 20px);height:26px;margin:0 10px 2px;}
+}
+@media (max-height:360px){
+  #err-ov{padding:10px;}
+  .ec{padding:16px 16px 14px;border-radius:24px;}
+  .ec .ei-wrap{display:none;}
+  .ec .etxt{font-size:16px;margin-bottom:4px;}
+  .ec .emsg{font-size:12.5px;line-height:1.45;margin-bottom:12px;}
+  .ec .eretry{margin-bottom:10px;}
+  .ec .elink{height:38px;font-size:13px;}
+  .ec .retrybtn{margin-bottom:8px;}
+}
+@media (max-width:380px){
+  .cb{width:34px;height:34px;}
+  #bq{padding:0 7px 0 10px;}
+}
+@media (prefers-reduced-motion:reduce){
+  .cb,.live-pill,.bpbtn,.qopt,.ec .elink,.pth,#bar{transition:none;}
+  #qmenu.open{animation:none;}
+  .ldot{animation:none;}
 }
 </style>
 </head>
 <body>
 
-<div class="credit-tag"></div>
+<div class="credit-tag glass"></div>
 
 <div id="player">
   <video id="vid" autoplay muted playsinline preload="metadata"></video>
@@ -152,17 +235,17 @@ body{width:100%;height:100%;min-height:100dvh;background:var(--bg);overflow:hidd
     <div class="load-label">Connecting to stream…</div>
   </div>
 
-  <div id="bufspin"><div></div></div>
+  <div id="bufspin" class="glass"><div></div></div>
 
   <div id="err-ov">
-    <div class="ec">
+    <div class="ec glass">
       <div class="ei-wrap"><svg viewBox="0 0 24 24"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg></div>
-      <div class="etxt" id="etitle">Stream Unavailable</div>
+      <div class="etxt" id="etitle">Stream unavailable</div>
       <div class="emsg" id="emsg"></div>
       <div class="eretry" id="eretry" style="display:none"><span class="retdot"></span><span>Retrying…</span></div>
       <button type="button" id="retryNow" class="elink retrybtn">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-        Retry Now
+        Try again
       </button>
       <div class="esoc">
         <a href="https://discord.gg/w46C6mQgrY" target="_blank" rel="noopener noreferrer" class="elink esoc-discord" aria-label="Join EV Streams Discord">
@@ -178,56 +261,58 @@ body{width:100%;height:100%;min-height:100dvh;background:var(--bg);overflow:hidd
   </div>
 
   <div id="bigplay" class="gone">
-    <div class="bpbtn" id="bpbtn" role="button" tabindex="0" aria-label="Play video">
+    <div class="bpbtn glass" id="bpbtn" role="button" tabindex="0" aria-label="Play video">
       <svg viewBox="0 0 24 24" fill="#fff"><path d="M8 5.14v13.72a1 1 0 0 0 1.5.87l11-6.86a1 1 0 0 0 0-1.72L9.5 4.27A1 1 0 0 0 8 5.14z"/></svg>
     </div>
   </div>
 
-  <div id="ctrls">
-    <div id="prog" role="slider" aria-label="Seek" tabindex="0">
-      <div class="pt">
-        <div class="pbf" id="pbuf"></div>
-        <div class="ppl" id="ppl"></div>
-        <div class="pth" id="pth"></div>
+  <div id="ctrls" class="is-live">
+    <div id="bar" class="glass" role="group" aria-label="Player controls">
+      <div id="crow">
+        <button class="cb" id="bplay" title="Play / Pause" aria-label="Play or pause">
+          <svg viewBox="0 0 24 24" fill="currentColor" id="pico">
+            <rect x="6" y="5" width="4" height="14" rx="1.5"/><rect x="14" y="5" width="4" height="14" rx="1.5"/>
+          </svg>
+        </button>
+        <button class="cb" id="bvol" title="Mute / Unmute" aria-label="Mute or unmute">
+          <svg viewBox="0 0 24 24" fill="none" id="vico">
+            <path d="M4 9v6h4l5 5V4L8 9H4z" fill="currentColor"/>
+            <path d="M16.5 8.5a5 5 0 0 1 0 7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" fill="none"/>
+            <path d="M19 6a9 9 0 0 1 0 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" fill="none"/>
+          </svg>
+        </button>
+        <div class="live-pill" id="livepill"><span class="ldot"></span><span id="lpitext">Live</span></div>
+        <div class="csp"></div>
+        <div id="prog" role="slider" aria-label="Seek" tabindex="0">
+          <div class="pt">
+            <div class="pbf" id="pbuf"></div>
+            <div class="ppl" id="ppl"></div>
+            <div class="pth" id="pth"></div>
+          </div>
+        </div>
+        <button class="cb" id="bq" title="Quality" aria-label="Change video quality" aria-haspopup="true" aria-expanded="false" style="display:none">
+          <span id="qlbl">–</span>
+          <svg class="qchev" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="2,3 5,7 8,3"/></svg>
+        </button>
+        <button class="cb" id="bfill" title="Fill / Fit" aria-label="Change video fit mode">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" id="fillico">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/>
+            <path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>
+          </svg>
+        </button>
+        <button class="cb" id="bpip" title="Picture in Picture" aria-label="Picture in picture">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="5" width="18" height="14" rx="2"/><rect x="12.5" y="11.5" width="7" height="5" rx="1.5" fill="currentColor" stroke="none"/>
+          </svg>
+        </button>
+        <button class="cb" id="bfs" title="Fullscreen" aria-label="Toggle fullscreen">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" id="fsico">
+            <path d="M9 4H4v5"/><path d="M15 4h5v5"/><path d="M9 20H4v-5"/><path d="M15 20h5v-5"/>
+          </svg>
+        </button>
       </div>
     </div>
-    <div id="crow">
-      <button class="cb" id="bplay" title="Play / Pause" aria-label="Play or pause">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" id="pico">
-          <rect x="6" y="5" width="4" height="14" rx="1.5"/><rect x="14" y="5" width="4" height="14" rx="1.5"/>
-        </svg>
-      </button>
-      <button class="cb" id="bvol" title="Mute / Unmute" aria-label="Mute or unmute">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" id="vico">
-          <path d="M4 9v6h4l5 5V4L8 9H4z" fill="currentColor"/>
-          <path d="M16.5 8.5a5 5 0 0 1 0 7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" fill="none"/>
-          <path d="M19 6a9 9 0 0 1 0 12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" fill="none"/>
-        </svg>
-      </button>
-      <div class="live-pill" id="livepill"><span class="ldot"></span><span id="lpitext">LIVE</span></div>
-      <div class="csp"></div>
-      <button class="cb" id="bq" title="Quality" aria-label="Change video quality" aria-haspopup="true" aria-expanded="false" style="display:none">
-        <span id="qlbl">–</span>
-        <svg class="qchev" width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="2,3 5,7 8,3"/></svg>
-      </button>
-      <button class="cb" id="bfill" title="Fill / Fit" aria-label="Change video fit mode">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" id="fillico">
-          <path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/>
-          <path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>
-        </svg>
-      </button>
-      <button class="cb" id="bpip" title="Picture in Picture" aria-label="Picture in picture">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="5" width="18" height="14" rx="2"/><rect x="12.5" y="11.5" width="7" height="5" rx="1.5" fill="currentColor" stroke="none"/>
-        </svg>
-      </button>
-      <button class="cb" id="bfs" title="Fullscreen" aria-label="Toggle fullscreen">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" id="fsico">
-          <path d="M9 4H4v5"/><path d="M15 4h5v5"/><path d="M9 20H4v-5"/><path d="M15 20h5v-5"/>
-        </svg>
-      </button>
-    </div>
-    <div id="qmenu" role="menu" aria-label="Video quality">
+    <div id="qmenu" class="glass" role="menu" aria-label="Video quality">
       <div class="qmenu-head">Quality</div>
       <div id="qlist"></div>
     </div>
@@ -275,6 +360,7 @@ var fillico  = document.getElementById('fillico');
 var bpip     = document.getElementById('bpip');
 var bfs      = document.getElementById('bfs');
 var fsico    = document.getElementById('fsico');
+var bar      = document.getElementById('bar');
 var bigplay  = document.getElementById('bigplay');
 var bpbtn    = document.getElementById('bpbtn');
 
@@ -349,6 +435,9 @@ function syncBig(){
   }
 }
 
+bpbtn.addEventListener('keydown', function(e){
+  if(e.key==='Enter'||e.key===' '){ e.preventDefault(); bpbtn.click(); }
+});
 bpbtn.addEventListener('click', function(e){
   e.stopPropagation();
   uPaused=false;
@@ -444,13 +533,8 @@ setInterval(function(){
   if(!vid.seekable||!vid.seekable.length) return;
   var edge=vid.seekable.end(vid.seekable.length-1);
   var behind=edge-vid.currentTime>12;
-  livepill.style.cursor=behind?'pointer':'default';
-  lpitext.textContent=behind?'GO LIVE':'LIVE';
-  livepill.style.color=behind?'#ffb020':'#ff5a5a';
-  livepill.style.borderColor=behind?'rgba(255,176,32,.32)':'rgba(255,69,69,.32)';
-  livepill.style.background=behind?'rgba(255,176,32,.13)':'rgba(255,69,69,.13)';
-  var dot=livepill.querySelector('.ldot');
-  if(dot) dot.style.background=behind?'#ffb020':'#ff4545';
+  livepill.classList.toggle('behind', behind);   // amber + clickable when behind the live edge
+  lpitext.textContent=behind?'Go live':'Live';
 },2000);
 
 vid.addEventListener('timeupdate', function(){
@@ -464,6 +548,7 @@ vid.addEventListener('progress', function(){
 });
 vid.addEventListener('loadedmetadata', function(){
   isLive=!isFinite(vid.duration)||vid.duration>86400;
+  ctrls.classList.toggle('is-live', isLive);   // seek bar only shows for on-demand streams
   if(!isLive) livepill.style.display='none';
 });
 
@@ -478,7 +563,7 @@ document.addEventListener('mouseup',    function(){if(isDragging){isDragging=fal
 document.addEventListener('touchend',   function(){if(isDragging){isDragging=false;prog.classList.remove('drag');}});
 
 // ── Quality selector ──────────────────────────────────────────────
-// A real in-player menu (flat panel above the control bar) instead of the
+// A real in-player menu (glass panel above the control bar) instead of the
 // old hidden native <select>: every available rendition is listed, the
 // active one is highlighted, and picking one swaps the stream in place.
 var TICK_SVG = '<svg class="qtick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
@@ -498,11 +583,22 @@ function closeQMenu(){
   bq.setAttribute('aria-expanded','false');
 }
 
+// Centres the menu over the quality button and lifts it just above the bar.
+function placeQMenu(){
+  var pr=player.getBoundingClientRect(), br=bq.getBoundingClientRect(), bb=bar.getBoundingClientRect();
+  var mw=qmenu.offsetWidth;
+  var left=br.left+br.width/2-pr.left-mw/2;
+  left=Math.max(8,Math.min(pr.width-mw-8,left));
+  qmenu.style.left=left+'px';
+  qmenu.style.bottom=(pr.bottom-bb.top+10)+'px';
+}
+
 function openQMenu(){
   if(!buildQMenu()) return;
   qmenu.classList.add('open');
   bq.classList.add('open');
   bq.setAttribute('aria-expanded','true');
+  placeQMenu();
   showCtrls();
 }
 
@@ -617,7 +713,7 @@ function tryNativeCascade(all, lastShakaErr){
   var idx = 0;
   function attempt(){
     if (idx >= all.length || !all[idx]) {
-      showErr('Playback Error', lastShakaErr || 'No playable stream found', false);
+      showErr('Playback error', lastShakaErr || 'No playable stream found', false);
       return;
     }
     var url = all[idx++];
@@ -660,7 +756,7 @@ async function loadStream(url,fallbacks){
       tryNativeCascade(all, lastErr);
       return;
     }
-    showErr('Playback Error',lastErr,false);
+    showErr('Playback error',lastErr,false);
     return;
   }
 
@@ -708,6 +804,13 @@ function resolve(data){
   return{type:'single',url:u,fallbacks:fb};
 }
 
+// Glass sheen follows the pointer along the bar; the quality menu closes on resize.
+bar.addEventListener('pointermove', function(e){
+  var r=bar.getBoundingClientRect();
+  bar.style.setProperty('--hx', ((e.clientX-r.left)/r.width*100).toFixed(1)+'%');
+});
+window.addEventListener('resize', closeQMenu);
+
 shaka.polyfill.installAll();
 function start(){
   clearTimeout(retryTimer);
@@ -716,7 +819,7 @@ function start(){
   fetchJSON(JSON_URL).then(function(data){
     var r;
     try{r=resolve(data);}
-    catch(e){showErr('Stream Unavailable',e.message,true);retryTimer=setTimeout(start,8000);return;}
+    catch(e){showErr('Stream unavailable',e.message,true);retryTimer=setTimeout(start,8000);return;}
     if(r.type==='multi'){
       qStreams=r.streams;
       var url=r.streams[DEFAULT_Q]||r.streams['720p']||r.streams['480p']||r.streams['1080p']||r.streams['360p']||r.streams['240p'];
