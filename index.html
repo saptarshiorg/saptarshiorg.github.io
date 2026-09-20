@@ -2522,7 +2522,7 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
     display: flex; align-items: center; justify-content: space-around;
     flex-wrap: nowrap;
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 1220;
-    height: 30px; padding-bottom: env(safe-area-inset-bottom, 0);
+    height: 40px; padding-bottom: env(safe-area-inset-bottom, 0);
     background: #000; border: none; box-shadow: none;
   }
   .mtab {
@@ -2532,15 +2532,15 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
     -webkit-tap-highlight-color: transparent;
     transition: color 0.16s ease, transform 0.16s ease;
   }
-  .mtab svg { width: 16px; height: 16px; display: block; }
+  .mtab svg { width: 19px; height: 19px; display: block; }
   .mtab .mtab-fill-part { transition: fill 0.15s ease; }
   .mtab.active { color: #fff; }
   .mtab.active .mtab-fill-part { fill: currentColor; }
   .mtab:active { transform: scale(0.86); }
 
   /* Push page content above the fixed bar */
-  body { padding-bottom: 30px; }
-  footer { padding-bottom: calc(24px + 30px + env(safe-area-inset-bottom, 0)); }
+  body { padding-bottom: 40px; }
+  footer { padding-bottom: calc(24px + 40px + env(safe-area-inset-bottom, 0)); }
 }
 
 /* ────────────────────────────────────────────
@@ -3710,147 +3710,21 @@ function sxSwitchTab(name){
 window.sxSwitchTab = sxSwitchTab;
 
 // ══════════════════════════════════════════════════════════════════════
-// FAVOURITES — heart button on any match card / channel card saves it
-// here (localStorage, survives reloads). SEARCH — one box that filters
-// both MATCH CARDS and LIVE CHANNELS together.
+// FAVOURITES — heart button on any channel card saves it here
+// (localStorage, survives reloads). Favourites is channels-only — no
+// match/team/sport favouriting. SEARCH — one box that filters both
+// MATCH CARDS and LIVE CHANNELS together (search still covers matches;
+// only favouriting is channels-only).
 // ══════════════════════════════════════════════════════════════════════
 const SX_FAV_KEY = 'sx_favourites_v1';
 function sxLoadFavs(){
-  try { const v = JSON.parse(localStorage.getItem(SX_FAV_KEY)); return v && v.matches && v.channels ? v : {matches:{},channels:{}}; }
-  catch(e){ return {matches:{},channels:{}}; }
+  try { const v = JSON.parse(localStorage.getItem(SX_FAV_KEY)); return v && v.channels ? v : {channels:{}}; }
+  catch(e){ return {channels:{}}; }
 }
 function sxSaveFavs(favs){ try { localStorage.setItem(SX_FAV_KEY, JSON.stringify(favs)); } catch(e){} }
 function sxIsFav(type, key){ const f = sxLoadFavs(); return !!(f[type] && f[type][key]); }
-function sxMatchFavKey(c){
-  return ((c.team1_full_name||c.team1_code||'')+'|'+(c.team2_full_name||c.team2_code||'')+'|'+(c.game||'')+'|'+(c.countdown_to_iso_datetime||c.countdown_to||c.date_label||'')).toLowerCase().trim();
-}
 function sxChanFavKey(c){ return (c.channel_name||'').toLowerCase().trim(); }
-window.sxMatchFavKey = sxMatchFavKey;
 window.sxChanFavKey = sxChanFavKey;
-
-// ── Favourite TEAMS — pick teams to follow; their LIVE matches float to
-// the top of the matches page automatically. ──
-const SX_FAV_TEAMS_KEY = 'sx_fav_teams_v1';
-function sxLoadFavTeams(){
-  try { const v = JSON.parse(localStorage.getItem(SX_FAV_TEAMS_KEY)); return Array.isArray(v) ? v : []; }
-  catch(e){ return []; }
-}
-function sxSaveFavTeams(list){ try { localStorage.setItem(SX_FAV_TEAMS_KEY, JSON.stringify(list)); } catch(e){} }
-function sxIsFavTeam(name){
-  const t = (name||'').toLowerCase().trim();
-  return !!t && sxLoadFavTeams().includes(t);
-}
-window.sxIsFavTeam = sxIsFavTeam;
-function sxToggleFavTeam(name){
-  const t = (name||'').toLowerCase().trim();
-  if (!t) return;
-  let list = sxLoadFavTeams();
-  list = list.includes(t) ? list.filter(x => x !== t) : list.concat([t]);
-  sxSaveFavTeams(list);
-  if (typeof sxApplyFavTeamsBoost === 'function') sxApplyFavTeamsBoost();
-  if (typeof sxRenderFavTeamsUI === 'function') sxRenderFavTeamsUI();
-}
-window.sxToggleFavTeam = sxToggleFavTeam;
-// Pipe-joined lowercase team names for a sheet MATCH CARDS row — stamped
-// on every rendered card as data-teams so the DOM-level boost pass (and
-// the favourites-page team picker) can match against it without re-fetching data.
-function sxTeamsAttr(c){
-  return [(c.team1_full_name||c.team1_code||''), (c.team2_full_name||c.team2_code||'')]
-    .map(t => t.toLowerCase().trim()).filter(Boolean).join('|');
-}
-window.sxTeamsAttr = sxTeamsAttr;
-// Floats any LIVE match card whose data-teams overlaps the favourite-teams
-// list to the very front of its .smo-section — purely a DOM reorder, so it
-// never touches the existing live/upcoming/finished sort logic underneath.
-function sxApplyFavTeamsBoost(){
-  const favTeams = sxLoadFavTeams();
-  if (!favTeams.length) return;
-  document.querySelectorAll('#match-overlay > .smo-section').forEach(section => {
-    const boosted = Array.from(section.querySelectorAll(':scope > .smo-card[data-live="1"][data-teams]'))
-      .filter(card => (card.dataset.teams||'').split('|').some(t => favTeams.includes(t)));
-    boosted.reverse().forEach(card => section.prepend(card));
-  });
-}
-window.sxApplyFavTeamsBoost = sxApplyFavTeamsBoost;
-
-// ── Favourite SPORT CATEGORIES — pick a sport (Cricket/Football/…) and
-// its whole section floats to the top of the Matches page. ──
-const SX_FAV_SPORTS_KEY = 'sx_fav_sports_v1';
-function sxLoadFavSports(){
-  try { const v = JSON.parse(localStorage.getItem(SX_FAV_SPORTS_KEY)); return Array.isArray(v) ? v : []; }
-  catch(e){ return []; }
-}
-function sxSaveFavSports(list){ try { localStorage.setItem(SX_FAV_SPORTS_KEY, JSON.stringify(list)); } catch(e){} }
-function sxToggleFavSport(name){
-  const t = (name||'').toLowerCase().trim();
-  if (!t) return;
-  let list = sxLoadFavSports();
-  list = list.includes(t) ? list.filter(x => x !== t) : list.concat([t]);
-  sxSaveFavSports(list);
-  if (typeof sxApplySportBoost === 'function') sxApplySportBoost();
-  if (typeof sxRenderFavSportsUI === 'function') sxRenderFavSportsUI();
-}
-window.sxToggleFavSport = sxToggleFavSport;
-// Moves whole .smo-section blocks whose sport is favourited to the front
-// of #match-overlay — same additive DOM-reorder approach as the team
-// boost above, layered on top of whatever order already exists there.
-function sxApplySportBoost(){
-  const favSports = sxLoadFavSports();
-  if (!favSports.length) return;
-  const container = document.getElementById('match-overlay');
-  if (!container) return;
-  const sections = Array.from(container.querySelectorAll(':scope > .smo-section'));
-  if (sections.length < 2) return;
-  const isFav = sec => favSports.includes((sec.dataset.sport||'').toLowerCase());
-  const boosted = sections.filter(isFav);
-  if (!boosted.length || boosted.length === sections.length) return;
-  const rest = sections.filter(sec => !isFav(sec));
-  boosted.concat(rest).forEach(sec => container.appendChild(sec));
-}
-window.sxApplySportBoost = sxApplySportBoost;
-
-// ── Favourites-page pickers for both of the above ──
-function sxRenderFavTeamsUI(){
-  const wrap = document.getElementById('sx-fav-teams-chips');
-  if (!wrap) return;
-  const favTeams = sxLoadFavTeams();
-  const seen = new Set();
-  const teams = [];
-  (window._matchCardsData || []).forEach(c => {
-    [c.team1_full_name || c.team1_code, c.team2_full_name || c.team2_code].forEach(t => {
-      const name = (t || '').trim();
-      const key = name.toLowerCase();
-      if (name && !seen.has(key)) { seen.add(key); teams.push(name); }
-    });
-  });
-  teams.sort((a, b) => a.localeCompare(b));
-  if (!teams.length) {
-    wrap.innerHTML = `<div class="sx-search-hint" style="padding:8px 4px;">No teams loaded yet — check back once matches are listed.</div>`;
-    return;
-  }
-  wrap.innerHTML = teams.map(name => {
-    const active = favTeams.includes(name.toLowerCase()) ? ' active' : '';
-    return `<button type="button" class="sx-chip${active}" onclick="sxToggleFavTeam('${escJs(name)}')">${active ? '★ ' : ''}${name}</button>`;
-  }).join('');
-}
-window.sxRenderFavTeamsUI = sxRenderFavTeamsUI;
-
-function sxRenderFavSportsUI(){
-  const wrap = document.getElementById('sx-fav-sports-chips');
-  if (!wrap) return;
-  const favSports = sxLoadFavSports();
-  const sportMap = window._smoGameToSport || {};
-  const sports = [...new Set(Object.values(sportMap).filter(Boolean))].sort((a, b) => a.localeCompare(b));
-  if (!sports.length) {
-    wrap.innerHTML = `<div class="sx-search-hint" style="padding:8px 4px;">No sport categories loaded yet.</div>`;
-    return;
-  }
-  wrap.innerHTML = sports.map(name => {
-    const active = favSports.includes(name.toLowerCase()) ? ' active' : '';
-    return `<button type="button" class="sx-chip${active}" onclick="sxToggleFavSport('${escJs(name)}')">${active ? '★ ' : ''}${name}</button>`;
-  }).join('');
-}
-window.sxRenderFavSportsUI = sxRenderFavSportsUI;
 
 // Safely round-trips a data object through an HTML attribute (base64 of a
 // UTF-8 JSON string) — sidesteps every quote-escaping issue that comes
@@ -3940,8 +3814,9 @@ function sxOpenChannelPayload(enc){
 }
 window.sxOpenChannelPayload = sxOpenChannelPayload;
 
-// Builds one match card (thumb/body + heart), reused by Search and Favourites.
-function sxMatchCardHtml(c, favKeyOverride){
+// Builds one match card (thumb/body), reused by Search results. Favourites
+// is channels-only, so match cards never show a heart/favourite button.
+function sxMatchCardHtml(c){
   const teamsLine = `${c.team1_full_name||c.team1_code||''} vs ${c.team2_full_name||c.team2_code||''}`;
   const isLive = (typeof matchStatusText === 'function') && matchStatusText(c).toLowerCase() === 'live';
   const isFinished = (typeof isMatchFinished === 'function') && isMatchFinished(c);
@@ -3956,13 +3831,11 @@ function sxMatchCardHtml(c, favKeyOverride){
         <div class="fx2-thumb-vs">VS</div>
         <div class="fx2-thumb-team">${img(c.team2_icon_url,c.team2_code||'','')}</div>
       </div>`;
-  const favKey = favKeyOverride || sxMatchFavKey(c);
   return `
   <div class="smo-card fx2-card">
     <div class="fx2-thumb">
       ${thumbInner}
       ${badge}
-      ${sxHeartBtnHtml('matches', favKey, c)}
     </div>
     <div class="fx2-body">
       <div class="fx2-title-row">
@@ -3978,6 +3851,35 @@ function sxMatchCardHtml(c, favKeyOverride){
   </div>`;
 }
 window.sxMatchCardHtml = sxMatchCardHtml;
+
+// Same visual card, wired for a FanCode match object ({id,title,tournament,
+// category,image,status,time} — see window._fcxMatchesCache) instead of a
+// sheet MATCH CARDS row, so FanCode-only fixtures can appear in Search too.
+function sxFcxMatchCardHtml(m){
+  const isLive = m.status === 'LIVE';
+  const isCompleted = m.status === 'COMPLETED';
+  const badge = isLive
+    ? '<span class="fx2-badge fx2-badge-live"><span class="fx2-live-dot"></span>LIVE</span>'
+    : isCompleted ? '<span class="fx2-badge">FINISHED</span>' : '<span class="fx2-badge">⏰ UPCOMING</span>';
+  return `
+  <div class="smo-card fx2-card">
+    <div class="fx2-thumb">
+      <img src="${m.image||''}" alt="" class="fx2-thumb-img" onerror="this.style.display='none'">
+      ${badge}
+    </div>
+    <div class="fx2-body">
+      <div class="fx2-title-row">
+        <div class="fx2-title">${m.title||''}</div>
+        <span class="fx2-free">FREE</span>
+      </div>
+      <div class="fx2-meta">
+        <span class="fx2-tag">${m.tournament||m.category||'FanCode'}</span>
+      </div>
+      ${(typeof fcxWatchBtnHtml === 'function') ? fcxWatchBtnHtml(m,'smo-btn') : ''}
+    </div>
+  </div>`;
+}
+window.sxFcxMatchCardHtml = sxFcxMatchCardHtml;
 
 // ── Search: filters MATCH CARDS + LIVE CHANNELS together ──
 let SX_SEARCH_FILTER = 'all';
@@ -4099,18 +4001,32 @@ function sxRunSearch(qRaw){
   const wantMatches = SX_SEARCH_FILTER !== 'channels';
   const wantChannels = SX_SEARCH_FILTER !== 'matches';
 
-  let matches = [];
+  // MATCHES come from two sources: the sheet (window._matchCardsData) and
+  // FanCode's own feed (window._fcxMatchesCache) — a query has to check
+  // both or FanCode-only fixtures never show up in search at all.
+  let matchCards = [];
   if (wantMatches) {
     if (!q) {
-      matches = (window._matchCardsData || []).filter(c => (typeof matchStatusText === 'function') && matchStatusText(c).toLowerCase() === 'live');
+      matchCards = (window._matchCardsData || [])
+        .filter(c => (typeof matchStatusText === 'function') && matchStatusText(c).toLowerCase() === 'live')
+        .map(c => sxMatchCardHtml(c))
+        .concat(
+          (window._fcxMatchesCache || [])
+            .filter(m => m.status === 'LIVE')
+            .map(m => sxFcxMatchCardHtml(m))
+        );
     } else {
-      matches = (window._matchCardsData || [])
-        .map(c => ({ c, score: sxHaystackScore(tokens, [c.team1_full_name||'', c.team1_code||'', c.team2_full_name||'', c.team2_code||'', c.game||'']) }))
-        .filter(x => x.score > 0)
+      const sheetScored = (window._matchCardsData || [])
+        .map(c => ({ score: sxHaystackScore(tokens, [c.team1_full_name||'', c.team1_code||'', c.team2_full_name||'', c.team2_code||'', c.game||'']), html: sxMatchCardHtml(c) }))
+        .filter(x => x.score > 0);
+      const fcxScored = (window._fcxMatchesCache || [])
+        .map(m => ({ score: sxHaystackScore(tokens, [m.title||'', m.tournament||'', m.category||'']), html: sxFcxMatchCardHtml(m) }))
+        .filter(x => x.score > 0);
+      matchCards = sheetScored.concat(fcxScored)
         .sort((a, b) => b.score - a.score)
-        .map(x => x.c);
+        .map(x => x.html);
     }
-    matches = matches.slice(0, 40);
+    matchCards = matchCards.slice(0, 40);
   }
   let channels = [];
   if (wantChannels) {
@@ -4128,17 +4044,17 @@ function sxRunSearch(qRaw){
 
   let html = '';
   if (!q) {
-    if (matches.length || channels.length) {
+    if (matchCards.length || channels.length) {
       html += `<div class="epg-cat-heading">LIVE NOW</div>`;
-      if (matches.length) html += `<div class="smo-section">` + matches.map(c => sxMatchCardHtml(c)).join('') + `</div>`;
+      if (matchCards.length) html += `<div class="smo-section">` + matchCards.join('') + `</div>`;
       if (channels.length) html += `<div class="epg-list">` + channels.map(c => sxChannelRowOuterHtml(c)).join('') + `</div>`;
     } else {
       html += `<div class="sx-search-hint">Search live channels and matches…</div>`;
     }
   } else {
-    if (matches.length) html += `<div class="epg-cat-heading">MATCHES</div><div class="smo-section">` + matches.map(c => sxMatchCardHtml(c)).join('') + `</div>`;
+    if (matchCards.length) html += `<div class="epg-cat-heading">MATCHES</div><div class="smo-section">` + matchCards.join('') + `</div>`;
     if (channels.length) html += `<div class="epg-cat-heading">LIVE CHANNELS</div><div class="epg-list">` + channels.map(c => sxChannelRowOuterHtml(c)).join('') + `</div>`;
-    if (!matches.length && !channels.length) html += `<div class="epg-no-results">No matches or channels found.</div>`;
+    if (!matchCards.length && !channels.length) html += `<div class="epg-no-results">No matches or channels found.</div>`;
   }
   resultsEl.innerHTML = html;
 }
@@ -4152,8 +4068,6 @@ function openFavourites(){
   window.scrollTo(0,0);
   document.querySelectorAll('[data-sxtab]').forEach(el => el.classList.toggle('active', el.dataset.sxtab === 'favourites'));
   sxHeaderInto('sx-fav-overlay', null);
-  sxRenderFavTeamsUI();
-  sxRenderFavSportsUI();
   sxRenderFavouritesOverlay();
 }
 function closeFavourites(){
@@ -4164,24 +4078,17 @@ function closeFavourites(){
 window.openFavourites = openFavourites;
 window.closeFavourites = closeFavourites;
 
+// Favourites is channels-only — no matches, teams, or sports here.
 function sxRenderFavouritesOverlay(){
   const wrap = document.getElementById('sx-fav-results');
   if (!wrap) return;
   const favs = sxLoadFavs();
-  const matchEntries = Object.entries(favs.matches||{});
   const chanEntries = Object.entries(favs.channels||{});
-  if (!matchEntries.length && !chanEntries.length) {
-    wrap.innerHTML = `<div class="epg-no-results">No favourites yet. Tap the heart on any match or channel card to save it here.</div>`;
+  if (!chanEntries.length) {
+    wrap.innerHTML = `<div class="epg-no-results">No favourite channels yet. Tap the heart on any channel card to save it here.</div>`;
     return;
   }
-  let html = '';
-  if (matchEntries.length) {
-    html += `<div class="epg-cat-heading">MATCHES</div><div class="smo-section">` + matchEntries.map(([key,c]) => sxMatchCardHtml(c, key)).join('') + `</div>`;
-  }
-  if (chanEntries.length) {
-    html += `<div class="epg-cat-heading">LIVE CHANNELS</div><div class="epg-list">` + chanEntries.map(([key,c]) => sxChannelRowOuterHtml(c, key)).join('') + `</div>`;
-  }
-  wrap.innerHTML = html;
+  wrap.innerHTML = `<div class="epg-list">` + chanEntries.map(([key,c]) => sxChannelRowOuterHtml(c, key)).join('') + `</div>`;
 }
 window.sxRenderFavouritesOverlay = sxRenderFavouritesOverlay;
 </script>
@@ -4247,19 +4154,12 @@ window.sxRenderFavouritesOverlay = sxRenderFavouritesOverlay;
   <div id="sx-search-results"></div>
 </div>
 
-<!-- FAVOURITES — matches & channels saved via the heart button on any card,
-     plus favourite TEAMS (their live matches float to the top of the
-     Matches page) and favourite SPORT categories (their sections float
-     to the top too). -->
+<!-- FAVOURITES — channels saved via the heart button on any channel card. -->
 <div id="sx-fav-overlay">
   <div class="epg-hero" style="padding:6px 2px 2px;">
     <div class="epg-hero-title">FAVOURITES</div>
-    <div class="epg-hero-sub">Matches and channels you've saved.</div>
+    <div class="epg-hero-sub">Channels you've saved.</div>
   </div>
-  <div class="epg-cat-heading">MY TEAMS <span style="opacity:.5;font-weight:600;text-transform:none;letter-spacing:0;">— live matches float to the top</span></div>
-  <div class="sx-search-chips" id="sx-fav-teams-chips" style="flex-wrap:wrap;"></div>
-  <div class="epg-cat-heading">FAVOURITE SPORTS <span style="opacity:.5;font-weight:600;text-transform:none;letter-spacing:0;">— their sections float to the top</span></div>
-  <div class="sx-search-chips" id="sx-fav-sports-chips" style="flex-wrap:wrap;"></div>
   <div id="sx-fav-results"></div>
 </div>
 
@@ -5623,7 +5523,7 @@ window.fcxAppendHomeSections = function(){
       // whether or not this particular match has a countdown to show.
       const timerBlock = `<div class="smo-timer" id="${timerWrapId}" style="visibility:${countdown ? 'visible' : 'hidden'}"><div class="timer-label">STARTS IN</div><div class="timer-display" id="${timerId}">--:--:--</div></div>`;
       cardsHtml += `
-      <div class="smo-card fx2-card${existingSec ? ' fcx-smo-card' : ''}" data-live="${isLive?'1':'0'}" data-finished="${isFinished?'1':'0'}" data-start-ms="${fcxStartMs(m)}" data-teams="${escJs((m.title||'').toLowerCase().split(/\s+vs\s+/).map(t=>t.trim()).join('|'))}">
+      <div class="smo-card fx2-card${existingSec ? ' fcx-smo-card' : ''}" data-live="${isLive?'1':'0'}" data-finished="${isFinished?'1':'0'}" data-start-ms="${fcxStartMs(m)}">
         <div class="fx2-thumb">
           <img src="${m.image}" alt="${escJs(m.title)}" class="fx2-thumb-img" onerror="this.style.display='none'">
           ${badge}
@@ -5669,8 +5569,6 @@ window.fcxAppendHomeSections = function(){
   // live sections up and left the rest (sheet vs FanCode) as two separate,
   // un-interleaved blocks.
   sxReorderAllSectionsLiveThenTime(el);
-  if (typeof sxApplySportBoost === 'function') sxApplySportBoost();
-  if (typeof sxApplyFavTeamsBoost === 'function') sxApplyFavTeamsBoost();
   timers.forEach(({ timerDisplayId, timerWrapId, badgeId, liveBadgeHtml, target }) => {
     setTimeout(() => {
       wireAutoLiveCountdown(target, { timerDisplayId, timerWrapId, badgeId, liveBadgeHtml });
@@ -5825,6 +5723,12 @@ window.fcxAppendHeroSlides = function(){
 <!-- LIVE FIXTURES -->
 <section class="section" style="background:linear-gradient(180deg,#000000,#000000);padding:40px 0;" id="fixtures-section">
   <div class="section-inner">
+    <div class="sx-home-search-row" style="margin-bottom:20px;display:flex;justify-content:flex-end;">
+      <button type="button" class="sx-home-search-bar" onclick="openSxSearch()" aria-label="Search matches and channels">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.3" y1="15.3" x2="20" y2="20"/></svg>
+        <span>Search matches &amp; channels…</span>
+      </button>
+    </div>
     <div class="fixtures-grid" id="fixtures-grid"><div class="sk sk-card"></div><div class="sk sk-card"></div><div class="sk sk-card"></div><div class="sk sk-card"></div><div class="sk sk-card"></div><div class="sk sk-card"></div></div>
   </div>
 </section>
@@ -6180,6 +6084,8 @@ function renderNav(rows) {
     { label:'Home',     href:'#', sxtab:'home', onclick:"goHome();return false;" },
     { label:'Live TV',  href:'#sxTabPanels', sxtab:'livetv', onclick:"openLiveTV();return false;" },
     { label:'Matches',  href:'#sxTabPanels', sxtab:'matches', onclick:"sxSwitchTab('matches');return false;" },
+    { label:'Search',   href:'#sxTabPanels', sxtab:'search', onclick:"openSxSearch();return false;" },
+    { label:'Favourites', href:'#sxTabPanels', sxtab:'favourites', onclick:"openFavourites();return false;" },
     { label:'OTT',      href:'#sxTabPanels', sxtab:'ott', onclick:"openOTT();return false;" },
   ];
   let dHtml = '', mHtml = '';
@@ -7652,11 +7558,10 @@ function renderMatchCards(rows) {
           </div>`;
 
       sectionHtml += `
-      <div class="smo-card fx2-card" id="${cardId}" data-live="${isLive ? '1' : '0'}" data-finished="${isFinished ? '1' : '0'}" data-start-ms="${cardStartMs(c)}" data-teams="${escJs(sxTeamsAttr(c))}"${hideAt !== null ? ` data-expire-at="${hideAt}"` : ''}>
+      <div class="smo-card fx2-card" id="${cardId}" data-live="${isLive ? '1' : '0'}" data-finished="${isFinished ? '1' : '0'}" data-start-ms="${cardStartMs(c)}"${hideAt !== null ? ` data-expire-at="${hideAt}"` : ''}>
         <div class="fx2-thumb">
           ${thumbInner}
           ${badge}
-          ${(typeof sxHeartBtnHtml === 'function') ? sxHeartBtnHtml('matches', sxMatchFavKey(c), c) : ''}
         </div>
         <div class="fx2-body">
           <div class="fx2-title-row">
@@ -7687,8 +7592,6 @@ function renderMatchCards(rows) {
   });
 
   el.innerHTML = html.trim() ? html : `<div class="smo-empty-box">NO MATCHES LISTED</div>`;
-  if (typeof sxApplySportBoost === 'function') sxApplySportBoost();
-  if (typeof sxApplyFavTeamsBoost === 'function') sxApplyFavTeamsBoost();
 
   // Tag each rendered section with its game name and sport (via the DOM
   // property, not an HTML attribute string, so no escaping worries even if
@@ -7942,7 +7845,6 @@ function renderFixtures(rows) {
       <div class="fx2-thumb">
         ${thumb}
         ${isLive ? '<span class="fx2-badge fx2-badge-live"><span class="fx2-live-dot"></span>LIVE</span>' : ''}
-        ${(typeof sxHeartBtnHtml === 'function') ? sxHeartBtnHtml('matches', sxMatchFavKey(c), c) : ''}
       </div>
       <div class="fx2-body">
         <div class="fx2-title-row">
@@ -8485,6 +8387,17 @@ document.addEventListener('DOMContentLoaded', () => {
 .sx-chip{ background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); color:rgba(255,255,255,0.6); font-size:12px; font-weight:700; padding:6px 15px; border-radius:999px; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:background .15s ease, color .15s ease; }
 .sx-chip.active{ background:#fff; border-color:#fff; color:#000; }
 .sx-search-hint{ color:rgba(255,255,255,0.4); font-size:13px; padding:20px 4px; text-align:center; }
+.sx-home-search-bar{
+  display:inline-flex; align-items:center; gap:10px;
+  background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12);
+  border-radius:999px; padding:11px 20px; color:rgba(255,255,255,0.65);
+  font-size:14px; font-family:inherit; cursor:pointer; min-width:260px;
+  -webkit-tap-highlight-color:transparent;
+  transition:background .15s ease, border-color .15s ease, color .15s ease;
+}
+.sx-home-search-bar:hover{ background:rgba(255,255,255,0.1); border-color:rgba(255,255,255,0.22); color:#fff; }
+.sx-home-search-bar svg{ width:16px; height:16px; flex-shrink:0; opacity:.7; }
+@media(max-width:900px){ .sx-home-search-row{ display:none !important; } }
 @media(max-width:900px){ #sx-search-overlay{ padding:14px 14px calc(60px + env(safe-area-inset-bottom,0)); } }
 
 /* ── Favourites overlay ── */
@@ -11792,6 +11705,14 @@ function closeVip(){
     transition: outline-color 0.15s ease, box-shadow 0.15s ease;
     z-index: 2;
   }
+  /* Belt-and-suspenders: these are never tagged data-remote-focusable by
+     the script below, but guard them here too in case anything else ever
+     focuses them — the bottom nav / top hamburger / card hearts must stay
+     fully outline-free on tap, same as Instagram's own nav bar. */
+  .mobile-tabbar *, .mobile-topstrip *, .sx-heart-btn {
+    outline: none !important;
+    box-shadow: none !important;
+  }
 </style>
 <script>
 (function(){
@@ -11812,10 +11733,14 @@ function closeVip(){
     return r.width > 0 && r.height > 0;
   }
 
-  // Make every clickable element keyboard/remote-focusable, once.
+  // Make every clickable element keyboard/remote-focusable, once — except
+  // the mobile bottom nav, the mobile top hamburger strip, and the
+  // per-card favourite-heart buttons, which must never show the remote
+  // focus ring (they're tap targets, not D-pad/TV navigation targets).
   function normalizeFocusables(){
     document.querySelectorAll(CLICKABLE_SEL).forEach(function(el){
       if (el.hasAttribute('data-remote-focusable')) return;
+      if (el.closest('.mobile-tabbar, .mobile-topstrip, .sx-heart-btn')) return;
       if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '0');
       if (!el.hasAttribute('role') && el.tagName !== 'A' && el.tagName !== 'BUTTON') el.setAttribute('role', 'button');
       el.setAttribute('data-remote-focusable', '1');
@@ -12063,6 +11988,8 @@ header{
 #matches-panel{ padding-top: var(--sx-nav-safe) !important; }
 #livetv-page-inner{ padding-top: var(--sx-nav-safe) !important; }
 #movies-page-inner{ padding-top: var(--sx-nav-safe) !important; }
+#sx-search-overlay{ padding-top: var(--sx-nav-safe) !important; }
+#sx-fav-overlay{ padding-top: var(--sx-nav-safe) !important; }
 </style>
 
 <!-- ══════════════════════════════════════════════════════════════════════
