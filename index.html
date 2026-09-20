@@ -9870,6 +9870,17 @@ function closeAdminChatDiscordPopup(){
 }
 #sp-info-fullscreen:hover{ background: rgba(255,255,255,0.16); }
 #sp-info-fullscreen svg{ width: 15px; height: 15px; }
+/* FanCode source switch (World / India) — only shown while a FanCode match is playing */
+#sp-src-switch{ display: none; align-items: center; gap: 3px; flex-shrink: 0; padding: 3px; border-radius: 9px; background: rgba(255,255,255,0.07); }
+#sp-src-switch.show{ display: flex; }
+.sp-src-btn{
+  border: none; background: transparent; color: rgba(255,255,255,0.62); cursor: pointer;
+  font-family: var(--cu-font,inherit); font-weight: 800; font-size: 10px; letter-spacing: .04em; text-transform: uppercase;
+  padding: 7px 11px; border-radius: 7px; white-space: nowrap;
+}
+.sp-src-btn:hover:not(:disabled):not(.active){ background: rgba(255,255,255,0.10); color: #fff; }
+.sp-src-btn.active{ background: var(--cu-accent,#F04F8C); color: #fff; }
+.sp-src-btn:disabled{ opacity: .38; cursor: not-allowed; }
 
 /* ── Ad-safety notice: recommend Brave / an ad blocker (sits beside the
      player, in the rail column — never overlapping the video itself) ── */
@@ -10104,234 +10115,6 @@ function closeAdminChatDiscordPopup(){
 }
 </style>
 
-<style id="sp-liquid-glass">
-/* ══════════════════════════════════════════════════════════════════════
-   STREAM PLAYER — minimal liquid glass (same language as play.html).
-   Scoped to the player + cast dialogs so the rest of the site keeps its
-   flat style. Ids + !important on radius/border are deliberate: the site's
-   late global rules force every button to 8px and reset card borders.
-   Accent (magenta) is reserved for live dots, the active rail row, the
-   primary action and spinners.
-═══════════════════════════════════════════════════════════════════════ */
-#stream-player-overlay, .sx-cast-help-overlay, #sx-cast-toast{
-  --spg-tint: rgba(14,14,22,.34);
-  --spg-fill: linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.03) 50%,rgba(255,255,255,.07));
-  --spg-glass: linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.05) 55%,rgba(255,255,255,.10)), rgba(14,14,22,.34);
-  --spg-mg: #F04F8C;
-  --spg-ease: cubic-bezier(.22,.61,.36,1);
-  --spg-spring: cubic-bezier(.34,1.56,.64,1);
-}
-
-/* shared frosted body (controls that sit over the picture) */
-#stream-player-overlay #stream-player-back,
-#stream-player-overlay #stream-player-cast,
-#stream-player-overlay #sp-info-fullscreen,
-#sx-cast-toast,
-.sx-cast-help-overlay .sx-cast-help-box{
-  position: relative; border: 0 !important;
-  background: var(--spg-glass);
-  -webkit-backdrop-filter: blur(18px) saturate(1.7) brightness(.9);
-          backdrop-filter: blur(18px) saturate(1.7) brightness(.9);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.38),
-    inset 0 -1px 0 rgba(255,255,255,.07),
-    0 10px 26px rgba(0,0,0,.38), 0 1px 3px rgba(0,0,0,.3);
-}
-/* infobar: same glass, but its backdrop is black, so it also carries a light fill of its own */
-#stream-player-overlay #stream-player-infobar{
-  position: relative; margin: 8px 12px 12px; padding: 8px 10px 8px 8px; gap: 12px;
-  border: 0; border-radius: 24px;
-  background: var(--spg-fill), rgba(255,255,255,.035);
-  -webkit-backdrop-filter: blur(18px) saturate(1.6);
-          backdrop-filter: blur(18px) saturate(1.6);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.30), inset 0 -1px 0 rgba(255,255,255,.06), 0 12px 30px rgba(0,0,0,.45);
-}
-#stream-player-overlay #stream-player-infobar::before{
-  content:''; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
-  background: radial-gradient(160px 60px at var(--hx,22%) 0%, rgba(255,255,255,.15), transparent 72%);
-}
-/* masked 1px rim: bright top-left, fading out — the "liquid" edge */
-#stream-player-overlay #stream-player-back::after,
-#stream-player-overlay #stream-player-cast::after,
-#stream-player-overlay #sp-info-fullscreen::after,
-#stream-player-overlay #stream-player-infobar::after,
-#stream-player-overlay #stream-player-rail .sp-rail-item::after,
-#stream-player-overlay #sp-adblock-banner::after,
-#sx-cast-toast::after,
-.sx-cast-help-overlay .sx-cast-help-box::after{
-  content:''; position:absolute; inset:0; border-radius:inherit; padding:1px; pointer-events:none;
-  background: linear-gradient(155deg,rgba(255,255,255,.55),rgba(255,255,255,.07) 34%,rgba(255,255,255,.02) 62%,rgba(255,255,255,.24));
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-          mask-composite: exclude;
-}
-#stream-player-overlay #stream-player-back > *,
-#stream-player-overlay #stream-player-infobar > *,
-#stream-player-overlay #stream-player-rail .sp-rail-item > *,
-#stream-player-overlay #sp-adblock-banner > *,
-.sx-cast-help-overlay .sx-cast-help-box > *{ position: relative; }
-
-/* ── Top bar (over the picture) ─────────────────────────────────────── */
-#stream-player-overlay #stream-player-topbar{ padding: 12px 14px 30px; gap: 10px; }
-#stream-player-overlay #stream-player-back{
-  height: 38px; padding: 0 16px 0 11px; gap: 6px; border-radius: 999px !important;
-  font-size: 13px; font-weight: 600; letter-spacing: 0; color: #fff;
-  transition: background .2s var(--spg-ease), transform .28s var(--spg-spring);
-}
-#stream-player-overlay #stream-player-cast{
-  width: 38px; height: 38px; border-radius: 50% !important; color: #fff;
-  transition: background .2s var(--spg-ease), transform .28s var(--spg-spring);
-}
-#stream-player-overlay #stream-player-back:hover,
-#stream-player-overlay #stream-player-cast:hover,
-#stream-player-overlay #sp-info-fullscreen:hover{
-  background: linear-gradient(180deg,rgba(255,255,255,.32),rgba(255,255,255,.10) 55%,rgba(255,255,255,.16)), rgba(14,14,22,.34);
-}
-#stream-player-overlay #stream-player-back:active,
-#stream-player-overlay #stream-player-cast:active,
-#stream-player-overlay #sp-info-fullscreen:active{ transform: scale(.92); }
-#stream-player-overlay #stream-player-cast.sp-cast-active{
-  color: #fff;
-  background: linear-gradient(180deg,rgba(255,112,168,.94),rgba(212,50,114,.88));
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 8px 22px rgba(240,79,140,.3);
-}
-#stream-player-overlay #stream-player-title{ font-size: 14px; font-weight: 700; letter-spacing: 0; }
-
-/* ── Info bar ───────────────────────────────────────────────────────── */
-#stream-player-overlay #sp-info-logo{
-  width: 42px; height: 42px; border-radius: 15px; background: rgba(255,255,255,.07);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.20), inset 0 0 0 1px rgba(255,255,255,.08);
-}
-#stream-player-overlay #sp-info-name{ font-size: 14px; font-weight: 700; letter-spacing: 0; }
-#stream-player-overlay #sp-info-meta{
-  text-transform: none; letter-spacing: 0; font-size: 12px; font-weight: 600;
-  color: rgba(255,255,255,.58); margin-top: 3px; gap: 8px;
-}
-#stream-player-overlay .sp-info-live{ color: #fff; font-weight: 700; gap: 6px; }
-#stream-player-overlay .sp-info-live::before{ background: var(--spg-mg); box-shadow: 0 0 8px var(--spg-mg); }
-#stream-player-overlay #sp-info-fullscreen{ width: 38px; height: 38px; border-radius: 50% !important; color: #fff; transition: background .2s var(--spg-ease), transform .28s var(--spg-spring); }
-#stream-player-overlay #sp-info-fullscreen svg{ width: 16px; height: 16px; }
-
-/* FanCode source switch: recessed glass track, raised glass thumb on the active side */
-#stream-player-overlay #sp-src-switch{
-  display: none; align-items: center; gap: 2px; flex-shrink: 0; padding: 3px; border-radius: 999px;
-  background: rgba(255,255,255,.07);
-  box-shadow: inset 0 1px 3px rgba(0,0,0,.42), inset 0 0 0 1px rgba(255,255,255,.08);
-}
-#stream-player-overlay #sp-src-switch.show{ display: flex; }
-#stream-player-overlay .sp-src-btn{
-  border: 0; border-radius: 999px !important; padding: 8px 15px; background: transparent;
-  color: rgba(255,255,255,.66); cursor: pointer; white-space: nowrap;
-  font-family: var(--cu-font,inherit); font-size: 12.5px; font-weight: 600; letter-spacing: 0; text-transform: none;
-  transition: background .2s var(--spg-ease), color .2s var(--spg-ease), transform .28s var(--spg-spring);
-}
-#stream-player-overlay .sp-src-btn:hover:not(:disabled):not(.active){ background: rgba(255,255,255,.10); color: #fff; }
-#stream-player-overlay .sp-src-btn:active:not(:disabled){ transform: scale(.94); }
-#stream-player-overlay .sp-src-btn.active{
-  color: #fff;
-  background: linear-gradient(180deg,rgba(255,255,255,.36),rgba(255,255,255,.14));
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.52), 0 2px 8px rgba(0,0,0,.35);
-}
-#stream-player-overlay .sp-src-btn:disabled{ opacity: .38; cursor: not-allowed; }
-
-/* ── Rail ───────────────────────────────────────────────────────────── */
-#stream-player-overlay #stream-player-rail{
-  background: radial-gradient(120% 55% at 0% 0%, rgba(240,79,140,.13), transparent 62%), #09090c;
-  border-color: rgba(255,255,255,.06);
-}
-#stream-player-overlay #sp-rail-header{ padding: 16px 16px 10px; }
-#stream-player-overlay #sp-rail-header-bar{ display: none; }
-#stream-player-overlay #stream-player-rail-title{ text-transform: none; letter-spacing: 0; font-size: 15px; font-weight: 700; }
-#stream-player-overlay #stream-player-rail-list{ gap: 8px; padding: 0 12px 14px; }
-#stream-player-overlay #stream-player-rail .sp-rail-item{
-  position: relative; border: 0 !important; border-radius: 18px !important; padding: 9px 12px 9px 9px; gap: 12px;
-  background: var(--spg-fill);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.20), inset 0 -1px 0 rgba(255,255,255,.05);
-  transition: background .2s var(--spg-ease), transform .28s var(--spg-spring);
-}
-#stream-player-overlay #stream-player-rail .sp-rail-item:hover{ background: linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.06) 50%,rgba(255,255,255,.11)); }
-#stream-player-overlay #stream-player-rail .sp-rail-item:active{ transform: scale(.98); }
-#stream-player-overlay #stream-player-rail .sp-rail-item.active{
-  background: linear-gradient(180deg,rgba(240,79,140,.34),rgba(240,79,140,.13));
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.38), inset 0 0 0 1px rgba(240,79,140,.5);
-}
-#stream-player-overlay .sp-rail-thumb{ border-radius: 12px; background: rgba(255,255,255,.06); box-shadow: inset 0 0 0 1px rgba(255,255,255,.07); }
-#stream-player-overlay .sp-rail-thumb.sp-rail-thumb-banner{ border-radius: 10px; }
-#stream-player-overlay .sp-rail-name{ font-size: 13px; font-weight: 600; }
-#stream-player-overlay .sp-rail-meta{ font-size: 11.5px; color: rgba(255,255,255,.5); gap: 7px; white-space: nowrap; overflow: hidden; min-width: 0; }
-#stream-player-overlay .sp-rail-live{ color: #ff8bb8; font-size: 11.5px; font-weight: 700; letter-spacing: 0; }
-#stream-player-overlay .sp-rail-empty{ font-size: 13px; color: rgba(255,255,255,.5); }
-#stream-player-overlay #stream-player-rail .sp-rail-viewall{
-  border: 0; border-radius: 999px !important; height: 42px; padding: 0 18px; margin-top: 6px;
-  background: linear-gradient(180deg,rgba(255,112,168,.92),rgba(212,50,114,.86)); color: #fff;
-  font-size: 13px; font-weight: 600; letter-spacing: 0; text-transform: none;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 8px 22px rgba(240,79,140,.25);
-  transition: background .2s var(--spg-ease), transform .28s var(--spg-spring);
-}
-#stream-player-overlay #stream-player-rail .sp-rail-viewall:hover{ background: linear-gradient(180deg,rgba(255,126,178,.98),rgba(222,58,122,.92)); }
-#stream-player-overlay #stream-player-rail .sp-rail-viewall:active{ transform: scale(.97); }
-
-#stream-player-overlay #sp-adblock-banner{
-  position: relative; margin: 10px 12px 2px; padding: 10px 12px; border: 0; border-radius: 16px;
-  background: var(--spg-fill);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.18), inset 0 -1px 0 rgba(255,255,255,.05);
-}
-#stream-player-overlay #sp-adblock-text b,
-#stream-player-overlay #sp-adblock-text a{ color: #ff8bb8; }
-#stream-player-overlay .sp-ad-box{ border-radius: 18px; }
-
-/* ── Loading ────────────────────────────────────────────────────────── */
-#stream-player-overlay #sp-loading-spinner{ width: 38px; height: 38px; border: 2px solid rgba(255,255,255,.10); border-top-color: var(--spg-mg); }
-#stream-player-overlay #sp-loading-label{ text-transform: none; letter-spacing: 0; font-size: 13px; font-weight: 500; color: rgba(255,255,255,.6); }
-#stream-player-overlay #sp-loading-barwrap{ height: 4px; background: rgba(255,255,255,.12); }
-#stream-player-overlay #sp-loading-bar{ background: var(--spg-mg); }
-
-/* ── Cast toast + cast help dialog ──────────────────────────────────── */
-#sx-cast-toast{
-  position: fixed; /* stays a floating bubble; the shared glass rule sets position:relative */
-  border-radius: 999px; padding: 11px 20px; font-size: 13px; font-weight: 600; letter-spacing: 0; color: #fff;
-}
-.sx-cast-help-overlay{ background: rgba(0,0,0,.62); }
-.sx-cast-help-overlay .sx-cast-help-box{ border-radius: 28px !important; padding: 24px 22px 20px; }
-.sx-cast-help-overlay .sx-cast-help-title{ font-size: 17px; font-weight: 700; letter-spacing: 0; }
-.sx-cast-help-overlay .sx-cast-help-steps b{ color: #ff8bb8; }
-.sx-cast-help-overlay .sx-cast-help-close{
-  height: 44px; border: 0; border-radius: 999px !important; padding: 0 18px; color: #fff;
-  background: linear-gradient(180deg,rgba(255,112,168,.94),rgba(212,50,114,.88));
-  font-size: 13.5px; font-weight: 600; letter-spacing: 0; text-transform: none;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 8px 22px rgba(240,79,140,.28);
-  transition: background .2s var(--spg-ease), transform .28s var(--spg-spring);
-}
-.sx-cast-help-overlay .sx-cast-help-close:hover{ background: linear-gradient(180deg,rgba(255,126,178,.98),rgba(222,58,122,.92)); }
-.sx-cast-help-overlay .sx-cast-help-close:active{ transform: scale(.97); }
-
-/* ── Focus, small screens, fallbacks ────────────────────────────────── */
-#stream-player-overlay button:focus-visible,
-.sx-cast-help-overlay button:focus-visible{ outline: 2px solid rgba(255,255,255,.92); outline-offset: 2px; }
-@media (max-width: 900px){
-  #stream-player-overlay .sp-ad-box{ margin: 0 12px 14px; }
-  #stream-player-overlay #stream-player-rail .sp-rail-item{ width: 210px; }
-  #stream-player-overlay #stream-player-rail-list{ padding: 0 12px 14px; }
-}
-@media (max-width: 480px){
-  #stream-player-overlay #stream-player-infobar{ margin: 6px 8px 8px; padding: 7px 8px 7px 7px; gap: 9px; border-radius: 22px; }
-  #stream-player-overlay #sp-info-logo{ width: 36px; height: 36px; border-radius: 13px; }
-  #stream-player-overlay .sp-src-btn{ padding: 7px 12px; }
-  #stream-player-overlay #sp-info-fullscreen{ width: 36px; height: 36px; }
-}
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))){
-  #stream-player-overlay #stream-player-back,
-  #stream-player-overlay #stream-player-cast,
-  #stream-player-overlay #sp-info-fullscreen,
-  #sx-cast-toast,
-  .sx-cast-help-overlay .sx-cast-help-box{ background: linear-gradient(180deg,rgba(64,64,76,.94),rgba(30,30,38,.96)); }
-}
-@media (prefers-reduced-motion: reduce){
-  #stream-player-overlay button, .sx-cast-help-overlay button{ transition: none !important; }
-}
-</style>
-
 <div id="stream-player-overlay">
   <div id="stream-player-main">
     <div id="stream-player-topbar">
@@ -10348,7 +10131,7 @@ function closeAdminChatDiscordPopup(){
         <div id="stream-player-loading">
           <div id="sp-loading-spinner"></div>
           <div id="sp-loading-status">
-            <div id="sp-loading-label">Loading stream</div>
+            <div id="sp-loading-label">Loading Stream</div>
             <div id="sp-loading-barwrap"><div id="sp-loading-bar"></div></div>
           </div>
         </div>
@@ -10374,7 +10157,7 @@ function closeAdminChatDiscordPopup(){
     </div>
     <div id="sp-rail-header">
       <span id="sp-rail-header-bar"></span>
-      <span id="stream-player-rail-title">More channels</span>
+      <span id="stream-player-rail-title">MORE CHANNELS</span>
     </div>
     <div id="stream-player-rail-list"></div>
     <div class="sp-ad-box">
@@ -10603,11 +10386,11 @@ spSetAdblockBannerText();
 
 const SP_LOADING_DURATION_MS = 1400;
 const SP_LOADING_LABELS = {
-  stream:  'Loading stream',
-  channel: 'Loading channel',
-  movie:   'Loading movie',
-  tv:      'Loading TV shows',
-  match:   'Loading live match'
+  stream:  'Loading Stream',
+  channel: 'Loading Channel',
+  movie:   'Loading Movie',
+  tv:      'Loading TV Shows',
+  match:   'Loading Live Match'
 };
 function openStreamPlayer(url, name, type){
   if (!url || url === '#') return;
@@ -10678,14 +10461,14 @@ function spUpdateInfobar(type, label){
     const m = (window._matchCardsData || []).find(c => ((c.team1_code||'') + ' vs ' + (c.team2_code||'')) === label);
     const live = m && matchStatusText(m).toLowerCase() === 'live';
     logoImg.src = (m && (m.team1_icon_url || m.team2_icon_url)) || '';
-    metaEl.innerHTML = (live ? '<span class="sp-info-live">Live</span>' : '') + (m && m.game ? `<span>${m.game}</span>` : '');
+    metaEl.innerHTML = (live ? '<span class="sp-info-live">LIVE</span>' : '') + (m && m.game ? `<span>${m.game}</span>` : '');
     if (!logoImg.src) logoWrap.style.display = 'none';
   } else {
     const c = (window._cmsChannels || []).find(ch => (ch.channel_name || '') === label);
     const live = c && (c.status_live_off || '').toUpperCase() === 'LIVE';
     logoImg.src = (c && c.icon_url) || SX_OTHER_LOGO;
     logoImg.style.display = '';
-    metaEl.innerHTML = (live ? '<span class="sp-info-live">Live</span>' : '') + (c && c.group ? `<span>${c.group}</span>` : '');
+    metaEl.innerHTML = (live ? '<span class="sp-info-live">LIVE</span>' : '') + (c && c.group ? `<span>${c.group}</span>` : '');
   }
 }
 
@@ -10696,7 +10479,7 @@ function populateStreamPlayerRail(type, currentLabel){
   const titleEl = document.getElementById('stream-player-rail-title');
   if (!rail) return;
   const isMatch = type === 'match';
-  if (titleEl) titleEl.textContent = isMatch ? 'More matches' : 'More channels';
+  if (titleEl) titleEl.textContent = isMatch ? 'MORE MATCHES' : 'MORE CHANNELS';
 
   if (isMatch) {
     const sheetList = (window._matchCardsData || []).filter(c => !isMatchFinished(c) && matchStatusText(c).toLowerCase() === 'live');
@@ -10707,7 +10490,7 @@ function populateStreamPlayerRail(type, currentLabel){
         <span class="sp-rail-thumb">${img(c.team1_icon_url||c.team2_icon_url,'','')}</span>
         <span class="sp-rail-info">
           <span class="sp-rail-name">${label}</span>
-          <span class="sp-rail-meta"><span class="sp-rail-live">Live</span>${c.game||''}</span>
+          <span class="sp-rail-meta"><span class="sp-rail-live">LIVE</span>${c.game||''}</span>
         </span>
       </button>`;
     }).join('');
@@ -10728,12 +10511,12 @@ function populateStreamPlayerRail(type, currentLabel){
         <span class="sp-rail-thumb sp-rail-thumb-banner"><img src="${m.image}" alt="" onerror="this.style.display='none'"></span>
         <span class="sp-rail-info">
           <span class="sp-rail-name">${m.title}</span>
-          <span class="sp-rail-meta"><span class="sp-rail-live">Live</span>${m.tournament||''}</span>
+          <span class="sp-rail-meta"><span class="sp-rail-live">LIVE</span>${m.tournament||''}</span>
         </span>
       </button>`
     ).join('');
     const items = sheetItems + fcxItems;
-    const viewAll = `<button type="button" class="sp-rail-viewall" onclick="closeStreamPlayer();openMatches();">View all matches</button>`;
+    const viewAll = `<button type="button" class="sp-rail-viewall" onclick="closeStreamPlayer();openMatches();">View All Matches</button>`;
     rail.innerHTML = (items || `<div class="sp-rail-empty">No other live matches right now</div>`) + viewAll;
   } else {
     const list = (window._cmsChannels || []).filter(c => (c.status_live_off||'').toUpperCase() === 'LIVE');
@@ -10744,11 +10527,11 @@ function populateStreamPlayerRail(type, currentLabel){
         <span class="sp-rail-thumb"><img src="${c.icon_url||SX_OTHER_LOGO}" alt="" onerror="this.src='${SX_OTHER_LOGO}'"></span>
         <span class="sp-rail-info">
           <span class="sp-rail-name">${name}</span>
-          <span class="sp-rail-meta"><span class="sp-rail-live">Live</span>${c.group||''}</span>
+          <span class="sp-rail-meta"><span class="sp-rail-live">LIVE</span>${c.group||''}</span>
         </span>
       </button>`;
     }).join('');
-    const viewAll = `<button type="button" class="sp-rail-viewall" onclick="closeStreamPlayer();openLiveTV();">View all channels</button>`;
+    const viewAll = `<button type="button" class="sp-rail-viewall" onclick="closeStreamPlayer();openLiveTV();">View All Channels</button>`;
     rail.innerHTML = (items || `<div class="sp-rail-empty">No other live channels right now</div>`) + viewAll;
   }
 }
@@ -10868,14 +10651,6 @@ function spShowTopbar(){
   const overlay = document.getElementById('stream-player-overlay');
   if (!overlay) return;
   ['mousemove', 'touchstart', 'click'].forEach(evt => overlay.addEventListener(evt, spShowTopbar));
-})();
-(function(){
-  const bar = document.getElementById('stream-player-infobar');
-  if (!bar) return;
-  bar.addEventListener('pointermove', e => {
-    const r = bar.getBoundingClientRect();
-    bar.style.setProperty('--hx', ((e.clientX - r.left) / r.width * 100).toFixed(1) + '%');
-  });
 })();
 </script>
 
@@ -11627,8 +11402,7 @@ function closeFifa(){
 }
 #vip-overlay.open{ display: block; }
 
-#vip-page-inner{ max-width: 880px; margin: 0 auto; padding: 128px 20px 80px; } /* the nav bar is position:fixed over this page; sxVipOffset() below sets the exact value */
-@media (max-width: 900px){ #vip-page-inner{ padding-top: 72px; } }
+#vip-page-inner{ max-width: 880px; margin: 0 auto; padding: 40px 20px 80px; }
 
 #vip-hero{ text-align: center; margin-bottom: 36px; }
 #vip-crown{
@@ -11918,27 +11692,11 @@ function closeVipPlayer(){
 </script>
 
 <script>
-// The site nav bar is position:fixed and sits over this page, so the page
-// content starts below it: nav bar bottom edge + two lines of text.
-function sxVipOffset(){
-  var inner = document.getElementById('vip-page-inner');
-  var header = document.querySelector('header');
-  if (!inner) return;
-  var bottom = header ? header.getBoundingClientRect().bottom : 0;
-  inner.style.paddingTop = Math.max(72, Math.round(bottom + 48)) + 'px';
-}
-window.addEventListener('resize', function(){
-  var ov = document.getElementById('vip-overlay');
-  if (ov && ov.classList.contains('open')) sxVipOffset();
-});
 function openVip(){
   document.getElementById('vip-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   window.scrollTo(0,0);
   sxHeaderInto('vip-overlay', null);
-  sxVipOffset();
-  requestAnimationFrame(sxVipOffset);
-  setTimeout(sxVipOffset, 300);
 }
 function closeVip(){
   document.getElementById('vip-overlay').classList.remove('open');
