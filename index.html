@@ -5027,8 +5027,13 @@ window.sxRenderFavouritesOverlay = sxRenderFavouritesOverlay;
       fetch(FCX_API_CNPTV).then(r=>r.json()).catch(()=>({matches:[]})),
       fetch(FCX_API_WORLD).then(r=>r.json()).catch(()=>({matches:[]}))
     ]).then(([cnptv, world]) => {
+      // India source (fan.json): match_id -> cnptv_cdn m3u8 (only present once
+      // CNP-TV has the match up; empty string otherwise).
+      const fcxIndiaMap = {};
+      (cnptv && cnptv.matches || []).forEach(x => { if (x && x.match_id && x.cnptv_cdn) fcxIndiaMap[String(x.match_id)] = x.cnptv_cdn; });
       fcxMatches = (world.matches||[]).map(m => ({
         id: m.match_id,
+        india: fcxIndiaMap[String(m.match_id)] || '',
         title: m.title||'Match',
         tournament: m.tournament||'',
         category: (m.category||'').trim(),
@@ -5044,6 +5049,9 @@ window.sxRenderFavouritesOverlay = sxRenderFavouritesOverlay;
       // (defined further down, outside this closure) so FanCode matches
       // keep showing up there even while the FanCode panel itself is closed.
       window._fcxMatchesCache = fcxMatches;
+      // If the player is open on a FanCode match, re-check whether the India
+      // source has appeared since it was opened.
+      if (typeof window.spRefreshFcxSwitch === 'function') window.spRefreshFcxSwitch();
       // If the sheet has already loaded, re-run its render — this both
       // re-checks every card for a FanCode cross-link (fcxAugmentSheetCards)
       // and re-appends FanCode's own sections at the end. Otherwise fall
@@ -9862,6 +9870,17 @@ function closeAdminChatDiscordPopup(){
 }
 #sp-info-fullscreen:hover{ background: rgba(255,255,255,0.16); }
 #sp-info-fullscreen svg{ width: 15px; height: 15px; }
+/* FanCode source switch (World / India) — only shown while a FanCode match is playing */
+#sp-src-switch{ display: none; align-items: center; gap: 3px; flex-shrink: 0; padding: 3px; border-radius: 9px; background: rgba(255,255,255,0.07); }
+#sp-src-switch.show{ display: flex; }
+.sp-src-btn{
+  border: none; background: transparent; color: rgba(255,255,255,0.62); cursor: pointer;
+  font-family: var(--cu-font,inherit); font-weight: 800; font-size: 10px; letter-spacing: .04em; text-transform: uppercase;
+  padding: 7px 11px; border-radius: 7px; white-space: nowrap;
+}
+.sp-src-btn:hover:not(:disabled):not(.active){ background: rgba(255,255,255,0.10); color: #fff; }
+.sp-src-btn.active{ background: var(--cu-accent,#F04F8C); color: #fff; }
+.sp-src-btn:disabled{ opacity: .38; cursor: not-allowed; }
 
 /* ── Ad-safety notice: recommend Brave / an ad blocker (sits beside the
      player, in the rail column — never overlapping the video itself) ── */
@@ -10124,6 +10143,7 @@ function closeAdminChatDiscordPopup(){
         <div id="sp-info-name">Live Stream</div>
         <div id="sp-info-meta"></div>
       </div>
+      <div id="sp-src-switch" role="group" aria-label="FanCode source"></div>
       <button id="sp-info-fullscreen" onclick="spToggleFullscreen()" title="Fullscreen">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
       </button>
@@ -10387,6 +10407,7 @@ function openStreamPlayer(url, name, type){
   sxCurrentStreamRawUrl = url; // used by sxCastCurrentStream() below
   const src = url.includes('#') ? url : url + '#' + encodeURIComponent(label);
   spUpdateInfobar(type, label);
+  spInitFcxSwitch(url, label);
   populateStreamPlayerRail(type, label);
   const adBanner = document.getElementById('sp-adblock-banner');
   if (adBanner) adBanner.style.display = 'flex';
@@ -10410,6 +10431,7 @@ function openStreamPlayer(url, name, type){
     requestAnimationFrame(() => { loadingBarEl.style.width = '100%'; });
   }
   clearTimeout(window._spLoadingTimer);
+  document.getElementById('stream-player-frame').removeAttribute('srcdoc'); // left over from an India-source session
   document.getElementById('stream-player-frame').src = src;
   document.getElementById('stream-player-overlay').classList.add('open');
   // Hide navbar when player opens
@@ -10526,9 +10548,75 @@ function spToggleFullscreen(){
 }
 window.spToggleFullscreen = spToggleFullscreen;
 
+// ── FanCode source switch (inside the embedder) ──────────────────────
+// World = FanCode's own feed through play.html (unchanged: play.html?id=…_eng&s=0).
+// India = CNP-TV m3u8 from fan.json (cnptv_cdn), played by a tiny hls.js page
+// injected into the same iframe via srcdoc — so it stays inside the embedder
+// and needs nothing from play.html. Only offered while a FanCode match is
+// playing; the India button stays disabled until fan.json has a link for it.
+window._spFcx = null; // { id, label, world, source }
+function spFcxIdFromUrl(url){
+  const m = /play\.html\?id=([^&#]+?)_eng(?:[&#]|$)/i.exec(String(url || ''));
+  return m ? decodeURIComponent(m[1]) : '';
+}
+function spIndiaPlayerDoc(m3u8){
+  const u = JSON.stringify(String(m3u8));
+  return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+    + '<style>html,body{margin:0;height:100%;background:#000;overflow:hidden}video{width:100%;height:100%;background:#000;display:block}'
+    + '#e{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:24px;color:#fff;font:600 13px system-ui,sans-serif;background:#000}</style></head><body>'
+    + '<video id="v" controls autoplay playsinline></video><div id="e">India source is not playing right now.<br>Try the World source.</div>'
+    + '<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js"><\/script>'
+    + '<script>(function(){var u=' + u + ',v=document.getElementById("v"),e=document.getElementById("e");'
+    + 'function bad(){e.style.display="flex";}'
+    + 'if(window.Hls&&Hls.isSupported()){var h=new Hls({lowLatencyMode:true});h.loadSource(u);h.attachMedia(v);'
+    + 'h.on(Hls.Events.MANIFEST_PARSED,function(){var p=v.play();if(p&&p.catch)p.catch(function(){});});'
+    + 'h.on(Hls.Events.ERROR,function(_,d){if(d&&d.fatal){if(d.type===Hls.ErrorTypes.NETWORK_ERROR){try{h.startLoad();}catch(x){}setTimeout(function(){if(v.readyState<2)bad();},6000);}else if(d.type===Hls.ErrorTypes.MEDIA_ERROR){try{h.recoverMediaError();}catch(x){bad();}}else{bad();}}});}'
+    + 'else if(v.canPlayType("application/vnd.apple.mpegurl")){v.src=u;v.addEventListener("error",bad);}else{bad();}'
+    + '})();<\/script></body></html>';
+}
+function spRenderFcxSwitch(){
+  const box = document.getElementById('sp-src-switch');
+  const st = window._spFcx;
+  if (!box) return;
+  if (!st){ box.classList.remove('show'); box.innerHTML = ''; return; }
+  const fm = (typeof fcxFindById === 'function') ? fcxFindById(st.id) : null;
+  const india = fm && fm.india ? fm.india : '';
+  box.innerHTML =
+    `<button type="button" class="sp-src-btn${st.source === 'world' ? ' active' : ''}" onclick="spSetFcxSource('world')">World</button>` +
+    `<button type="button" class="sp-src-btn${st.source === 'india' ? ' active' : ''}" ${india ? '' : 'disabled'} title="${india ? 'CNP-TV source' : 'India source not available for this match yet'}" onclick="spSetFcxSource('india')">India</button>`;
+  box.classList.add('show');
+}
+function spInitFcxSwitch(url, label){
+  const id = spFcxIdFromUrl(url);
+  window._spFcx = id ? { id: id, label: label, world: url, source: 'world' } : null;
+  spRenderFcxSwitch();
+}
+window.spRefreshFcxSwitch = function(){ if (window._spFcx) spRenderFcxSwitch(); };
+function spSetFcxSource(which){
+  const st = window._spFcx;
+  if (!st || st.source === which) return;
+  const frame = document.getElementById('stream-player-frame');
+  if (!frame) return;
+  if (which === 'india'){
+    const fm = fcxFindById(st.id);
+    if (!fm || !fm.india) return;
+    frame.srcdoc = spIndiaPlayerDoc(fm.india);
+    sxCurrentStreamRawUrl = fm.india; // Cast works with a direct HLS link
+  } else {
+    frame.removeAttribute('srcdoc');
+    const w = st.world;
+    frame.src = w.includes('#') ? w : w + '#' + encodeURIComponent(st.label || 'Live Stream');
+    sxCurrentStreamRawUrl = w;
+  }
+  st.source = which;
+  spRenderFcxSwitch();
+}
+
 function closeStreamPlayer(){
   document.getElementById('stream-player-overlay').classList.remove('open');
+  document.getElementById('stream-player-frame').removeAttribute('srcdoc');
   document.getElementById('stream-player-frame').src = '';
+  spInitFcxSwitch('', '');
   sxCurrentStreamRawUrl = '';
   clearTimeout(window._spHideTimer);
   clearTimeout(window._spLoadingTimer);
