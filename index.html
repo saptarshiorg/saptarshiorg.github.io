@@ -11627,7 +11627,8 @@ function closeFifa(){
 }
 #vip-overlay.open{ display: block; }
 
-#vip-page-inner{ max-width: 880px; margin: 0 auto; padding: 40px 20px 80px; }
+#vip-page-inner{ max-width: 880px; margin: 0 auto; padding: 128px 20px 80px; } /* the nav bar is position:fixed over this page; sxVipOffset() below sets the exact value */
+@media (max-width: 900px){ #vip-page-inner{ padding-top: 72px; } }
 
 #vip-hero{ text-align: center; margin-bottom: 36px; }
 #vip-crown{
@@ -11917,11 +11918,27 @@ function closeVipPlayer(){
 </script>
 
 <script>
+// The site nav bar is position:fixed and sits over this page, so the page
+// content starts below it: nav bar bottom edge + two lines of text.
+function sxVipOffset(){
+  var inner = document.getElementById('vip-page-inner');
+  var header = document.querySelector('header');
+  if (!inner) return;
+  var bottom = header ? header.getBoundingClientRect().bottom : 0;
+  inner.style.paddingTop = Math.max(72, Math.round(bottom + 48)) + 'px';
+}
+window.addEventListener('resize', function(){
+  var ov = document.getElementById('vip-overlay');
+  if (ov && ov.classList.contains('open')) sxVipOffset();
+});
 function openVip(){
   document.getElementById('vip-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   window.scrollTo(0,0);
   sxHeaderInto('vip-overlay', null);
+  sxVipOffset();
+  requestAnimationFrame(sxVipOffset);
+  setTimeout(sxVipOffset, 300);
 }
 function closeVip(){
   document.getElementById('vip-overlay').classList.remove('open');
