@@ -10169,7 +10169,7 @@ function closeAdminChatDiscordPopup(){
 </div>
 
 <!-- ══════════════════════════════════════════════════════════════════════
-     SX 4K PLAYER — the source of SXSPORTS4K.html, kept as inert text and
+     EV PREMIUM PLAYER  — the source of EV4K.html, kept as inert text and
      loaded into #stream-player-frame via srcdoc for every clear (non-DRM)
      .m3u8 stream. Sheet channels, match servers and hero links all reach it
      through openStreamPlayer(). DRM is detected inside the player and
@@ -10185,7 +10185,7 @@ function closeAdminChatDiscordPopup(){
 <script id="sx4k-boot">/*__SX4K_BOOT__*/<\/script>
 <style>
 /* SX SPORTS 4K PLAYER
-   Standalone:  SXSPORTS4K.html?src=<url-encoded .m3u8>&title=<name>
+   Standalone:  EV4K.html?src=<url-encoded .m3u8>&title=<name>
    Embedded:    the site injects window.SX4K_BOOT = { url, title, embed:true }
    Plays clear (non-DRM) HLS only. DRM-protected streams are detected and refused. */
 :root{
@@ -11136,7 +11136,7 @@ function sxIsHlsUrl(u){
 // in-page iframe player, which can't play a raw manifest URL anyway.
 function sxIsRawStreamUrl(u){
   if (!u) return false;
-  // Clear HLS (.m3u8 over http/https) now plays in our own SX 4K player, so
+  // Clear HLS (.m3u8 over http/https) now plays in our own EV PREMIUM PLAYER , so
   // it is no longer an "external player" link. Only DASH / plain .m3u / odd
   // manifests still go to the VLC popup.
   if (sxIsHlsUrl(u)) return false;
@@ -11173,7 +11173,7 @@ function sxCopyStreamLink(text){
 }
 
 
-// ── SX 4K PLAYER glue ────────────────────────────────────────────────────
+// ── EV PREMIUM PLAYER  glue ────────────────────────────────────────────────────
 var _sx4kTpl = null;
 function sx4kDoc(url, title){
   if (_sx4kTpl === null){
@@ -11353,14 +11353,14 @@ function openStreamPlayer(url, name, type){
     return;
   }
   const label = name || 'Live Stream';
-  const use4k = sxIsHlsUrl(url); // clear .m3u8 from the sheets plays in the SX 4K player
+  const use4k = sxIsHlsUrl(url); // clear .m3u8 from the sheets plays in the EV PREMIUM PLAYER 
   document.getElementById('stream-player-title').textContent = label;
   sxCurrentStreamRawUrl = url; // used by sxCastCurrentStream() below
   const src = url.includes('#') ? url : url + '#' + encodeURIComponent(label);
   spUpdateInfobar(type, label);
   if (use4k) {
     const mEl = document.getElementById('sp-info-meta');
-    if (mEl) mEl.insertAdjacentHTML('beforeend', '<span class="sp-info-4k">SX 4K PLAYER</span>');
+    if (mEl) mEl.insertAdjacentHTML('beforeend', '<span class="sp-info-4k">EV PREMIUM PLAYER </span>');
   }
   spInitFcxSwitch(url, label);
   populateStreamPlayerRail(type, label);
