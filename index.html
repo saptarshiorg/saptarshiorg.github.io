@@ -976,6 +976,28 @@ header.scrolled {
   line-height: 1.5;
 }
 
+/* ── ISSUE / NOTIFY banners — shown alongside content that still loads
+   normally (unlike the full-replace maintenance box above). Inserted as
+   a sibling right before the section's grid, so re-rendering the grid
+   (search, category switch, auto-refresh) never wipes the banner. ── */
+.sx-issue-banner, .sx-notify-banner {
+  display: flex; align-items: flex-start; gap: 10px;
+  border-radius: 8px; padding: 12px 14px; margin: 0 0 10px;
+  font-size: 12.5px; line-height: 1.45;
+}
+.sx-issue-banner {
+  background: rgba(255,180,50,0.10);
+  border: 1px solid rgba(255,180,50,0.35);
+  color: #FFC53D;
+}
+.sx-notify-banner {
+  background: rgba(90,160,255,0.10);
+  border: 1px solid rgba(90,160,255,0.35);
+  color: #7EB6FF;
+}
+.sx-issue-icon, .sx-notify-icon { font-size: 16px; line-height: 1.3; flex: 0 0 auto; }
+.sx-issue-text, .sx-notify-text { color: var(--text-muted); }
+
 /* ── Match cards: 3-col grid on desktop ── */
 @media(min-width:901px) {
   .slider-match-overlay {
@@ -6055,12 +6077,49 @@ function sxMaintenanceHtml(reason) {
     ${reason ? `<div class="sx-maintenance-note">${reason}</div>` : ''}
   </div>`;
 }
-function sxIsMaintenanceOn(key) {
+// Reads a SETTINGS!value cell for `key`, trimmed/uppercased: "YES",
+// "ISSUE", "NOTIFY", or "" if unset/anything else.
+function sxSettingMode(key) {
   const v = (window._settings && window._settings[key]) || '';
-  return v.toString().trim().toUpperCase() === 'YES';
+  return v.toString().trim().toUpperCase();
+}
+function sxIsMaintenanceOn(key) {
+  return sxSettingMode(key) === 'YES';
 }
 function sxMaintenanceReason(key) {
   return (window._settingsNotes && window._settingsNotes[key]) || '';
+}
+// Creates/updates/removes a small ISSUE or NOTIFY banner as a sibling
+// placed immediately BEFORE the element at `anchorId` — never inside it —
+// so re-rendering that element's innerHTML (search, filters, 30s
+// auto-refresh) never wipes the banner back out. "YES" and "" both mean
+// "no banner here" (YES uses the full-replace maintenance box instead,
+// handled separately by the caller).
+function sxUpsertNotice(anchorId, bannerId, mode, reason) {
+  const anchor = document.getElementById(anchorId);
+  if (!anchor || !anchor.parentNode) return;
+  let banner = document.getElementById(bannerId);
+  if (mode !== 'ISSUE' && mode !== 'NOTIFY') {
+    if (banner) banner.remove();
+    return;
+  }
+  // NOTIFY with nothing to say has nothing to show.
+  if (mode === 'NOTIFY' && !reason) {
+    if (banner) banner.remove();
+    return;
+  }
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = bannerId;
+    anchor.parentNode.insertBefore(banner, anchor);
+  }
+  if (mode === 'ISSUE') {
+    banner.className = 'sx-issue-banner';
+    banner.innerHTML = `<span class="sx-issue-icon">⚠️</span><span class="sx-issue-text">${reason || 'Some playback issues may be affecting this section right now.'}</span>`;
+  } else {
+    banner.className = 'sx-notify-banner';
+    banner.innerHTML = `<span class="sx-notify-icon">🔔</span><span class="sx-notify-text">${reason}</span>`;
+  }
 }
 
 // ── Image with fallback ──────────────────────────────────────
@@ -7482,14 +7541,21 @@ setInterval(() => {
 function renderMatchCards(rows) {
   if (!rows) { console.warn('[MATCH CARDS] fetchSheet returned null — check the tab name is exactly "MATCH CARDS" and the sheet is shared ("Anyone with the link can view").'); return; }
 
-  // ── Maintenance mode (SETTINGS!maintain_matches = YES) ──────────
-  // Replaces the whole matches section with a maintenance notice, using
-  // that settings row's "notes" column as the shown reason.
-  if (sxIsMaintenanceOn('maintain_matches')) {
+  // ── SETTINGS!maintain_matches ────────────────────────────────
+  //   YES    → full-replace: whole matches section shows the maintenance
+  //            box instead of match cards; nothing else loads.
+  //   ISSUE  → matches still load normally; a small ⚠️ banner (using the
+  //            same row's "notes" column) is shown above them.
+  //   NOTIFY → matches still load normally; the note is shown as a plain
+  //            🔔 notice above them (nothing shown if there's no note).
+  const smoMode = sxSettingMode('maintain_matches');
+  const smoReason = sxMaintenanceReason('maintain_matches');
+  sxUpsertNotice('match-overlay', 'sx-matches-notice', smoMode, smoReason);
+  if (smoMode === 'YES') {
     window._matchCardsRawRows = rows;
     window._matchCardsData = [];
     const el = document.getElementById('match-overlay');
-    if (el) el.innerHTML = sxMaintenanceHtml(sxMaintenanceReason('maintain_matches'));
+    if (el) el.innerHTML = sxMaintenanceHtml(smoReason);
     const promptEl = document.getElementById('smo-sport-prompt');
     if (promptEl) promptEl.style.display = 'none';
     const smoToolbarWrap = document.getElementById('smo-toolbar');
@@ -7767,16 +7833,23 @@ function renderMatchCards(rows) {
 function renderChannels(rows) {
   if (!rows) return;
 
-  // ── Maintenance mode (SETTINGS!maintain_channels = YES) ─────────
-  // Replaces the channels preview + full Live TV grid with a maintenance
-  // notice, using that settings row's "notes" column as the shown reason.
-  window._channelsMaintenance = sxIsMaintenanceOn('maintain_channels');
+  // ── SETTINGS!maintain_channels ───────────────────────────────
+  //   YES    → full-replace: channels preview + Live TV grid show the
+  //            maintenance box instead of channels; nothing else loads.
+  //   ISSUE  → channels still load normally; a small ⚠️ banner (using the
+  //            same row's "notes" column) is shown above them.
+  //   NOTIFY → channels still load normally; the note is shown as a plain
+  //            🔔 notice above them (nothing shown if there's no note).
+  const chMode = sxSettingMode('maintain_channels');
+  const chReason = sxMaintenanceReason('maintain_channels');
+  sxUpsertNotice('channelsPreviewGrid', 'sx-channels-preview-notice', chMode, chReason);
+  sxUpsertNotice('chGrid', 'sx-channels-grid-notice', chMode, chReason);
+  window._channelsMaintenance = (chMode === 'YES');
   if (window._channelsMaintenance) {
     window._cmsChannels = [];
     window._liveChannelNames = [];
-    const reason = sxMaintenanceReason('maintain_channels');
     const previewGrid = document.getElementById('channelsPreviewGrid');
-    if (previewGrid) previewGrid.innerHTML = sxMaintenanceHtml(reason);
+    if (previewGrid) previewGrid.innerHTML = sxMaintenanceHtml(chReason);
     if (typeof window.chBuildCategories === 'function') window.chBuildCategories();
     if (typeof window.chFilter === 'function') window.chFilter();
     return;
