@@ -9862,6 +9862,7 @@ function closeAdminChatDiscordPopup(){
   text-transform: uppercase;
 }
 .sp-info-live{ display: inline-flex; align-items: center; gap: 4px; color: #E0155F; font-weight: 800; }
+.sp-info-4k{ display: inline-flex; align-items: center; padding: 1px 6px; border-radius: 5px; background: var(--pm-magenta,#F0146E); color: #fff; font-weight: 800; font-size: 9px; letter-spacing: .06em; }
 .sp-info-live::before{ content: ''; width: 6px; height: 6px; border-radius: 50%; background: #E0155F; box-shadow: 0 0 6px #E0155F; }
 #sp-info-fullscreen{
   flex-shrink: 0; width: 32px; height: 32px; border-radius: 8px; border: none;
@@ -10167,6 +10168,918 @@ function closeAdminChatDiscordPopup(){
   </div>
 </div>
 
+<!-- ══════════════════════════════════════════════════════════════════════
+     SX 4K PLAYER — the source of SXSPORTS4K.html, kept as inert text and
+     loaded into #stream-player-frame via srcdoc for every clear (non-DRM)
+     .m3u8 stream. Sheet channels, match servers and hero links all reach it
+     through openStreamPlayer(). DRM is detected inside the player and
+     refused; unplayable sources fall back to the VLC popup.
+═══════════════════════════════════════════════════════════════════════ -->
+<script type="text/plain" id="sx4k-player-src"><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>SX SPORTS - 4K UHD Live Player</title>
+<script id="sx4k-boot">/*__SX4K_BOOT__*/<\/script>
+<style>
+/* SX SPORTS 4K PLAYER
+   Standalone:  SXSPORTS4K.html?src=<url-encoded .m3u8>&title=<name>
+   Embedded:    the site injects window.SX4K_BOOT = { url, title, embed:true }
+   Plays clear (non-DRM) HLS only. DRM-protected streams are detected and refused. */
+:root{
+  --accent:#F0146E; --accent-2:#FF8FBB; --accent-dim:rgba(240,20,110,.20);
+  --glass:rgba(22,22,26,.58); --glass-strong:rgba(16,16,20,.88);
+  --line:rgba(255,255,255,.14); --text:#F5F5F7; --muted:rgba(245,245,247,.66); --faint:rgba(245,245,247,.42);
+  --font:'Inter','Satoshi',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:var(--font);color:var(--text);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent-2);outline-offset:2px}
+svg{display:block;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+svg .f{fill:currentColor;stroke:none}
+
+#stage{position:relative;width:100%;height:100%;background:#000;overflow:hidden;user-select:none;-webkit-user-select:none}
+#v{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;transition:filter .25s}
+#stage.vivid #v{filter:contrast(1.12) saturate(1.08) brightness(1.02)}
+#stage.idle{cursor:none}
+
+.scrim{position:absolute;left:0;right:0;pointer-events:none;z-index:2;transition:opacity .3s}
+#scrim-t{top:0;height:120px;background:linear-gradient(180deg,rgba(0,0,0,.62),transparent)}
+#scrim-b{bottom:0;height:190px;background:linear-gradient(0deg,rgba(0,0,0,.72),transparent)}
+#stage.idle .scrim{opacity:0}
+
+/* top bar */
+#top{position:absolute;top:0;left:0;right:0;z-index:5;display:flex;align-items:center;gap:10px;
+  padding:max(12px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) 0 max(14px,env(safe-area-inset-left));
+  pointer-events:none;transition:opacity .3s}
+#top > *{pointer-events:auto}
+#stage.idle #top{opacity:0}
+#brand{font-weight:900;font-style:italic;letter-spacing:.07em;font-size:12px;color:rgba(255,255,255,.9);text-shadow:0 1px 3px rgba(0,0,0,.8)}
+#title{flex:1;min-width:0;font-weight:700;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.05em;
+  color:#fff;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.chip[hidden]{display:none}
+.chip .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);animation:pulse 1.6s infinite}
+#chip-q.k4{background:linear-gradient(135deg,var(--accent-2),var(--accent));border-color:transparent}
+#dmca{font-size:11px;font-weight:800;letter-spacing:.05em;opacity:.55;transition:opacity .2s}
+#dmca:hover{opacity:1}
+body.embed #brand,body.embed #title,body.embed #dmca{display:none}
+body.embed #top{justify-content:flex-end}
+
+/* centre: big play + buffering + toast */
+#big{position:absolute;left:50%;top:50%;width:78px;height:78px;margin:-39px 0 0 -39px;z-index:4;border-radius:50%;
+  display:grid;place-items:center;background:var(--glass);border:1px solid var(--line);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);opacity:0;transform:scale(.9);pointer-events:none;transition:opacity .2s,transform .2s}
+#big svg{width:30px;height:30px}
+#stage.paused:not(.loading):not(.err) #big{opacity:1;transform:scale(1);pointer-events:auto}
+#big:hover{background:var(--accent-dim)}
+#spin{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;z-index:4;border-radius:50%;
+  border:3px solid rgba(255,255,255,.16);border-top-color:var(--accent);animation:spin .85s linear infinite;opacity:0;pointer-events:none;transition:opacity .2s}
+#stage.buffering:not(.loading):not(.err) #spin{opacity:1}
+#toast{position:absolute;left:50%;top:64px;transform:translate(-50%,-8px);z-index:10;max-width:88%;padding:9px 16px;border-radius:999px;
+  font-size:12.5px;font-weight:700;background:var(--glass-strong);border:1px solid var(--line);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;text-align:center}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#unmute{position:absolute;left:50%;top:64px;transform:translateX(-50%);z-index:10;display:none;align-items:center;gap:8px;padding:10px 18px;border-radius:999px;
+  font-size:13px;font-weight:800;background:var(--accent);color:#fff;box-shadow:0 8px 26px rgba(240,20,110,.45)}
+#unmute.show{display:inline-flex}
+#unmute svg{width:18px;height:18px}
+
+/* loader (first connect) */
+#loader{position:absolute;inset:0;z-index:7;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  background:radial-gradient(ellipse at center,#15151a 0%,#000 72%);transition:opacity .45s}
+#loader.hide{opacity:0;pointer-events:none}
+.ring{width:46px;height:46px;border-radius:50%;border:3px solid rgba(255,255,255,.14);border-top-color:var(--accent);animation:spin .9s linear infinite}
+#loader .lbl{font-size:12px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.88)}
+#loader .sub{font-size:12px;color:var(--faint);text-align:center;padding:0 24px}
+.lbar{width:220px;height:3px;border-radius:99px;background:rgba(255,255,255,.14);overflow:hidden}
+.lbar i{display:block;height:100%;width:34%;border-radius:99px;background:linear-gradient(90deg,#E0155F,#FF8FBB);animation:slide 1.3s ease-in-out infinite}
+
+/* error / protected panel */
+#err{position:absolute;inset:0;z-index:9;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(0,0,0,.88);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+#err.show{display:flex}
+#err .box{max-width:430px;text-align:center}
+#err .ic{width:54px;height:54px;margin:0 auto 14px;border-radius:50%;display:grid;place-items:center;background:var(--accent-dim);color:var(--accent-2)}
+#err .ic svg{width:26px;height:26px}
+#err h2{font-size:18px;font-weight:800;margin-bottom:8px}
+#err p{font-size:13px;line-height:1.6;color:var(--muted);margin-bottom:18px}
+#err .acts{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.btn{padding:10px 16px;border-radius:10px;font-size:13px;font-weight:800;background:rgba(255,255,255,.09);border:1px solid var(--line);transition:background .15s}
+.btn:hover{background:rgba(255,255,255,.16)}
+.btn.pri{background:var(--accent);border-color:transparent}
+.btn.pri:hover{background:#FF3D96}
+
+/* control bar */
+#bar{position:absolute;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:6;width:min(94%,880px);
+  padding:8px 12px 6px;border-radius:16px;background:var(--glass);border:1px solid var(--line);
+  backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);box-shadow:0 10px 40px rgba(0,0,0,.45);
+  transition:opacity .3s,transform .3s}
+#stage.idle #bar{opacity:0;transform:translate(-50%,10px);pointer-events:none}
+#stage.err #bar{visibility:hidden}
+#seek{position:relative;height:20px;display:flex;align-items:center;cursor:pointer;touch-action:none}
+#seek[aria-disabled=true]{cursor:default;opacity:.5}
+#seek .track{position:relative;flex:1;height:4px;border-radius:99px;background:rgba(255,255,255,.22);overflow:hidden;transition:height .15s}
+#seek:hover .track,#seek.drag .track{height:6px}
+#seek .buf,#seek .played{position:absolute;top:0;bottom:0;left:0;width:0}
+#seek .buf{background:rgba(255,255,255,.3)}
+#seek .played{background:linear-gradient(90deg,var(--accent),var(--accent-2))}
+#seek .thumb{position:absolute;top:50%;left:0;width:13px;height:13px;border-radius:50%;background:#fff;transform:translate(-50%,-50%) scale(0);transition:transform .15s;box-shadow:0 0 8px rgba(0,0,0,.5)}
+#seek:hover .thumb,#seek.drag .thumb{transform:translate(-50%,-50%) scale(1)}
+#tip{position:absolute;bottom:26px;left:0;transform:translateX(-50%);padding:3px 8px;border-radius:7px;font-size:11px;font-weight:800;background:var(--glass-strong);
+  border:1px solid var(--line);font-variant-numeric:tabular-nums;opacity:0;pointer-events:none;transition:opacity .12s;white-space:nowrap}
+#seek:hover #tip,#seek.drag #tip{opacity:1}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.grp{display:flex;align-items:center;gap:2px;min-width:0}
+.ib{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;transition:background .15s;flex-shrink:0}
+.ib svg{width:20px;height:20px}
+.ib:hover{background:rgba(255,255,255,.13)}
+.ib[hidden]{display:none}
+#time{margin-left:8px;font-size:12px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+#golive{margin-left:6px;padding:6px 12px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.05em;background:rgba(255,255,255,.1);color:var(--faint);white-space:nowrap}
+#golive .dot{display:inline-block;width:7px;height:7px;margin-right:6px;border-radius:50%;background:var(--faint);vertical-align:1px}
+#golive.at-live{color:#fff}
+#golive.at-live .dot{background:var(--accent);box-shadow:0 0 8px var(--accent);animation:pulse 1.6s infinite}
+#golive.behind{background:var(--accent);color:#fff}
+#golive.behind .dot{background:#fff}
+#golive[hidden]{display:none}
+#vol{-webkit-appearance:none;appearance:none;width:84px;height:20px;background:transparent;cursor:pointer;margin:0 6px 0 2px}
+#vol::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:linear-gradient(90deg,#fff var(--p,100%),rgba(255,255,255,.28) var(--p,100%))}
+#vol::-moz-range-track{height:4px;border-radius:2px;background:rgba(255,255,255,.28)}
+#vol::-moz-range-progress{height:4px;border-radius:2px;background:#fff}
+#vol::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#fff;margin-top:-4px;box-shadow:0 0 5px rgba(0,0,0,.4)}
+#vol::-moz-range-thumb{width:12px;height:12px;border:0;border-radius:50%;background:#fff}
+
+/* settings menu */
+#menu{position:absolute;right:6px;bottom:calc(100% + 10px);width:264px;max-height:min(58vh,380px);overflow:auto;padding:6px;border-radius:14px;display:none;
+  background:var(--glass-strong);border:1px solid var(--line);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 14px 44px rgba(0,0,0,.55)}
+#menu.open{display:block}
+.mh{padding:9px 10px 4px;font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
+.mi{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:9px 10px;border-radius:9px;font-size:13px;font-weight:600;text-align:left}
+.mi:hover{background:rgba(255,255,255,.09)}
+.mi[aria-checked=true]{color:#fff;background:var(--accent-dim)}
+.mi small{font-size:11px;font-weight:600;color:var(--faint)}
+.mi .tag{font-size:10px;font-weight:800;padding:2px 7px;border-radius:6px;color:#fff;background:linear-gradient(135deg,var(--accent-2),var(--accent))}
+.sw{width:34px;height:20px;border-radius:99px;background:rgba(255,255,255,.22);position:relative;flex-shrink:0;transition:background .15s}
+.sw::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .15s}
+.mi[aria-checked=true] .sw{background:var(--accent)}
+.mi[aria-checked=true] .sw::after{transform:translateX(14px)}
+
+/* DMCA */
+#dmca-modal{position:absolute;inset:0;z-index:12;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.72);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+#dmca-modal.show{display:flex}
+#dmca-card{position:relative;width:100%;max-width:550px;max-height:90%;overflow:auto;padding:28px;border-radius:16px;background:var(--glass-strong);border:1px solid var(--line)}
+#dmca-card h2{font-size:18px;font-style:italic;margin-bottom:4px}
+#dmca-card h3{font-size:13px;color:var(--accent-2);margin-bottom:14px;letter-spacing:.03em}
+#dmca-card p{font-size:13px;line-height:1.65;color:rgba(255,255,255,.82);margin-bottom:11px}
+#dmca-card .foot{margin:16px 0 0;font-size:11px;color:var(--faint);text-align:center}
+#dmca-x{position:absolute;top:12px;right:14px;font-size:24px;line-height:1;color:#fff;opacity:.7}
+#dmca-x:hover{opacity:1;color:var(--accent-2)}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes slide{0%{transform:translateX(-120%)}100%{transform:translateX(320%)}}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(240,20,110,.6)}70%{box-shadow:0 0 0 8px rgba(240,20,110,0)}100%{box-shadow:0 0 0 0 rgba(240,20,110,0)}}
+@media (prefers-reduced-motion:reduce){.dot,.lbar i{animation:none}}
+@media (max-width:560px){
+  #vol{display:none}
+  #bar{width:calc(100% - 16px);padding:6px 8px 4px;border-radius:14px}
+  .ib{width:36px;height:36px}
+  #time{margin-left:4px}
+  #toast,#unmute{top:52px}
+  #err h2{font-size:16px}
+}
+</style>
+</head>
+<body>
+<div id="stage" class="paused loading vivid">
+  <video id="v" playsinline webkit-playsinline preload="auto"></video>
+  <div class="scrim" id="scrim-t"></div>
+  <div class="scrim" id="scrim-b"></div>
+
+  <div id="top">
+    <span id="brand">SX SPORTS</span>
+    <span id="title"></span>
+    <span class="chip" id="chip-q" hidden></span>
+    <span class="chip" id="chip-live" hidden><i class="dot"></i>LIVE</span>
+    <button id="dmca" type="button" class="chip" aria-label="DMCA and copyright notice">DMCA</button>
+  </div>
+
+  <button id="big" type="button" aria-label="Play"><svg viewBox="0 0 24 24"><path class="f" d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg></button>
+  <div id="spin"></div>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <button id="unmute" type="button"><svg viewBox="0 0 24 24"><path class="f" d="M11 5 6 9H3v6h3l5 4z"/><path d="m16 9 5 6m0-6-5 6"/></svg>Tap to unmute</button>
+
+  <div id="loader">
+    <div class="ring"></div>
+    <div class="lbl" id="loader-lbl">Connecting to stream</div>
+    <div class="lbar"><i></i></div>
+    <div class="sub">Streams can take 5-15 seconds to load fully.</div>
+  </div>
+
+  <div id="err" role="alert">
+    <div class="box">
+      <div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></svg></div>
+      <h2 id="err-t"></h2>
+      <p id="err-b"></p>
+      <div class="acts" id="err-a"></div>
+    </div>
+  </div>
+
+  <div id="bar">
+    <div id="seek" role="slider" aria-label="Seek" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-disabled="true">
+      <div class="track"><div class="buf" id="s-buf"></div><div class="played" id="s-played"></div></div>
+      <div class="thumb" id="s-thumb"></div>
+      <div id="tip">0:00</div>
+    </div>
+    <div class="row">
+      <div class="grp">
+        <button id="play" class="ib" type="button" aria-label="Play"></button>
+        <button id="mute" class="ib" type="button" aria-label="Mute"></button>
+        <input id="vol" type="range" min="0" max="1" step="0.05" value="1" aria-label="Volume">
+        <span id="time"></span>
+        <button id="golive" type="button" hidden><i class="dot"></i><span>LIVE</span></button>
+      </div>
+      <div class="grp">
+        <button id="gear" class="ib" type="button" aria-label="Settings" aria-haspopup="menu" aria-expanded="false"></button>
+        <button id="pip" class="ib" type="button" aria-label="Picture in picture" hidden></button>
+        <button id="fs" class="ib" type="button" aria-label="Fullscreen"></button>
+      </div>
+    </div>
+    <div id="menu" role="menu"></div>
+  </div>
+
+  <div id="dmca-modal" role="dialog" aria-modal="true" aria-label="DMCA and copyright notice">
+    <div id="dmca-card">
+      <button id="dmca-x" type="button" aria-label="Close">&times;</button>
+      <h2>SX SPORTS</h2>
+      <h3>OFFICIAL DMCA &amp; COPYRIGHT DISCLAIMER</h3>
+      <p><strong>DMCA Notice</strong></p>
+      <p>SX SPORTS does not host, upload, store, transmit, or broadcast any live streams, videos, or media files on its own servers.</p>
+      <p>We only provide links to publicly available streams and media content that are hosted by independent third-party websites.</p>
+      <p>All trademarks, copyrights, logos, streaming rights, and broadcasting rights belong to their respective owners. SX SPORTS has no control over, and assumes no responsibility for, the content hosted on external websites.</p>
+      <p>If you are a copyright owner or authorized representative and believe that any content infringes your rights, please contact the original third-party hosting provider directly, as they are solely responsible for the hosted content.</p>
+      <p class="foot">&copy; 2026 SX SPORTS &bull; All Rights Reserved</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+var DEFAULT_SRC = 'https://hugh.cdn.rumble.cloud/live/r8wvl35k/slot-5/iwj7-mxym/chunklist.m3u8';
+var HLS_CDNS = [
+  'https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js',
+  'https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js'
+];
+var LOAD_TIMEOUT_MS = 25000;
+
+var $ = function(id){ return document.getElementById(id); };
+var boot = window.SX4K_BOOT || null;
+var params = new URLSearchParams(location.search);
+var EMBED = !!(boot && boot.embed) || params.get('embed') === '1';
+if (EMBED) document.body.classList.add('embed');
+
+var stage = $('stage'), video = $('v');
+var st = {
+  src:'', title:'', hls:null, live:false, levels:[], mode:'best', started:false, drm:false,
+  retries:0, mediaRetries:0, lastRecoverT:0, stalls:[], loadTimer:0, idleT:0, toastT:0,
+  menuOpen:false, dmcaOpen:false, errShown:false, dragging:false, lastPointer:'mouse'
+};
+
+/* ── icons ── */
+var IC = {
+  play:'<svg viewBox="0 0 24 24"><path class="f" d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>',
+  pause:'<svg viewBox="0 0 24 24"><rect class="f" x="6" y="5" width="4.2" height="14" rx="1.2"/><rect class="f" x="13.8" y="5" width="4.2" height="14" rx="1.2"/></svg>',
+  vol:'<svg viewBox="0 0 24 24"><path class="f" d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.4 6a9 9 0 0 1 0 12"/></svg>',
+  low:'<svg viewBox="0 0 24 24"><path class="f" d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>',
+  mute:'<svg viewBox="0 0 24 24"><path class="f" d="M11 5 6 9H3v6h3l5 4z"/><path d="m16 9 5 6m0-6-5 6"/></svg>',
+  gear:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+  pip:'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><rect class="f" x="12" y="11" width="7" height="5" rx="1"/></svg>',
+  fs:'<svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>',
+  xfs:'<svg viewBox="0 0 24 24"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>',
+  warn:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></svg>',
+  lock:'<svg viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>'
+};
+
+/* ── small helpers ── */
+function lsGet(k){ try { return localStorage.getItem('sx4k_' + k); } catch(e){ return null; } }
+function lsSet(k, v){ try { localStorage.setItem('sx4k_' + k, v); } catch(e){} }
+function fmt(s){
+  if (!isFinite(s) || s < 0) s = 0;
+  s = Math.floor(s);
+  var h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60;
+  return (h ? h + ':' + (m < 10 ? '0' : '') : '') + m + ':' + (x < 10 ? '0' : '') + x;
+}
+function pageProto(){ try { return new URL(document.baseURI).protocol; } catch(e){ return location.protocol; } }
+function toParent(msg){ try { if (window.parent && window.parent !== window) { window.parent.postMessage(msg, '*'); return true; } } catch(e){} return false; }
+function toast(text, ms){
+  var t = $('toast'); t.textContent = text; t.classList.add('show');
+  clearTimeout(st.toastT); st.toastT = setTimeout(function(){ t.classList.remove('show'); }, ms || 2600);
+}
+function setClass(name, on){ stage.classList.toggle(name, !!on); }
+
+/* ── idle (auto-hide controls) ── */
+function poke(){
+  setClass('idle', false);
+  clearTimeout(st.idleT);
+  st.idleT = setTimeout(function(){
+    if (!video.paused && !st.menuOpen && !st.dmcaOpen && !st.errShown && !st.dragging) setClass('idle', true);
+  }, 3000);
+}
+
+/* ── errors ── */
+var ERR = {
+  cors:      { i:'warn', t:'This stream can\u2019t play in the browser', b:'The stream\u2019s server doesn\u2019t allow web players to load it. It may still play in VLC.', a:['vlc','copy','retry'] },
+  mixed:     { i:'warn', t:'Blocked by browser security', b:'This stream is served over plain http, and this page is secure, so the browser blocks it. Try VLC instead.', a:['vlc','copy','retry'] },
+  forbidden: { i:'warn', t:'The stream refused the request', b:'Its server denied access (the link may have expired or need a login). You can try again or open it in VLC.', a:['retry','vlc','copy'] },
+  offline:   { i:'warn', t:'Stream unavailable', b:'The stream isn\u2019t live right now, or its link has changed. Try again in a moment.', a:['retry'] },
+  timeout:   { i:'warn', t:'The stream didn\u2019t start', b:'It took too long to connect. Check your connection, then try again.', a:['retry','vlc','copy'] },
+  media:     { i:'warn', t:'Playback stopped', b:'The stream broke or uses a format this browser can\u2019t play.', a:['retry','vlc','copy'] },
+  native:    { i:'warn', t:'This browser couldn\u2019t play the stream', b:'Try VLC, or open this page in Chrome, Edge or Firefox.', a:['retry','vlc','copy'] },
+  unsupported:{i:'warn', t:'This browser can\u2019t play HLS', b:'Open this page in a current version of Chrome, Edge, Firefox or Safari.', a:['copy'] },
+  lib:       { i:'warn', t:'Player failed to load', b:'The video library couldn\u2019t be downloaded. Check your connection, then try again.', a:['retry'] },
+  invalid:   { i:'warn', t:'No valid stream link', b:'This player needs an http or https link to an .m3u8 stream.', a:[] },
+  drm:       { i:'lock', t:'Protected stream', b:'This stream uses DRM, which can\u2019t be played here. Pick another server or channel.', a:[] }
+};
+var ACT = {
+  retry:'<button class="btn pri" type="button" data-a="retry">Try again</button>',
+  vlc:'<button class="btn" type="button" data-a="vlc">Open in VLC</button>',
+  copy:'<button class="btn" type="button" data-a="copy">Copy link</button>'
+};
+function showError(kind){
+  var e = ERR[kind] || ERR.media;
+  st.errShown = true; st.started = false;
+  clearTimeout(st.loadTimer);
+  try { if (st.hls) st.hls.stopLoad(); } catch(x){}
+  try { video.pause(); } catch(x){}
+  $('err').querySelector('.ic').innerHTML = IC[e.i];
+  $('err-t').textContent = e.t;
+  $('err-b').textContent = e.b;
+  $('err-a').innerHTML = e.a.map(function(k){ return ACT[k]; }).join('');
+  $('err').classList.add('show');
+  $('loader').classList.add('hide');
+  setClass('err', true); setClass('loading', false); setClass('buffering', false); setClass('idle', false);
+  toParent({ type:'sx4k:state', state:'error', kind:kind });
+}
+function hideError(){ st.errShown = false; $('err').classList.remove('show'); setClass('err', false); }
+
+/* ── DRM detection ──
+   Refuses anything that needs a licence/CDM (Widevine, PlayReady, FairPlay,
+   SAMPLE-AES). Plain AES-128 HLS (key URL in the playlist) is ordinary clear
+   HLS and is allowed. */
+function keyIsDrm(k){
+  if (!k) return false;
+  var m = String(k.method || '').toUpperCase();
+  if (m === 'NONE' || m === '') return false;
+  var f = String(k.keyFormat || 'identity').toLowerCase();
+  if (f !== 'identity') return true;
+  return m.indexOf('SAMPLE-AES') === 0;
+}
+function detailsIsDrm(det){
+  if (!det) return false;
+  try {
+    var frags = det.fragments || [];
+    for (var i = 0; i < frags.length; i++) {
+      var f = frags[i];
+      if (f.decryptdata && keyIsDrm(f.decryptdata)) return true;
+      var lk = f.levelkeys;
+      if (lk) for (var k in lk) { if (keyIsDrm(lk[k])) return true; }
+    }
+  } catch(e){}
+  return false;
+}
+function manifestIsDrm(d){
+  try {
+    var sk = d && d.sessionKeys;
+    if (sk) for (var i = 0; i < sk.length; i++) { if (keyIsDrm(sk[i])) return true; }
+  } catch(e){}
+  return false;
+}
+function drmDetected(){
+  if (st.drm) return;
+  st.drm = true;
+  teardown(true);
+  showError('drm');
+}
+
+/* ── teardown / load ── */
+function teardown(keepUi){
+  clearTimeout(st.loadTimer);
+  if (st.hls) { try { st.hls.destroy(); } catch(e){} st.hls = null; }
+  try { video.removeAttribute('src'); video.load(); } catch(e){}
+  st.live = false; st.levels = [];
+  if (!keepUi) { $('menu').innerHTML = ''; }
+}
+
+function ensureHls(cb){
+  if (window.Hls) return cb(true);
+  var i = 0;
+  (function next(){
+    if (i >= HLS_CDNS.length) return cb(false);
+    var s = document.createElement('script');
+    s.src = HLS_CDNS[i++];
+    s.onload = function(){ cb(!!window.Hls); };
+    s.onerror = function(){ s.remove(); next(); };
+    document.head.appendChild(s);
+  })();
+}
+
+function load(url, title){
+  teardown();
+  hideError();
+  st.src = String(url || '').trim();
+  st.title = title || '';
+  clearWait();
+  st.started = false; st.drm = false; st.retries = 0; st.mediaRetries = 0; st.lastRecoverT = 0; st.stalls = [];
+  $('title').textContent = st.title;
+  if (st.title) document.title = st.title + ' - SX SPORTS 4K';
+  setMedia();
+  $('chip-q').hidden = true; $('chip-live').hidden = true;
+  $('golive').hidden = true; $('time').textContent = '';
+  if (!/^https?:\/\//i.test(st.src)) { showError('invalid'); return; }
+  setClass('loading', true);
+  $('loader').classList.remove('hide');
+  $('loader-lbl').textContent = 'Connecting to stream';
+
+  st.loadTimer = setTimeout(function(){ if (!st.started && !st.errShown) { teardown(true); showError('timeout'); } }, LOAD_TIMEOUT_MS);
+
+  ensureHls(function(ok){
+    if (ok && window.Hls && Hls.isSupported()) return startHls(st.src);
+    if (video.canPlayType('application/vnd.apple.mpegurl')) return startNative(st.src);
+    showError(ok ? 'unsupported' : 'lib');
+  });
+}
+
+function startNative(url){
+  video.addEventListener('error', function onErr(){
+    video.removeEventListener('error', onErr);
+    if (!st.started) showError('native');
+  });
+  video.src = url;
+  tryPlay();
+}
+
+function startHls(url){
+  var hls = new Hls({
+    enableWorker:true, lowLatencyMode:false,
+    maxBufferLength:120, maxMaxBufferLength:300, backBufferLength:90,
+    liveSyncDurationCount:3, liveMaxLatencyDurationCount:10,
+    capLevelToPlayerSize:false
+  });
+  st.hls = hls;
+
+  hls.on(Hls.Events.MANIFEST_LOADED, function(_, d){ if (manifestIsDrm(d)) drmDetected(); });
+  hls.on(Hls.Events.MANIFEST_PARSED, function(_, d){
+    st.levels = (d && d.levels) || [];
+    var saved = lsGet('quality');
+    st.mode = (saved === 'auto' && st.levels.length > 1) ? 'auto' : 'best';
+    buildMenu(); applyQuality(); tryPlay();
+  });
+  hls.on(Hls.Events.LEVEL_LOADED, function(_, d){
+    if (st.drm) return;
+    if (detailsIsDrm(d && d.details)) return drmDetected();
+    st.live = !!(d && d.details && d.details.live);
+    buildMenuIfNeeded(); renderTime();
+  });
+  hls.on(Hls.Events.ERROR, onHlsError);
+  hls.attachMedia(video);
+  hls.loadSource(url);
+}
+
+function bestLevel(){
+  var b = 0, L = st.levels;
+  for (var i = 1; i < L.length; i++) {
+    if ((L[i].height || 0) > (L[b].height || 0) || ((L[i].height || 0) === (L[b].height || 0) && (L[i].bitrate || 0) > (L[b].bitrate || 0))) b = i;
+  }
+  return b;
+}
+function applyQuality(){
+  if (!st.hls || !st.levels.length) return;
+  if (st.mode === 'auto') st.hls.currentLevel = -1;
+  else if (st.mode === 'best') st.hls.currentLevel = bestLevel();
+  else st.hls.currentLevel = +st.mode;
+  updateMenuChecks();
+}
+
+function onHlsError(_, data){
+  if (st.drm || !data) return;
+  var det = String(data.details || '');
+  if (/^keySystem/i.test(det)) return drmDetected();
+  if (!data.fatal) {
+    if (det === 'bufferStalledError') noteStall();
+    return;
+  }
+  if (video.currentTime - st.lastRecoverT > 30) { st.retries = 0; st.mediaRetries = 0; }
+  st.lastRecoverT = video.currentTime;
+  var hls = st.hls;
+  if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+    var code = data.response && data.response.code;
+    if (!st.started) {
+      if (!code) {
+        if (pageProto() === 'https:' && /^http:/i.test(st.src)) return showError('mixed');
+        return showError('cors');
+      }
+      if (code === 401 || code === 403) return showError('forbidden');
+      if (code === 404 || code === 410) return showError('offline');
+    }
+    if (st.retries < 3 && hls) {
+      st.retries++;
+      toast('Reconnecting...');
+      setTimeout(function(){ try { hls.startLoad(); } catch(e){} }, 900 * st.retries);
+      return;
+    }
+    return showError(code === 404 || code === 410 ? 'offline' : (code === 401 || code === 403 ? 'forbidden' : 'offline'));
+  }
+  if (data.type === Hls.ErrorTypes.MEDIA_ERROR && hls) {
+    if (st.mediaRetries === 0) { st.mediaRetries++; toast('Recovering...'); try { hls.recoverMediaError(); } catch(e){} return; }
+    if (st.mediaRetries === 1) { st.mediaRetries++; try { hls.swapAudioCodec(); hls.recoverMediaError(); } catch(e){} return; }
+  }
+  showError('media');
+}
+
+/* Repeated stalls while pinned to the top quality: fall back to Auto. */
+function noteStall(){
+  if (!st.started) return;
+  var now = Date.now();
+  st.stalls = st.stalls.filter(function(t){ return now - t < 40000; });
+  st.stalls.push(now);
+  if (st.stalls.length >= 3 && st.mode !== 'auto' && st.levels.length > 1) {
+    st.mode = 'auto'; st.stalls = [];
+    applyQuality();
+    toast('Switched to Auto quality to keep playback smooth', 3600);
+  }
+}
+
+/* ── playback ── */
+function tryPlay(){
+  var vol = parseFloat(lsGet('vol')); if (!isNaN(vol)) video.volume = Math.min(1, Math.max(0, vol));
+  video.muted = lsGet('muted') === '1';
+  var p = video.play();
+  if (p && p.catch) p.catch(function(err){
+    if (err && err.name === 'NotAllowedError' && !video.muted) {
+      video.muted = true;
+      var q = video.play();
+      if (q && q.then) q.then(function(){ $('unmute').classList.add('show'); }).catch(function(){});
+    }
+  });
+}
+function togglePlay(){
+  if (st.errShown) return;
+  if (video.paused) { var p = video.play(); if (p && p.catch) p.catch(function(){}); } else video.pause();
+}
+function goLive(){
+  var r = seekRange(); if (!r) return;
+  var t = (st.hls && st.hls.liveSyncPosition) || (r.end - 3);
+  video.currentTime = Math.min(Math.max(r.start, t), r.end);
+  if (video.paused) togglePlay();
+}
+
+/* ── seek bar / time ── */
+function seekRange(){
+  var s = video.seekable;
+  if (s && s.length) return { start:s.start(0), end:s.end(s.length - 1) };
+  return null;
+}
+function isLive(){ return st.live || video.duration === Infinity; }
+function edgeBehind(){
+  var r = seekRange(); if (!r) return 0;
+  var edge = (st.hls && st.hls.liveSyncPosition) || r.end;
+  return Math.max(0, edge - video.currentTime);
+}
+function renderTime(){
+  var seek = $('seek'), r = seekRange(), live = isLive();
+  $('chip-live').hidden = !live;
+  $('golive').hidden = !live;
+  if (!r || (!live && !isFinite(video.duration))) { seek.setAttribute('aria-disabled', 'true'); $('time').textContent = live ? '' : fmt(video.currentTime); return; }
+  seek.setAttribute('aria-disabled', 'false');
+  var total = live ? (r.end - r.start) : video.duration;
+  var base = live ? r.start : 0;
+  var pos = total > 0 ? Math.min(1, Math.max(0, (video.currentTime - base) / total)) : 0;
+  $('s-played').style.width = (pos * 100) + '%';
+  $('s-thumb').style.left = (pos * 100) + '%';
+  var b = video.buffered, bEnd = 0;
+  for (var i = 0; i < b.length; i++) { if (b.start(i) <= video.currentTime + 0.5 && b.end(i) > bEnd) bEnd = b.end(i); }
+  $('s-buf').style.width = (total > 0 ? Math.min(1, Math.max(0, (bEnd - base) / total)) * 100 : 0) + '%';
+  seek.setAttribute('aria-valuenow', Math.round(pos * 100));
+  if (live) {
+    var behind = edgeBehind(), gl = $('golive'), atLive = behind < 10;
+    gl.classList.toggle('at-live', atLive); gl.classList.toggle('behind', !atLive);
+    gl.lastElementChild.textContent = atLive ? 'LIVE' : 'GO LIVE';
+    $('time').textContent = atLive ? '' : '-' + fmt(behind);
+  } else {
+    $('time').textContent = fmt(video.currentTime) + ' / ' + fmt(video.duration);
+  }
+}
+function ratioFromEvent(e){
+  var rect = $('seek').getBoundingClientRect();
+  return Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+}
+function timeAtRatio(ratio){
+  var r = seekRange(); if (!r) return null;
+  return isLive() ? r.start + ratio * (r.end - r.start) : ratio * video.duration;
+}
+(function bindSeek(){
+  var seek = $('seek');
+  function tip(e){
+    var ratio = ratioFromEvent(e), t = timeAtRatio(ratio);
+    var el = $('tip'); el.style.left = (ratio * 100) + '%';
+    if (t == null) { el.textContent = ''; return; }
+    if (isLive()) { var r = seekRange(); el.textContent = ratio > 0.985 ? 'LIVE' : '-' + fmt(r.end - t); }
+    else el.textContent = fmt(t);
+  }
+  seek.addEventListener('pointerdown', function(e){
+    if (seek.getAttribute('aria-disabled') === 'true') return;
+    st.dragging = true; seek.classList.add('drag');
+    try { seek.setPointerCapture(e.pointerId); } catch(x){}
+    tip(e);
+    var t = timeAtRatio(ratioFromEvent(e)); if (t != null) video.currentTime = t;
+  });
+  seek.addEventListener('pointermove', function(e){
+    if (seek.getAttribute('aria-disabled') === 'true') return;
+    tip(e);
+    if (st.dragging) { var t = timeAtRatio(ratioFromEvent(e)); if (t != null) video.currentTime = t; }
+  });
+  function end(){ st.dragging = false; seek.classList.remove('drag'); poke(); }
+  seek.addEventListener('pointerup', end);
+  seek.addEventListener('pointercancel', end);
+})();
+
+/* ── controls ── */
+function renderPlay(){
+  $('play').innerHTML = video.paused ? IC.play : IC.pause;
+  $('play').setAttribute('aria-label', video.paused ? 'Play' : 'Pause');
+  $('big').setAttribute('aria-label', 'Play');
+  setClass('paused', video.paused);
+}
+function renderVol(){
+  var muted = video.muted || video.volume === 0;
+  $('mute').innerHTML = muted ? IC.mute : (video.volume < 0.5 ? IC.low : IC.vol);
+  $('mute').setAttribute('aria-label', muted ? 'Unmute' : 'Mute');
+  var v = muted ? 0 : video.volume;
+  $('vol').value = v; $('vol').style.setProperty('--p', (v * 100) + '%');
+  if (!muted) $('unmute').classList.remove('show');
+}
+function setQualityChip(){
+  var h = video.videoHeight, w = video.videoWidth, c = $('chip-q');
+  if (!h) { c.hidden = true; return; }
+  var k4 = h >= 2000 || w >= 3800;
+  c.textContent = k4 ? '4K' : (h >= 1400 ? '1440p' : h + 'p');
+  c.classList.toggle('k4', k4);
+  c.hidden = false;
+}
+function toggleMute(){
+  video.muted = !video.muted;
+  if (!video.muted && video.volume === 0) video.volume = 0.6;
+  lsSet('muted', video.muted ? '1' : '0');
+}
+function fsActive(){ return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+function toggleFs(){
+  if (!fsActive()) {
+    var r = stage.requestFullscreen || stage.webkitRequestFullscreen;
+    if (r) {
+      var p = r.call(stage);
+      var lock = function(){ try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(function(){}); } catch(e){} };
+      if (p && p.then) p.then(lock).catch(function(){}); else lock();
+    } else if (video.webkitEnterFullscreen) {
+      video.webkitEnterFullscreen();
+    }
+  } else {
+    (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+  }
+}
+function renderFs(){
+  $('fs').innerHTML = fsActive() ? IC.xfs : IC.fs;
+  $('fs').setAttribute('aria-label', fsActive() ? 'Exit fullscreen' : 'Fullscreen');
+  if (!fsActive()) { try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch(e){} }
+}
+function togglePip(){
+  try {
+    if (document.pictureInPictureElement) document.exitPictureInPicture();
+    else if (video.requestPictureInPicture) video.requestPictureInPicture();
+  } catch(e){}
+}
+
+/* ── settings menu ── */
+function levelLabel(l){
+  if (l.height) return l.height + 'p';
+  if (l.bitrate) return (Math.round(l.bitrate / 1e5) / 10) + ' Mbps';
+  return 'Level';
+}
+function buildMenuIfNeeded(){ if (!$('menu').innerHTML) buildMenu(); }
+function buildMenu(){
+  var h = '', L = st.levels;
+  if (L.length > 1) {
+    var top = L[bestLevel()], k4 = top && top.height >= 2000;
+    h += '<div class="mh">Quality</div>';
+    h += '<button class="mi" role="menuitemradio" data-q="auto"><span>Auto <small>adapts to your connection</small></span></button>';
+    h += '<button class="mi" role="menuitemradio" data-q="best"><span>Highest available <small>' + levelLabel(top) + '</small></span>' + (k4 ? '<span class="tag">4K</span>' : '') + '</button>';
+    var idx = L.map(function(_, i){ return i; }).sort(function(a, b){ return (L[b].height || 0) - (L[a].height || 0) || (L[b].bitrate || 0) - (L[a].bitrate || 0); });
+    idx.forEach(function(i){
+      h += '<button class="mi" role="menuitemradio" data-q="' + i + '"><span>' + levelLabel(L[i]) + '</span>' + (L[i].height >= 2000 ? '<span class="tag">4K</span>' : '') + '</button>';
+    });
+  }
+  h += '<div class="mh">Picture</div>';
+  h += '<button class="mi" role="menuitemcheckbox" data-vivid="1"><span>Vivid picture <small>boosts contrast and colour</small></span><i class="sw"></i></button>';
+  if (!isLive() && isFinite(video.duration)) {
+    h += '<div class="mh">Speed</div>';
+    [0.5, 1, 1.25, 1.5, 2].forEach(function(s){ h += '<button class="mi" role="menuitemradio" data-rate="' + s + '"><span>' + (s === 1 ? 'Normal' : s + 'x') + '</span></button>'; });
+  }
+  $('menu').innerHTML = h;
+  updateMenuChecks();
+}
+function updateMenuChecks(){
+  var m = $('menu');
+  Array.prototype.forEach.call(m.querySelectorAll('[data-q]'), function(b){
+    var q = b.getAttribute('data-q');
+    var on = (q === String(st.mode));
+    b.setAttribute('aria-checked', on ? 'true' : 'false');
+  });
+  var v = m.querySelector('[data-vivid]'); if (v) v.setAttribute('aria-checked', stage.classList.contains('vivid') ? 'true' : 'false');
+  Array.prototype.forEach.call(m.querySelectorAll('[data-rate]'), function(b){
+    b.setAttribute('aria-checked', (+b.getAttribute('data-rate') === video.playbackRate) ? 'true' : 'false');
+  });
+}
+function setMenu(open){
+  st.menuOpen = !!open;
+  $('menu').classList.toggle('open', st.menuOpen);
+  $('gear').setAttribute('aria-expanded', st.menuOpen ? 'true' : 'false');
+  if (st.menuOpen) { buildMenuIfNeeded(); updateMenuChecks(); poke(); } else poke();
+}
+$('menu').addEventListener('click', function(e){
+  var b = e.target.closest('.mi'); if (!b) return;
+  if (b.hasAttribute('data-q')) {
+    var q = b.getAttribute('data-q'); st.mode = q;
+    if (q === 'auto' || q === 'best') lsSet('quality', q);
+    applyQuality();
+  } else if (b.hasAttribute('data-vivid')) {
+    setClass('vivid', !stage.classList.contains('vivid'));
+    lsSet('vivid', stage.classList.contains('vivid') ? '1' : '0');
+  } else if (b.hasAttribute('data-rate')) {
+    video.playbackRate = +b.getAttribute('data-rate');
+  }
+  updateMenuChecks();
+});
+
+/* ── error actions (VLC / copy / retry) ── */
+function openVlc(){
+  if (EMBED && toParent({ type:'sx4k:vlc', url:st.src, title:st.title })) return;
+  toast('Opening VLC...');
+  location.href = 'vlc://' + st.src;
+}
+function copyLink(){
+  if (EMBED && toParent({ type:'sx4k:copy', url:st.src })) return;
+  var done = function(){ toast('Stream link copied'); };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(st.src).then(done).catch(function(){ toast('Could not copy the link'); });
+  } else {
+    var ta = document.createElement('textarea'); ta.value = st.src; ta.style.cssText = 'position:fixed;opacity:0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); done(); } catch(e){ toast('Could not copy the link'); }
+    document.body.removeChild(ta);
+  }
+}
+$('err-a').addEventListener('click', function(e){
+  var b = e.target.closest('[data-a]'); if (!b) return;
+  var a = b.getAttribute('data-a');
+  if (a === 'retry') load(st.src, st.title);
+  else if (a === 'vlc') openVlc();
+  else if (a === 'copy') copyLink();
+});
+
+/* ── DMCA ── */
+function setDmca(open){
+  st.dmcaOpen = !!open;
+  $('dmca-modal').classList.toggle('show', st.dmcaOpen);
+  poke();
+}
+$('dmca').addEventListener('click', function(){ setDmca(true); });
+$('dmca-x').addEventListener('click', function(){ setDmca(false); });
+$('dmca-modal').addEventListener('click', function(e){ if (e.target === this) setDmca(false); });
+
+/* ── wiring ── */
+$('play').addEventListener('click', togglePlay);
+$('big').addEventListener('click', togglePlay);
+$('mute').addEventListener('click', toggleMute);
+$('unmute').addEventListener('click', function(){ video.muted = false; lsSet('muted', '0'); $('unmute').classList.remove('show'); });
+$('vol').addEventListener('input', function(){
+  video.volume = +this.value; video.muted = video.volume === 0;
+  lsSet('vol', String(video.volume)); lsSet('muted', video.muted ? '1' : '0');
+});
+$('golive').addEventListener('click', goLive);
+$('gear').addEventListener('click', function(e){ e.stopPropagation(); setMenu(!st.menuOpen); });
+$('fs').addEventListener('click', toggleFs);
+$('pip').addEventListener('click', togglePip);
+if (document.pictureInPictureEnabled && video.requestPictureInPicture) $('pip').hidden = false;
+$('pip').innerHTML = IC.pip; $('gear').innerHTML = IC.gear;
+
+document.addEventListener('pointerdown', function(e){
+  st.lastPointer = e.pointerType || 'mouse';
+  st.wasIdle = stage.classList.contains('idle');
+  if (st.menuOpen && !e.target.closest('#menu') && !e.target.closest('#gear')) setMenu(false);
+});
+
+/* click on the picture: mouse toggles play, touch toggles the controls */
+var lastClickT = 0;
+stage.addEventListener('click', function(e){
+  if (e.target.closest('#bar,#top,#err,#dmca-modal,#unmute,#big,#loader')) return;
+  if (st.errShown) return;
+  if (st.lastPointer === 'touch') { if (st.wasIdle) poke(); else { clearTimeout(st.idleT); setClass('idle', true); } return; }
+  var now = Date.now();
+  if (now - lastClickT < 300) { toggleFs(); lastClickT = 0; return; }
+  lastClickT = now;
+  setTimeout(function(){ if (lastClickT && Date.now() - lastClickT >= 280) { lastClickT = 0; togglePlay(); } }, 300);
+});
+['pointermove', 'keydown'].forEach(function(ev){ document.addEventListener(ev, poke, { passive:true }); });
+$('bar').addEventListener('pointerdown', poke);
+stage.addEventListener('pointerleave', function(e){ if (e.pointerType === 'mouse' && !video.paused && !st.menuOpen && !st.dmcaOpen) { clearTimeout(st.idleT); st.idleT = setTimeout(function(){ setClass('idle', true); }, 600); } });
+
+document.addEventListener('keydown', function(e){
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.key === 'Escape') { if (st.menuOpen) setMenu(false); if (st.dmcaOpen) setDmca(false); return; }
+  if (st.dmcaOpen || (e.target && e.target.tagName === 'INPUT')) return;
+  var k = e.key, used = true;
+  if (k === ' ' || k === 'k' || k === 'K') togglePlay();
+  else if (k === 'm' || k === 'M') toggleMute();
+  else if (k === 'f' || k === 'F') toggleFs();
+  else if (k === 'l' || k === 'L' || k === 'End') { if (isLive()) goLive(); }
+  else if (k === 'ArrowUp') { video.volume = Math.min(1, video.volume + 0.05); video.muted = false; lsSet('vol', String(video.volume)); }
+  else if (k === 'ArrowDown') { video.volume = Math.max(0, video.volume - 0.05); lsSet('vol', String(video.volume)); }
+  else if (k === 'ArrowLeft' || k === 'ArrowRight') {
+    var r = seekRange(); if (r) video.currentTime = Math.min(r.end, Math.max(r.start, video.currentTime + (k === 'ArrowLeft' ? -10 : 10)));
+  } else used = false;
+  if (used) e.preventDefault();
+});
+
+/* ── video events ── */
+var waitT = 0;
+video.addEventListener('play', renderPlay);
+video.addEventListener('pause', function(){ renderPlay(); poke(); });
+video.addEventListener('volumechange', renderVol);
+video.addEventListener('resize', setQualityChip);
+video.addEventListener('loadedmetadata', function(){ setQualityChip(); buildMenu(); });
+video.addEventListener('durationchange', function(){ renderTime(); });
+video.addEventListener('timeupdate', renderTime);
+video.addEventListener('progress', renderTime);
+video.addEventListener('ratechange', updateMenuChecks);
+video.addEventListener('waiting', function(){
+  clearTimeout(waitT);
+  waitT = setTimeout(function(){ if (!video.paused && !video.seeking) noteStall(); setClass('buffering', true); }, 500);
+});
+function clearWait(){ clearTimeout(waitT); setClass('buffering', false); }
+video.addEventListener('canplay', clearWait);
+video.addEventListener('seeked', clearWait);
+video.addEventListener('playing', function(){
+  clearWait();
+  if (!st.started) {
+    st.started = true;
+    clearTimeout(st.loadTimer);
+    setClass('loading', false);
+    $('loader').classList.add('hide');
+    toParent({ type:'sx4k:state', state:'playing' });
+  }
+  renderPlay(); setQualityChip(); poke();
+});
+document.addEventListener('fullscreenchange', renderFs);
+document.addEventListener('webkitfullscreenchange', renderFs);
+setInterval(function(){ if (st.started) renderTime(); }, 1000);
+
+function setMedia(){
+  if (!('mediaSession' in navigator)) return;
+  try {
+    navigator.mediaSession.metadata = new MediaMetadata({ title: st.title || 'Live Stream', artist: 'SX SPORTS' });
+    navigator.mediaSession.setActionHandler('play', function(){ video.play(); });
+    navigator.mediaSession.setActionHandler('pause', function(){ video.pause(); });
+  } catch(e){}
+}
+
+/* the site can swap streams without reloading the player */
+window.addEventListener('message', function(e){
+  if (e.source !== window.parent && e.source !== window) return;
+  var d = e.data;
+  if (d && d.type === 'sx4k:load' && typeof d.url === 'string') load(d.url, d.title);
+});
+
+/* ── start ── */
+if (lsGet('vivid') === '0') setClass('vivid', false);
+renderPlay(); renderVol(); renderFs();
+var startUrl = (boot && boot.url) || params.get('src') || params.get('url') || params.get('u') || DEFAULT_SRC;
+var startTitle = (boot && boot.title) || params.get('title') || params.get('name') || '';
+load(startUrl, startTitle);
+poke();
+
+/* handy for debugging / embedding */
+window.SX4K = { load: load, state: st, video: video };
+})();
+<\/script>
+</body>
+</html>
+</script>
+
 <script>
 // Casts whatever is currently open in the stream player to a TV. This
 // only works for channels whose watch_url is a direct HLS (.m3u8) feed —
@@ -10206,7 +11119,14 @@ function sxUpdateCastButtonState(){
 }
 
 function sxIsHlsUrl(u){
-  return /\.m3u8(\?|#|$)/i.test(u) || /[?&](format|type)=m3u8/i.test(u);
+  u = String(u || '').trim();
+  if (!/^https?:\/\//i.test(u)) return false;
+  try {
+    var x = new URL(u);
+    return /\.m3u8$/i.test(x.pathname) || /(^|&)(format|type)=m3u8(&|$)/i.test(x.search.slice(1));
+  } catch (e) {
+    return /\.m3u8(\?|#|$)/i.test(u);
+  }
 }
 
 // Broader "is this a direct, playable stream link rather than a page/embed"
@@ -10216,6 +11136,10 @@ function sxIsHlsUrl(u){
 // in-page iframe player, which can't play a raw manifest URL anyway.
 function sxIsRawStreamUrl(u){
   if (!u) return false;
+  // Clear HLS (.m3u8 over http/https) now plays in our own SX 4K player, so
+  // it is no longer an "external player" link. Only DASH / plain .m3u / odd
+  // manifests still go to the VLC popup.
+  if (sxIsHlsUrl(u)) return false;
   return /\.(m3u8|m3u|mpd)(\?|#|$)/i.test(u) || /[?&](format|type)=(m3u8|m3u|mpd|dash)/i.test(u);
 }
 
@@ -10247,6 +11171,32 @@ function sxCopyStreamLink(text){
     fail();
   }
 }
+
+
+// ── SX 4K PLAYER glue ────────────────────────────────────────────────────
+var _sx4kTpl = null;
+function sx4kDoc(url, title){
+  if (_sx4kTpl === null){
+    var el = document.getElementById('sx4k-player-src');
+    _sx4kTpl = el ? el.textContent.replace(/<\\\/script/gi, '</script') : '';
+  }
+  var boot = 'window.SX4K_BOOT=' + JSON.stringify({ url: url, title: title || '', embed: true }).replace(/</g, '\\u003c') + ';';
+  return _sx4kTpl.replace('/*__SX4K_BOOT__*/', function(){ return boot; });
+}
+window.addEventListener('message', function(e){
+  var f = document.getElementById('stream-player-frame');
+  if (!f || e.source !== f.contentWindow) return;
+  var d = e.data;
+  if (!d || typeof d.type !== 'string' || d.type.indexOf('sx4k:') !== 0) return;
+  var u = sxCurrentStreamRawUrl || '';
+  if (d.type === 'sx4k:vlc' && u){
+    var n = (document.getElementById('stream-player-title') || {}).textContent || 'Live Stream';
+    closeStreamPlayer();
+    sxOpenVlcPopup(u, n);
+  } else if (d.type === 'sx4k:copy' && u){
+    sxCopyStreamLink(u);
+  }
+});
 
 // Full-screen popup offered for any raw HLS/DASH stream link (channel rows
 // and match servers alike) instead of loading it in our own iframe player.
@@ -10403,14 +11353,19 @@ function openStreamPlayer(url, name, type){
     return;
   }
   const label = name || 'Live Stream';
+  const use4k = sxIsHlsUrl(url); // clear .m3u8 from the sheets plays in the SX 4K player
   document.getElementById('stream-player-title').textContent = label;
   sxCurrentStreamRawUrl = url; // used by sxCastCurrentStream() below
   const src = url.includes('#') ? url : url + '#' + encodeURIComponent(label);
   spUpdateInfobar(type, label);
+  if (use4k) {
+    const mEl = document.getElementById('sp-info-meta');
+    if (mEl) mEl.insertAdjacentHTML('beforeend', '<span class="sp-info-4k">SX 4K PLAYER</span>');
+  }
   spInitFcxSwitch(url, label);
   populateStreamPlayerRail(type, label);
   const adBanner = document.getElementById('sp-adblock-banner');
-  if (adBanner) adBanner.style.display = 'flex';
+  if (adBanner) adBanner.style.display = use4k ? 'none' : 'flex'; // ad-safety note is for third-party embeds
   // Loading overlay shows briefly while the stream spins up — the stream
   // itself starts loading immediately underneath, not after the delay.
   // Setting the iframe src here, before the overlay timer, means the
@@ -10431,8 +11386,13 @@ function openStreamPlayer(url, name, type){
     requestAnimationFrame(() => { loadingBarEl.style.width = '100%'; });
   }
   clearTimeout(window._spLoadingTimer);
-  document.getElementById('stream-player-frame').removeAttribute('srcdoc'); // left over from an India-source session
-  document.getElementById('stream-player-frame').src = src;
+  const spFrame = document.getElementById('stream-player-frame');
+  if (use4k) {
+    spFrame.srcdoc = sx4kDoc(url, label);
+  } else {
+    spFrame.removeAttribute('srcdoc'); // left over from an India-source / 4K session
+    spFrame.src = src;
+  }
   document.getElementById('stream-player-overlay').classList.add('open');
   // Hide navbar when player opens
   const navbar = document.querySelector('.sx-topbar, [data-navbar]');
