@@ -955,6 +955,27 @@ header.scrolled {
   letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted);
 }
 
+/* ── Maintenance banner — shown in place of channels/matches when the
+   SETTINGS sheet's maintain_channels / maintain_matches key is "YES".
+   The reason text comes from that same row's "notes" column. ── */
+.sx-maintenance-box {
+  width: 100%; text-align: center; grid-column: 1 / -1;
+  background: var(--glass); backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 1px dashed rgba(255,197,61,0.35);
+  border-radius: 10px; padding: 30px 18px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.sx-maintenance-icon { font-size: 26px; line-height: 1; }
+.sx-maintenance-title {
+  font-family: var(--font-display); font-weight: 800; font-size: 12px;
+  letter-spacing: 2px; text-transform: uppercase; color: #FFC53D;
+}
+.sx-maintenance-note {
+  font-size: 13px; color: var(--text-muted); max-width: 420px;
+  line-height: 1.5;
+}
+
 /* ── Match cards: 3-col grid on desktop ── */
 @media(min-width:901px) {
   .slider-match-overlay {
@@ -6023,6 +6044,25 @@ function wireAutoLiveCountdown(target, opts) {
   });
 }
 
+// ── Maintenance banner ───────────────────────────────────────
+// Shown in place of a section's real content when the SETTINGS sheet has
+// maintain_channels / maintain_matches = "YES". `reason` is that same
+// settings row's "notes" column, shown as the reason for the maintenance.
+function sxMaintenanceHtml(reason) {
+  return `<div class="sx-maintenance-box">
+    <div class="sx-maintenance-icon">🛠️</div>
+    <div class="sx-maintenance-title">Under Maintenance</div>
+    ${reason ? `<div class="sx-maintenance-note">${reason}</div>` : ''}
+  </div>`;
+}
+function sxIsMaintenanceOn(key) {
+  const v = (window._settings && window._settings[key]) || '';
+  return v.toString().trim().toUpperCase() === 'YES';
+}
+function sxMaintenanceReason(key) {
+  return (window._settingsNotes && window._settingsNotes[key]) || '';
+}
+
 // ── Image with fallback ──────────────────────────────────────
 function img(src, alt, cls='', fb='') {
   if (!src) return fb ? `<span style="font-size:32px">${fb}</span>` : '';
@@ -6034,8 +6074,18 @@ function img(src, alt, cls='', fb='') {
 function renderSettings(rows) {
   if (!rows) return;
   const s = {};
-  rows.forEach(r => { if (r.setting_key) s[r.setting_key] = r.value; });
+  const notes = {};
+  rows.forEach(r => {
+    if (r.setting_key) {
+      s[r.setting_key] = r.value;
+      // The SETTINGS sheet's own "notes" column, on that same row, is used
+      // as the maintenance reason for maintain_channels / maintain_matches
+      // (and is available generically for any other setting_key too).
+      if (r.notes !== undefined && r.notes !== '') notes[r.setting_key] = r.notes;
+    }
+  });
   window._settings = s;
+  window._settingsNotes = notes;
 
   // NOTE: every DOM write below is null-guarded on purpose. Previously several
   // lines called .textContent/.src straight on document.getElementById(...)
@@ -6138,7 +6188,7 @@ function renderNav_CMS_UNUSED(rows) {
 
 // ── Hero banner "#" routing ─────────────────────────────────────────────
 // HERO SLIDES sheet: if a row's btn1_url is exactly "#", its "location"
-// column (livetv / matches / fancode / f) sends the click to that
+// column (livetv / matches / fancode / fifa) sends the click to that
 // in-site panel instead of trying to open a stream player with "#".
 // Any other btn1_url value plays as a normal stream, same as before.
 function sxHeroWatch(url, location, title) {
@@ -7431,6 +7481,25 @@ setInterval(() => {
 
 function renderMatchCards(rows) {
   if (!rows) { console.warn('[MATCH CARDS] fetchSheet returned null — check the tab name is exactly "MATCH CARDS" and the sheet is shared ("Anyone with the link can view").'); return; }
+
+  // ── Maintenance mode (SETTINGS!maintain_matches = YES) ──────────
+  // Replaces the whole matches section with a maintenance notice, using
+  // that settings row's "notes" column as the shown reason.
+  if (sxIsMaintenanceOn('maintain_matches')) {
+    window._matchCardsRawRows = rows;
+    window._matchCardsData = [];
+    const el = document.getElementById('match-overlay');
+    if (el) el.innerHTML = sxMaintenanceHtml(sxMaintenanceReason('maintain_matches'));
+    const promptEl = document.getElementById('smo-sport-prompt');
+    if (promptEl) promptEl.style.display = 'none';
+    const smoToolbarWrap = document.getElementById('smo-toolbar');
+    if (smoToolbarWrap) smoToolbarWrap.style.display = 'none';
+    const mSection = document.getElementById('match-overlay-section');
+    if (mSection) mSection.style.display = '';
+    if (typeof renderFixtures === 'function') renderFixtures();
+    return;
+  }
+
   window._matchCardsRawRows = rows; // cached so smoRefreshAutoLive() can re-render without refetching
   console.log('[MATCH CARDS] raw rows from sheet:', rows.length, rows);
   console.log('[MATCH CARDS] active-flag per row:', rows.map(r => ({ game: r.game, flag_used: activeFlagRaw(r), kept: isRowActive(r) })));
@@ -7697,6 +7766,22 @@ function renderMatchCards(rows) {
 
 function renderChannels(rows) {
   if (!rows) return;
+
+  // ── Maintenance mode (SETTINGS!maintain_channels = YES) ─────────
+  // Replaces the channels preview + full Live TV grid with a maintenance
+  // notice, using that settings row's "notes" column as the shown reason.
+  window._channelsMaintenance = sxIsMaintenanceOn('maintain_channels');
+  if (window._channelsMaintenance) {
+    window._cmsChannels = [];
+    window._liveChannelNames = [];
+    const reason = sxMaintenanceReason('maintain_channels');
+    const previewGrid = document.getElementById('channelsPreviewGrid');
+    if (previewGrid) previewGrid.innerHTML = sxMaintenanceHtml(reason);
+    if (typeof window.chBuildCategories === 'function') window.chBuildCategories();
+    if (typeof window.chFilter === 'function') window.chFilter();
+    return;
+  }
+
   // Store CMS channels globally so the browser's Other group can include them
   window._cmsChannels = active(rows);
   // Store live channel names for CSS class matching
@@ -8191,14 +8276,23 @@ function countryFlagHTML(rawCountry){
   window.chLogoHTML = chLogoHTML;
 
   window.chFilter = function() {
+    const grid = document.getElementById('chGrid');
+    if (!grid) return;
+    // Maintenance mode: show the notice instead of any search/category
+    // results, and skip the rest of the filtering entirely.
+    if (window._channelsMaintenance) {
+      grid.style.display = 'flex';
+      grid.innerHTML = sxMaintenanceHtml(sxMaintenanceReason('maintain_channels'));
+      const countEl0 = document.getElementById('epgCount');
+      if (countEl0) countEl0.textContent = '';
+      return;
+    }
     const qInput = document.getElementById('chSearchInput');
     const q = (qInput ? qInput.value : '').toLowerCase().trim();
     const sel = document.getElementById('chCategorySelect');
     if (sel) chActiveGrp = sel.value || 'All';
-    const grid = document.getElementById('chGrid');
     const clearBtn = document.getElementById('epgSearchClear');
     const countEl = document.getElementById('epgCount');
-    if (!grid) return;
     if (clearBtn) clearBtn.classList.toggle('show', !!q);
 
     const effectiveGrp = q ? 'All' : chActiveGrp;
@@ -10169,7 +10263,7 @@ function closeAdminChatDiscordPopup(){
 </div>
 
 <!-- ══════════════════════════════════════════════════════════════════════
-     EV PREMIUM PLAYER  — the source of EV4K.html, kept as inert text and
+     SX 4K PLAYER — the source of SXSPORTS4K.html, kept as inert text and
      loaded into #stream-player-frame via srcdoc for every clear (non-DRM)
      .m3u8 stream. Sheet channels, match servers and hero links all reach it
      through openStreamPlayer(). DRM is detected inside the player and
@@ -10185,7 +10279,7 @@ function closeAdminChatDiscordPopup(){
 <script id="sx4k-boot">/*__SX4K_BOOT__*/<\/script>
 <style>
 /* SX SPORTS 4K PLAYER
-   Standalone:  EV4K.html?src=<url-encoded .m3u8>&title=<name>
+   Standalone:  SXSPORTS4K.html?src=<url-encoded .m3u8>&title=<name>
    Embedded:    the site injects window.SX4K_BOOT = { url, title, embed:true }
    Plays clear (non-DRM) HLS only. DRM-protected streams are detected and refused. */
 :root{
@@ -11136,7 +11230,7 @@ function sxIsHlsUrl(u){
 // in-page iframe player, which can't play a raw manifest URL anyway.
 function sxIsRawStreamUrl(u){
   if (!u) return false;
-  // Clear HLS (.m3u8 over http/https) now plays in our own EV PREMIUM PLAYER , so
+  // Clear HLS (.m3u8 over http/https) now plays in our own SX 4K player, so
   // it is no longer an "external player" link. Only DASH / plain .m3u / odd
   // manifests still go to the VLC popup.
   if (sxIsHlsUrl(u)) return false;
@@ -11173,7 +11267,7 @@ function sxCopyStreamLink(text){
 }
 
 
-// ── EV PREMIUM PLAYER  glue ────────────────────────────────────────────────────
+// ── SX 4K PLAYER glue ────────────────────────────────────────────────────
 var _sx4kTpl = null;
 function sx4kDoc(url, title){
   if (_sx4kTpl === null){
@@ -11353,14 +11447,14 @@ function openStreamPlayer(url, name, type){
     return;
   }
   const label = name || 'Live Stream';
-  const use4k = sxIsHlsUrl(url); // clear .m3u8 from the sheets plays in the EV PREMIUM PLAYER 
+  const use4k = sxIsHlsUrl(url); // clear .m3u8 from the sheets plays in the SX 4K player
   document.getElementById('stream-player-title').textContent = label;
   sxCurrentStreamRawUrl = url; // used by sxCastCurrentStream() below
   const src = url.includes('#') ? url : url + '#' + encodeURIComponent(label);
   spUpdateInfobar(type, label);
   if (use4k) {
     const mEl = document.getElementById('sp-info-meta');
-    if (mEl) mEl.insertAdjacentHTML('beforeend', '<span class="sp-info-4k">EV PREMIUM PLAYER </span>');
+    if (mEl) mEl.insertAdjacentHTML('beforeend', '<span class="sp-info-4k">SX 4K PLAYER</span>');
   }
   spInitFcxSwitch(url, label);
   populateStreamPlayerRail(type, label);
