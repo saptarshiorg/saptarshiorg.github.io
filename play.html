@@ -182,11 +182,7 @@ body{width:100%;height:100%;min-height:100dvh;background:var(--bg);overflow:hidd
   color:#fff;background:var(--glass);border:1px solid var(--line);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);white-space:nowrap;}
 .tchip[hidden]{display:none;}
 .tchip .dot{width:7px;height:7px;border-radius:50%;background:var(--mg);box-shadow:0 0 8px var(--mg);animation:lblink 1.6s infinite;}
-.castbtn{border:0;cursor:pointer;font-family:inherit;color:#fff;-webkit-tap-highlight-color:transparent;transition:background .15s,color .15s,border-color .15s;}
-.castbtn:hover{background:rgba(255,255,255,.16);}
-.castbtn.active{background:var(--mg);border-color:transparent;}
-.castbtn.active #castico{animation:castpulse 1.6s ease-in-out infinite;}
-@keyframes castpulse{0%,100%{opacity:1}50%{opacity:.55}}
+google-cast-launcher{--connected-color:var(--mg);--disconnected-color:#fff;width:24px;height:24px;flex-shrink:0;cursor:pointer;}
 
 /* ── Small screens ───────────────────────────────────────────────── */
 @media (max-width:480px){
@@ -229,19 +225,11 @@ body{width:100%;height:100%;min-height:100dvh;background:var(--bg);overflow:hidd
   <video id="vid" autoplay playsinline preload="metadata"></video>
 
   <div id="top">
+    <google-cast-launcher id="castbtn" title="Cast to TV"></google-cast-launcher>
     <span class="credit-tag"></span>
     <span id="toptitle"></span>
     <span class="tchip" id="topquality" hidden></span>
     <span class="tchip" id="toplive" hidden><i class="dot"></i><span>LIVE</span></span>
-    <button type="button" class="tchip castbtn" id="castbtn" title="Cast to TV" aria-label="Cast to TV" hidden>
-      <svg id="castico" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-7"/>
-        <path d="M2 12a9 9 0 0 1 8 8"/>
-        <path d="M2 16a5 5 0 0 1 4 4"/>
-        <circle cx="2" cy="20" r="1" fill="currentColor" stroke="none"/>
-      </svg>
-      <span id="castlbl" hidden>Casting</span>
-    </button>
   </div>
 
   <div id="overlay">
@@ -386,7 +374,6 @@ var topbar   = document.getElementById('top');
 var topquality = document.getElementById('topquality');
 var toplive    = document.getElementById('toplive');
 var castbtn    = document.getElementById('castbtn');
-var castlbl    = document.getElementById('castlbl');
 
 var shakaPlayer = null;
 var currentStreamUrl = null;
@@ -764,36 +751,24 @@ function sendToCast(url){
 function updateCastUI(){
   var ctx=cast.framework.CastContext.getInstance();
   castSession=ctx.getCurrentSession();
-  var casting=!!castSession;
-  castbtn.classList.toggle('active',casting);
-  castlbl.hidden=!casting;
-  castbtn.title=casting?'Casting — tap to change device':'Cast to TV';
-  castbtn.setAttribute('aria-pressed',casting?'true':'false');
-  if(casting && currentStreamUrl){
+  if(castSession && currentStreamUrl){
     sendToCast(currentStreamUrl);
     try{vid.pause();}catch(e){}
   }
 }
 
+// google-cast-launcher shows/hides and opens the device picker on its own —
+// we only need to react once a session connects, to push the stream to it.
 window['__onGCastApiAvailable']=function(isAvailable){
   if(!isAvailable||!window.chrome||!chrome.cast) return;
   cast.framework.CastContext.getInstance().setOptions({
     receiverApplicationId:chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
     autoJoinPolicy:chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
   });
-  castbtn.hidden=false;
   cast.framework.CastContext.getInstance().addEventListener(
     cast.framework.CastContextEventType.SESSION_STATE_CHANGED, updateCastUI
   );
-  updateCastUI();
 };
-
-castbtn.addEventListener('click', function(){
-  if(!window.cast||!cast.framework) return;
-  cast.framework.CastContext.getInstance().requestSession().then(function(){
-    updateCastUI();
-  }).catch(function(){ /* user closed the device picker */ });
-});
 
 async function tryShaka(url){
   if(shakaPlayer){try{await shakaPlayer.destroy();}catch(e){}shakaPlayer=null;}
