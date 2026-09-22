@@ -14,6 +14,7 @@
 <link rel="preconnect" href="https://api.fontshare.com">
 <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700,900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/shaka-player.ui.min.js"></script>
+<script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
 <style>
 /* ── EV Streams player — minimal liquid glass ─────────────────────────
    One floating glass bar carries every control; the picture stays clear.
@@ -181,6 +182,11 @@ body{width:100%;height:100%;min-height:100dvh;background:var(--bg);overflow:hidd
   color:#fff;background:var(--glass);border:1px solid var(--line);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);white-space:nowrap;}
 .tchip[hidden]{display:none;}
 .tchip .dot{width:7px;height:7px;border-radius:50%;background:var(--mg);box-shadow:0 0 8px var(--mg);animation:lblink 1.6s infinite;}
+.castbtn{border:0;cursor:pointer;font-family:inherit;color:#fff;-webkit-tap-highlight-color:transparent;transition:background .15s,color .15s,border-color .15s;}
+.castbtn:hover{background:rgba(255,255,255,.16);}
+.castbtn.active{background:var(--mg);border-color:transparent;}
+.castbtn.active #castico{animation:castpulse 1.6s ease-in-out infinite;}
+@keyframes castpulse{0%,100%{opacity:1}50%{opacity:.55}}
 
 /* ── Small screens ───────────────────────────────────────────────── */
 @media (max-width:480px){
@@ -220,13 +226,22 @@ body{width:100%;height:100%;min-height:100dvh;background:var(--bg);overflow:hidd
 <body>
 
 <div id="player">
-  <video id="vid" autoplay muted playsinline preload="metadata"></video>
+  <video id="vid" autoplay playsinline preload="metadata"></video>
 
   <div id="top">
     <span class="credit-tag"></span>
     <span id="toptitle"></span>
     <span class="tchip" id="topquality" hidden></span>
     <span class="tchip" id="toplive" hidden><i class="dot"></i><span>LIVE</span></span>
+    <button type="button" class="tchip castbtn" id="castbtn" title="Cast to TV" aria-label="Cast to TV" hidden>
+      <svg id="castico" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-7"/>
+        <path d="M2 12a9 9 0 0 1 8 8"/>
+        <path d="M2 16a5 5 0 0 1 4 4"/>
+        <circle cx="2" cy="20" r="1" fill="currentColor" stroke="none"/>
+      </svg>
+      <span id="castlbl" hidden>Casting</span>
+    </button>
   </div>
 
   <div id="overlay">
@@ -370,8 +385,12 @@ var bpbtn    = document.getElementById('bpbtn');
 var topbar   = document.getElementById('top');
 var topquality = document.getElementById('topquality');
 var toplive    = document.getElementById('toplive');
+var castbtn    = document.getElementById('castbtn');
+var castlbl    = document.getElementById('castlbl');
 
 var shakaPlayer = null;
+var currentStreamUrl = null;
+var castSession = null;
 var qStreams = {}, currentQ = DEFAULT_Q;
 var isLive = true, isDragging = false, uPaused = false, hasError = false;
 var fillModeIdx = 0, isMuted = true;
@@ -401,6 +420,22 @@ function hideOverlay(){
   overlay.style.opacity='0';
   overlay.style.pointerEvents='none';
   setTimeout(function(){overlay.classList.add('gone');},360);
+}
+
+async function attemptPlay(){
+  try{
+    vid.muted=false;
+    await vid.play();
+  }catch(e){
+    // Browser autoplay policy blocked sound-on playback — fall back to muted
+    // so the stream still starts. The first tap on the volume button or the
+    // big play button will unmute it (that's a real user gesture, so it's allowed).
+    try{
+      vid.muted=true;
+      await vid.play();
+    }catch(e2){ syncBig(); }
+  }
+  syncVol();
 }
 
 function toFriendlyMessage(raw){
@@ -449,7 +484,8 @@ bpbtn.addEventListener('click', function(e){
   e.stopPropagation();
   uPaused=false;
   playerActivated=true;
-  vid.play().catch(function(){});
+  vid.muted=false;
+  vid.play().then(syncVol).catch(function(){ syncVol(); });
 });
 vid.addEventListener('play',  syncBig);
 vid.addEventListener('pause', syncBig);
@@ -705,6 +741,60 @@ function syncFs(){
 }
 ['fullscreenchange','webkitfullscreenchange','mozfullscreenchange'].forEach(function(e){document.addEventListener(e,syncFs);});
 
+/* ── Chromecast ──────────────────────────────────────────────────────
+   Casts the currently-playing manifest URL straight to the receiver
+   via the Cast Sender Framework, independent of the local Shaka
+   player instance (which this file recreates on every retry). */
+function castContentType(url){
+  if(/\.m3u8(\?|$)/i.test(url)) return 'application/x-mpegurl';
+  if(/\.mpd(\?|$)/i.test(url))  return 'application/dash+xml';
+  return 'video/mp4';
+}
+
+function sendToCast(url){
+  if(!castSession||!url) return;
+  var mediaInfo=new chrome.cast.media.MediaInfo(url,castContentType(url));
+  mediaInfo.streamType = isLive ? chrome.cast.media.StreamType.LIVE : chrome.cast.media.StreamType.BUFFERED;
+  mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
+  mediaInfo.metadata.title = document.title||'Live Stream';
+  var request=new chrome.cast.media.LoadRequest(mediaInfo);
+  castSession.loadMedia(request).catch(function(err){console.warn('Cast load failed',err);});
+}
+
+function updateCastUI(){
+  var ctx=cast.framework.CastContext.getInstance();
+  castSession=ctx.getCurrentSession();
+  var casting=!!castSession;
+  castbtn.classList.toggle('active',casting);
+  castlbl.hidden=!casting;
+  castbtn.title=casting?'Casting — tap to change device':'Cast to TV';
+  castbtn.setAttribute('aria-pressed',casting?'true':'false');
+  if(casting && currentStreamUrl){
+    sendToCast(currentStreamUrl);
+    try{vid.pause();}catch(e){}
+  }
+}
+
+window['__onGCastApiAvailable']=function(isAvailable){
+  if(!isAvailable||!window.chrome||!chrome.cast) return;
+  cast.framework.CastContext.getInstance().setOptions({
+    receiverApplicationId:chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
+    autoJoinPolicy:chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+  });
+  castbtn.hidden=false;
+  cast.framework.CastContext.getInstance().addEventListener(
+    cast.framework.CastContextEventType.SESSION_STATE_CHANGED, updateCastUI
+  );
+  updateCastUI();
+};
+
+castbtn.addEventListener('click', function(){
+  if(!window.cast||!cast.framework) return;
+  cast.framework.CastContext.getInstance().requestSession().then(function(){
+    updateCastUI();
+  }).catch(function(){ /* user closed the device picker */ });
+});
+
 async function tryShaka(url){
   if(shakaPlayer){try{await shakaPlayer.destroy();}catch(e){}shakaPlayer=null;}
   shakaPlayer=new shaka.Player();
@@ -712,6 +802,8 @@ async function tryShaka(url){
   shakaPlayer.configure({streaming:{bufferingGoal:4,rebufferingGoal:1,safeSeekOffset:5,lowLatencyMode:true}});
   shakaPlayer.getNetworkingEngine().registerRequestFilter(function(t,req){req.allowCrossSiteCredentials=true;});
   await shakaPlayer.load(url);
+  currentStreamUrl=url;
+  if(castSession) sendToCast(url);
 }
 
 function armPlaybackWatchers(){
@@ -734,9 +826,9 @@ function tryNativeCascade(all, lastShakaErr){
     };
     vid.addEventListener('error', onErr, {once:true});
     vid.src = url;
-    vid.muted = true;
-    vid.play().catch(function(){ syncBig(); });
-    syncVol();
+    currentStreamUrl = url;
+    if(castSession) sendToCast(url);
+    attemptPlay();
     armPlaybackWatchers();
   }
   attempt();
@@ -771,9 +863,7 @@ async function loadStream(url,fallbacks){
     return;
   }
 
-  vid.muted=true;
-  await vid.play().catch(function(){ syncBig(); });
-  syncVol();
+  await attemptPlay();
   armPlaybackWatchers();
 }
 
