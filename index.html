@@ -10293,7 +10293,7 @@ function closeAdminChatDiscordPopup(){
       </button>
       <span id="stream-player-title">Live Stream</span>
       <button id="stream-player-cast" onclick="sxCastCurrentStream()" title="Cast to TV" aria-label="Cast to TV">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h.01"/><path d="M2 16a4 4 0 0 1 4 4"/><path d="M2 12a8 8 0 0 1 8 8"/><path d="M22 4H2v4h1a15 15 0 0 1 15 15v1h4Z"/></svg>
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M1 18v3h3c0-1.66-1.34-3-3-3zm0-4v2c2.76 0 5 2.24 5 5h2c0-3.87-3.13-7-7-7zm18-7H5v1.63c3.96 1.28 7.09 4.41 8.37 8.37H19V7zM1 10v2c4.97 0 9 4.03 9 9h2c0-6.08-4.93-11-11-11zm20-7H3c-1.1 0-2 .9-2 2v3h2V5h18v14h-7v2h7c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
       </button>
     </div>
     <div id="stream-player-body">
@@ -11555,6 +11555,11 @@ const SP_LOADING_LABELS = {
   tv:      'Loading TV Shows',
   match:   'Loading Live Match'
 };
+function sxSetCastButtonVisible(visible){
+  var btn = document.getElementById('stream-player-cast');
+  if (btn) btn.style.display = visible ? '' : 'none';
+}
+
 function openStreamPlayer(url, name, type){
   if (!url || url === '#') return;
   // Match cards, hero slides, and Live TV all funnel every stream link
@@ -11570,6 +11575,11 @@ function openStreamPlayer(url, name, type){
   const isFcx = !!spFcxIdFromUrl(url); // play.html?id=..._eng FanCode links
   document.getElementById('stream-player-title').textContent = label;
   sxCurrentStreamRawUrl = url; // used by sxCastCurrentStream() below
+  // FanCode's own play.html embed ships its own Cast SDK/button inside the
+  // iframe, so our Cast button would just be a confusing duplicate there —
+  // hidden for World-source FanCode plays, shown for everything else
+  // (regular channels, the India/CNP-TV HLS source, matches, etc).
+  sxSetCastButtonVisible(!isFcx);
   sxCastRefreshIfConnected(); // keep an already-connected TV in sync with the new channel
   const src = url.includes('#') ? url : url + '#' + encodeURIComponent(label);
   spUpdateInfobar(type, label);
@@ -11775,13 +11785,18 @@ function spSetFcxSource(which){
   if (which === 'india'){
     const fm = fcxFindById(st.id);
     if (!fm || !fm.india) return;
-    frame.srcdoc = spIndiaPlayerDoc(fm.india);
+    // Same StreamPulse (SX4K) player every other direct-HLS channel uses —
+    // not the old bare hls.js mini-page — so the India feed gets the full
+    // player chrome (VLC/copy, DRM detection, loading UI) too.
+    frame.srcdoc = sx4kDoc(fm.india, st.label);
     sxCurrentStreamRawUrl = fm.india; // Cast works with a direct HLS link
+    sxSetCastButtonVisible(true); // our own StreamPulse player — safe to offer Cast
   } else {
     frame.removeAttribute('srcdoc');
     const w = st.world;
     frame.src = w.includes('#') ? w : w + '#' + encodeURIComponent(st.label || 'Live Stream');
     sxCurrentStreamRawUrl = w;
+    sxSetCastButtonVisible(false); // FanCode's embed has its own Cast SDK
   }
   st.source = which;
   sxCastRefreshIfConnected(); // keep an already-connected TV in sync with the source switch
