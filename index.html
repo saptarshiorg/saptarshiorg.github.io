@@ -10616,7 +10616,7 @@ var HLS_CDNS = [
   'https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js',
   'https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js'
 ];
-var LOAD_TIMEOUT_MS = 12000;
+var LOAD_TIMEOUT_MS = 25000;
 
 var $ = function(id){ return document.getElementById(id); };
 var boot = window.SX4K_BOOT || null;
@@ -10627,7 +10627,7 @@ if (EMBED) document.body.classList.add('embed');
 var stage = $('stage'), video = $('v');
 var st = {
   src:'', title:'', hls:null, live:false, levels:[], mode:'best', started:false, drm:false,
-  retries:0, mediaRetries:0, lastRecoverT:0, stalls:[], startupQualityPending:false, loadTimer:0, idleT:0, toastT:0,
+  retries:0, mediaRetries:0, lastRecoverT:0, stalls:[], loadTimer:0, idleT:0, toastT:0,
   menuOpen:false, dmcaOpen:false, errShown:false, dragging:false, lastPointer:'mouse'
 };
 
@@ -10809,20 +10809,10 @@ function startNative(url){
 
 function startHls(url){
   var hls = new Hls({
-    enableWorker:true,
-    lowLatencyMode:true,
-    // Start with the first/lowest rendition so only one small media
-    // segment is needed before playback. The old code immediately selected
-    // the highest rendition, which can add several seconds on live feeds.
-    startLevel:0,
-    startFragPrefetch:true,
-    initialLiveManifestSize:1,
-    maxBufferLength:4,
-    maxMaxBufferLength:8,
-    backBufferLength:15,
-    liveSyncDurationCount:1,
-    liveMaxLatencyDurationCount:3,
-    capLevelToPlayerSize:true
+    enableWorker:true, lowLatencyMode:true,
+    maxBufferLength:8, maxMaxBufferLength:20, backBufferLength:30,
+    liveSyncDurationCount:1, liveMaxLatencyDurationCount:3,
+    capLevelToPlayerSize:false
   });
   st.hls = hls;
 
@@ -10831,12 +10821,7 @@ function startHls(url){
     st.levels = (d && d.levels) || [];
     var saved = lsGet('quality');
     st.mode = (saved === 'auto' && st.levels.length > 1) ? 'auto' : 'best';
-    // IMPORTANT: do not switch to the highest quality before first frame.
-    // Let hls.js fetch the startup fragment immediately, then apply the
-    // user's requested quality once playback has actually started.
-    st.startupQualityPending = true;
-    buildMenu();
-    tryPlay();
+    buildMenu(); applyQuality(); tryPlay();
   });
   hls.on(Hls.Events.LEVEL_LOADED, function(_, d){
     if (st.drm) return;
@@ -11250,13 +11235,6 @@ video.addEventListener('playing', function(){
     setClass('loading', false);
     $('loader').classList.add('hide');
     toParent({ type:'sx4k:state', state:'playing' });
-
-    // First frame is already playing. Only now move to the user's saved
-    // quality / best quality, avoiding a slow high-bitrate startup fetch.
-    if (st.startupQualityPending && st.hls && st.levels.length) {
-      st.startupQualityPending = false;
-      try { applyQuality(); } catch(e){}
-    }
   }
   renderPlay(); setQualityChip(); poke();
 });
@@ -11476,26 +11454,6 @@ window.addEventListener('message', function(e){
   }
 });
 
-// Hide the parent loader as soon as the actual embedded player starts.
-// Do not use a guessed delay: the player itself knows when media is playing.
-window.addEventListener('message', function(e){
-  var f = document.getElementById('stream-player-frame');
-  if (!f || e.source !== f.contentWindow) return;
-  var d = e.data || {};
-  if (d.type !== 'sx4k:state') return;
-  var loadingEl = document.getElementById('stream-player-loading');
-  var loadingBarEl = document.getElementById('sp-loading-bar');
-  if (d.state === 'playing') {
-    if (loadingBarEl) {
-      loadingBarEl.style.transition = 'width 180ms ease-out';
-      loadingBarEl.style.width = '100%';
-    }
-    if (loadingEl) loadingEl.classList.add('sp-loading-hide');
-  } else if (d.state === 'error') {
-    if (loadingEl) loadingEl.classList.add('sp-loading-hide');
-  }
-});
-
 // Full-screen popup offered for any raw HLS/DASH stream link (channel rows
 // and match servers alike) instead of loading it in our own iframe player.
 // Auto-attempts to hand the stream straight to VLC via the vlc:// scheme on
@@ -11678,7 +11636,7 @@ function spSetAdblockBannerText(){
 }
 spSetAdblockBannerText();
 
-const SP_LOADING_DURATION_MS = 0; // no artificial wait; hide only when the player reports ready
+const SP_LOADING_DURATION_MS = 250;
 const SP_LOADING_LABELS = {
   stream:  'Loading Stream',
   channel: 'Loading Channel',
@@ -11736,10 +11694,10 @@ function openStreamPlayer(url, name, type){
   const loadingBarEl = document.getElementById('sp-loading-bar');
   if (loadingBarEl) {
     loadingBarEl.style.transition = 'none';
-    loadingBarEl.style.width = '12%';
-    void loadingBarEl.offsetWidth;
-    loadingBarEl.style.transition = 'width 1200ms ease-out';
-    requestAnimationFrame(() => { loadingBarEl.style.width = '72%'; });
+    loadingBarEl.style.width = '0%';
+    void loadingBarEl.offsetWidth; // force reflow so the width change below actually animates
+    loadingBarEl.style.transition = `width ${SP_LOADING_DURATION_MS}ms linear`;
+    requestAnimationFrame(() => { loadingBarEl.style.width = '100%'; });
   }
   clearTimeout(window._spLoadingTimer);
   const spFrame = document.getElementById('stream-player-frame');
@@ -11756,11 +11714,9 @@ function openStreamPlayer(url, name, type){
   const mobileTabbar = document.getElementById('mobile-tabbar');
   if (mobileTabbar) mobileTabbar.style.display = 'none';
   spShowTopbar();
-  // No fixed 250 ms/other artificial hide timer. The embedded SX4K player
-  // sends sx4k:state=playing/error when the stream actually responds.
-  // This prevents the UI from pretending the stream is ready while it is
-  // still fetching, and removes timer-based delays.
-  window._spLoadingTimer = null;
+  window._spLoadingTimer = setTimeout(() => {
+    if (loadingEl) loadingEl.classList.add('sp-loading-hide');
+  }, SP_LOADING_DURATION_MS);
 }
 
 // ── Bottom info bar: logo + name + tag/LIVE, matched against whichever
