@@ -709,7 +709,7 @@ async function tryShaka(url){
   if(shakaPlayer){try{await shakaPlayer.destroy();}catch(e){}shakaPlayer=null;}
   shakaPlayer=new shaka.Player();
   await shakaPlayer.attach(vid);
-  shakaPlayer.configure({streaming:{bufferingGoal:10,rebufferingGoal:2,safeSeekOffset:5,lowLatencyMode:true}});
+  shakaPlayer.configure({streaming:{bufferingGoal:4,rebufferingGoal:1,safeSeekOffset:5,lowLatencyMode:true}});
   shakaPlayer.getNetworkingEngine().registerRequestFilter(function(t,req){req.allowCrossSiteCredentials=true;});
   await shakaPlayer.load(url);
 }
@@ -717,7 +717,7 @@ async function tryShaka(url){
 function armPlaybackWatchers(){
   var onP=function(){vid.removeEventListener('playing',onP);hideOverlay();};
   vid.addEventListener('playing',onP);
-  setTimeout(function(){if(!hasError) hideOverlay();},9000);
+  setTimeout(function(){if(!hasError) hideOverlay();},6000);
 }
 
 function tryNativeCascade(all, lastShakaErr){
