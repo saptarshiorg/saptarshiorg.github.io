@@ -7,7 +7,8 @@
 <meta property="og:image:height" content="675">
 
   <!-- Tells Google this is the primary, master version of the URL -->
-<link rel="canonical" href="saptarshiorg.github.io" />
+<link rel="canonical" href="https://saptarshiorg.github.io/" />
+    <link rel="alternate" href="https://evstreams.pages.dev/" />
 
 <!-- Explicitly commands Google to index the page and pass ranking power -->
 <meta name="robots" content="index, follow" />
@@ -10796,9 +10797,9 @@ function startNative(url){
 
 function startHls(url){
   var hls = new Hls({
-    enableWorker:true, lowLatencyMode:false,
-    maxBufferLength:120, maxMaxBufferLength:300, backBufferLength:90,
-    liveSyncDurationCount:3, liveMaxLatencyDurationCount:10,
+    enableWorker:true, lowLatencyMode:true,
+    maxBufferLength:8, maxMaxBufferLength:20, backBufferLength:30,
+    liveSyncDurationCount:1, liveMaxLatencyDurationCount:3,
     capLevelToPlayerSize:false
   });
   st.hls = hls;
@@ -11547,7 +11548,7 @@ function spSetAdblockBannerText(){
 }
 spSetAdblockBannerText();
 
-const SP_LOADING_DURATION_MS = 1400;
+const SP_LOADING_DURATION_MS = 250;
 const SP_LOADING_LABELS = {
   stream:  'Loading Stream',
   channel: 'Loading Channel',
