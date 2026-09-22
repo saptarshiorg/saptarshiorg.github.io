@@ -182,7 +182,9 @@ body{width:100%;height:100%;min-height:100dvh;background:var(--bg);overflow:hidd
   color:#fff;background:var(--glass);border:1px solid var(--line);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);white-space:nowrap;}
 .tchip[hidden]{display:none;}
 .tchip .dot{width:7px;height:7px;border-radius:50%;background:var(--mg);box-shadow:0 0 8px var(--mg);animation:lblink 1.6s infinite;}
-google-cast-launcher{--connected-color:var(--mg);--disconnected-color:#fff;width:24px;height:24px;flex-shrink:0;cursor:pointer;}
+google-cast-launcher{--connected-color:var(--mg);--disconnected-color:#fff;}
+#castbtn{width:38px;height:38px;border-radius:10px;flex-shrink:0;cursor:pointer;display:flex!important;align-items:center;justify-content:center;transition:background .15s;}
+#castbtn:hover{background:rgba(255,255,255,.13);}
 
 /* ── Small screens ───────────────────────────────────────────────── */
 @media (max-width:480px){
@@ -225,7 +227,6 @@ google-cast-launcher{--connected-color:var(--mg);--disconnected-color:#fff;width
   <video id="vid" autoplay playsinline preload="metadata"></video>
 
   <div id="top">
-    <google-cast-launcher id="castbtn" title="Cast to TV"></google-cast-launcher>
     <span class="credit-tag"></span>
     <span id="toptitle"></span>
     <span class="tchip" id="topquality" hidden></span>
@@ -312,6 +313,7 @@ google-cast-launcher{--connected-color:var(--mg);--disconnected-color:#fff;width
             <rect x="3" y="5" width="18" height="14" rx="2"/><rect x="12.5" y="11.5" width="7" height="5" rx="1.5" fill="currentColor" stroke="none"/>
           </svg>
         </button>
+        <google-cast-launcher id="castbtn" title="Cast to TV"></google-cast-launcher>
         <button class="cb" id="bfs" title="Fullscreen" aria-label="Toggle fullscreen">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" id="fsico">
             <path d="M9 4H4v5"/><path d="M15 4h5v5"/><path d="M9 20H4v-5"/><path d="M15 20h5v-5"/>
