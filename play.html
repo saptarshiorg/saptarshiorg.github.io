@@ -14,7 +14,6 @@
 <link rel="preconnect" href="https://api.fontshare.com">
 <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700,900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/shaka-player.ui.min.js"></script>
-<script src="https://pl31053757.profitableratecpmnetwork.com/ac/7a/82/ac7a8279de9743729ea0cb7ecd52684b.js"></script>
 <style>
 /* ── EV Streams player — minimal liquid glass ─────────────────────────
    One floating glass bar carries every control; the picture stays clear.
@@ -48,9 +47,9 @@ body{width:100%;height:100%;min-height:100dvh;background:var(--bg);overflow:hidd
   position:relative;
   background:var(--glass);
   border:1px solid var(--line);
-  -webkit-backdrop-filter:blur(18px) saturate(1.4);
-          backdrop-filter:blur(18px) saturate(1.4);
-  box-shadow:0 10px 40px rgba(0,0,0,.45);
+  -webkit-backdrop-filter:blur(24px) saturate(1.6);
+          backdrop-filter:blur(24px) saturate(1.6);
+  box-shadow:0 10px 40px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06);
 }
 .glass.strong{background:var(--glass-strong);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);}
 .glass > *{position:relative;}
@@ -113,11 +112,11 @@ body{width:100%;height:100%;min-height:100dvh;background:var(--bg);overflow:hidd
 /* ── Control bar ─────────────────────────────────────────────────── */
 #ctrls{position:absolute;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;
   padding:0 12px max(14px,env(safe-area-inset-bottom));pointer-events:none;}
-#bar{pointer-events:auto;width:min(880px,94%);border-radius:16px;padding:8px 12px 6px;
+#bar{pointer-events:auto;width:min(620px,92%);border-radius:20px;padding:7px 10px 5px;
   transition:opacity .3s,transform .3s;}
 /* Fade the glass itself, never a parent — a fading ancestor would switch the blur off mid-transition. */
 #ctrls.gone #bar{opacity:0;transform:translateY(10px);pointer-events:none;}
-#crow{display:flex;align-items:center;gap:2px;}
+#crow{display:flex;align-items:center;gap:1px;}
 .csp{flex:1;min-width:8px;}
 #ctrls:not(.is-live) .csp{display:none;}
 
@@ -151,14 +150,11 @@ body{width:100%;height:100%;min-height:100dvh;background:var(--bg);overflow:hidd
   box-shadow:0 0 8px rgba(0,0,0,.5);transition:transform .15s;}
 #prog:hover .pth,#prog.drag .pth{transform:translate(-50%,-50%) scale(1);}
 
-/* ── Quality ─────────────────────────────────────────────────────── */
-#bq{width:auto;height:32px;padding:0 10px 0 13px;gap:6px;margin-right:2px;border-radius:999px;
-  background:rgba(255,255,255,.1);border:1px solid var(--line);}
-#bq:hover{background:rgba(255,255,255,.17);}
-#bq.open{background:rgba(255,255,255,.22);}
-#qlbl{font-size:11px;font-weight:800;letter-spacing:.03em;}
-#bq .qchev{width:9px;height:9px;flex-shrink:0;transition:transform .2s;}
-#bq.open .qchev{transform:rotate(180deg);}
+/* ── Quality (settings gear) ─────────────────────────────────────── */
+#bq.open{background:rgba(255,255,255,.2);}
+#bq svg{transition:transform .25s var(--ease);}
+#bq.open svg{transform:rotate(45deg);}
+#qlbl{display:none;}
 #qmenu{position:absolute;z-index:30;min-width:170px;max-height:min(58vh,380px);overflow:auto;padding:6px;border-radius:14px;display:none;pointer-events:auto;
   background:var(--glass-strong);border:1px solid var(--line);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);box-shadow:0 14px 44px rgba(0,0,0,.55);}
 #qmenu.open{display:block;animation:qpop .2s;}
@@ -193,7 +189,6 @@ body{width:100%;height:100%;min-height:100dvh;background:var(--bg);overflow:hidd
   .cb{width:36px;height:36px;}
   .cb svg{width:18px;height:18px;}
   .live-pill{height:28px;padding:0 10px;font-size:10.5px;margin-left:2px;}
-  #bq{height:30px;padding:0 8px 0 11px;}
   .bpbtn{width:64px;height:64px;}
   #top{height:100px;}
   #toptitle{display:none;}
@@ -214,7 +209,6 @@ body{width:100%;height:100%;min-height:100dvh;background:var(--bg);overflow:hidd
 }
 @media (max-width:380px){
   .cb{width:34px;height:34px;}
-  #bq{padding:0 7px 0 10px;}
 }
 @media (prefers-reduced-motion:reduce){
   .cb,.live-pill,.bpbtn,.qopt,.ec .elink,.pth,#bar{transition:none;}
@@ -297,9 +291,12 @@ body{width:100%;height:100%;min-height:100dvh;background:var(--bg);overflow:hidd
             <div class="pth" id="pth"></div>
           </div>
         </div>
-        <button class="cb" id="bq" title="Quality" aria-label="Change video quality" aria-haspopup="true" aria-expanded="false" style="display:none">
-          <span id="qlbl">–</span>
-          <svg class="qchev" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="2,3 5,7 8,3"/></svg>
+        <button class="cb" id="bq" title="Settings" aria-label="Video quality settings" aria-haspopup="true" aria-expanded="false" style="display:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          <span id="qlbl" hidden>–</span>
         </button>
         <button class="cb" id="bfill" title="Fill / Fit" aria-label="Change video fit mode">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" id="fillico">
