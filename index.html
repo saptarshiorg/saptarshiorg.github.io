@@ -10348,7 +10348,7 @@ function closeAdminChatDiscordPopup(){
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#000000">
-<title>SX SPORTS - 4K UHD Live Player</title>
+<title>EV StreamPulse - 4K UHD Live Player</title>
 <script id="sx4k-boot">/*__SX4K_BOOT__*/<\/script>
 <style>
 /* SX SPORTS 4K PLAYER
@@ -10528,7 +10528,7 @@ body.embed #top{justify-content:flex-end}
   <div class="scrim" id="scrim-b"></div>
 
   <div id="top">
-    <span id="brand">SX SPORTS</span>
+    <span id="brand">EV StreamPulse</span>
     <span id="title"></span>
     <span class="chip" id="chip-q" hidden></span>
     <span class="chip" id="chip-live" hidden><i class="dot"></i>LIVE</span>
@@ -10582,14 +10582,14 @@ body.embed #top{justify-content:flex-end}
   <div id="dmca-modal" role="dialog" aria-modal="true" aria-label="DMCA and copyright notice">
     <div id="dmca-card">
       <button id="dmca-x" type="button" aria-label="Close">&times;</button>
-      <h2>SX SPORTS</h2>
+      <h2>EV StreamPulse</h2>
       <h3>OFFICIAL DMCA &amp; COPYRIGHT DISCLAIMER</h3>
       <p><strong>DMCA Notice</strong></p>
-      <p>SX SPORTS does not host, upload, store, transmit, or broadcast any live streams, videos, or media files on its own servers.</p>
+      <p>EV StreamPulse does not host, upload, store, transmit, or broadcast any live streams, videos, or media files on its own servers.</p>
       <p>We only provide links to publicly available streams and media content that are hosted by independent third-party websites.</p>
-      <p>All trademarks, copyrights, logos, streaming rights, and broadcasting rights belong to their respective owners. SX SPORTS has no control over, and assumes no responsibility for, the content hosted on external websites.</p>
+      <p>All trademarks, copyrights, logos, streaming rights, and broadcasting rights belong to their respective owners. EV StreamPulse has no control over, and assumes no responsibility for, the content hosted on external websites.</p>
       <p>If you are a copyright owner or authorized representative and believe that any content infringes your rights, please contact the original third-party hosting provider directly, as they are solely responsible for the hosted content.</p>
-      <p class="foot">&copy; 2026 SX SPORTS &bull; All Rights Reserved</p>
+      <p class="foot">&copy; 2026 EV StreamPulse &bull; All Rights Reserved</p>
     </div>
   </div>
 </div>
@@ -10764,7 +10764,7 @@ function load(url, title){
   clearWait();
   st.started = false; st.drm = false; st.retries = 0; st.mediaRetries = 0; st.lastRecoverT = 0; st.stalls = [];
   $('title').textContent = st.title;
-  if (st.title) document.title = st.title + ' - SX SPORTS 4K';
+  if (st.title) document.title = st.title + ' - EV StreamPulse';
   setMedia();
   $('chip-q').hidden = true; $('chip-live').hidden = true;
   $('golive').hidden = true; $('time').textContent = '';
@@ -11218,7 +11218,7 @@ setInterval(function(){ if (st.started) renderTime(); }, 1000);
 function setMedia(){
   if (!('mediaSession' in navigator)) return;
   try {
-    navigator.mediaSession.metadata = new MediaMetadata({ title: st.title || 'Live Stream', artist: 'SX SPORTS' });
+    navigator.mediaSession.metadata = new MediaMetadata({ title: st.title || 'Live Stream', artist: 'EV StreamPulse' });
     navigator.mediaSession.setActionHandler('play', function(){ video.play(); });
     navigator.mediaSession.setActionHandler('pause', function(){ video.pause(); });
   } catch(e){}
@@ -11527,7 +11527,7 @@ function openStreamPlayer(url, name, type){
   spUpdateInfobar(type, label);
   if (use4k) {
     const mEl = document.getElementById('sp-info-meta');
-    if (mEl) mEl.insertAdjacentHTML('beforeend', '<span class="sp-info-4k">SX 4K PLAYER</span>');
+    if (mEl) mEl.insertAdjacentHTML('beforeend', '<span class="sp-info-4k">EV STREAMPULSE</span>');
   }
   spInitFcxSwitch(url, label);
   populateStreamPlayerRail(type, label);
