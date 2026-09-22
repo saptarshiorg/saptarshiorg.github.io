@@ -7,7 +7,7 @@
 <meta property="og:image:height" content="675">
 
   <!-- Tells Google this is the primary, master version of the URL -->
-<link rel="canonical" href="https://saptarshiorg.github.io/" />
+<link rel="canonical" href="saptarshiorg.github.io" />
 
 <!-- Explicitly commands Google to index the page and pass ranking power -->
 <meta name="robots" content="index, follow" />
@@ -10190,15 +10190,6 @@ function closeAdminChatDiscordPopup(){
 #stream-player-cast svg{ width: 17px; height: 17px; flex-shrink: 0; display: block; }
 #stream-player-cast.sp-cast-active{ background: #E0155F; color: #101010; }
 #stream-player-cast.sp-cast-active:hover{ background: #FF5FA0; }
-#sx-cast-status{
-  display:none; align-items:center; gap:6px; max-width:42vw; margin-left:8px; padding:6px 10px;
-  border-radius:999px; background:rgba(224,21,95,.16); border:1px solid rgba(255,95,160,.28);
-  color:#fff; font-family:var(--cu-font,inherit); font-size:11px; font-weight:800;
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-}
-#sx-cast-status.show{ display:flex; }
-#sx-cast-status-dot{ width:7px; height:7px; border-radius:50%; background:#FF5FA0; flex:0 0 auto; box-shadow:0 0 8px rgba(255,95,160,.8); }
-#sx-cast-status-name{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 #sx-cast-toast{
   position: fixed; left: 50%; bottom: 32px; transform: translateX(-50%) translateY(20px);
   background: rgba(20,20,20,0.95); color: #fff; font-family: var(--cu-font,inherit);
@@ -10301,10 +10292,6 @@ function closeAdminChatDiscordPopup(){
         Back
       </button>
       <span id="stream-player-title">Live Stream</span>
-      <div id="sx-cast-status" aria-live="polite"><span id="sx-cast-status-dot"></span><span>Casting to</span><span id="sx-cast-status-name">TV</span></div>
-      <button id="stream-player-cast" onclick="sxCastCurrentStream()" title="Cast to TV" aria-label="Cast to TV">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M1 18v3h3c0-1.66-1.34-3-3-3zm0-4v2c2.76 0 5 2.24 5 5h2c0-3.87-3.13-7-7-7zm18-7H5v1.63c3.96 1.28 7.09 4.41 8.37 8.37H19V7zM1 10v2c4.97 0 9 4.03 9 9h2c0-6.08-4.93-11-11-11zm20-7H3c-1.1 0-2 .9-2 2v3h2V5h18v14h-7v2h7c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
-      </button>
     </div>
     <div id="stream-player-body">
       <div id="stream-player-frame-wrap">
@@ -10616,9 +10603,7 @@ var HLS_CDNS = [
   'https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js',
   'https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js'
 ];
-// EV StreamPulse startup: fail reasonably quickly instead of leaving a
-// dead/stalled source behind for 25s. This is only used by the HLS player.
-var LOAD_TIMEOUT_MS = 12000;
+var LOAD_TIMEOUT_MS = 25000;
 
 var $ = function(id){ return document.getElementById(id); };
 var boot = window.SX4K_BOOT || null;
@@ -10774,10 +10759,7 @@ function ensureHls(cb){
 function load(url, title){
   teardown();
   hideError();
-  st.src = sxHttpsFirstUrl(String(url || '').trim());
-  var sxCandidates = sxStreamCandidates(String(url || '').trim());
-  st.fallbackSrc = sxCandidates.length > 1 ? sxCandidates[1] : '';
-  st.altTried = false;
+  st.src = String(url || '').trim();
   st.title = title || '';
   clearWait();
   st.started = false; st.drm = false; st.retries = 0; st.mediaRetries = 0; st.lastRecoverT = 0; st.stalls = [];
@@ -10810,39 +10792,20 @@ function startNative(url){
 }
 
 function startHls(url){
-  // Start fetching the manifest/first segments immediately at a startup
-  // level. Do NOT force the highest rendition before first playback: that
-  // was causing EV StreamPulse to wait several seconds while a large/high
-  // bitrate variant was selected. Once playback has started, the player can
-  // move to the user's saved quality/auto mode.
   var hls = new Hls({
-    enableWorker:true,
-    lowLatencyMode:true,
-    startLevel:0,
-    autoStartLoad:true,
-    maxBufferLength:4,
-    maxMaxBufferLength:10,
-    backBufferLength:15,
-    liveSyncDurationCount:1,
-    liveMaxLatencyDurationCount:2,
-    maxStarvationDelay:1,
-    maxLoadingDelay:1,
+    enableWorker:true, lowLatencyMode:false,
+    maxBufferLength:120, maxMaxBufferLength:300, backBufferLength:90,
+    liveSyncDurationCount:3, liveMaxLatencyDurationCount:10,
     capLevelToPlayerSize:false
   });
   st.hls = hls;
-  st.startupQualityPending = true;
 
-  hls.on(Hls.Events.MANIFEST_LOADED, function(_, d){
-    if (manifestIsDrm(d)) drmDetected();
-  });
+  hls.on(Hls.Events.MANIFEST_LOADED, function(_, d){ if (manifestIsDrm(d)) drmDetected(); });
   hls.on(Hls.Events.MANIFEST_PARSED, function(_, d){
     st.levels = (d && d.levels) || [];
     var saved = lsGet('quality');
-    // Always let rendition 0 start the stream quickly. The requested
-    // quality is applied after the first real playback event below.
     st.mode = (saved === 'auto' && st.levels.length > 1) ? 'auto' : 'best';
-    buildMenu();
-    tryPlay();
+    buildMenu(); applyQuality(); tryPlay();
   });
   hls.on(Hls.Events.LEVEL_LOADED, function(_, d){
     if (st.drm) return;
@@ -10884,17 +10847,6 @@ function onHlsError(_, data){
   if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
     var code = data.response && data.response.code;
     if (!st.started) {
-      // If HTTPS failed before playback began, immediately try the HTTP
-      // equivalent once. HTTPS remains the first choice; HTTP is only a
-      // compatibility fallback for feeds that do not publish a secure URL.
-      if (!st.altTried && st.fallbackSrc && st.fallbackSrc !== st.src) {
-        st.altTried = true;
-        try { if (hls) hls.destroy(); } catch(e){}
-        st.hls = null;
-        st.src = st.fallbackSrc;
-        toast('Trying HTTP fallback…');
-        return startHls(st.src);
-      }
       if (!code) {
         if (pageProto() === 'https:' && /^http:/i.test(st.src)) return showError('mixed');
         return showError('cors');
@@ -11256,17 +11208,6 @@ video.addEventListener('playing', function(){
     setClass('loading', false);
     $('loader').classList.add('hide');
     toParent({ type:'sx4k:state', state:'playing' });
-
-    // First frame is already playing. Only now switch away from the
-    // low startup rendition, preventing high-bitrate selection from
-    // delaying startup. Explicit saved quality is still respected.
-    if (st.hls && st.startupQualityPending) {
-      st.startupQualityPending = false;
-      setTimeout(function(){
-        if (!st.hls || st.drm) return;
-        applyQuality();
-      }, 0);
-    }
   }
   renderPlay(); setQualityChip(); poke();
 });
@@ -11330,55 +11271,18 @@ window['__onGCastApiAvailable'] = function(isAvailable){
       cast.framework.CastContextEventType.CAST_STATE_CHANGED,
       sxUpdateCastButtonState
     );
-    // Also react to session changes so an already-connected TV picks up a
-    // freshly-loaded stream (see sxCastLoadUrl below) and the button state
-    // stays correct the moment a session starts/ends, not just on state ticks.
-    sxCastContext.addEventListener(
-      cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
-      sxUpdateCastButtonState
-    );
     sxUpdateCastButtonState();
   } catch (e) {
     console.warn('Cast init failed:', e);
   }
 };
 
-// Safety net: the Cast sender library can call __onGCastApiAvailable the
-// instant it finishes loading, which — if that happens before this inline
-// script has run and defined the callback above — would silently drop the
-// call. If the framework object already exists by the time we get here,
-// fire the init manually so Cast still comes up.
-(function sxCastInitFallback(){
-  if (window.chrome && chrome.cast && window.cast && cast.framework && !sxCastAvailable) {
-    window['__onGCastApiAvailable'](true);
-  }
-})();
-
-function sxGetCastDeviceName(){
-  try {
-    var session = sxCastContext && sxCastContext.getCurrentSession && sxCastContext.getCurrentSession();
-    var device = session && session.getCastDevice && session.getCastDevice();
-    return (device && (device.friendlyName || device.displayName || device.name)) || 'TV';
-  } catch(e){ return 'TV'; }
-}
-function sxUpdateCastStatus(connected){
-  var el = document.getElementById('sx-cast-status');
-  var name = document.getElementById('sx-cast-status-name');
-  if (!el) return;
-  if (connected){
-    if (name) name.textContent = sxGetCastDeviceName();
-    el.classList.add('show');
-  } else {
-    el.classList.remove('show');
-  }
-}
 function sxUpdateCastButtonState(){
   var btn = document.getElementById('stream-player-cast');
   if (!btn || !sxCastContext) return;
   var connected = sxCastContext.getCastState() === cast.framework.CastState.CONNECTED;
   btn.classList.toggle('sp-cast-active', connected);
-  btn.title = connected ? ('Casting to ' + sxGetCastDeviceName() + ' — tap to manage') : 'Cast to TV';
-  sxUpdateCastStatus(connected);
+  btn.title = connected ? 'Casting to TV — tap to manage' : 'Cast to TV';
 }
 
 function sxIsHlsUrl(u){
@@ -11390,31 +11294,6 @@ function sxIsHlsUrl(u){
   } catch (e) {
     return /\.m3u8(\?|#|$)/i.test(u);
   }
-}
-
-// Prefer HTTPS stream URLs, but keep an HTTP fallback for sources that only
-// publish the stream over HTTP. This is intentionally candidate-based: the
-// browser/Cast receiver may reject HTTP because of mixed-content or receiver
-// security rules, so we always try HTTPS first and only then try HTTP.
-function sxStreamCandidates(raw){
-  raw = String(raw || '').trim();
-  if (!raw) return [];
-  var out = [raw];
-  try {
-    var u = new URL(raw);
-    var https = new URL(u.href); https.protocol = 'https:';
-    var http  = new URL(u.href); http.protocol = 'http:';
-    out = [https.href, http.href];
-  } catch (e) {
-    if (/^http:\/\//i.test(raw)) out = [raw.replace(/^http:\/\//i, 'https://'), raw];
-    else if (/^https:\/\//i.test(raw)) out = [raw, raw.replace(/^https:\/\//i, 'http://')];
-  }
-  return out.filter(function(v,i,a){ return v && a.indexOf(v) === i; });
-}
-
-function sxHttpsFirstUrl(raw){
-  var c = sxStreamCandidates(raw);
-  return c[0] || String(raw || '');
 }
 
 // Broader "is this a direct, playable stream link rather than a page/embed"
@@ -11570,44 +11449,6 @@ function sxCloseCastHelp(){
   if (ov) ov.classList.remove('open');
 }
 
-// Builds a LoadRequest for a direct HLS (.m3u8) URL and sends it to a Cast
-// session. Shared by the manual Cast button (sxCastCurrentStream) and the
-// auto-refresh that runs when the viewer switches channel/match while
-// already connected to a TV (sxCastRefreshIfConnected).
-function sxCastLoadUrl(url, title, session, announce){
-  var candidates = sxStreamCandidates(url);
-  if (!candidates.length){
-    if (announce) sxCastToast('No stream URL available.');
-    return;
-  }
-
-  // Always try HTTPS first. If the receiver rejects it, try the HTTP
-  // equivalent when one exists. This helps sources that inconsistently
-  // expose secure/insecure variants while preserving the secure preference.
-  function tryAt(i){
-    var candidate = candidates[i];
-    var mediaInfo = new chrome.cast.media.MediaInfo(candidate, 'application/x-mpegurl');
-    mediaInfo.streamType = chrome.cast.media.StreamType.LIVE;
-    mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
-    mediaInfo.metadata.title = title || 'Live Stream';
-    var request = new chrome.cast.media.LoadRequest(mediaInfo);
-    request.autoplay = true;
-    session.loadMedia(request).then(
-      function(){
-        sxCurrentStreamRawUrl = candidate;
-        if (announce) sxCastToast('Casting to ' + sxGetCastDeviceName() + '…');
-        sxUpdateCastButtonState();
-      },
-      function(err){
-        if (i + 1 < candidates.length) tryAt(i + 1);
-        else if (announce) sxCastToast('Cast failed — this stream is not playable on the TV.');
-      }
-    );
-  }
-  tryAt(0);
-}
-
-
 function sxCastCurrentStream(){
   if (!sxCastAvailable || !sxCastContext){
     sxCastToast('Cast needs Chrome on an https:// page \u2014 open this site in Chrome to cast.');
@@ -11622,11 +11463,18 @@ function sxCastCurrentStream(){
     sxShowCastHelp();
     return;
   }
-  var title = document.getElementById('stream-player-title').textContent || 'Live Stream';
+  var mediaInfo = new chrome.cast.media.MediaInfo(url, 'application/x-mpegurl');
+  mediaInfo.streamType = chrome.cast.media.StreamType.LIVE;
+  mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
+  mediaInfo.metadata.title = document.getElementById('stream-player-title').textContent || 'Live Stream';
+  var request = new chrome.cast.media.LoadRequest(mediaInfo);
 
   function loadOnSession(session){
     if (!session) { sxCastToast('Could not connect to a Cast device.'); return; }
-    sxCastLoadUrl(url, title, session, true);
+    session.loadMedia(request).then(
+      function(){ sxCastToast('Casting to TV\u2026'); sxUpdateCastButtonState(); },
+      function(err){ sxCastToast('Cast failed \u2014 this stream may be blocked for TV playback.'); }
+    );
   }
   var session = sxCastContext.getCurrentSession();
   if (session){
@@ -11637,21 +11485,6 @@ function sxCastCurrentStream(){
       function(err){ if (err !== 'cancel') sxCastToast('Could not connect to a Cast device.'); }
     );
   }
-}
-
-// Called whenever the player switches to a new channel/match/source. If the
-// viewer is already casting to a TV and the new stream is a direct HLS
-// link, push it to the active session automatically instead of leaving the
-// TV stuck on the previous channel until they re-tap Cast.
-function sxCastRefreshIfConnected(){
-  if (!sxCastAvailable || !sxCastContext) return;
-  if (sxCastContext.getCastState() !== cast.framework.CastState.CONNECTED) return;
-  var url = sxCurrentStreamRawUrl;
-  if (!url || !sxIsHlsUrl(url)) return;
-  var session = sxCastContext.getCurrentSession();
-  if (!session) return;
-  var title = document.getElementById('stream-player-title').textContent || 'Live Stream';
-  sxCastLoadUrl(url, title, session, false);
 }
 
 // ── Ad-safety banner copy: mobile always points to Brave, desktop
@@ -11668,7 +11501,7 @@ function spSetAdblockBannerText(){
 }
 spSetAdblockBannerText();
 
-const SP_LOADING_DURATION_MS = 250;
+const SP_LOADING_DURATION_MS = 400;
 const SP_LOADING_LABELS = {
   stream:  'Loading Stream',
   channel: 'Loading Channel',
@@ -11676,11 +11509,6 @@ const SP_LOADING_LABELS = {
   tv:      'Loading TV Shows',
   match:   'Loading Live Match'
 };
-function sxSetCastButtonVisible(visible){
-  var btn = document.getElementById('stream-player-cast');
-  if (btn) btn.style.display = visible ? '' : 'none';
-}
-
 function openStreamPlayer(url, name, type){
   if (!url || url === '#') return;
   // Match cards, hero slides, and Live TV all funnel every stream link
@@ -11695,13 +11523,7 @@ function openStreamPlayer(url, name, type){
   const use4k = sxIsHlsUrl(url); // clear .m3u8 from the sheets plays in the SX 4K player
   const isFcx = !!spFcxIdFromUrl(url); // play.html?id=..._eng FanCode links
   document.getElementById('stream-player-title').textContent = label;
-  sxCurrentStreamRawUrl = sxHttpsFirstUrl(url); // prefer HTTPS; player/cast can fall back to HTTP
-  // FanCode's own play.html embed ships its own Cast SDK/button inside the
-  // iframe, so our Cast button would just be a confusing duplicate there —
-  // hidden for World-source FanCode plays, shown for everything else
-  // (regular channels, the India/CNP-TV HLS source, matches, etc).
-  sxSetCastButtonVisible(!isFcx);
-  sxCastRefreshIfConnected(); // keep an already-connected TV in sync with the new channel
+  sxCurrentStreamRawUrl = url; // used by sxCastCurrentStream() below
   const src = url.includes('#') ? url : url + '#' + encodeURIComponent(label);
   spUpdateInfobar(type, label);
   if (use4k || isFcx) {
@@ -11906,21 +11728,15 @@ function spSetFcxSource(which){
   if (which === 'india'){
     const fm = fcxFindById(st.id);
     if (!fm || !fm.india) return;
-    // Same StreamPulse (SX4K) player every other direct-HLS channel uses —
-    // not the old bare hls.js mini-page — so the India feed gets the full
-    // player chrome (VLC/copy, DRM detection, loading UI) too.
-    frame.srcdoc = sx4kDoc(fm.india, st.label);
+    frame.srcdoc = spIndiaPlayerDoc(fm.india);
     sxCurrentStreamRawUrl = fm.india; // Cast works with a direct HLS link
-    sxSetCastButtonVisible(true); // our own StreamPulse player — safe to offer Cast
   } else {
     frame.removeAttribute('srcdoc');
     const w = st.world;
     frame.src = w.includes('#') ? w : w + '#' + encodeURIComponent(st.label || 'Live Stream');
     sxCurrentStreamRawUrl = w;
-    sxSetCastButtonVisible(false); // FanCode's embed has its own Cast SDK
   }
   st.source = which;
-  sxCastRefreshIfConnected(); // keep an already-connected TV in sync with the source switch
   spRenderFcxSwitch();
 }
 
