@@ -10190,6 +10190,15 @@ function closeAdminChatDiscordPopup(){
 #stream-player-cast svg{ width: 17px; height: 17px; flex-shrink: 0; display: block; }
 #stream-player-cast.sp-cast-active{ background: #E0155F; color: #101010; }
 #stream-player-cast.sp-cast-active:hover{ background: #FF5FA0; }
+#sx-cast-status{
+  display:none; align-items:center; gap:6px; max-width:42vw; margin-left:8px; padding:6px 10px;
+  border-radius:999px; background:rgba(224,21,95,.16); border:1px solid rgba(255,95,160,.28);
+  color:#fff; font-family:var(--cu-font,inherit); font-size:11px; font-weight:800;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+#sx-cast-status.show{ display:flex; }
+#sx-cast-status-dot{ width:7px; height:7px; border-radius:50%; background:#FF5FA0; flex:0 0 auto; box-shadow:0 0 8px rgba(255,95,160,.8); }
+#sx-cast-status-name{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 #sx-cast-toast{
   position: fixed; left: 50%; bottom: 32px; transform: translateX(-50%) translateY(20px);
   background: rgba(20,20,20,0.95); color: #fff; font-family: var(--cu-font,inherit);
@@ -10292,6 +10301,7 @@ function closeAdminChatDiscordPopup(){
         Back
       </button>
       <span id="stream-player-title">Live Stream</span>
+      <div id="sx-cast-status" aria-live="polite"><span id="sx-cast-status-dot"></span><span>Casting to</span><span id="sx-cast-status-name">TV</span></div>
       <button id="stream-player-cast" onclick="sxCastCurrentStream()" title="Cast to TV" aria-label="Cast to TV">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M1 18v3h3c0-1.66-1.34-3-3-3zm0-4v2c2.76 0 5 2.24 5 5h2c0-3.87-3.13-7-7-7zm18-7H5v1.63c3.96 1.28 7.09 4.41 8.37 8.37H19V7zM1 10v2c4.97 0 9 4.03 9 9h2c0-6.08-4.93-11-11-11zm20-7H3c-1.1 0-2 .9-2 2v3h2V5h18v14h-7v2h7c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
       </button>
@@ -10606,7 +10616,7 @@ var HLS_CDNS = [
   'https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js',
   'https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js'
 ];
-var LOAD_TIMEOUT_MS = 25000;
+var LOAD_TIMEOUT_MS = 12000;
 
 var $ = function(id){ return document.getElementById(id); };
 var boot = window.SX4K_BOOT || null;
@@ -10617,7 +10627,7 @@ if (EMBED) document.body.classList.add('embed');
 var stage = $('stage'), video = $('v');
 var st = {
   src:'', title:'', hls:null, live:false, levels:[], mode:'best', started:false, drm:false,
-  retries:0, mediaRetries:0, lastRecoverT:0, stalls:[], loadTimer:0, idleT:0, toastT:0,
+  retries:0, mediaRetries:0, lastRecoverT:0, stalls:[], startupQualityPending:false, loadTimer:0, idleT:0, toastT:0,
   menuOpen:false, dmcaOpen:false, errShown:false, dragging:false, lastPointer:'mouse'
 };
 
@@ -10799,10 +10809,20 @@ function startNative(url){
 
 function startHls(url){
   var hls = new Hls({
-    enableWorker:true, lowLatencyMode:true,
-    maxBufferLength:8, maxMaxBufferLength:20, backBufferLength:30,
-    liveSyncDurationCount:1, liveMaxLatencyDurationCount:3,
-    capLevelToPlayerSize:false
+    enableWorker:true,
+    lowLatencyMode:true,
+    // Start with the first/lowest rendition so only one small media
+    // segment is needed before playback. The old code immediately selected
+    // the highest rendition, which can add several seconds on live feeds.
+    startLevel:0,
+    startFragPrefetch:true,
+    initialLiveManifestSize:1,
+    maxBufferLength:4,
+    maxMaxBufferLength:8,
+    backBufferLength:15,
+    liveSyncDurationCount:1,
+    liveMaxLatencyDurationCount:3,
+    capLevelToPlayerSize:true
   });
   st.hls = hls;
 
@@ -10811,7 +10831,12 @@ function startHls(url){
     st.levels = (d && d.levels) || [];
     var saved = lsGet('quality');
     st.mode = (saved === 'auto' && st.levels.length > 1) ? 'auto' : 'best';
-    buildMenu(); applyQuality(); tryPlay();
+    // IMPORTANT: do not switch to the highest quality before first frame.
+    // Let hls.js fetch the startup fragment immediately, then apply the
+    // user's requested quality once playback has actually started.
+    st.startupQualityPending = true;
+    buildMenu();
+    tryPlay();
   });
   hls.on(Hls.Events.LEVEL_LOADED, function(_, d){
     if (st.drm) return;
@@ -11225,6 +11250,13 @@ video.addEventListener('playing', function(){
     setClass('loading', false);
     $('loader').classList.add('hide');
     toParent({ type:'sx4k:state', state:'playing' });
+
+    // First frame is already playing. Only now move to the user's saved
+    // quality / best quality, avoiding a slow high-bitrate startup fetch.
+    if (st.startupQualityPending && st.hls && st.levels.length) {
+      st.startupQualityPending = false;
+      try { applyQuality(); } catch(e){}
+    }
   }
   renderPlay(); setQualityChip(); poke();
 });
@@ -11312,12 +11344,31 @@ window['__onGCastApiAvailable'] = function(isAvailable){
   }
 })();
 
+function sxGetCastDeviceName(){
+  try {
+    var session = sxCastContext && sxCastContext.getCurrentSession && sxCastContext.getCurrentSession();
+    var device = session && session.getCastDevice && session.getCastDevice();
+    return (device && (device.friendlyName || device.displayName || device.name)) || 'TV';
+  } catch(e){ return 'TV'; }
+}
+function sxUpdateCastStatus(connected){
+  var el = document.getElementById('sx-cast-status');
+  var name = document.getElementById('sx-cast-status-name');
+  if (!el) return;
+  if (connected){
+    if (name) name.textContent = sxGetCastDeviceName();
+    el.classList.add('show');
+  } else {
+    el.classList.remove('show');
+  }
+}
 function sxUpdateCastButtonState(){
   var btn = document.getElementById('stream-player-cast');
   if (!btn || !sxCastContext) return;
   var connected = sxCastContext.getCastState() === cast.framework.CastState.CONNECTED;
   btn.classList.toggle('sp-cast-active', connected);
-  btn.title = connected ? 'Casting to TV — tap to manage' : 'Cast to TV';
+  btn.title = connected ? ('Casting to ' + sxGetCastDeviceName() + ' — tap to manage') : 'Cast to TV';
+  sxUpdateCastStatus(connected);
 }
 
 function sxIsHlsUrl(u){
@@ -11422,6 +11473,26 @@ window.addEventListener('message', function(e){
     sxOpenVlcPopup(u, n);
   } else if (d.type === 'sx4k:copy' && u){
     sxCopyStreamLink(u);
+  }
+});
+
+// Hide the parent loader as soon as the actual embedded player starts.
+// Do not use a guessed delay: the player itself knows when media is playing.
+window.addEventListener('message', function(e){
+  var f = document.getElementById('stream-player-frame');
+  if (!f || e.source !== f.contentWindow) return;
+  var d = e.data || {};
+  if (d.type !== 'sx4k:state') return;
+  var loadingEl = document.getElementById('stream-player-loading');
+  var loadingBarEl = document.getElementById('sp-loading-bar');
+  if (d.state === 'playing') {
+    if (loadingBarEl) {
+      loadingBarEl.style.transition = 'width 180ms ease-out';
+      loadingBarEl.style.width = '100%';
+    }
+    if (loadingEl) loadingEl.classList.add('sp-loading-hide');
+  } else if (d.state === 'error') {
+    if (loadingEl) loadingEl.classList.add('sp-loading-hide');
   }
 });
 
@@ -11534,7 +11605,7 @@ function sxCastLoadUrl(url, title, session, announce){
     session.loadMedia(request).then(
       function(){
         sxCurrentStreamRawUrl = candidate;
-        if (announce) sxCastToast('Casting to TV…');
+        if (announce) sxCastToast('Casting to ' + sxGetCastDeviceName() + '…');
         sxUpdateCastButtonState();
       },
       function(err){
@@ -11607,7 +11678,7 @@ function spSetAdblockBannerText(){
 }
 spSetAdblockBannerText();
 
-const SP_LOADING_DURATION_MS = 250;
+const SP_LOADING_DURATION_MS = 0; // no artificial wait; hide only when the player reports ready
 const SP_LOADING_LABELS = {
   stream:  'Loading Stream',
   channel: 'Loading Channel',
@@ -11665,10 +11736,10 @@ function openStreamPlayer(url, name, type){
   const loadingBarEl = document.getElementById('sp-loading-bar');
   if (loadingBarEl) {
     loadingBarEl.style.transition = 'none';
-    loadingBarEl.style.width = '0%';
-    void loadingBarEl.offsetWidth; // force reflow so the width change below actually animates
-    loadingBarEl.style.transition = `width ${SP_LOADING_DURATION_MS}ms linear`;
-    requestAnimationFrame(() => { loadingBarEl.style.width = '100%'; });
+    loadingBarEl.style.width = '12%';
+    void loadingBarEl.offsetWidth;
+    loadingBarEl.style.transition = 'width 1200ms ease-out';
+    requestAnimationFrame(() => { loadingBarEl.style.width = '72%'; });
   }
   clearTimeout(window._spLoadingTimer);
   const spFrame = document.getElementById('stream-player-frame');
@@ -11685,9 +11756,11 @@ function openStreamPlayer(url, name, type){
   const mobileTabbar = document.getElementById('mobile-tabbar');
   if (mobileTabbar) mobileTabbar.style.display = 'none';
   spShowTopbar();
-  window._spLoadingTimer = setTimeout(() => {
-    if (loadingEl) loadingEl.classList.add('sp-loading-hide');
-  }, SP_LOADING_DURATION_MS);
+  // No fixed 250 ms/other artificial hide timer. The embedded SX4K player
+  // sends sx4k:state=playing/error when the stream actually responds.
+  // This prevents the UI from pretending the stream is ready while it is
+  // still fetching, and removes timer-based delays.
+  window._spLoadingTimer = null;
 }
 
 // ── Bottom info bar: logo + name + tag/LIVE, matched against whichever
