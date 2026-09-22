@@ -10616,7 +10616,9 @@ var HLS_CDNS = [
   'https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js',
   'https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js'
 ];
-var LOAD_TIMEOUT_MS = 25000;
+// EV StreamPulse startup: fail reasonably quickly instead of leaving a
+// dead/stalled source behind for 25s. This is only used by the HLS player.
+var LOAD_TIMEOUT_MS = 12000;
 
 var $ = function(id){ return document.getElementById(id); };
 var boot = window.SX4K_BOOT || null;
@@ -10808,20 +10810,39 @@ function startNative(url){
 }
 
 function startHls(url){
+  // Start fetching the manifest/first segments immediately at a startup
+  // level. Do NOT force the highest rendition before first playback: that
+  // was causing EV StreamPulse to wait several seconds while a large/high
+  // bitrate variant was selected. Once playback has started, the player can
+  // move to the user's saved quality/auto mode.
   var hls = new Hls({
-    enableWorker:true, lowLatencyMode:true,
-    maxBufferLength:8, maxMaxBufferLength:20, backBufferLength:30,
-    liveSyncDurationCount:1, liveMaxLatencyDurationCount:3,
+    enableWorker:true,
+    lowLatencyMode:true,
+    startLevel:0,
+    autoStartLoad:true,
+    maxBufferLength:4,
+    maxMaxBufferLength:10,
+    backBufferLength:15,
+    liveSyncDurationCount:1,
+    liveMaxLatencyDurationCount:2,
+    maxStarvationDelay:1,
+    maxLoadingDelay:1,
     capLevelToPlayerSize:false
   });
   st.hls = hls;
+  st.startupQualityPending = true;
 
-  hls.on(Hls.Events.MANIFEST_LOADED, function(_, d){ if (manifestIsDrm(d)) drmDetected(); });
+  hls.on(Hls.Events.MANIFEST_LOADED, function(_, d){
+    if (manifestIsDrm(d)) drmDetected();
+  });
   hls.on(Hls.Events.MANIFEST_PARSED, function(_, d){
     st.levels = (d && d.levels) || [];
     var saved = lsGet('quality');
+    // Always let rendition 0 start the stream quickly. The requested
+    // quality is applied after the first real playback event below.
     st.mode = (saved === 'auto' && st.levels.length > 1) ? 'auto' : 'best';
-    buildMenu(); applyQuality(); tryPlay();
+    buildMenu();
+    tryPlay();
   });
   hls.on(Hls.Events.LEVEL_LOADED, function(_, d){
     if (st.drm) return;
@@ -11235,6 +11256,17 @@ video.addEventListener('playing', function(){
     setClass('loading', false);
     $('loader').classList.add('hide');
     toParent({ type:'sx4k:state', state:'playing' });
+
+    // First frame is already playing. Only now switch away from the
+    // low startup rendition, preventing high-bitrate selection from
+    // delaying startup. Explicit saved quality is still respected.
+    if (st.hls && st.startupQualityPending) {
+      st.startupQualityPending = false;
+      setTimeout(function(){
+        if (!st.hls || st.drm) return;
+        applyQuality();
+      }, 0);
+    }
   }
   renderPlay(); setQualityChip(); poke();
 });
