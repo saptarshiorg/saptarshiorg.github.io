@@ -10292,6 +10292,9 @@ function closeAdminChatDiscordPopup(){
         Back
       </button>
       <span id="stream-player-title">Live Stream</span>
+      <button id="stream-player-cast" onclick="sxCastCurrentStream()" title="Cast to TV" aria-label="Cast to TV">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h.01"/><path d="M2 16a4 4 0 0 1 4 4"/><path d="M2 12a8 8 0 0 1 8 8"/><path d="M22 4H2v4h1a15 15 0 0 1 15 15v1h4Z"/></svg>
+      </button>
     </div>
     <div id="stream-player-body">
       <div id="stream-player-frame-wrap">
@@ -11271,11 +11274,29 @@ window['__onGCastApiAvailable'] = function(isAvailable){
       cast.framework.CastContextEventType.CAST_STATE_CHANGED,
       sxUpdateCastButtonState
     );
+    // Also react to session changes so an already-connected TV picks up a
+    // freshly-loaded stream (see sxCastLoadUrl below) and the button state
+    // stays correct the moment a session starts/ends, not just on state ticks.
+    sxCastContext.addEventListener(
+      cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
+      sxUpdateCastButtonState
+    );
     sxUpdateCastButtonState();
   } catch (e) {
     console.warn('Cast init failed:', e);
   }
 };
+
+// Safety net: the Cast sender library can call __onGCastApiAvailable the
+// instant it finishes loading, which — if that happens before this inline
+// script has run and defined the callback above — would silently drop the
+// call. If the framework object already exists by the time we get here,
+// fire the init manually so Cast still comes up.
+(function sxCastInitFallback(){
+  if (window.chrome && chrome.cast && window.cast && cast.framework && !sxCastAvailable) {
+    window['__onGCastApiAvailable'](true);
+  }
+})();
 
 function sxUpdateCastButtonState(){
   var btn = document.getElementById('stream-player-cast');
@@ -11449,6 +11470,23 @@ function sxCloseCastHelp(){
   if (ov) ov.classList.remove('open');
 }
 
+// Builds a LoadRequest for a direct HLS (.m3u8) URL and sends it to a Cast
+// session. Shared by the manual Cast button (sxCastCurrentStream) and the
+// auto-refresh that runs when the viewer switches channel/match while
+// already connected to a TV (sxCastRefreshIfConnected).
+function sxCastLoadUrl(url, title, session, announce){
+  var mediaInfo = new chrome.cast.media.MediaInfo(url, 'application/x-mpegurl');
+  mediaInfo.streamType = chrome.cast.media.StreamType.LIVE;
+  mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
+  mediaInfo.metadata.title = title || 'Live Stream';
+  var request = new chrome.cast.media.LoadRequest(mediaInfo);
+  request.autoplay = true;
+  session.loadMedia(request).then(
+    function(){ if (announce) sxCastToast('Casting to TV\u2026'); sxUpdateCastButtonState(); },
+    function(err){ if (announce) sxCastToast('Cast failed \u2014 this stream may be blocked for TV playback.'); }
+  );
+}
+
 function sxCastCurrentStream(){
   if (!sxCastAvailable || !sxCastContext){
     sxCastToast('Cast needs Chrome on an https:// page \u2014 open this site in Chrome to cast.');
@@ -11463,18 +11501,11 @@ function sxCastCurrentStream(){
     sxShowCastHelp();
     return;
   }
-  var mediaInfo = new chrome.cast.media.MediaInfo(url, 'application/x-mpegurl');
-  mediaInfo.streamType = chrome.cast.media.StreamType.LIVE;
-  mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
-  mediaInfo.metadata.title = document.getElementById('stream-player-title').textContent || 'Live Stream';
-  var request = new chrome.cast.media.LoadRequest(mediaInfo);
+  var title = document.getElementById('stream-player-title').textContent || 'Live Stream';
 
   function loadOnSession(session){
     if (!session) { sxCastToast('Could not connect to a Cast device.'); return; }
-    session.loadMedia(request).then(
-      function(){ sxCastToast('Casting to TV\u2026'); sxUpdateCastButtonState(); },
-      function(err){ sxCastToast('Cast failed \u2014 this stream may be blocked for TV playback.'); }
-    );
+    sxCastLoadUrl(url, title, session, true);
   }
   var session = sxCastContext.getCurrentSession();
   if (session){
@@ -11485,6 +11516,21 @@ function sxCastCurrentStream(){
       function(err){ if (err !== 'cancel') sxCastToast('Could not connect to a Cast device.'); }
     );
   }
+}
+
+// Called whenever the player switches to a new channel/match/source. If the
+// viewer is already casting to a TV and the new stream is a direct HLS
+// link, push it to the active session automatically instead of leaving the
+// TV stuck on the previous channel until they re-tap Cast.
+function sxCastRefreshIfConnected(){
+  if (!sxCastAvailable || !sxCastContext) return;
+  if (sxCastContext.getCastState() !== cast.framework.CastState.CONNECTED) return;
+  var url = sxCurrentStreamRawUrl;
+  if (!url || !sxIsHlsUrl(url)) return;
+  var session = sxCastContext.getCurrentSession();
+  if (!session) return;
+  var title = document.getElementById('stream-player-title').textContent || 'Live Stream';
+  sxCastLoadUrl(url, title, session, false);
 }
 
 // ── Ad-safety banner copy: mobile always points to Brave, desktop
@@ -11524,6 +11570,7 @@ function openStreamPlayer(url, name, type){
   const isFcx = !!spFcxIdFromUrl(url); // play.html?id=..._eng FanCode links
   document.getElementById('stream-player-title').textContent = label;
   sxCurrentStreamRawUrl = url; // used by sxCastCurrentStream() below
+  sxCastRefreshIfConnected(); // keep an already-connected TV in sync with the new channel
   const src = url.includes('#') ? url : url + '#' + encodeURIComponent(label);
   spUpdateInfobar(type, label);
   if (use4k || isFcx) {
@@ -11737,6 +11784,7 @@ function spSetFcxSource(which){
     sxCurrentStreamRawUrl = w;
   }
   st.source = which;
+  sxCastRefreshIfConnected(); // keep an already-connected TV in sync with the source switch
   spRenderFcxSwitch();
 }
 
