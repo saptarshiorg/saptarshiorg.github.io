@@ -31,6 +31,22 @@ links to VLC when the in-app player can't handle them.
   players via `onShowCustomView`/`onHideCustomView`.
 - **Mixed content + self-signed certs allowed** — many stream hosts serve
   plain http or bad SSL; the app proceeds anyway, same as a native player would.
+- **Brave-level ad/popup blocking** (v1.1+): a ~76,000-domain blocklist
+  (`assets/adblock_hosts.txt` — StevenBlack's combined hosts list plus a
+  curated set of streaming-site popunder/redirect ad networks: popads,
+  propellerads, exoclick, juicyads, mgid, hilltopads, and more) kills ad
+  requests at the network layer via `AdBlocker` in `MainActivity.kt`. Blocked
+  requests get an empty 200 response instead of failing, so the embed's
+  layout doesn't break waiting on a dead request — same behaviour as Brave's
+  adblock engine. On top of that:
+  - `PopupGuard` rate-limits and gesture-checks every `window.open()`/new-tab
+    request (1.5s cooldown, real user gesture required) to kill popunder
+    chains, since ad scripts often fire `window.open()` synthetically inside
+    a real click handler
+  - `javaScriptCanOpenWindowsAutomatically` is off, so JS can't spawn a
+    window without a user gesture in the first place
+  - Forced full-page redirects to a blocklisted ad domain are blocked in
+    `shouldOverrideUrlLoading` the same way network requests are
 
 ## Building the APK
 
