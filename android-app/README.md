@@ -47,6 +47,17 @@ links to VLC when the in-app player can't handle them.
     window without a user gesture in the first place
   - Forced full-page redirects to a blocklisted ad domain are blocked in
     `shouldOverrideUrlLoading` the same way network requests are
+- **Cosmetic filtering** (v1.2+, `COSMETIC_FILTER_JS`, injected after every
+  page load): the other half of "proper" ad blocking. Not every streaming ad
+  makes a network request that can be blocked — a lot of them are already
+  loaded as part of the embed and just inject a full-screen overlay `<div>`
+  or spam `alert()`/`confirm()` dialogs. This layer:
+  - injects CSS hiding common ad/popup class-and-id patterns
+  - runs a MutationObserver + 1.5s sweep that detects and hides fixed/
+    absolute full-viewport overlay divs (the "fake close button" trick) —
+    conservative on purpose, so it doesn't eat your own site's real UI
+  - restores body scroll-lock some overlays force
+  - `onJsAlert`/`onJsConfirm` auto-dismiss dialog-spam loops silently
 
 ## Building the APK
 

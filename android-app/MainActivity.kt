@@ -59,6 +59,100 @@ class MainActivity : AppCompatActivity() {
         private val STREAM_EXTENSIONS = listOf(
             ".m3u8", ".mpd", ".ts", ".mkv", ".mp4", ".flv", ".key", ".m4s", ".vtt"
         )
+
+        /**
+         * Cosmetic filtering — the other half of a "proper" adblocker
+         * alongside the network-layer AdBlocker below. A lot of shady
+         * streaming ad scripts never make a separately-blockable network
+         * request at all: the ad script is already loaded as part of the
+         * embed, and it just injects a full-screen overlay <div>/<iframe>
+         * or spams alert()/confirm() dialogs. This runs after every page
+         * (and iframe) load, plus on a short interval and via a
+         * MutationObserver so late-injected ad overlays get caught too:
+         *  - hides elements matching common ad/popup class-and-id patterns
+         *  - detects and removes fixed/absolute full-viewport overlay divs
+         *    that aren't part of your own player UI (the common "fake close
+         *    button" full-screen ad trick)
+         *  - is intentionally conservative: it only nukes elements that are
+         *    BOTH suspiciously positioned/sized AND pattern-matched, to
+         *    avoid hiding your own site's real UI
+         */
+        private val COSMETIC_FILTER_JS = """
+        (function(){
+          if (window.__evStreamsAdblockInstalled) return;
+          window.__evStreamsAdblockInstalled = true;
+
+          var css = [
+            '[id*="popup" i]:not([id*="player" i]):not([id*="video" i])',
+            '[class*="popup" i]:not([class*="player" i]):not([class*="video" i])',
+            '[id*="banner-ad" i]', '[class*="banner-ad" i]',
+            '[id*="ad-container" i]', '[class*="ad-container" i]',
+            '[class*="ads-container" i]', '.advertisement', '.adsbygoogle',
+            'ins.adsbygoogle',
+            'iframe[src*="doubleclick" i]', 'iframe[src*="googlesyndication" i]',
+            'iframe[src*="popads" i]', 'iframe[src*="propellerads" i]',
+            'iframe[src*="exoclick" i]', 'iframe[src*="juicyads" i]',
+            'iframe[src*="mgid" i]', 'iframe[src*="hilltopads" i]'
+          ].join(',') + ' { display:none !important; visibility:hidden !important; pointer-events:none !important; opacity:0 !important; height:0 !important; }';
+
+          var style = document.createElement('style');
+          style.setAttribute('data-evstreams', 'adblock-css');
+          style.textContent = css;
+          (document.head || document.documentElement).appendChild(style);
+
+          var KEEP_ATTR = 'data-evstreams-keep';
+          var AD_PATTERN = /(^|[^a-z])(ad|ads|advert|popup|banner|sponsor)([^a-z]|${'$'})/i;
+
+          function looksLikeAdOverlay(el) {
+            if (!el || el.hasAttribute(KEEP_ATTR)) return false;
+            var id = (el.id || '') + ' ' + (el.className || '');
+            if (typeof el.className !== 'string' && el.className && el.className.baseVal) {
+              id += ' ' + el.className.baseVal;
+            }
+            var cs;
+            try { cs = window.getComputedStyle(el); } catch (e) { return false; }
+            if (!cs) return false;
+            var pos = cs.position;
+            if (pos !== 'fixed' && pos !== 'absolute') return false;
+            var z = parseInt(cs.zIndex) || 0;
+            var rect = el.getBoundingClientRect();
+            var bigEnough = rect.width >= window.innerWidth * 0.65 &&
+                             rect.height >= window.innerHeight * 0.65;
+            if (!bigEnough) return false;
+            // High z-index full-viewport overlay is suspicious on its own;
+            // pattern match on id/class raises confidence further but isn't
+            // required, since ad overlays are often unnamed inline divs.
+            return z >= 999 || AD_PATTERN.test(id);
+          }
+
+          function sweep() {
+            try {
+              var candidates = document.querySelectorAll(
+                'body > div, body > iframe, body > section'
+              );
+              for (var i = 0; i < candidates.length; i++) {
+                var el = candidates[i];
+                if (looksLikeAdOverlay(el)) {
+                  el.style.setProperty('display', 'none', 'important');
+                  el.setAttribute('data-evstreams-blocked', '1');
+                }
+              }
+              // Also restore scroll/body-lock some ad overlays force on <body>
+              if (document.body && document.body.style.overflow === 'hidden' &&
+                  document.querySelectorAll('[data-evstreams-blocked]').length > 0) {
+                document.body.style.removeProperty('overflow');
+              }
+            } catch (e) {}
+          }
+
+          sweep();
+          try {
+            var observer = new MutationObserver(function(){ sweep(); });
+            observer.observe(document.documentElement, { childList: true, subtree: true });
+          } catch (e) {}
+          setInterval(sweep, 1500);
+        })();
+        """
     }
 
     /**
@@ -348,6 +442,15 @@ class MainActivity : AppCompatActivity() {
                 handler.proceed()
             }
 
+            // Cosmetic filtering — injected as soon as the page finishes
+            // loading so it catches ad overlays present in the initial DOM.
+            // Its own MutationObserver + interval sweep (set up inside the
+            // JS itself) handles anything injected later by ad scripts.
+            override fun onPageFinished(view: WebView, url: String?) {
+                super.onPageFinished(view, url)
+                view.evaluateJavascript(COSMETIC_FILTER_JS, null)
+            }
+
             override fun shouldOverrideUrlLoading(
                 view: WebView,
                 request: WebResourceRequest
@@ -401,6 +504,38 @@ class MainActivity : AppCompatActivity() {
                 customView = null
                 customViewCallback?.onCustomViewHidden()
                 webView.visibility = View.VISIBLE
+            }
+
+            // Auto-dismiss alert()/confirm()/prompt() dialogs. Aggressive ad
+            // scripts on shady streaming embeds use these as spam/scare
+            // loops ("you've won a prize", fake virus warnings, permission
+            // traps) since a real WebView shows a native dialog for them
+            // that can otherwise be hard to close. Swallowing them silently
+            // is safe here since the site itself doesn't rely on them.
+            override fun onJsAlert(
+                view: WebView, url: String?, message: String?,
+                result: JsResult
+            ): Boolean {
+                Log.i("EVStreams", "Suppressed alert() spam: $message")
+                result.cancel()
+                return true
+            }
+
+            override fun onJsConfirm(
+                view: WebView, url: String?, message: String?,
+                result: JsResult
+            ): Boolean {
+                Log.i("EVStreams", "Suppressed confirm() spam: $message")
+                result.cancel()
+                return true
+            }
+
+            override fun onJsBeforeUnload(
+                view: WebView, url: String?, message: String?,
+                result: JsResult
+            ): Boolean {
+                result.confirm()
+                return true
             }
 
             // Popup/popunder suppression: only a genuine, rate-limited user
