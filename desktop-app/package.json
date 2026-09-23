@@ -1,0 +1,56 @@
+{
+  "name": "ev-streams-desktop",
+  "version": "1.0.0",
+  "description": "EV Streams desktop app - native shell for evstreams.pages.dev with CORS-bypass proxy, ad/popup blocking and VLC hand-off",
+  "main": "main.js",
+  "author": "RISHI.EV",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder",
+    "dist:win": "electron-builder --win",
+    "dist:linux": "electron-builder --linux",
+    "dist:mac": "electron-builder --mac"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.evstreams.desktop",
+    "productName": "EV Streams",
+    "asar": true,
+    "files": [
+      "main.js",
+      "preload.js",
+      "assets/**/*"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ],
+      "icon": "assets/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "EV Streams"
+    },
+    "linux": {
+      "target": ["AppImage"],
+      "icon": "assets/icon.png",
+      "category": "AudioVideo"
+    },
+    "mac": {
+      "target": ["dmg"],
+      "icon": "assets/icon.png"
+    }
+  }
+}
