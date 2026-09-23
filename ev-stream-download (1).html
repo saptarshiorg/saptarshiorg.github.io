@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ff0080">
+  <title>EV Stream — Free Live TV & Sports</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      font-family: Inter, Arial, sans-serif;
+      color: #fff;
+      background:
+        radial-gradient(circle at 50% 15%, rgba(255,0,128,.20), transparent 32%),
+        linear-gradient(145deg, #050505, #10030b 55%, #050505);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 28px 16px;
+    }
+    .card {
+      width: min(960px, 100%);
+      text-align: center;
+      padding: 54px 28px 34px;
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 30px;
+      background: rgba(12,12,12,.78);
+      box-shadow: 0 25px 80px rgba(0,0,0,.55);
+      backdrop-filter: blur(18px);
+    }
+    .logo {
+      width: 150px;
+      height: 150px;
+      object-fit: contain;
+      margin-bottom: 14px;
+      filter: drop-shadow(0 0 28px rgba(255,0,128,.35));
+    }
+    .eyebrow {
+      color: #ff4aa3;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 10px 0 12px;
+      font-size: clamp(38px, 7vw, 72px);
+      line-height: .98;
+      letter-spacing: -2px;
+    }
+    h1 span { color: #ff0080; }
+    .sub {
+      max-width: 650px;
+      margin: 0 auto;
+      color: #cfcfcf;
+      font-size: 17px;
+      line-height: 1.65;
+    }
+    .buttons {
+      margin: 30px 0 24px;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 210px;
+      padding: 15px 24px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 800;
+      transition: .2s ease;
+    }
+    .primary {
+      color: #fff;
+      background: linear-gradient(90deg, #ff0080, #ff2b9b);
+      box-shadow: 0 10px 30px rgba(255,0,128,.28);
+    }
+    .secondary {
+      color: #fff;
+      border: 1px solid rgba(255,255,255,.15);
+      background: rgba(255,255,255,.05);
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 26px;
+    }
+    .feature {
+      padding: 22px 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.045);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .icon { font-size: 27px; margin-bottom: 8px; }
+    .feature b { display:block; margin-bottom: 5px; }
+    .feature small { color:#aaa; line-height:1.5; }
+    .note {
+      margin: 28px auto 0;
+      max-width: 720px;
+      color: #888;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    footer {
+      margin-top: 20px;
+      color: #666;
+      font-size: 12px;
+    }
+    @media (max-width: 650px) {
+      .card { padding: 40px 18px 28px; border-radius: 24px; }
+      .features { grid-template-columns: 1fr; }
+      .logo { width: 120px; height: 120px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <img class="logo"
+         src="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/magenta.png"
+         alt="EV Stream logo">
+
+    <div class="eyebrow">EV STREAM</div>
+    <h1>LIVE TV.<br><span>LIVE SPORTS.</span></h1>
+    <p class="sub">
+      A fast, simple streaming experience for live television and sports.
+      Download the Android app and enjoy channels and events that are
+      available to you through the app.
+    </p>
+
+    <div class="buttons">
+      <a class="btn primary"
+         href="https://github.com/saptarshiorg/saptarshiorg.github.io/raw/refs/heads/main/app-release.apk">
+        ↓ Download APK
+      </a>
+      <a class="btn secondary" href="#features">Explore Features</a>
+    </div>
+
+    <section class="features" id="features">
+      <div class="feature">
+        <div class="icon">📺</div>
+        <b>Live TV</b>
+        <small>Access available live television streams in one place.</small>
+      </div>
+      <div class="feature">
+        <div class="icon">🏟️</div>
+        <b>Live Sports</b>
+        <small>Follow live sporting content available through the service.</small>
+      </div>
+      <div class="feature">
+        <div class="icon">⚡</div>
+        <b>Fast & Simple</b>
+        <small>A clean interface designed for quick access to streams.</small>
+      </div>
+    </section>
+
+    <p class="note">
+      Streaming availability depends on regional access and applicable
+      broadcasting/licensing rights. Use the app only for content you are
+      authorized to access.
+    </p>
+
+    <footer>© 2026 EV Stream · Android App</footer>
+  </main>
+</body>
+</html>
