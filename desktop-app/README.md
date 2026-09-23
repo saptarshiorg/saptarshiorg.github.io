@@ -3,7 +3,7 @@
 Electron shell for https://evstreams.pages.dev/ — the desktop port of the
 Android app in `../android-app/`. Same goals as the Android version: play
 HLS (`.m3u8`), DASH, and iframe-embedded (JW Player / Video.js) streams that
-a plain browser tab can't, with ad/popup blocking and a VLC hand-off for
+a plain browser tab can't, with a VLC hand-off for
 streams the in-app player can't handle.
 
 ## What it does (ported from the Android app)
@@ -18,23 +18,7 @@ streams the in-app player can't handle.
   first place — the same net effect as the Android app's OkHttp `NativeProxy`,
   achieved via Electron's request-interception API instead of a native
   re-fetch.
-- **Ad/tracker blocking**, same blocklist as Android
-  (`assets/adblock_hosts.txt` — StevenBlack's combined hosts list + curated
-  streaming popunder/redirect networks: popads, propellerads, exoclick,
-  juicyads, mgid, hilltopads, etc). Matching requests are redirected to an
-  empty `data:` response instead of failing outright, so embeds don't break
-  waiting on a dead request.
-- **Cosmetic filtering**, identical logic to the Android app's
-  `COSMETIC_FILTER_JS`, injected into every frame (main page + iframes) after
-  each load: hides common ad/popup class-and-id patterns via CSS, and a
-  `MutationObserver` + 1.5s sweep detects and hides fixed/absolute
-  full-viewport overlay divs (the "fake close button" trick), conservative
-  enough not to eat the site's own player UI. `alert()`/`confirm()` spam
-  loops are suppressed silently.
-- **Popup/popunder guard**: new-window requests are rate-limited (1.5s
-  cooldown) and ad-host requests are denied outright; anything else is
-  redirected into the current window rather than opened as a real popup —
-  streaming embeds never legitimately need a second window.
+- **New windows**: own-site links open in the app, raw stream links go to VLC, other links open in your default browser. There is no ad blocker.
 - **VLC hand-off**: any raw stream link the app can't play in-window — or any
   page button that calls `window.EVStreamsNative.openInVlc(url)` — launches
   VLC directly (checked at its typical install path per OS), falling back to

@@ -1,7 +1,7 @@
 {
   "name": "ev-streams-desktop",
   "version": "1.0.0",
-  "description": "EV Streams desktop app - native shell for evstreams.pages.dev with CORS-bypass proxy, ad/popup blocking and VLC hand-off",
+  "description": "EV Streams desktop app - native shell for evstreams.pages.dev with CORS-bypass proxy and VLC hand-off",
   "main": "main.js",
   "author": "RISHI.EV",
   "license": "UNLICENSED",
