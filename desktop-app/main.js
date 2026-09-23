@@ -5,7 +5,7 @@
 // overlay filtering, mixed-content + self-signed cert tolerance, and VLC
 // hand-off for raw stream links.
 
-const { app, BrowserWindow, session, shell, dialog, ipcMain, globalShortcut } = require('electron');
+const { app, BrowserWindow, session, shell, dialog, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
@@ -16,6 +16,12 @@ const { spawn } = require('child_process');
 const SITE_URL = 'https://evstreams.pages.dev/';
 const SITE_HOST = new URL(SITE_URL).host;
 const STREAM_EXTENSIONS = ['.m3u8', '.mpd', '.ts', '.mkv', '.mp4', '.flv', '.key', '.m4s', '.vtt'];
+function isStreamUrl(url) {
+  try {
+    const p = new URL(url).pathname.toLowerCase();
+    return STREAM_EXTENSIONS.some((ext) => p.endsWith(ext));
+  } catch (e) { return false; }
+}
 
 const STRIP_RESPONSE_HEADERS = new Set([
   'x-frame-options', 'content-security-policy', 'content-security-policy-report-only',
@@ -295,7 +301,7 @@ function createWindow() {
       console.log('[EVStreams] Blocked ad redirect:', url);
       return;
     }
-    const isStream = STREAM_EXTENSIONS.some((ext) => url.toLowerCase().includes(ext));
+    const isStream = isStreamUrl(url);
     if (isStream && !url.includes('play.html') && !url.startsWith(SITE_URL)) {
       event.preventDefault();
       openInVlcOrChooser(url);
@@ -317,7 +323,7 @@ function createWindow() {
       console.log('[EVStreams] Blocked popup (cooldown):', url);
       return { action: 'deny' };
     }
-    const isStream = STREAM_EXTENSIONS.some((ext) => url.toLowerCase().includes(ext));
+    const isStream = isStreamUrl(url);
     if (isStream) {
       openInVlcOrChooser(url);
     } else {
@@ -327,11 +333,15 @@ function createWindow() {
   });
 
   // Back navigation (mirrors Android's hardware-back handling).
-  globalShortcut.register('Alt+Left', () => {
-    if (mainWindow.isFocused() && mainWindow.webContents.canGoBack()) mainWindow.webContents.goBack();
-  });
-  globalShortcut.register('Backspace', () => {
-    if (mainWindow.isFocused() && mainWindow.webContents.canGoBack()) mainWindow.webContents.goBack();
+  // Handled per-window via before-input-event, NOT globalShortcut: a global
+  // Backspace shortcut hijacks the key system-wide and breaks typing.
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.type !== 'keyDown') return;
+    const wc = mainWindow.webContents;
+    if (input.alt && input.key === 'ArrowLeft' && wc.canGoBack()) {
+      event.preventDefault();
+      wc.goBack();
+    }
   });
 
   mainWindow.loadURL(SITE_URL);
@@ -345,7 +355,6 @@ ipcMain.on('evstreams-open-in-vlc', (event, url) => openInVlcOrChooser(url));
 app.whenReady().then(createWindow);
 
 app.on('window-all-closed', () => {
-  globalShortcut.unregisterAll();
   if (process.platform !== 'darwin') app.quit();
 });
 
@@ -353,4 +362,3 @@ app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
 
-app.on('will-quit', () => globalShortcut.unregisterAll());
