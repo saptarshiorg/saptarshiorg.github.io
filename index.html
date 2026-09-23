@@ -5168,55 +5168,6 @@ window.sxRenderFavouritesOverlay = sxRenderFavouritesOverlay;
 })();
 
 // ══════════════════════════════════════════════════════════════════════
-// SVX — SONY EV APP: live-match feed from the SonyLiv Events JSON API,
-// cross-linked into sheet MATCH CARDS rows exactly like FanCode is above
-// (see fcxAugmentSheetCards / svxAugmentSheetCards below). Only matches
-// whose status is actually "Live" right now are ever kept — upcoming/
-// finished rows in the feed are dropped outright, so nothing from this
-// source ever appears before kickoff. Playback uses the match's own real
-// stream URL (video_url/dai_url/pub_url), which runs straight through the
-// site's own EV StreamPulse player like any other direct stream — no
-// separate resolver page needed (unlike FanCode's play.html).
-// ══════════════════════════════════════════════════════════════════════
-(function(){
-  const SVX_API = 'https://raw.githubusercontent.com/kajju027/SonyLiv-Events-Json/refs/heads/main/sonyliv.json';
-  window.SVX_LOGO = 'https://upload.wikimedia.org/wikipedia/commons/f/f7/SonyLIV_2020.png?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=original';
-
-  function svxCleanTitle(name){
-    // The feed prefixes rows with "Live - " / "Upcoming - " — strip that,
-    // it's not part of the actual match/event name.
-    return (name || '').replace(/^\s*(live|upcoming)\s*-\s*/i, '').trim() || 'Live Match';
-  }
-
-  function svxLoad(){
-    fetch(SVX_API).then(r => r.json()).then(data => {
-      const rows = (data && data.matches) || [];
-      window._svxMatchesCache = rows
-        .filter(m => (m.status || '').trim().toLowerCase() === 'live')
-        .map(m => ({
-          id: m.match_id,
-          title: svxCleanTitle(m.event_name || m.match_name),
-          category: (m.category || '').trim(),
-          broadcast: m.digital_broadcast || '',
-          image: m.poster || '',
-          url: (m.video_url || m.dai_url || m.pub_url || '').trim()
-        }))
-        .filter(m => !!m.url); // no playable link yet — don't list it
-      // Same downstream hooks FanCode's loader uses above — re-render
-      // whatever's already on screen so a Sony match can appear/disappear
-      // the moment it goes live or ends.
-      if (window._matchCardsRawRows && typeof renderMatchCards === 'function') {
-        renderMatchCards(window._matchCardsRawRows);
-      }
-      if (typeof window.svxAppendFixturesPreview === 'function') window.svxAppendFixturesPreview();
-    }).catch(err => console.error('SVX (Sony EV APP) load error:', err));
-  }
-  window._svxMatchesCache = [];
-  svxLoad();
-  setInterval(svxLoad, 30000);
-})();
-
-// ══════════════════════════════════════════════════════════════════════
 // FCX BRIDGE — surfaces the same FanCode matches (cached above on
 // window._fcxMatchesCache every 30s) inside the main Matches tab and the
 // homescreen hero carousel, as their own "FanCode" section/slides. Kept
@@ -5394,107 +5345,6 @@ function fcxAugmentSheetCards(cards){
     c._fcxBanner = fm.image; // let the card's thumbnail fall back to FanCode's own banner too
   });
 }
-
-// ── SONY EV APP cross-link with sheet MATCH CARDS rows — same team-name
-// matching fcxFindSheetMatch/fcxHasSheetCard use above (fcxTitleHasTeam),
-// just against window._svxMatchesCache instead of FanCode's feed. Only
-// ever finds a match while Sony's feed says that fixture is actually live.
-function svxFindSheetMatch(card){
-  const list = window._svxMatchesCache || [];
-  return list.find(m => fcxTitleHasTeam(m.title, card.team1_code, card.team1_full_name) &&
-                         fcxTitleHasTeam(m.title, card.team2_code, card.team2_full_name)) || null;
-}
-function svxHasSheetCard(m){
-  const rows = window._matchCardsRawRows || [];
-  return rows.some(c => fcxTitleHasTeam(m.title, c.team1_code, c.team1_full_name) &&
-                         fcxTitleHasTeam(m.title, c.team2_code, c.team2_full_name));
-}
-// For every sheet row with a matching live Sony stream, drops it into the
-// next empty server slot (btn_url / btn_url_2 .. btn_url_5) as a "SONY EV
-// APP" option — same mechanism fcxAugmentSheetCards uses for FanCode above,
-// just a different source/label. Re-run every time MATCH CARDS re-renders
-// (every 30s, on Sony's own poll), so a stale/ended Sony link never lingers
-// — see the re-check svxFindSheetMatch does again inside sxGetMatchServers.
-function svxAugmentSheetCards(cards){
-  const urlSlots = ['btn_url', 'btn_url_2', 'btn_url_3', 'btn_url_4', 'btn_url_5'];
-  const textSlots = ['btn_text', 'btn_text_2', 'btn_text_3', 'btn_text_4', 'btn_text_5'];
-  (cards || []).forEach(c => {
-    const already = textSlots.some(t => (c[t] || '').trim().toLowerCase() === 'sony ev app');
-    if (already) return;
-    const sm = svxFindSheetMatch(c);
-    if (!sm) return;
-    const emptyIdx = urlSlots.findIndex(s => {
-      const v = (c[s] || '').toString().trim();
-      return !v || v === '#';
-    });
-    if (emptyIdx === -1) return; // all 5 server slots already taken
-    c[urlSlots[emptyIdx]] = sm.url;
-    c[textSlots[emptyIdx]] = 'SONY EV APP';
-  });
-}
-function svxFmtLabel(m){ return (m && (m.category || m.broadcast)) || 'Live Sports'; }
-function svxFindById(id){
-  return (window._svxMatchesCache || []).find(m => String(m.id) === String(id)) || null;
-}
-// Opens the same full-screen server selector sheet/FanCode matches use, for
-// a Sony-only match with no matching sheet row. Always live — only-live
-// matches ever make it into window._svxMatchesCache.
-function svxOpenWatchById(id){
-  const m = svxFindById(id);
-  if (!m) return false;
-  const servers = [{ url: m.url, text: 'SONY EV APP' }];
-  openMatchWatchScreen(servers, {
-    name: m.title || 'Live Stream',
-    team1_code: '', team1_full_name: '', team1_icon_url: '',
-    team2_code: '', team2_full_name: '', team2_icon_url: '',
-    date_label: '', details: svxFmtLabel(m),
-    countdown: '', status: 'live', banner: m.image || ''
-  });
-  return false;
-}
-// Re-appends Sony-only live matches (no matching sheet/FanCode card) into
-// the homescreen "Matches" preview grid — a small supplementary source,
-// capped low and only ever shown while actually live.
-window.svxAppendFixturesPreview = function(){
-  const grid = document.getElementById('fixtures-grid');
-  if (!grid) return;
-  grid.querySelectorAll('.svx-fixture-card').forEach(c => c.remove());
-  const list = (window._svxMatchesCache || []).filter(m => !svxHasSheetCard(m)).slice(0, 2);
-  if (!list.length) return;
-  const emptyBox = grid.querySelector('.smo-empty-box');
-  if (emptyBox) emptyBox.remove();
-  let viewAll = grid.querySelector('.fx2-viewall');
-  if (!viewAll && !grid.children.length) {
-    grid.insertAdjacentHTML('beforeend', `
-    <a class="fx2-viewall" href="#sxTabPanels" onclick="event.preventDefault();openMatches();">
-      <span class="fx2-viewall-arrow">→</span>
-      <span class="fx2-viewall-text">VIEW ALL</span>
-    </a>`);
-    viewAll = grid.querySelector('.fx2-viewall');
-  }
-  const cardsHtml = list.map(m => `
-    <a class="fx2-card svx-fixture-card" data-live="1" data-start-ms="0" href="javascript:void(0)" onclick="return svxOpenWatchById('${escJs(String(m.id))}')">
-      <div class="fx2-thumb">
-        <img src="${m.image}" alt="${escJs(m.title)}" class="fx2-thumb-img" onerror="this.style.display='none'">
-        <span class="fx2-badge fx2-badge-live"><span class="fx2-live-dot"></span>LIVE</span>
-      </div>
-      <div class="fx2-body">
-        <div class="fx2-title-row">
-          <div class="fx2-title">${m.title}</div>
-          <span class="fx2-free">FREE</span>
-        </div>
-        <div class="fx2-meta">
-          <span class="fx2-tag">${svxFmtLabel(m)}</span>
-        </div>
-      </div>
-    </a>`).join('');
-  if (viewAll) viewAll.insertAdjacentHTML('beforebegin', cardsHtml);
-  else grid.insertAdjacentHTML('beforeend', cardsHtml);
-  sxSortCardsLiveThenTime(
-    Array.from(grid.children).filter(c => c !== viewAll && c.classList.contains('fx2-card')),
-    c => grid.insertBefore(c, viewAll || null)
-  );
-};
 
 // Groups the cached FanCode matches by tournament/series — live-first
 // ordering both across groups (a tournament with a live match sorts
@@ -6655,18 +6505,6 @@ function sxGetMatchServers(m) {
       }
     });
   }
-  // The SONY EV APP entry (see svxAugmentSheetCards) is only ever added
-  // while Sony's feed says this fixture is live — re-check right now and
-  // drop it outright if that's no longer true (unlike FanCode, there's no
-  // "starts at" countdown worth showing once the stream disappears).
-  if (typeof svxFindSheetMatch === 'function') {
-    const sm = svxFindSheetMatch(m);
-    for (let i = servers.length - 1; i >= 0; i--) {
-      if ((servers[i].text || '').trim().toLowerCase() !== 'sony ev app') continue;
-      if (sm && sm.url) servers[i].url = sm.url; // keep the freshest stream link
-      else servers.splice(i, 1);
-    }
-  }
   return servers;
 }
 // URI-encoded JSON of a match row's server list — safe to drop straight into
@@ -6895,8 +6733,7 @@ function openMatchWatchScreen(servers, info) {
     // renders inconsistently across fonts/platforms and looks flat).
     const MWS_PLAY_SVG = '<span class="mws-play-disc"><svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor"><path d="M8 5.14v13.72a1 1 0 0 0 1.5.87l11-6.86a1 1 0 0 0 0-1.72L9.5 4.27A1 1 0 0 0 8 5.14z"/></svg></span>';
     const isFcxServer = s => (s.text || '').trim().toLowerCase() === 'fancode';
-    const isSvxServer = s => (s.text || '').trim().toLowerCase() === 'sony ev app';
-    const sortedServers = (servers || []).slice().sort((a, b) => (isFcxServer(a) || isSvxServer(a) ? 0 : 1) - (isFcxServer(b) || isSvxServer(b) ? 0 : 1));
+    const sortedServers = (servers || []).slice().sort((a, b) => (isFcxServer(a) ? 0 : 1) - (isFcxServer(b) ? 0 : 1));
     // Match hasn't started yet — the server list still opens, topped with a
     // red notice telling the visitor exactly when it goes live.
     // Kickoff gate — applies to the WHOLE list, FanCode and sheet servers
@@ -6937,21 +6774,6 @@ function openMatchWatchScreen(servers, info) {
             <span class="mws-server-sub">${fcxReady ? 'Tap to play this stream' : (s.fcxTime ? 'Starts ' + s.fcxTime : 'Not live yet')}</span>
           </span>
           <span class="mws-server-play">${fcxReady ? MWS_PLAY_SVG : MWS_LOCK_SVG}</span>
-        </button>`;
-      }
-      if (isSvxServer(s)) {
-        // Only ever added to the server list while Sony's feed says this
-        // fixture is live (see svxAugmentSheetCards / the recheck inside
-        // sxGetMatchServers) — so, unlike FanCode/sheet servers, this row
-        // never needs a locked/countdown state, just play it.
-        return `
-        <button type="button" class="mws-server-btn" onclick="closeMatchWatchScreen();sxGoToMatchUrl(null,'${escJs(s.url)}','${escJs(label)}')">
-          <img class="mws-server-logo-lg" src="${window.SVX_LOGO}" alt="SONY EV APP" onerror="this.style.display='none'">
-          <span class="mws-server-info">
-            <span class="mws-server-label">${s.text || 'SONY EV APP'}</span>
-            <span class="mws-server-sub">Tap to play this stream</span>
-          </span>
-          <span class="mws-server-play">${MWS_PLAY_SVG}</span>
         </button>`;
       }
       // Only a name that actually matches a LIVE CHANNELS row gets the
@@ -7759,7 +7581,6 @@ function renderMatchCards(rows) {
   // add it as an extra server on that row — the sheet card keeps its own
   // banner/thumbnail exactly as configured, this only adds a watch option.
   if (typeof fcxAugmentSheetCards === 'function') fcxAugmentSheetCards(cards);
-  if (typeof svxAugmentSheetCards === 'function') svxAugmentSheetCards(cards);
 
   if (typeof renderFixtures === 'function') renderFixtures(); // home "Matches" preview now sources from this same data
   const el = document.getElementById('match-overlay');
@@ -8170,7 +7991,6 @@ function renderFixtures(rows) {
       <button type="button" class="smo-next-btn" onclick="openMatches()">▶ Watch Next Matches</button>
     </div>`;
     if (typeof window.fcxAppendFixturesPreview === 'function') window.fcxAppendFixturesPreview();
-    if (typeof window.svxAppendFixturesPreview === 'function') window.svxAppendFixturesPreview();
     return;
   }
   grid.innerHTML = fx.map(c => {
@@ -8209,10 +8029,9 @@ function renderFixtures(rows) {
       <span class="fx2-viewall-text">VIEW ALL</span>
     </a>`;
 
-  // This just rebuilt #fixtures-grid from scratch — put back any FanCode/
-  // Sony preview cards a prior refresh had already added.
+  // This just rebuilt #fixtures-grid from scratch — put back any FanCode
+  // preview cards a prior FCX refresh had already added.
   if (typeof window.fcxAppendFixturesPreview === 'function') window.fcxAppendFixturesPreview();
-  if (typeof window.svxAppendFixturesPreview === 'function') window.svxAppendFixturesPreview();
 }
 
 function renderCategories(rows) {
