@@ -1,7 +1,8 @@
 // EV Streams — Desktop app
 // Electron port of the Android WebView shell (see android-app/README.md).
 // Ports: native CORS/CSP/X-Frame-Options bypass, mixed-content + self-signed
-// cert tolerance, and VLC hand-off for raw stream links. (No ad blocker.)
+// cert tolerance, and VLC hand-off for raw stream links. No ad blocker —
+// popups and ad redirects open in a new app window instead of being blocked.
 
 const { app, BrowserWindow, session, shell, dialog, ipcMain } = require('electron');
 const path = require('path');
@@ -99,6 +100,25 @@ function setupSession(ses) {
   ses.setCertificateVerifyProc((request, callback) => callback(0));
 }
 
+
+const STRIP_META_CSP_JS = `
+(function(){
+  try {
+    document.querySelectorAll('meta[http-equiv]').forEach(function(m){
+      if (/content-security-policy/i.test(m.getAttribute('http-equiv') || '')) m.remove();
+    });
+  } catch (e) {}
+})();
+`;
+
+function stripMetaCspEverywhere(wc) {
+  try {
+    for (const frame of wc.mainFrame.framesInSubtree) {
+      frame.executeJavaScript(STRIP_META_CSP_JS).catch(() => {});
+    }
+  } catch (e) {}
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1280,
@@ -117,6 +137,8 @@ function createWindow() {
   });
 
   setupSession(mainWindow.webContents.session);
+  mainWindow.webContents.on('dom-ready', () => stripMetaCspEverywhere(mainWindow.webContents));
+  mainWindow.webContents.on('did-frame-navigate', () => stripMetaCspEverywhere(mainWindow.webContents));
 
   // Fullscreen playback for <video> and iframe-embedded players.
   mainWindow.webContents.on('enter-html-full-screen', () => mainWindow.setFullScreen(true));
@@ -137,19 +159,57 @@ function createWindow() {
   mainWindow.webContents.on('will-navigate', maybeIntercept);
 
   // New-window requests: own-site links open in this window, raw stream
-  // links go to VLC, anything else opens in the default browser so it never
-  // takes over the app window.
+  // links go to VLC, and everything else (ads, popups, and player redirects
+  // from VidAPI/movie embeds) opens in a new app window — same as a browser
+  // "open in new tab". Nothing is blocked here; players that rely on
+  // window.open() returning a real window keep working.
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     let u;
     try { u = new URL(url); } catch (e) { return { action: 'deny' }; }
     if (u.host === SITE_HOST) {
       mainWindow.webContents.loadURL(url);
-    } else if (isStreamUrl(url)) {
+      return { action: 'deny' };
+    }
+    if (isStreamUrl(url)) {
       openInVlcOrChooser(url);
-    } else if (u.protocol === 'http:' || u.protocol === 'https:') {
-      shell.openExternal(url);
+      return { action: 'deny' };
+    }
+    if (u.protocol === 'http:' || u.protocol === 'https:') {
+      return {
+        action: 'allow',
+        overrideBrowserWindowOptions: {
+          width: 1000,
+          height: 720,
+          autoHideMenuBar: true,
+          icon: path.join(__dirname, 'assets', 'icon.png'),
+          webPreferences: {
+            contextIsolation: true,
+            nodeIntegration: false,
+            webSecurity: false,
+            allowRunningInsecureContent: true,
+            autoplayPolicy: 'no-user-gesture-required',
+            plugins: true
+          }
+        }
+      };
     }
     return { action: 'deny' };
+  });
+
+  // New windows opened above (ad/popup tabs) get the same VLC hand-off and
+  // back-navigation shortcut, and close cleanly instead of piling up.
+  mainWindow.webContents.on('did-create-window', (childWindow) => {
+    childWindow.webContents.on('dom-ready', () => stripMetaCspEverywhere(childWindow.webContents));
+    childWindow.webContents.on('did-frame-navigate', () => stripMetaCspEverywhere(childWindow.webContents));
+    childWindow.webContents.on('will-navigate', maybeIntercept);
+    childWindow.webContents.on('before-input-event', (event, input) => {
+      if (input.type !== 'keyDown') return;
+      if (input.key === 'F12') { childWindow.webContents.toggleDevTools(); return; }
+      if (input.alt && input.key === 'ArrowLeft' && childWindow.webContents.canGoBack()) {
+        event.preventDefault();
+        childWindow.webContents.goBack();
+      }
+    });
   });
 
   // Back navigation (mirrors Android's hardware-back handling).
