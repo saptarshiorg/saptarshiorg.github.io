@@ -4,9 +4,57 @@
 // cert tolerance, and VLC hand-off for raw stream links. No ad blocker —
 // popups and ad redirects open in a new app window instead of being blocked.
 
-const { app, BrowserWindow, session, shell, dialog, ipcMain } = require('electron');
+const { app, BrowserWindow, Menu, session, shell, dialog, ipcMain, clipboard } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
+
+// Chromecast — pure-JS device discovery (mDNS over UDP) and Cast v2
+// control, no native build tools required, so it won't break the Windows/
+// Linux CI build the way native mdns bindings would.
+let ChromecastAPI = null;
+let castClient = null;
+const castDevices = new Map(); // host -> { name, host, device }
+
+function getCastClient() {
+  if (castClient) return castClient;
+  try {
+    ChromecastAPI = ChromecastAPI || require('chromecast-api');
+    castClient = new ChromecastAPI();
+    castClient.on('device', (device) => {
+      castDevices.set(device.host, { name: device.friendlyName || device.name || device.host, host: device.host, device });
+    });
+    return castClient;
+  } catch (e) {
+    console.log('[EVStreams] Chromecast unavailable:', e.message);
+    return null;
+  }
+}
+
+
+// Detected stream links — sniffed from every request in the shared session,
+// so this catches manifests loaded inside third-party embeds/iframes
+// (VidAPI, movie players) too, not just the main site.
+const MANIFEST_EXTENSIONS = ['.m3u8', '.mpd', '.mp4'];
+const MAX_DETECTED = 30;
+let detectedStreams = []; // [{ url, host, ts }], most recent first
+
+function isManifestUrl(url) {
+  try {
+    const p = new URL(url).pathname.toLowerCase();
+    return MANIFEST_EXTENSIONS.some((ext) => p.endsWith(ext));
+  } catch (e) { return false; }
+}
+
+function addDetectedStream(url) {
+  if (detectedStreams.some((s) => s.url === url)) return;
+  let host = '';
+  try { host = new URL(url).host; } catch (e) {}
+  const entry = { url, host, ts: Date.now() };
+  detectedStreams.unshift(entry);
+  if (detectedStreams.length > MAX_DETECTED) detectedStreams.length = MAX_DETECTED;
+  if (mainWindow) mainWindow.webContents.send('evstreams-stream-detected', entry);
+}
+
 
 // ---------------------------------------------------------------------------
 // Config
@@ -98,6 +146,13 @@ function setupSession(ses) {
   // Mixed content (http streams on an https page) and self-signed/bad certs —
   // many stream hosts serve these; proceed anyway, same as a native player.
   ses.setCertificateVerifyProc((request, callback) => callback(0));
+
+  // Sniff every request (main site, iframes, popup windows share this same
+  // session) for manifest/stream links, without blocking anything.
+  ses.webRequest.onBeforeRequest((details, callback) => {
+    if (isManifestUrl(details.url)) addDetectedStream(details.url);
+    callback({});
+  });
 }
 
 
@@ -125,7 +180,6 @@ function createWindow() {
     height: 800,
     title: 'EV Streams',
     icon: path.join(__dirname, 'assets', 'icon.png'),
-    autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -139,6 +193,7 @@ function createWindow() {
   setupSession(mainWindow.webContents.session);
   mainWindow.webContents.on('dom-ready', () => stripMetaCspEverywhere(mainWindow.webContents));
   mainWindow.webContents.on('did-frame-navigate', () => stripMetaCspEverywhere(mainWindow.webContents));
+  mainWindow.webContents.on('did-navigate', () => { detectedStreams = []; });
 
   // Fullscreen playback for <video> and iframe-embedded players.
   mainWindow.webContents.on('enter-html-full-screen', () => mainWindow.setFullScreen(true));
@@ -180,7 +235,6 @@ function createWindow() {
         overrideBrowserWindowOptions: {
           width: 1000,
           height: 720,
-          autoHideMenuBar: true,
           icon: path.join(__dirname, 'assets', 'icon.png'),
           webPreferences: {
             contextIsolation: true,
@@ -233,7 +287,57 @@ function createWindow() {
 // IPC bridge for window.EVStreamsNative.openInVlc(url) called from the page.
 ipcMain.on('evstreams-open-in-vlc', (event, url) => openInVlcOrChooser(url));
 
-app.whenReady().then(createWindow);
+// Chromecast IPC bridge for window.EVStreamsNative.cast.*
+ipcMain.handle('evstreams-cast-list', () => {
+  const client = getCastClient();
+  if (!client) return { supported: false, devices: [] };
+  return {
+    supported: true,
+    devices: Array.from(castDevices.values()).map((d) => ({ name: d.name, host: d.host }))
+  };
+});
+
+ipcMain.handle('evstreams-cast-play', (event, host, url) => {
+  return new Promise((resolve) => {
+    const entry = castDevices.get(host);
+    if (!entry) return resolve({ ok: false, error: 'Device not found — try refreshing the device list.' });
+    entry.device.play(url, {}, (err) => {
+      if (err) return resolve({ ok: false, error: err.message || String(err) });
+      resolve({ ok: true });
+    });
+  });
+});
+
+ipcMain.handle('evstreams-cast-stop', (event, host) => {
+  return new Promise((resolve) => {
+    const entry = castDevices.get(host);
+    if (!entry) return resolve({ ok: false, error: 'Device not found.' });
+    entry.device.stop((err) => resolve({ ok: !err, error: err ? (err.message || String(err)) : undefined }));
+  });
+});
+
+// Detected-stream IPC bridge for window.EVStreamsNative.streams.*
+ipcMain.handle('evstreams-streams-list', () => detectedStreams);
+
+// Clipboard bridge — used for "copy" on a detected link or cast device.
+ipcMain.handle('evstreams-copy-text', (event, text) => {
+  try {
+    clipboard.writeText(String(text));
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e.message || String(e) };
+  }
+});
+
+app.on('will-quit', () => {
+  try { if (castClient) castClient.destroy(); } catch (e) {}
+});
+
+Menu.setApplicationMenu(null);
+app.whenReady().then(() => {
+  createWindow();
+  getCastClient(); // start Chromecast discovery in the background
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
