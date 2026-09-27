@@ -6201,6 +6201,7 @@ function renderNav(rows) {
     { label:'Home',     href:'#', sxtab:'home', onclick:"goHome();return false;" },
     { label:'Live TV',  href:'#sxTabPanels', sxtab:'livetv', onclick:"openLiveTV();return false;" },
     { label:'Matches',  href:'#sxTabPanels', sxtab:'matches', onclick:"sxSwitchTab('matches');return false;" },
+    { label:'Multiview', href:'#', sxtab:'multiview', onclick:"openMultiview();return false;" },
     { label:'Search',   href:'#sxTabPanels', sxtab:'search', onclick:"openSxSearch();return false;" },
     { label:'Favourites', href:'#sxTabPanels', sxtab:'favourites', onclick:"openFavourites();return false;" },
     { label:'OTT',      href:'#sxTabPanels', sxtab:'ott', onclick:"openOTT();return false;" },
@@ -10038,6 +10039,13 @@ function closeAdminChatDiscordPopup(){
 }
 #sp-info-fullscreen:hover{ background: rgba(255,255,255,0.16); }
 #sp-info-fullscreen svg{ width: 15px; height: 15px; }
+#sp-info-multiview{
+  flex-shrink: 0; width: 32px; height: 32px; border-radius: 8px; border: none;
+  background: rgba(255,255,255,0.08); color: #fff; display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+#sp-info-multiview:hover{ background: rgba(255,255,255,0.16); }
+#sp-info-multiview svg{ width: 15px; height: 15px; }
 /* FanCode source switch (World / India) — only shown while a FanCode match is playing */
 #sp-src-switch{ display: none; align-items: center; gap: 3px; flex-shrink: 0; padding: 3px; border-radius: 9px; background: rgba(255,255,255,0.07); }
 #sp-src-switch.show{ display: flex; }
@@ -10312,6 +10320,9 @@ function closeAdminChatDiscordPopup(){
         <div id="sp-info-meta"></div>
       </div>
       <div id="sp-src-switch" role="group" aria-label="FanCode source"></div>
+      <button id="sp-info-multiview" onclick="mvAddFromPlayer()" title="Add to Multiview">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7.5" height="7.5" rx="1"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1"/></svg>
+      </button>
       <button id="sp-info-fullscreen" onclick="spToggleFullscreen()" title="Fullscreen">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
       </button>
@@ -10332,6 +10343,134 @@ function closeAdminChatDiscordPopup(){
       <div class="sp-ad-title">YOUR AD HERE</div>
       <div class="sp-ad-contact">Contact Discord: <span class="sp-ad-handle">rishi.ev</span></div>
     </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     MULTIVIEW — watch up to 4 live channels/matches at once. Direct HLS
+     (.m3u8) links play through a tiny hls.js page injected via srcdoc
+     (same technique as the FanCode India-source switch); everything else
+     (third-party embed pages) plays as a plain iframe — those can't be
+     muted from the parent since they're cross-origin.
+═══════════════════════════════════════════════════════════════════════ -->
+<style>
+#sx-multiview-overlay{
+  display:none; position:fixed; inset:0; z-index:1450;
+  background:#000; flex-direction:column;
+}
+#sx-multiview-overlay.open{ display:flex; }
+#mv-topbar{
+  flex:0 0 auto; display:flex; align-items:center; gap:14px;
+  padding:12px 16px; padding-top:max(12px,env(safe-area-inset-top));
+  background:rgba(10,10,12,0.94); border-bottom:1px solid rgba(255,255,255,0.08);
+}
+#mv-back{
+  display:flex; align-items:center; gap:4px; background:none; border:none;
+  color:#fff; font-weight:700; font-size:13px; cursor:pointer; padding:6px 4px 6px 0; flex-shrink:0;
+}
+#mv-back svg{ width:20px; height:20px; }
+#mv-title{ font-weight:800; font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:#fff; flex:1; }
+.mv-layout-group{ display:flex; gap:4px; background:rgba(255,255,255,0.06); padding:4px; border-radius:10px; flex-shrink:0; }
+.mv-layout-btn{
+  background:none; border:none; color:rgba(255,255,255,0.6); font-weight:800; font-size:12px;
+  min-width:26px; padding:6px 10px; border-radius:8px; cursor:pointer;
+}
+.mv-layout-btn.active{ background:var(--pm-magenta,#F0146E); color:#fff; }
+
+#mv-grid{ flex:1; min-height:0; display:grid; gap:3px; background:#000; padding:3px; }
+#mv-grid.mv-l2{ grid-template-columns:1fr 1fr; grid-template-rows:1fr; }
+#mv-grid.mv-l3{ grid-template-columns:1fr 1fr 1fr; grid-template-rows:1fr; }
+#mv-grid.mv-l4{ grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; }
+@media(max-width:760px){
+  #mv-grid.mv-l2{ grid-template-columns:1fr; grid-template-rows:1fr 1fr; }
+  #mv-grid.mv-l3{ grid-template-columns:1fr; grid-template-rows:repeat(3,1fr); }
+  #mv-grid.mv-l4{ grid-template-columns:1fr; grid-template-rows:repeat(4,1fr); }
+}
+
+.mv-slot{
+  position:relative; background:#0c0c0e; border:1px solid rgba(255,255,255,0.08);
+  overflow:hidden; display:flex; align-items:center; justify-content:center;
+}
+.mv-slot iframe, .mv-slot video{ width:100%; height:100%; border:none; display:block; background:#000; }
+.mv-slot-empty{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:8px; width:100%; height:100%; background:none; border:none; color:rgba(255,255,255,0.5);
+  cursor:pointer; font-family:inherit;
+}
+.mv-slot-empty svg{ width:26px; height:26px; opacity:.5; }
+.mv-slot-empty span{ font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
+.mv-slot-bar{
+  position:absolute; left:0; right:0; bottom:0; z-index:2;
+  display:flex; align-items:center; gap:6px; padding:6px 8px;
+  background:linear-gradient(0deg,rgba(0,0,0,0.85),transparent);
+}
+.mv-slot-name{ flex:1; min-width:0; color:#fff; font-size:11px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 3px rgba(0,0,0,.7); }
+.mv-slot-btn{
+  background:rgba(0,0,0,0.55); border:1px solid rgba(255,255,255,0.18); color:#fff;
+  width:24px; height:24px; border-radius:7px; display:flex; align-items:center; justify-content:center;
+  cursor:pointer; flex-shrink:0; padding:0;
+}
+.mv-slot-btn svg{ width:13px; height:13px; }
+.mv-slot-btn.mv-muted{ color:#FF6B9D; border-color:rgba(240,20,110,0.5); }
+
+#mv-picker{
+  display:none; position:fixed; inset:0; z-index:1500; background:rgba(0,0,0,0.78);
+  align-items:flex-end; justify-content:center;
+}
+#mv-picker.open{ display:flex; }
+#mv-picker-box{
+  width:100%; max-width:520px; max-height:78vh; background:#111114; border:1px solid rgba(255,255,255,0.1);
+  border-radius:16px 16px 0 0; display:flex; flex-direction:column; overflow:hidden;
+}
+@media(min-width:760px){ #mv-picker{ align-items:center; } #mv-picker-box{ border-radius:16px; max-height:70vh; } }
+#mv-picker-head{ display:flex; align-items:center; gap:10px; padding:16px 16px 8px; }
+#mv-picker-title{ flex:1; color:#fff; font-weight:800; font-size:14px; }
+#mv-picker-close{ background:none; border:none; color:rgba(255,255,255,0.6); cursor:pointer; padding:4px; }
+#mv-picker-close svg{ width:18px; height:18px; }
+#mv-picker-search{
+  margin:8px 16px 4px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
+  border-radius:10px; padding:9px 12px; color:#fff; font-size:13px; font-family:inherit; outline:none;
+}
+#mv-picker-list{ flex:1; overflow-y:auto; padding:8px 10px 16px; }
+.mv-pick-item{
+  width:100%; display:flex; align-items:center; gap:10px; background:none; border:none;
+  padding:9px 8px; border-radius:10px; cursor:pointer; text-align:left; color:#fff; font-family:inherit;
+}
+.mv-pick-item:hover{ background:rgba(255,255,255,0.06); }
+.mv-pick-thumb{ width:34px; height:34px; border-radius:8px; overflow:hidden; background:#1c1c21; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+.mv-pick-thumb img{ width:100%; height:100%; object-fit:contain; }
+.mv-pick-info{ min-width:0; flex:1; }
+.mv-pick-name{ font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.mv-pick-meta{ font-size:11px; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:.02em; }
+.mv-pick-empty{ padding:30px 10px; text-align:center; color:rgba(255,255,255,0.45); font-size:13px; }
+</style>
+
+<div id="sx-multiview-overlay">
+  <div id="mv-topbar">
+    <button type="button" id="mv-back" onclick="closeMultiview()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      Back
+    </button>
+    <span id="mv-title">Multiview</span>
+    <div class="mv-layout-group" role="group" aria-label="Layout">
+      <button type="button" class="mv-layout-btn active" data-n="2" onclick="mvSetLayout(2)">2</button>
+      <button type="button" class="mv-layout-btn" data-n="3" onclick="mvSetLayout(3)">3</button>
+      <button type="button" class="mv-layout-btn" data-n="4" onclick="mvSetLayout(4)">4</button>
+    </div>
+  </div>
+  <div id="mv-grid" class="mv-l2"></div>
+</div>
+
+<div id="mv-picker">
+  <div id="mv-picker-box">
+    <div id="mv-picker-head">
+      <span id="mv-picker-title">Add to Multiview</span>
+      <button type="button" id="mv-picker-close" onclick="closeMvPicker()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <input type="text" id="mv-picker-search" placeholder="Search live channels &amp; matches" oninput="mvRenderPickerList(this.value)">
+    <div id="mv-picker-list"></div>
   </div>
 </div>
 
@@ -11780,6 +11919,206 @@ function spShowTopbar(){
   if (!overlay) return;
   ['mousemove', 'touchstart', 'click'].forEach(evt => overlay.addEventListener(evt, spShowTopbar));
 })();
+
+// ══════════════════════════════════════════════════════════════════════
+// MULTIVIEW — see the markup/CSS block above for the overlay + picker.
+// ══════════════════════════════════════════════════════════════════════
+window._mvSlots = [null, null, null, null]; // {url,name,isHls,muted}
+window._mvLayout = 2;
+window._mvPickerSlot = -1;
+
+const MV_ICON_SOUND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>';
+const MV_ICON_MUTED = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>';
+const MV_ICON_SWAP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>';
+const MV_ICON_CLOSE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+
+function mvEscAttr(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
+function mvEscText(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function openMultiview(){
+  if (document.getElementById('stream-player-overlay').classList.contains('open')) closeStreamPlayer();
+  document.getElementById('sx-multiview-overlay').classList.add('open');
+  const navbar = document.querySelector('.sx-topbar, [data-navbar]');
+  if (navbar) navbar.style.display = 'none';
+  const mobileTabbar = document.getElementById('mobile-tabbar');
+  if (mobileTabbar) mobileTabbar.style.display = 'none';
+  mvRenderGrid();
+}
+window.openMultiview = openMultiview;
+
+function closeMultiview(){
+  document.getElementById('sx-multiview-overlay').classList.remove('open');
+  closeMvPicker();
+  const navbar = document.querySelector('.sx-topbar, [data-navbar]');
+  if (navbar) navbar.style.display = '';
+  const mobileTabbar = document.getElementById('mobile-tabbar');
+  if (mobileTabbar) mobileTabbar.style.display = '';
+}
+window.closeMultiview = closeMultiview;
+
+function mvSetLayout(n){
+  window._mvLayout = n;
+  document.querySelectorAll('.mv-layout-btn').forEach(b => b.classList.toggle('active', +b.dataset.n === n));
+  mvRenderGrid();
+}
+window.mvSetLayout = mvSetLayout;
+
+function mvRenderGrid(){
+  const grid = document.getElementById('mv-grid');
+  if (!grid) return;
+  const n = window._mvLayout;
+  grid.className = 'mv-l' + n;
+  let html = '';
+  for (let i = 0; i < n; i++) html += mvSlotHtml(i);
+  grid.innerHTML = html;
+}
+
+function mvSlotHtml(i){
+  const s = window._mvSlots[i];
+  if (!s) {
+    return `<div class="mv-slot" id="mv-slot-${i}">
+      <button type="button" class="mv-slot-empty" onclick="mvOpenPicker(${i})">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        <span>Add Stream</span>
+      </button>
+    </div>`;
+  }
+  const media = s.isHls
+    ? `<iframe id="mv-media-${i}" srcdoc="${mvEscAttr(mvHlsDoc(s.url, s.muted))}" allow="autoplay" title="${mvEscAttr(s.name)}"></iframe>`
+    : `<iframe id="mv-media-${i}" src="${mvEscAttr(s.url)}" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer-when-downgrade" title="${mvEscAttr(s.name)}"></iframe>`;
+  const muteBtn = s.isHls
+    ? `<button type="button" class="mv-slot-btn${s.muted?' mv-muted':''}" onclick="mvToggleMute(${i})" title="${s.muted?'Unmute':'Mute'}">${s.muted ? MV_ICON_MUTED : MV_ICON_SOUND}</button>`
+    : '';
+  return `<div class="mv-slot" id="mv-slot-${i}">
+    ${media}
+    <div class="mv-slot-bar">
+      <span class="mv-slot-name">${mvEscText(s.name)}</span>
+      ${muteBtn}
+      <button type="button" class="mv-slot-btn" onclick="mvOpenPicker(${i})" title="Change stream">${MV_ICON_SWAP}</button>
+      <button type="button" class="mv-slot-btn" onclick="mvRemoveSlot(${i})" title="Remove">${MV_ICON_CLOSE}</button>
+    </div>
+  </div>`;
+}
+
+// Tiny standalone HLS.js player doc, same technique as the FanCode
+// India-source switch above (spIndiaPlayerDoc) — injected via srcdoc so
+// each slot plays its own independent .m3u8 without touching the others.
+function mvHlsDoc(m3u8, muted){
+  const u = JSON.stringify(String(m3u8));
+  const m = muted ? 'true' : 'false';
+  return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+    + '<style>html,body{margin:0;height:100%;background:#000;overflow:hidden}video{width:100%;height:100%;background:#000;display:block;object-fit:contain}</style></head><body>'
+    + '<video id="v" autoplay playsinline' + (muted ? ' muted' : '') + '></video>'
+    + '<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js"><\/script>'
+    + '<script>(function(){var u=' + u + ',v=document.getElementById("v");v.muted=' + m + ';'
+    + 'if(window.Hls&&Hls.isSupported()){var h=new Hls({lowLatencyMode:true});h.loadSource(u);h.attachMedia(v);'
+    + 'h.on(Hls.Events.MANIFEST_PARSED,function(){var p=v.play();if(p&&p.catch)p.catch(function(){});});}'
+    + 'else if(v.canPlayType("application/vnd.apple.mpegurl")){v.src=u;v.addEventListener("loadedmetadata",function(){v.play().catch(function(){});});}'
+    + '})();<\/script></body></html>';
+}
+
+function mvToggleMute(i){
+  const s = window._mvSlots[i];
+  if (!s || !s.isHls) return;
+  s.muted = !s.muted;
+  mvRenderGrid();
+}
+window.mvToggleMute = mvToggleMute;
+
+function mvRemoveSlot(i){
+  window._mvSlots[i] = null;
+  mvRenderGrid();
+}
+window.mvRemoveSlot = mvRemoveSlot;
+
+function mvOpenPicker(i){
+  window._mvPickerSlot = i;
+  document.getElementById('mv-picker').classList.add('open');
+  const searchEl = document.getElementById('mv-picker-search');
+  if (searchEl) searchEl.value = '';
+  mvRenderPickerList('');
+  setTimeout(() => { if (searchEl) searchEl.focus(); }, 50);
+}
+window.mvOpenPicker = mvOpenPicker;
+
+function closeMvPicker(){
+  const el = document.getElementById('mv-picker');
+  if (el) el.classList.remove('open');
+}
+window.closeMvPicker = closeMvPicker;
+
+// Live channels + live sheet matches with a direct, embeddable watch URL.
+// FanCode's own dynamic-server matches are left out here on purpose —
+// they need the multi-server handshake in sxHandleMatchWatch(), which
+// doesn't fit a plain single-URL multiview slot.
+function mvPickerItems(){
+  const items = [];
+  (window._cmsChannels || []).forEach(c => {
+    if ((c.status_live_off || '').toUpperCase() !== 'LIVE') return;
+    const url = (c.watch_url || '').trim();
+    if (!url || url === '#') return;
+    items.push({ name: c.channel_name || 'Live Stream', meta: c.group || 'Live TV', icon: c.icon_url || '', url });
+  });
+  (window._matchCardsData || []).forEach(c => {
+    if (typeof isMatchFinished === 'function' && isMatchFinished(c)) return;
+    if (typeof matchStatusText === 'function' && matchStatusText(c).toLowerCase() !== 'live') return;
+    const url = (c.btn_url || '').trim();
+    if (!url || url === '#') return;
+    items.push({ name: (c.team1_code || '') + ' vs ' + (c.team2_code || ''), meta: c.game || 'Live Match', icon: c.team1_icon_url || c.team2_icon_url || '', url });
+  });
+  return items;
+}
+
+function mvRenderPickerList(q){
+  const list = document.getElementById('mv-picker-list');
+  if (!list) return;
+  const query = (q || '').toLowerCase();
+  const items = mvPickerItems().filter(it => !query || it.name.toLowerCase().includes(query));
+  if (!items.length) {
+    list.innerHTML = '<div class="mv-pick-empty">No live streams found</div>';
+    return;
+  }
+  list.innerHTML = items.map(it => `
+    <button type="button" class="mv-pick-item" onclick="mvPick('${escJs(it.url)}','${escJs(it.name)}')">
+      <span class="mv-pick-thumb">${it.icon ? `<img src="${it.icon}" alt="" onerror="this.parentElement.style.display='none'">` : ''}</span>
+      <span class="mv-pick-info">
+        <span class="mv-pick-name">${mvEscText(it.name)}</span>
+        <span class="mv-pick-meta">${mvEscText(it.meta)}</span>
+      </span>
+    </button>`).join('');
+}
+window.mvRenderPickerList = mvRenderPickerList;
+
+function mvPick(url, name){
+  const i = window._mvPickerSlot;
+  if (i < 0) return;
+  const isHls = typeof sxIsHlsUrl === 'function' && sxIsHlsUrl(url);
+  if (!isHls && /famcodexwebs\.pages\.dev/i.test(url)) {
+    alert("This stream can't be embedded in Multiview — open it from Matches on its own instead.");
+    return;
+  }
+  window._mvSlots[i] = { url, name, isHls, muted: true };
+  closeMvPicker();
+  mvRenderGrid();
+}
+window.mvPick = mvPick;
+
+// "Add to Multiview" button inside the normal single-stream player —
+// drops the stream that's currently playing into the first open slot
+// (or slot 0 if all four are full) and jumps straight into Multiview.
+function mvAddFromPlayer(){
+  const url = window.sxCurrentStreamRawUrl;
+  if (!url) return;
+  const nameEl = document.getElementById('sp-info-name');
+  const name = (nameEl && nameEl.textContent) || 'Live Stream';
+  const isHls = typeof sxIsHlsUrl === 'function' && sxIsHlsUrl(url);
+  let slot = window._mvSlots.findIndex(s => !s);
+  if (slot === -1) slot = 0;
+  window._mvSlots[slot] = { url, name, isHls, muted: false };
+  closeStreamPlayer();
+  openMultiview();
+}
+window.mvAddFromPlayer = mvAddFromPlayer;
 </script>
 
 
