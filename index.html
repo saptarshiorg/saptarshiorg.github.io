@@ -6144,15 +6144,14 @@ function toObj(rows) {
   });
 }
 
-// CMS URLs must follow the protocol of the page. A local file:// build may
-// still load an http:// source, but an https:// deployment is not allowed to
-// request http:// images, logos, banners or HLS manifests (mixed content).
-// Do NOT force https on file://, because that can break sources which only
-// exist on plain HTTP. On the live HTTPS site we upgrade CMS http:// URLs.
+// Preserve both HTTP and HTTPS URLs exactly as supplied by the API/CMS.
+// No application-level protocol rewriting is performed here. Browser security
+// rules still apply: an HTTPS page cannot load insecure HTTP subresources when
+// the browser blocks them as mixed content.
 function sxCmsUrl(u) {
   const v = String(u || '').trim();
   if (!v) return '';
-  return sxUpgradeHttpUrl(v);
+  return v;
 }
 
 // Normalize URL-bearing CMS columns as soon as Sheets data is received so
@@ -6172,16 +6171,11 @@ function sxNormalizeCmsRows(rows) {
   });
 }
 
-// ── GLOBAL HTTPS URL SAFETY ───────────────────────────────────────────────
-// APIs are handled exactly like the Sheets CMS.  On an HTTPS deployment,
-// browsers reject HTTP API endpoints, images, logos and HLS manifests as
-// mixed content.  Local file:// builds keep the original URLs.
+// ── URL PROTOCOL COMPATIBILITY ─────────────────────────────────────────
+// Keep explicit http:// and https:// URLs unchanged. This lets the site
+// support sources using either protocol instead of silently rewriting them.
 function sxUpgradeHttpUrl(value) {
-  const v = String(value == null ? '' : value).trim();
-  if (!v) return value;
-  return (location.protocol === 'https:' && /^http:\/\//i.test(v))
-    ? v.replace(/^http:\/\//i, 'https://')
-    : value;
+  return value;
 }
 
 function sxNormalizeApiValue(value, key) {
@@ -6870,8 +6864,8 @@ function sxMatchInfoEnc(m, name) {
   m = m || {};
   const info = {
     name: name || '',
-    team1_code: m.team1_code || '', team1_full_name: m.team1_full_name || '', team1_icon_url: m.team1_icon_url || '',
-    team2_code: m.team2_code || '', team2_full_name: m.team2_full_name || '', team2_icon_url: m.team2_icon_url || '',
+    team1_code: m.team1_code || '', team1_full_name: m.team1_full_name || '', team1_icon_url: m.team1_icon_url || '', team1_country: m.team1_country || '',
+    team2_code: m.team2_code || '', team2_full_name: m.team2_full_name || '', team2_icon_url: m.team2_icon_url || '', team2_country: m.team2_country || '',
     date_label: smoCardDateLabel(m), details: m.details || '',
     countdown: m.countdown_to_iso_datetime || m.countdown_to || '',
     status: matchStatusText(m).toLowerCase(),
@@ -6962,6 +6956,10 @@ function sxHandleMatchWatch(e, serversEnc, fallbackUrl, name, matchInfoEnc) {
 
 function openMatchWatchScreen(servers, info) {
   info = info || {};
+  // Country-derived FlagCDN visuals remain authoritative even on the
+  // fullscreen watch screen.
+  if (info.team1_country) info.team1_icon_url = sxCountryFlagUrl(info.team1_country) || info.team1_icon_url || '';
+  if (info.team2_country) info.team2_icon_url = sxCountryFlagUrl(info.team2_country) || info.team2_icon_url || '';
   const label = info.name || 'Live Stream';
 
   const isLive = info.status === 'live';
@@ -7119,7 +7117,7 @@ function openMatchWatchScreen(servers, info) {
         <span class="mws-server-info">
           <span class="mws-server-label">${s.text || ('Server ' + (i + 1))}${vlcIcon}${autoConnectBadge}</span>
           <span class="mws-server-sub">${sheetServersLocked ? 'Locked until ' + startText : (s.sub || 'Tap to play this stream')}</span>
-          ${(s.appOnly || (sxIsStreamUrl(s.url) && /^http:\/\//i.test(String(s.url).trim()) && location.protocol === 'https:')) ? '<span class="mws-server-app-note">Only Play Through EV STREAMS APP</span>' : ''}
+          ${s.appOnly ? '<span class="mws-server-app-note">Only Play Through EV STREAMS APP</span>' : ''}
         </span>
         <span class="mws-server-play">${sheetServersLocked ? MWS_LOCK_SVG : MWS_PLAY_SVG}</span>
       </button>`;
@@ -7893,6 +7891,8 @@ function renderMatchCards(rows) {
   console.log('[MATCH CARDS] raw rows from sheet:', rows.length, rows);
   console.log('[MATCH CARDS] active-flag per row:', rows.map(r => ({ game: r.game, flag_used: activeFlagRaw(r), kept: isRowActive(r) })));
   const allActiveCards = active(rows);
+  // API/CMS country values override any supplied team logo/flag URL.
+  allActiveCards.forEach(c => sxApplyCountryTeamFlags(c, c));
   console.log('[MATCH CARDS] after active() filter:', allActiveCards.length, allActiveCards);
   // Drop anything already 15h+ past its scheduled start (countdown_to_iso_datetime)
   // so old matches disappear from the site on their own.
@@ -8609,20 +8609,139 @@ const COUNTRY_TO_ISO2 = {
   'israel':'il','iran':'ir','iraq':'iq','jordan':'jo','lebanon':'lb',
   'international':'', 'global':'', 'world':''
 };
+function sxCountryIso2(rawCountry){
+  const raw = String(rawCountry || '').trim();
+  if (!raw) return '';
+  let clean = raw.replace(/^['\"\s]+|['\"\s]+$/g,'').trim().toLowerCase();
+  // Accept values such as `India (IN)`, `IN - India`, `IND`, etc.
+  clean = clean.replace(/\s*\([^)]*\)\s*$/,'').trim();
+  const ISO3_TO_ISO2 = {
+    ind:'in', aus:'au', pak:'pk', ban:'bd', lka:'lk', npl:'np', btn:'bt', afg:'af',
+    are:'ae', sau:'sa', qat:'qa', kwt:'kw', omn:'om', deu:'de', fra:'fr', esp:'es',
+    ita:'it', prt:'pt', nld:'nl', bel:'be', che:'ch', aut:'at', swe:'se', nor:'no',
+    dnk:'dk', fin:'fi', pol:'pl', irl:'ie', gbr:'gb', sco:'gb-sct', wls:'gb-wls',
+    rus:'ru', ukr:'ua', grc:'gr', tur:'tr', jpn:'jp', kor:'kr', chn:'cn', hkg:'hk',
+    twn:'tw', sgp:'sg', mys:'my', idn:'id', phl:'ph', tha:'th', vnm:'vn', mmr:'mm',
+    bra:'br', mex:'mx', arg:'ar', col:'co', chl:'cl', per:'pe', zaf:'za', nga:'ng',
+    ken:'ke', egy:'eg', mar:'ma', isr:'il', irn:'ir', irq:'iq', jor:'jo', lbn:'lb',
+    usa:'us', can:'ca', nzl:'nz'
+  };
+  let iso = clean;
+  if (COUNTRY_TO_ISO2.hasOwnProperty(clean)) iso = COUNTRY_TO_ISO2[clean];
+  else if (ISO3_TO_ISO2[clean]) iso = ISO3_TO_ISO2[clean];
+  else if (/^[a-z]{2}$/.test(clean)) { /* already ISO-2 */ }
+  else {
+    const m = clean.match(/\b([a-z]{2})\b/i);
+    if (m) iso = m[1].toLowerCase();
+    else iso = '';
+  }
+  return iso || '';
+}
+
+function sxCountryFlagUrl(rawCountry){
+  const iso = sxCountryIso2(rawCountry);
+  return iso ? `https://flagcdn.com/w80/${encodeURIComponent(iso)}.png` : '';
+}
+
+// Resolve a team-specific country from API/CMS data. Supports the common
+// team1/team2, teamA/teamB and nested-team shapes, while falling back to a
+// match-level country when that is all the API provides.
+function sxTeamCountry(row, side){
+  row = row || {};
+  const is1 = String(side || '1') === '1' || String(side).toUpperCase() === 'A';
+  const n = is1 ? 1 : 2;
+
+  // API/CMS field names seen in different feeds. Keep this deliberately
+  // broad so Team A/Team B country data is not missed just because the
+  // provider uses a different naming convention.
+  const directKeys = is1 ? [
+    'team1_country','team1Country','team1country','team_1_country','team1_country_name','team1CountryName',
+    'teamA_country','teamACountry','teamAcountry','team_a_country','team_a_country_name','teamACountryName',
+    'home_country','homeCountry','home_country_name','homeCountryName','homeTeamCountry','home_team_country',
+    'country1','country_1','countryA','country_a','team1nation','teamANation','team_a_nation','homeNation'
+  ] : [
+    'team2_country','team2Country','team2country','team_2_country','team2_country_name','team2CountryName',
+    'teamB_country','teamBCountry','teamBcountry','team_b_country','team_b_country_name','teamBCountryName',
+    'away_country','awayCountry','away_country_name','awayCountryName','awayTeamCountry','away_team_country',
+    'country2','country_2','countryB','country_b','team2nation','teamBNation','team_b_nation','awayNation'
+  ];
+
+  for (const key of directKeys){
+    const v = row[key];
+    if (v !== undefined && v !== null && typeof v !== 'object' && String(v).trim()) return String(v).trim();
+  }
+
+  // Case-insensitive fallback for APIs that use unusual capitalization.
+  const wanted = new Set(directKeys.map(k => k.toLowerCase()));
+  for (const key of Object.keys(row)){
+    if (wanted.has(String(key).toLowerCase())){
+      const v = row[key];
+      if (v !== undefined && v !== null && typeof v !== 'object' && String(v).trim()) return String(v).trim();
+    }
+  }
+
+  // Nested team objects: { teamA: { country: "India" } } etc.
+  const prefixes = is1 ? ['team1','teamA','home','homeTeam','team_a','home_team'] : ['team2','teamB','away','awayTeam','team_b','away_team'];
+  for (const prefix of prefixes){
+    const obj = row[prefix];
+    if (obj && typeof obj === 'object'){
+      for (const k of ['country','country_code','countryCode','country_name','countryName','nation','nation_code','nationCode','nationality']){
+        if (obj[k] !== undefined && obj[k] !== null && String(obj[k]).trim()) return String(obj[k]).trim();
+      }
+    }
+  }
+
+  // Some APIs put team data in a teams array.
+  const arr = row.teams || row.teams_data || row.team_data || row.teamsData;
+  if (Array.isArray(arr)){
+    const obj = arr[is1 ? 0 : 1];
+    if (obj && typeof obj === 'object'){
+      for (const k of ['country','country_code','countryCode','country_name','countryName','nation','nation_code','nationCode']){
+        if (obj[k] !== undefined && obj[k] !== null && String(obj[k]).trim()) return String(obj[k]).trim();
+      }
+    }
+  }
+
+  // Only use a match-level country when it is the sole country supplied.
+  // This prevents accidentally giving both teams the same flag when the API
+  // has two separate country values.
+  const matchKeys = ['country','country_name','countryName','country_code','countryCode','nation'];
+  for (const k of matchKeys){
+    if (row[k] !== undefined && row[k] !== null && String(row[k]).trim()) return String(row[k]).trim();
+  }
+  return '';
+}
+
+function sxApplyCountryTeamFlags(target, source){
+  target = target || {}; source = source || target;
+
+  // Check both the API object and its common nested eventInfo/matchInfo
+  // containers. This is the key fix for feeds where country is nested.
+  const sources = [source];
+  if (source.eventInfo && typeof source.eventInfo === 'object') sources.push(source.eventInfo);
+  if (source.matchInfo && typeof source.matchInfo === 'object') sources.push(source.matchInfo);
+  if (source.data && typeof source.data === 'object') sources.push(source.data);
+
+  let c1 = '', c2 = '';
+  for (const src of sources){
+    if (!c1) c1 = sxTeamCountry(src, '1');
+    if (!c2) c2 = sxTeamCountry(src, '2');
+  }
+
+  const f1 = sxCountryFlagUrl(c1), f2 = sxCountryFlagUrl(c2);
+  if (f1) target.team1_icon_url = f1;
+  if (f2) target.team2_icon_url = f2;
+  if (c1) target.team1_country = c1;
+  if (c2) target.team2_country = c2;
+  return target;
+}
+
 function countryFlagHTML(rawCountry){
   const raw = String(rawCountry || '').trim();
   if (!raw) return '';
   // Sheets sometimes supplies values such as `IN`, `in`, `India `, or
   // `India (IN)`. Normalize those variants before looking up the flag.
-  let clean = raw.replace(/^['"\s]+|['"\s]+$/g,'').trim().toLowerCase();
-  let iso = clean;
-  if (COUNTRY_TO_ISO2.hasOwnProperty(clean)) iso = COUNTRY_TO_ISO2[clean];
-  else if (/^[a-z]{2}$/.test(clean)) { /* already ISO-2 */ }
-  else {
-    const m = clean.match(/\(([a-z]{2})\)$/i);
-    if (m) iso = m[1].toLowerCase();
-    else iso = '';
-  }
+  const iso = sxCountryIso2(raw);
   if (!iso) return '';
   const src = `https://flagcdn.com/w40/${encodeURIComponent(iso)}.png`;
   const safeAlt = raw.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -15387,13 +15506,25 @@ button, a.btn, [class*="btn-"], input, select, textarea{
         // Team A flag = Team A logo, Team B flag = Team B logo.
         // (Single-name events carry the same image on both sides — that is the event logo, not two teams.)
         team1_icon_url: sameTeamEvent ? '' : up(info.teamAFlag), team2_icon_url: sameTeamEvent ? '' : up(info.teamBFlag),
+        team1_country: sxTeamCountry(e, '1') || sxTeamCountry(info, '1') || '',
+        team2_country: sxTeamCountry(e, '2') || sxTeamCountry(info, '2') || '',
         servers: servers
       });
+      // Country from the API is authoritative over teamAFlag/teamBFlag.
+      sxApplyCountryTeamFlags(out[out.length - 1], e);
+      if (!out[out.length - 1].team1_country) out[out.length - 1].team1_country = sxTeamCountry(info, '1') || '';
+      if (!out[out.length - 1].team2_country) out[out.length - 1].team2_country = sxTeamCountry(info, '2') || '';
+      if (out[out.length - 1].team1_country || out[out.length - 1].team2_country) {
+        const f1 = sxCountryFlagUrl(out[out.length - 1].team1_country);
+        const f2 = sxCountryFlagUrl(out[out.length - 1].team2_country);
+        if (f1 && !sameTeamEvent) out[out.length - 1].team1_icon_url = f1;
+        if (f2 && !sameTeamEvent) out[out.length - 1].team2_icon_url = f2;
+      }
     });
     return out;
   }
 
-  function up(u){ return sxCmsUrl(u); }   // HTTPS pages upgrade HTTP API image/stream URLs; file:// keeps originals
+  function up(u){ return sxCmsUrl(u); }   // Preserve both HTTP and HTTPS API/image/stream URLs
   // A browser page cannot reliably set arbitrary Referer / User-Agent / Origin / Cookie
   // headers for media requests, so entries explicitly requiring them remain app-only.
   function needsApp(o){
