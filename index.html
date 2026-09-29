@@ -7107,14 +7107,12 @@ function openMatchWatchScreen(servers, info) {
           ? `<img class="mws-server-icon" src="${keywordLogo}" alt="" onerror="this.outerHTML='<span class=\\'mws-server-num\\'>${i + 1}</span>'">`
           : `<span class="mws-server-num">${i + 1}</span>`;
       const isRawStream = !sheetServersLocked && sxIsRawStreamUrl(s.url);
-      const vlcIcon = isRawStream ? `<img class="mws-vlc-icon" src="https://images.icon-icons.com/1381/PNG/512/vlc_93519.png" alt="VLC" title="Direct stream \u2014 plays in VLC" onerror="this.style.display='none'">` : '';
+      const vlcIcon = '';
       // Auto-connected badge for servers linked from LIVE CHANNELS
       const autoConnectBadge = s.auto_connected ? `<span class="mws-auto-badge" title="Auto-connected from LIVE TV">📡 LIVE TV</span>` : '';
       const srvClick = sheetServersLocked
         ? `onclick="mwsLockedServerTap(this)"`
-        : isRawStream
-          ? `onclick="closeMatchWatchScreen();sxOpenVlcPopup('${escJs(s.url)}','${escJs(label)}')"`
-          : `onclick="closeMatchWatchScreen();sxGoToMatchUrl(null,'${escJs(s.url)}','${escJs(s.playName || label)}')"`;
+        : `onclick="closeMatchWatchScreen();sxGoToMatchUrl(null,'${escJs(s.url)}','${escJs(s.playName || label)}')"`;
       return `
       <button type="button" class="mws-server-btn${sheetServersLocked ? ' mws-server-locked' : ''}${isRawStream ? ' mws-server-btn-raw' : ''}" ${srvClick}>
         ${iconHtml}
@@ -10910,12 +10908,16 @@ body.embed #top{justify-content:flex-end}
 #err{position:absolute;inset:0;z-index:9;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(0,0,0,.88);
   backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 #err.show{display:flex}
-#err .box{max-width:430px;text-align:center}
+#err .box{max-width:460px;text-align:center}
+#err .ev-fallback-logo{width:72px;height:72px;object-fit:contain;display:block;margin:0 auto 14px;border-radius:18px;background:rgba(255,255,255,.06);padding:8px;border:1px solid var(--line)}
 #err .ic{width:54px;height:54px;margin:0 auto 14px;border-radius:50%;display:grid;place-items:center;background:var(--accent-dim);color:var(--accent-2)}
 #err .ic svg{width:26px;height:26px}
 #err h2{font-size:18px;font-weight:800;margin-bottom:8px}
 #err p{font-size:13px;line-height:1.6;color:var(--muted);margin-bottom:18px}
 #err .acts{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+#err .ev-fallback-note{font-size:12px;line-height:1.55;color:var(--faint);margin:0 auto 16px;max-width:390px}
+#err .ev-app-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 17px;border-radius:11px;font-size:13px;font-weight:850;background:var(--accent);color:#fff;border:1px solid transparent;text-decoration:none;transition:transform .15s,background .15s}
+#err .ev-app-btn:hover{background:#FF3D96;transform:translateY(-1px)}
 .btn{padding:10px 16px;border-radius:10px;font-size:13px;font-weight:800;background:rgba(255,255,255,.09);border:1px solid var(--line);transition:background .15s}
 .btn:hover{background:rgba(255,255,255,.16)}
 .btn.pri{background:var(--accent);border-color:transparent}
@@ -11030,9 +11032,12 @@ body.embed #top{justify-content:flex-end}
 
   <div id="err" role="alert">
     <div class="box">
+      <img class="ev-fallback-logo" src="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/main/logo.png" alt="EV SPORTS" onerror="this.style.display='none'">
       <div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></svg></div>
       <h2 id="err-t"></h2>
       <p id="err-b"></p>
+      <p class="ev-fallback-note">If the stream still does not play, use another server. If you are using the EV STREAMS app, try another server there as well.</p>
+      <a class="ev-app-btn" href="https://evstreams.pages.dev/" target="_blank" rel="noopener">Download EV SPORTS</a>
       <div class="acts" id="err-a"></div>
     </div>
   </div>
@@ -11146,18 +11151,18 @@ function poke(){
 
 /* ── errors ── */
 var ERR = {
-  cors:      { i:'warn', t:'This stream can\u2019t play in the browser', b:'The stream\u2019s server doesn\u2019t allow web players to load it. It may still play in VLC.', a:['vlc','copy','retry'] },
-  mixed:     { i:'warn', t:'Blocked by browser security', b:'This stream is served over plain http, and this page is secure, so the browser blocks it. Try VLC instead.', a:['vlc','copy','retry'] },
-  forbidden: { i:'warn', t:'The stream refused the request', b:'Its server denied access (the link may have expired or need a login). You can try again or open it in VLC.', a:['retry','vlc','copy'] },
-  offline:   { i:'warn', t:'Stream unavailable', b:'The stream isn\u2019t live right now, or its link has changed. Try again in a moment.', a:['retry'] },
-  timeout:   { i:'warn', t:'The stream didn\u2019t start', b:'It took too long to connect. Check your connection, then try again.', a:['retry','vlc','copy'] },
-  media:     { i:'warn', t:'Playback stopped', b:'The stream broke or uses a format this browser can\u2019t play.', a:['retry','vlc','copy'] },
-  native:    { i:'warn', t:'This browser couldn\u2019t play the stream', b:'Try VLC, or open this page in Chrome, Edge or Firefox.', a:['retry','vlc','copy'] },
-  unsupported:{i:'warn', t:'This browser can\u2019t play HLS', b:'Open this page in a current version of Chrome, Edge, Firefox or Safari.', a:['copy'] },
-  lib:       { i:'warn', t:'Player failed to load', b:'The video library couldn\u2019t be downloaded. Check your connection, then try again.', a:['retry'] },
-  invalid:   { i:'warn', t:'No valid stream link', b:'This player needs an http or https link to an .m3u8 (HLS) or .mpd (DASH) stream.', a:[] },
-  drm:       { i:'lock', t:'Protected stream', b:'This stream uses DRM, which can\u2019t be played here. Pick another server or channel.', a:[] }
-};
+  cors:       { i:'warn', t:'Stream could not be played', b:'The stream server did not allow playback in this browser. Try another server or use EV SPORTS.', a:[] },
+  mixed:      { i:'warn', t:'Stream could not be played', b:'This stream is blocked by browser security. Try another server or use EV SPORTS.', a:[] },
+  forbidden:  { i:'warn', t:'Stream could not be played', b:'The stream refused this browser request. Try another server or use EV SPORTS.', a:[] },
+  offline:    { i:'warn', t:'Stream unavailable', b:'This stream is not available right now. Try another server or use EV SPORTS.', a:[] },
+  timeout:    { i:'warn', t:'Stream did not start', b:'The stream took too long to connect. Try another server or use EV SPORTS.', a:[] },
+  media:      { i:'warn', t:'Playback failed', b:'This browser could not play this stream. Try another server or use EV SPORTS.', a:[] },
+  native:     { i:'warn', t:'Playback failed', b:'This browser could not play this stream. Try another server or use EV SPORTS.', a:[] },
+  unsupported:{ i:'warn', t:'Playback is not supported', b:'This browser could not play this stream. Try another server or use EV SPORTS.', a:[] },
+  lib:        { i:'warn', t:'Player failed to load', b:'The playback component could not be loaded. Try another server or use EV SPORTS.', a:[] },
+  invalid:    { i:'warn', t:'Invalid stream', b:'This stream link is not playable here. Try another server or use EV SPORTS.', a:[] },
+  drm:        { i:'warn', t:'Stream could not be played', b:'This browser could not complete playback of this protected stream. Try another server or use EV SPORTS.', a:[] }
+}
 var ACT = {
   retry:'<button class="btn pri" type="button" data-a="retry">Try again</button>',
   vlc:'<button class="btn" type="button" data-a="vlc">Open in VLC</button>',
@@ -11904,12 +11909,9 @@ window.addEventListener('message', function(e){
   }
 });
 
-// Full-screen popup offered for any raw HLS/DASH stream link (channel rows
-// and match servers alike) instead of loading it in our own iframe player.
-// Auto-attempts to hand the stream straight to VLC via the vlc:// scheme on
-// both mobile and desktop; the popup itself stays open underneath with a
-// manual retry plus a platform-appropriate fallback (MX Player on mobile,
-// Copy Link on desktop) in case the OS has nothing registered for vlc://.
+// Legacy external-player helper retained for compatibility with older data.
+// Normal stream playback stays in the browser player; playback failures use
+// the EV SPORTS fallback UI instead of exposing external-player actions.
 function sxOpenVlcPopup(rawUrl, name){
   name = name || 'Live Stream';
   let ov = document.getElementById('sx-vlc-popup-overlay');
@@ -15159,7 +15161,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
         seen[it.lang] = (seen[it.lang] || 0) + 1;
         var label = it.lang === 'Default' ? 'Server ' + (si + 1)
           : (seen[it.lang] > 1 ? it.lang + ' ' + seen[it.lang] : it.lang);
-        return { url: it.url, text: label, icon: LOGO, sub: 'SonyLIV · tap to play', playName: title + ' · ' + label, appOnly: !!it.drm };
+        return { url: it.url, text: label, icon: LOGO, sub: 'SonyLIV · tap to play', playName: title + ' · ' + label, appOnly: false };
       });
       var poster = ''; g.items.forEach(function(it){ if (!poster && it.e.poster) poster = it.e.poster; });
       var gStatus = g.items.some(function(it){ return it.st === 'LIVE'; }) ? 'LIVE' : g.items.every(function(it){ return it.st === 'ENDED'; }) ? 'ENDED' : 'UPCOMING';
@@ -15256,14 +15258,10 @@ button, a.btn, [class*="btn-"], input, select, textarea{
        already shows it.
    Whatever's left gets its own "More Matches · <Category>" section.
 
-   Playability: this feed mixes plain HLS (.m3u8) links with DASH (.mpd)
-   manifests, some ClearKey-DRM protected (kid/key pairs) and some that
-   need a spoofed Referer/User-Agent. The site's own player (EV
-   StreamPulse) has no DASH/EME engine and browsers can't force a custom
-   Referer on media requests from JS, so none of those would actually
-   play if offered — only direct, header-free .m3u8 streams are kept.
-   A fixture whose every stream is .mpd/DRM-only is skipped entirely
-   rather than shown with a dead "Watch Now" button.
+   Playability: the feed can contain HLS, DASH and DRM metadata. The site
+   does not proactively hide DRM streams; they are offered to the browser/player
+   and the normal playback error fallback is shown if the browser cannot play them.
+   Streams that explicitly require custom request headers may still need the app.
    ══════════════════════════════════════════════════════════════════════ */
 (function(){
   'use strict';
@@ -15364,10 +15362,10 @@ button, a.btn, [class*="btn-"], input, select, textarea{
       (e.streams || []).forEach(function(s){
         if (!s) return;                                                          // DRM (kid/key/license) streams are kept — flagged app-only below
         var su = (window.LMX && LMX.scan(s)[0]) || (s.stream_url && isHls(s.stream_url) ? String(s.stream_url).trim() : '');
-        if (su) streams.push({ stream_url: su, channel_name: s.channel_name || s.name || s.title, appOnly: needsApp(s) || needsApp(e) || !!(window.LMX && (LMX.hasDrm(s) || LMX.hasDrm(e, true))) });
+        if (su) streams.push({ stream_url: su, channel_name: s.channel_name || s.name || s.title, appOnly: needsApp(s) || needsApp(e) });
       });
       if (!streams.length && !(e.streams && e.streams.length) && window.LMX)     // no streams[] at all — scan the whole entry
-        LMX.scan(e).forEach(function(u, k){ streams.push({ stream_url: u, channel_name: 'Server ' + (k + 1), appOnly: needsApp(e) || !!(window.LMX && LMX.hasDrm(e, true)) }); });
+        LMX.scan(e).forEach(function(u, k){ streams.push({ stream_url: u, channel_name: 'Server ' + (k + 1), appOnly: needsApp(e) }); });
       // (no streams yet -> still listed, card shows 'No stream yet')
       var seenNames = {};
       var servers = streams.map(function(s){
@@ -15396,8 +15394,8 @@ button, a.btn, [class*="btn-"], input, select, textarea{
   }
 
   function up(u){ return sxCmsUrl(u); }   // HTTPS pages upgrade HTTP API image/stream URLs; file:// keeps originals
-  // A browser cannot set Referer / User-Agent / Origin / Cookie on media requests, so a stream whose
-  // feed entry lists any of them is blocked in the browser -> app only. Plain http:// on an https page too.
+  // A browser page cannot reliably set arbitrary Referer / User-Agent / Origin / Cookie
+  // headers for media requests, so entries explicitly requiring them remain app-only.
   function needsApp(o){
     if (!o || typeof o !== 'object') return false;
     return ['referer','referrer','origin','user_agent','useragent','user-agent','cookie','headers','http_headers'].some(function(k){
@@ -15548,7 +15546,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
    3. Homescreen "LIVE NOW" block lists EVERY live match from every source
       (never capped, not "today only"), one card per fixture.
    4. Stream scanner: any m3u8 / mpd / dash / hls link found anywhere in an
-      API entry is picked up. DRM (kid/key/license) entries are skipped.
+      API entry is picked up, including entries carrying DRM metadata.
    ══════════════════════════════════════════════════════════════════════ */
 (function(){
   'use strict';
@@ -15613,7 +15611,6 @@ button, a.btn, [class*="btn-"], input, select, textarea{
     if (typeof o === 'string'){ var u = o.trim(); if (isStream(u) && out.indexOf(u) < 0) out.push(u); return out; }
     if (Array.isArray(o)){ o.forEach(function(x){ scan(x, out, depth + 1); }); return out; }
     if (typeof o === 'object'){
-      if (depth > 0 && hasDrm(o)) return out;
       Object.keys(o).forEach(function(k){ scan(o[k], out, depth + 1); });
     }
     if (depth === 0){   // HLS first, DASH after
