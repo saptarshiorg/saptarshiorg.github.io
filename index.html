@@ -5216,7 +5216,7 @@ function fcxOpenWatchById(id){
   const servers = [{
     url: fcxJsUrl(m), text: 'FanCode',
     fcxLive: isLive, fcxTime: fcxFmtMatchTime(m)
-  }];
+  }].concat(window.LMX ? window.LMX.serversForFcx(m) : []);
   openMatchWatchScreen(servers, {
     name: m.title || 'Live Stream',
     fcxId: m.id,
@@ -6474,6 +6474,12 @@ function sxGetMatchServers(m) {
     { url: m.btn_url_4, text: m.btn_text_4 || 'Server 4' },
     { url: m.btn_url_5, text: m.btn_text_5 || 'Server 5' }
   ];
+  // Extra servers folded in by the LMX merge layer (SonyLIV languages, sm-monirulislam channels, ...)
+  // — no 5-slot limit, de-duplicated by URL.
+  (m._lmxServers || []).forEach(function(x){
+    if (!raw.some(function(r){ return r.url && String(r.url).trim() === x.url; }))
+      raw.push({ url: x.url, text: x.text, icon: x.icon, sub: x.sub, playName: x.playName });
+  });
   
   // AUTO-CONNECT LOGIC: If a server name matches LIVE CHANNELS but has no URL,
   // auto-fill it with the channel's watch_url
@@ -7205,6 +7211,7 @@ function matchIsAutoLive(c) {
 function matchStatusText(c) {
   const raw = rawMatchStatusText(c);
   if (raw.toLowerCase() === 'live') return raw;
+  if (c && c._lmxLive && !/finish|complet|ended|over/i.test(raw)) return 'Live'; // a FanCode / SonyLIV / API feed says it's live
   if (matchIsAutoLive(c)) return 'Live';
   return raw;
 }
@@ -7778,6 +7785,9 @@ function renderMatchCards(rows) {
       window._smoGameToSport[tournament] = sport;
     }
   });
+
+  // SonyLIV + API-feed matches: make sure their sports / events appear in the sport & event selectors too.
+  if (window.LMX && typeof LMX.foldSports === 'function') LMX.foldSports(sportOrder, gameOrder, window._smoGameToSport);
 
   // ── Build/refresh the sport-selector toolbar (parent tier) ──
   smoBuildSportToolbar(sportOrder);
@@ -10747,6 +10757,10 @@ var HLS_CDNS = [
   'https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js',
   'https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js'
 ];
+var DASH_CDNS = [
+  'https://cdnjs.cloudflare.com/ajax/libs/dashjs/4.7.4/dash.all.min.js',
+  'https://cdn.jsdelivr.net/npm/dashjs@4.7.4/dist/dash.all.min.js'
+];
 var LOAD_TIMEOUT_MS = 25000;
 
 var $ = function(id){ return document.getElementById(id); };
@@ -10814,7 +10828,7 @@ var ERR = {
   native:    { i:'warn', t:'This browser couldn\u2019t play the stream', b:'Try VLC, or open this page in Chrome, Edge or Firefox.', a:['retry','vlc','copy'] },
   unsupported:{i:'warn', t:'This browser can\u2019t play HLS', b:'Open this page in a current version of Chrome, Edge, Firefox or Safari.', a:['copy'] },
   lib:       { i:'warn', t:'Player failed to load', b:'The video library couldn\u2019t be downloaded. Check your connection, then try again.', a:['retry'] },
-  invalid:   { i:'warn', t:'No valid stream link', b:'This player needs an http or https link to an .m3u8 stream.', a:[] },
+  invalid:   { i:'warn', t:'No valid stream link', b:'This player needs an http or https link to an .m3u8 (HLS) or .mpd (DASH) stream.', a:[] },
   drm:       { i:'lock', t:'Protected stream', b:'This stream uses DRM, which can\u2019t be played here. Pick another server or channel.', a:[] }
 };
 var ACT = {
@@ -10882,6 +10896,7 @@ function drmDetected(){
 function teardown(keepUi){
   clearTimeout(st.loadTimer);
   if (st.hls) { try { st.hls.destroy(); } catch(e){} st.hls = null; }
+  if (st.dash) { try { st.dash.reset(); } catch(e){} st.dash = null; }
   try { video.removeAttribute('src'); video.load(); } catch(e){}
   st.live = false; st.levels = [];
   if (!keepUi) { $('menu').innerHTML = ''; }
@@ -10919,6 +10934,12 @@ function load(url, title){
 
   st.loadTimer = setTimeout(function(){ if (!st.started && !st.errShown) { teardown(true); showError('timeout'); } }, LOAD_TIMEOUT_MS);
 
+  if (isDashUrl(st.src)) {
+    return ensureDash(function(ok){
+      if (ok && window.dashjs) return startDash(st.src);
+      showError('lib');
+    });
+  }
   ensureHls(function(ok){
     if (ok && window.Hls && Hls.isSupported()) return startHls(st.src);
     if (video.canPlayType('application/vnd.apple.mpegurl')) return startNative(st.src);
@@ -10962,6 +10983,73 @@ function startHls(url){
   hls.loadSource(url);
 }
 
+/* ── DASH (.mpd) — clear (non-DRM) manifests via dash.js ── */
+function isDashUrl(u){
+  try { var x = new URL(u); return /\.mpd(\/|$)/i.test(x.pathname) || /(^|&)(format|type)=(mpd|dash)(&|$)/i.test(x.search.slice(1)); }
+  catch(e){ return /\.mpd(\?|#|$)/i.test(String(u || '')); }
+}
+function ensureDash(cb){
+  if (window.dashjs) return cb(true);
+  var i = 0;
+  (function next(){
+    if (i >= DASH_CDNS.length) return cb(false);
+    var sc = document.createElement('script');
+    sc.src = DASH_CDNS[i++];
+    sc.onload = function(){ cb(!!window.dashjs); };
+    sc.onerror = function(){ sc.remove(); next(); };
+    document.head.appendChild(sc);
+  })();
+}
+function startDash(url){
+  var p = dashjs.MediaPlayer().create();
+  st.dash = p;
+  try {
+    p.updateSettings({ streaming: {
+      buffer: { bufferTimeAtTopQuality: 30, bufferTimeAtTopQualityLongForm: 60 },
+      abr: { autoSwitchBitrate: { video: true, audio: true } }
+    }});
+  } catch(e){}
+  var E = dashjs.MediaPlayer.events;
+  p.on(E.STREAM_INITIALIZED, function(){
+    var list = []; try { list = p.getBitrateInfoListFor('video') || []; } catch(e){}
+    st.levels = list.map(function(b){ return { height:b.height || 0, width:b.width || 0, bitrate:b.bitrate || 0, _qi:b.qualityIndex }; });
+    try { st.live = !!(p.isDynamic && p.isDynamic()); } catch(e){}
+    var saved = lsGet('quality');
+    st.mode = (saved === 'auto' && st.levels.length > 1) ? 'auto' : 'best';
+    buildMenu(); applyQuality(); tryPlay(); renderTime();
+  });
+  p.on(E.ERROR, onDashError);
+  p.initialize(video, url, false);
+}
+function applyDashQuality(){
+  if (!st.dash || !st.levels.length) return;
+  try {
+    if (st.mode === 'auto') st.dash.updateSettings({ streaming:{ abr:{ autoSwitchBitrate:{ video:true } } } });
+    else {
+      var i = (st.mode === 'best') ? bestLevel() : +st.mode;
+      st.dash.updateSettings({ streaming:{ abr:{ autoSwitchBitrate:{ video:false } } } });
+      st.dash.setQualityFor('video', st.levels[i]._qi);
+    }
+  } catch(e){}
+  updateMenuChecks();
+}
+function onDashError(e){
+  if (st.drm || !e) return;
+  var err = e.error || {};
+  var code = err.code, msg = String(err.message || err || '');
+  if (/protect|drm|key ?system|license|encrypt|widevine|playready|mediakeys/i.test(msg)) return drmDetected();
+  if (code === 25 || (/manifest/i.test(msg) && /download|load|fetch/i.test(msg))) {
+    if (pageProto() === 'https:' && /^http:/i.test(st.src)) return showError('mixed');
+    return showError(st.started ? 'offline' : 'cors');
+  }
+  if (code === 30 || code === 31) return showError('offline');
+  if (code === 27 || code === 28) {            // segment download — dash.js already retries these itself
+    if (st.started) { toast('Reconnecting...'); return; }
+    return showError('offline');
+  }
+  if (!st.started) showError('media');
+}
+
 function bestLevel(){
   var b = 0, L = st.levels;
   for (var i = 1; i < L.length; i++) {
@@ -10970,6 +11058,7 @@ function bestLevel(){
   return b;
 }
 function applyQuality(){
+  if (st.dash) return applyDashQuality();
   if (!st.hls || !st.levels.length) return;
   if (st.mode === 'auto') st.hls.currentLevel = -1;
   else if (st.mode === 'best') st.hls.currentLevel = bestLevel();
@@ -11434,11 +11523,25 @@ function sxIsHlsUrl(u){
   if (!/^https?:\/\//i.test(u)) return false;
   try {
     var x = new URL(u);
-    return /\.m3u8$/i.test(x.pathname) || /(^|&)(format|type)=m3u8(&|$)/i.test(x.search.slice(1));
+    return /\.m3u8$/i.test(x.pathname) || /(^|&)(format|type)=(m3u8|hls)(&|$)/i.test(x.search.slice(1));
   } catch (e) {
     return /\.m3u8(\?|#|$)/i.test(u);
   }
 }
+// DASH (.mpd) manifests — played by dash.js inside the same SX 4K player.
+function sxIsDashUrl(u){
+  u = String(u || '').trim();
+  if (!/^https?:\/\//i.test(u)) return false;
+  try {
+    var x = new URL(u);
+    return /\.mpd(\/|$)/i.test(x.pathname) || /(^|&)(format|type)=(mpd|dash)(&|$)/i.test(x.search.slice(1));
+  } catch (e) {
+    return /\.mpd(\?|#|$)/i.test(u);
+  }
+}
+// Any clear stream our own player can handle (HLS or DASH).
+function sxIsStreamUrl(u){ return sxIsHlsUrl(u) || sxIsDashUrl(u); }
+window.sxIsHlsUrl = sxIsHlsUrl; window.sxIsDashUrl = sxIsDashUrl; window.sxIsStreamUrl = sxIsStreamUrl;
 
 // Broader "is this a direct, playable stream link rather than a page/embed"
 // check — DASH (.mpd) and plain .m3u playlists count too, not just .m3u8.
@@ -11450,7 +11553,7 @@ function sxIsRawStreamUrl(u){
   // Clear HLS (.m3u8 over http/https) now plays in our own SX 4K player, so
   // it is no longer an "external player" link. Only DASH / plain .m3u / odd
   // manifests still go to the VLC popup.
-  if (sxIsHlsUrl(u)) return false;
+  if (sxIsStreamUrl(u)) return false; // HLS and DASH (.mpd) both play in our own player now
   return /\.(m3u8|m3u|mpd)(\?|#|$)/i.test(u) || /[?&](format|type)=(m3u8|m3u|mpd|dash)/i.test(u);
 }
 
@@ -11603,11 +11706,11 @@ function sxCastCurrentStream(){
     sxCastToast('Open a stream first, then cast it.');
     return;
   }
-  if (!sxIsHlsUrl(url)){
+  if (!sxIsStreamUrl(url)){
     sxShowCastHelp();
     return;
   }
-  var mediaInfo = new chrome.cast.media.MediaInfo(url, 'application/x-mpegurl');
+  var mediaInfo = new chrome.cast.media.MediaInfo(url, sxIsDashUrl(url) ? 'application/dash+xml' : 'application/x-mpegurl');
   mediaInfo.streamType = chrome.cast.media.StreamType.LIVE;
   mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
   mediaInfo.metadata.title = document.getElementById('stream-player-title').textContent || 'Live Stream';
@@ -11664,7 +11767,7 @@ function openStreamPlayer(url, name, type){
     return;
   }
   const label = name || 'Live Stream';
-  const use4k = sxIsHlsUrl(url); // clear .m3u8 from the sheets plays in the SX 4K player
+  const use4k = sxIsStreamUrl(url); // clear .m3u8 / .mpd from any source plays in the SX 4K player
   const isFcx = !!spFcxIdFromUrl(url); // play.html?id=..._eng FanCode links
   document.getElementById('stream-player-title').textContent = label;
   sxCurrentStreamRawUrl = url; // used by sxCastCurrentStream() below
@@ -12011,6 +12114,15 @@ function mvSlotHtml(i){
 function mvHlsDoc(m3u8, muted){
   const u = JSON.stringify(String(m3u8));
   const m = muted ? 'true' : 'false';
+  if (typeof sxIsDashUrl === 'function' && sxIsDashUrl(m3u8)) {
+    return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+      + '<style>html,body{margin:0;height:100%;background:#000;overflow:hidden}video{width:100%;height:100%;background:#000;display:block;object-fit:contain}</style></head><body>'
+      + '<video id="v" autoplay playsinline' + (muted ? ' muted' : '') + '></video>'
+      + '<script src="https://cdnjs.cloudflare.com/ajax/libs/dashjs/4.7.4/dash.all.min.js"><\/script>'
+      + '<script>(function(){var u=' + u + ',v=document.getElementById("v");v.muted=' + m + ';'
+      + 'try{var p=dashjs.MediaPlayer().create();p.initialize(v,u,true);}catch(e){}'
+      + '})();<\/script></body></html>';
+  }
   return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
     + '<style>html,body{margin:0;height:100%;background:#000;overflow:hidden}video{width:100%;height:100%;background:#000;display:block;object-fit:contain}</style></head><body>'
     + '<video id="v" autoplay playsinline' + (muted ? ' muted' : '') + '></video>'
@@ -12097,7 +12209,7 @@ window.mvRenderPickerList = mvRenderPickerList;
 function mvPick(url, name){
   const i = window._mvPickerSlot;
   if (i < 0) return;
-  const isHls = typeof sxIsHlsUrl === 'function' && sxIsHlsUrl(url);
+  const isHls = typeof sxIsStreamUrl === 'function' && sxIsStreamUrl(url);
   if (!isHls && /famcodexwebs\.pages\.dev/i.test(url)) {
     alert("This stream can't be embedded in Multiview — open it from Matches on its own instead.");
     return;
@@ -12116,7 +12228,7 @@ function mvAddFromPlayer(){
   if (!url) return;
   const nameEl = document.getElementById('sp-info-name');
   const name = (nameEl && nameEl.textContent) || 'Live Stream';
-  const isHls = typeof sxIsHlsUrl === 'function' && sxIsHlsUrl(url);
+  const isHls = typeof sxIsStreamUrl === 'function' && sxIsStreamUrl(url);
   let slot = window._mvSlots.findIndex(s => !s);
   if (slot === -1) slot = 0;
   window._mvSlots[slot] = { url, name, isHls, muted: false };
@@ -14639,13 +14751,15 @@ button, a.btn, [class*="btn-"], input, select, textarea{
 
   function isHls(u){
     u = String(u || '').trim();
-    if (typeof window.sxIsHlsUrl === 'function') return window.sxIsHlsUrl(u);
-    return /^https?:\/\/[^#?]+\.m3u8(\?|#|$)/i.test(u);
+    if (typeof window.sxIsStreamUrl === 'function') return window.sxIsStreamUrl(u);
+    return /^https?:\/\/[^#?]+\.(m3u8|mpd)(\?|#|$)/i.test(u);
   }
   function pickUrl(e){
+    if (window.LMX && LMX.hasDrm(e, true)) return '';                            // DRM entries can't play
     var c = [e.video_url, e.dai_url, e.pub_url];
     for (var i = 0; i < c.length; i++) if (c[i] && isHls(c[i])) return String(c[i]).trim();
-    return '';
+    var all = (window.LMX && LMX.scan) ? LMX.scan(e) : [];                       // any other field holding m3u8 / mpd
+    return all.length ? all[0] : '';
   }
   function langOf(e){
     var raw = (e.match_name || '') + ' ' + (e.event_name || '');
@@ -14737,10 +14851,10 @@ button, a.btn, [class*="btn-"], input, select, textarea{
         seen[it.lang] = (seen[it.lang] || 0) + 1;
         var label = it.lang === 'Default' ? 'Server ' + (si + 1)
           : (seen[it.lang] > 1 ? it.lang + ' ' + seen[it.lang] : it.lang);
-        return { url: it.url, text: label, icon: LOGO, sub: 'SonyLIV · HLS · tap to play', playName: title + ' · ' + label };
+        return { url: it.url, text: label, icon: LOGO, sub: 'SonyLIV · tap to play', playName: title + ' · ' + label };
       });
       var poster = ''; g.items.forEach(function(it){ if (!poster && it.e.poster) poster = it.e.poster; });
-      return { key: 'slx' + idx, title: title, category: g.ref.cat, poster: poster, servers: servers };
+      return { key: 'slx' + idx, title: title, category: g.ref.cat, poster: poster, servers: servers, teams: g.ref.p.teams, date: g.ref.p.date };
     });
   }
 
@@ -14855,8 +14969,8 @@ button, a.btn, [class*="btn-"], input, select, textarea{
 
   function isHls(u){
     u = String(u || '').trim();
-    if (typeof window.sxIsHlsUrl === 'function') return window.sxIsHlsUrl(u);
-    return /^https?:\/\/[^#?]+\.m3u8(\?|#|$)/i.test(u);
+    if (typeof window.sxIsStreamUrl === 'function') return window.sxIsStreamUrl(u);
+    return /^https?:\/\/[^#?]+\.(m3u8|mpd)(\?|#|$)/i.test(u);
   }
 
   function normTeam(t){ return String(t||'').toLowerCase().replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim(); }
@@ -14934,7 +15048,14 @@ button, a.btn, [class*="btn-"], input, select, textarea{
       var info = e.eventInfo || {};
       var teamA = (info.teamA || '').trim(), teamB = (info.teamB || '').trim();
       if (!teamA || !teamB) return;
-      var streams = (e.streams || []).filter(function(s){ return s && s.stream_url && !s.kid && !s.key && isHls(s.stream_url); });
+      var streams = [];
+      (e.streams || []).forEach(function(s){
+        if (!s || (window.LMX && LMX.hasDrm(s))) return;                        // skip DRM (kid/key/license) streams
+        var su = (window.LMX && LMX.scan(s)[0]) || (s.stream_url && isHls(s.stream_url) ? String(s.stream_url).trim() : '');
+        if (su) streams.push({ stream_url: su, channel_name: s.channel_name || s.name || s.title });
+      });
+      if (!streams.length && !(e.streams && e.streams.length) && window.LMX)     // no streams[] at all — scan the whole entry
+        LMX.scan(e).forEach(function(u, k){ streams.push({ stream_url: u, channel_name: 'Server ' + (k + 1) }); });
       if (!streams.length) return; // nothing directly playable in-page — skip
       var seenNames = {};
       var servers = streams.map(function(s){
@@ -15071,6 +15192,405 @@ button, a.btn, [class*="btn-"], input, select, textarea{
   }
   load();
   setInterval(load, REFRESH_MS);
+})();
+</script>
+
+<style>
+#lmx-live-box{ margin-bottom:26px; }
+.lmx-live-head{ display:flex; align-items:center; gap:10px; margin-bottom:14px; font-family:var(--cu-font,var(--font-display)); font-weight:900; font-size:clamp(18px,2.6vw,24px); letter-spacing:.03em; color:#fff; text-transform:uppercase; }
+.lmx-live-bar{ width:4px; height:24px; background:linear-gradient(180deg,#ff3b3b,#E0155F); border-radius:4px; flex-shrink:0; }
+.lmx-live-count{ background:#e5173f; color:#fff; font-size:12px; font-weight:800; padding:2px 9px; border-radius:999px; letter-spacing:.04em; }
+.lmx-live-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; }
+@media (max-width:900px){ .lmx-live-grid{ grid-template-columns:1fr 1fr; } }
+@media (max-width:560px){ .lmx-live-grid{ grid-template-columns:1fr; gap:10px; } }
+.lmx-live-grid .fx2-card{ cursor:pointer; }
+</style>
+
+<script id="lmx-unified">
+/* ══════════════════════════════════════════════════════════════════════
+   LMX — UNIFIED LIVE-MATCH LAYER
+   Sits over all four match sources: Google-Sheet MATCH CARDS, FanCode
+   (FCX), SonyLIV (SLX) and the sm-monirulislam feed (MSX).
+
+   1. SonyLIV + MSX are merged into ONE list (same teams / same fixture =
+      one match; every language / channel becomes a server).
+   2. That list is matched against the Sheet rows and FanCode matches:
+        - Sheet row  -> servers are folded into that row's server selector
+          (no 5-slot limit) and the row is flagged LIVE if a feed says so.
+        - FanCode    -> servers are added to FanCode's server selector.
+        - otherwise  -> shown as its own card in the Matches tab, filed under
+          its SPORT (Cricket / Football / ...), and the sport shows in the
+          sport + event selectors.
+   3. Homescreen "LIVE NOW" block lists EVERY live match from every source
+      (never capped, not "today only"), one card per fixture.
+   4. Stream scanner: any m3u8 / mpd / dash / hls link found anywhere in an
+      API entry is picked up. DRM (kid/key/license) entries are skipped.
+   ══════════════════════════════════════════════════════════════════════ */
+(function(){
+  'use strict';
+  var ALIAS = { ind:'india', bra:'brazil', pak:'pakistan', eng:'england', aus:'australia', nz:'new zealand',
+    sl:'sri lanka', sa:'south africa', wi:'west indies', ban:'bangladesh', afg:'afghanistan', jpn:'japan',
+    qat:'qatar', tha:'thailand', chn:'china', kor:'south korea', irn:'iran', usa:'united states' };
+  var CAT_SYN = { soccer:'football', 'association football':'football' };
+  var items = [];
+
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]; }); }
+  function escJs(s){ return String(s == null ? '' : s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+  function norm(t){ t = String(t||'').toLowerCase().replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim(); return ALIAS[t] || t; }
+  function lev(a, b){
+    var m = a.length, n = b.length, i, j, d = [];
+    for (i = 0; i <= m; i++) d[i] = [i];
+    for (j = 1; j <= n; j++) d[0][j] = j;
+    for (i = 1; i <= m; i++) for (j = 1; j <= n; j++)
+      d[i][j] = Math.min(d[i-1][j]+1, d[i][j-1]+1, d[i-1][j-1] + (a[i-1] === b[j-1] ? 0 : 1));
+    return d[m][n];
+  }
+  function sameTeam(a, b){
+    a = norm(a); b = norm(b);
+    if (!a || !b) return false;
+    if (a === b) return true;
+    if (Math.min(a.length, b.length) >= 3 && (a.indexOf(b) === 0 || b.indexOf(a) === 0)) return true;
+    return 1 - lev(a, b) / Math.max(a.length, b.length) >= 0.78;
+  }
+  function catKey(c){
+    c = String(c||'').trim().toLowerCase();
+    if (/^(sports?|live|other|events?)?$/.test(c)) return '';
+    return CAT_SYN[c] || c;
+  }
+
+  /* ── Stream scanner (m3u8 / mpd / dash / hls, no DRM) ── */
+  function isStream(u){
+    u = String(u||'').trim();
+    if (!/^https?:\/\//i.test(u)) return false;
+    if (typeof window.sxIsStreamUrl === 'function') return window.sxIsStreamUrl(u);
+    return /\.(m3u8|mpd)(\?|#|\/|$)/i.test(u);
+  }
+  var DRM_KEYS_ENTRY  = /^(kid|keyid|key_id|license|license_url|licenseurl|license_key|drm_license|drm_license_url|clearkey|clear_key|drm_key|widevine|playready)$/i;
+  var DRM_KEYS_STREAM = /^(kid|key|keyid|key_id|license|license_url|licenseurl|license_key|drm_license|drm_license_url|clearkey|clear_key|drm_key|widevine|playready)$/i;
+  function hasDrm(o, isEntry){
+    if (!o || typeof o !== 'object') return false;
+    var re = isEntry ? DRM_KEYS_ENTRY : DRM_KEYS_STREAM;
+    for (var k in o){
+      if (!Object.prototype.hasOwnProperty.call(o, k)) continue;
+      var v = o[k];
+      if (re.test(k) && v && typeof v !== 'object' && String(v).toLowerCase() !== 'false' && String(v) !== '0') return true;
+      if (/^(drm|is_drm|isdrm|drm_protected)$/i.test(k) && (v === true || /^(true|yes|1)$/i.test(String(v)))) return true;
+    }
+    return false;
+  }
+  function scan(o, out, depth){
+    out = out || []; depth = depth || 0;
+    if (o == null || depth > 5) return out;
+    if (typeof o === 'string'){ var u = o.trim(); if (isStream(u) && out.indexOf(u) < 0) out.push(u); return out; }
+    if (Array.isArray(o)){ o.forEach(function(x){ scan(x, out, depth + 1); }); return out; }
+    if (typeof o === 'object'){
+      if (depth > 0 && hasDrm(o)) return out;
+      Object.keys(o).forEach(function(k){ scan(o[k], out, depth + 1); });
+    }
+    if (depth === 0){   // HLS first, DASH after
+      var h = out.filter(function(x){ return !(window.sxIsDashUrl && window.sxIsDashUrl(x)); });
+      var d = out.filter(function(x){ return window.sxIsDashUrl && window.sxIsDashUrl(x); });
+      return h.concat(d);
+    }
+    return out;
+  }
+
+  /* ── Build the merged SonyLIV + MSX list ── */
+  function fmtTime(d){
+    if (!d) return 'TBA';
+    var dp = d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}).toUpperCase();
+    var h = d.getHours(), mm = String(d.getMinutes()).padStart(2,'0'), ap = h >= 12 ? 'PM' : 'AM';
+    h = h % 12; if (h === 0) h = 12;
+    return dp + ', ' + h + ':' + mm + ' ' + ap;
+  }
+  function cloneServer(s){ return { url:s.url, text:s.text, icon:s.icon, sub:s.sub, playName:s.playName }; }
+  function relabel(it){
+    var seen = {};
+    it.servers.forEach(function(s){
+      var base = s._base || (s._base = s.text);
+      seen[base] = (seen[base] || 0) + 1;
+      s.text = seen[base] > 1 ? base + ' ' + seen[base] : base;
+    });
+  }
+  function addServers(it, list){
+    var have = {};
+    it.servers.forEach(function(s){ have[s.url] = 1; });
+    list.forEach(function(s){ if (have[s.url]) return; have[s.url] = 1; it.servers.push(cloneServer(s)); });
+  }
+  function sameFixture(a, b){
+    var ca = catKey(a.category), cb = catKey(b.category);
+    if (ca && cb && ca !== cb) return false;
+    if (a.teams && b.teams && a.teams.length === 2 && b.teams.length === 2)
+      return (sameTeam(a.teams[0], b.teams[0]) && sameTeam(a.teams[1], b.teams[1])) ||
+             (sameTeam(a.teams[0], b.teams[1]) && sameTeam(a.teams[1], b.teams[0]));
+    if (a.teams && b.teams) return false;
+    return norm(a.title) && norm(a.title) === norm(b.title);
+  }
+  function build(){
+    var raw = [];
+    (window._slxGroups || []).forEach(function(g){
+      raw.push({ src:'slx', title:g.title, teams:(g.teams && g.teams.length === 2) ? g.teams : null, names:null,
+        category:g.category, status:'LIVE', start:null, poster:g.poster || '', t1:'', t2:'', servers:g.servers.map(cloneServer) });
+    });
+    (window._msxEntries || []).forEach(function(m){
+      raw.push({ src:'msx', title:m.title, teams:m.sameTeamEvent ? null : [m.teamA, m.teamB], names:m.sameTeamEvent ? null : [m.teamA, m.teamB],
+        category:m.category, status:m.status, start:m.start, poster:m.poster || '', t1:m.team1_icon_url || '', t2:m.team2_icon_url || '',
+        servers:m.servers.map(cloneServer) });
+    });
+    var out = [];
+    raw.forEach(function(it){
+      var hit = out.filter(function(x){ return sameFixture(x, it); })[0];
+      if (!hit){ out.push(it); return; }
+      addServers(hit, it.servers);
+      if (it.status === 'LIVE') hit.status = 'LIVE';
+      if (!hit.poster && it.poster) hit.poster = it.poster;
+      if (!hit.start && it.start) hit.start = it.start;
+      if (!hit.names && it.names) hit.names = it.names;
+      if (!hit.t1) hit.t1 = it.t1;
+      if (!hit.t2) hit.t2 = it.t2;
+    });
+    out.forEach(function(it, i){ it.key = 'lmx' + i; relabel(it); });
+    items = out;
+    return out;
+  }
+
+  /* ── Match a merged item to a Sheet row / FanCode match (fresh each call) ── */
+  function eqAny(team, arr){ return arr.some(function(x){ return x && sameTeam(team, x); }); }
+  function rowHas(c, a, b){
+    var s1 = [c.team1_full_name, c.team1_code], s2 = [c.team2_full_name, c.team2_code];
+    return (eqAny(a, s1) && eqAny(b, s2)) || (eqAny(a, s2) && eqAny(b, s1));
+  }
+  function titleHas(title, team){
+    var t = String(title || '');
+    var parts = t.replace(/\[[^\]]*\]/g,' ').split(/\s+(?:vs\.?|v\.?|versus)\s+/i);
+    if (parts.length >= 2 && parts.some(function(p){ return sameTeam(p.split(/[,|\-–—(]/)[0], team); })) return true;
+    return (typeof fcxTitleHasTeam === 'function') ? fcxTitleHasTeam(t, team, team) : false;
+  }
+  function classify(it, cards){
+    it.sheet = null; it.fcx = null;
+    if (!it.teams) return it;
+    cards = cards || window._matchCardsData || [];
+    it.sheet = cards.filter(function(c){
+      if (typeof isMatchFinished === 'function' && isMatchFinished(c)) return false;
+      return rowHas(c, it.teams[0], it.teams[1]);
+    })[0] || null;
+    if (!it.sheet) it.fcx = (window._fcxMatchesCache || []).filter(function(m){
+      return m.status !== 'COMPLETED' && titleHas(m.title, it.teams[0]) && titleHas(m.title, it.teams[1]);
+    })[0] || null;
+    return it;
+  }
+  function extras(){
+    return items.filter(function(it){ classify(it); return !it.sheet && !it.fcx; });
+  }
+
+  /* ── Public API ── */
+  var LMX = window.LMX = {
+    scan: scan, hasDrm: hasDrm,
+    get items(){ return items; },
+
+    // Called by renderMatchCards (replaces MSX's own augment) — folds servers into Sheet rows.
+    augment: function(cards){
+      build();
+      cards = cards || [];
+      cards.forEach(function(c){ c._lmxServers = []; c._lmxLive = false; });
+      items.forEach(function(it){
+        classify(it, cards);
+        if (!it.sheet) return;
+        it.servers.forEach(function(s){ if (!it.sheet._lmxServers.some(function(x){ return x.url === s.url; })) it.sheet._lmxServers.push(cloneServer(s)); });
+        if (it.status === 'LIVE') it.sheet._lmxLive = true;
+      });
+      if (typeof fcxFindSheetMatch === 'function') cards.forEach(function(c){
+        var fm = fcxFindSheetMatch(c);
+        if (fm && fm.status === 'LIVE') c._lmxLive = true;     // FanCode says live -> sheet row is live too
+      });
+    },
+
+    // Extra servers for a FanCode match's selector.
+    serversForFcx: function(m){
+      var out = [];
+      items.forEach(function(it){
+        if (!it.teams || !titleHas(m.title, it.teams[0]) || !titleHas(m.title, it.teams[1])) return;
+        it.servers.forEach(function(s){ if (!out.some(function(x){ return x.url === s.url; })) out.push(cloneServer(s)); });
+      });
+      return out;
+    },
+
+    // Sports + events of standalone matches join the sport / event selectors.
+    foldSports: function(sportOrder, gameOrder, g2s){
+      g2s = g2s || {};
+      extras().forEach(function(it){
+        var cat = it.category || 'Other';
+        var sport = (typeof fcxResolveSport === 'function') ? fcxResolveSport(cat) : cat;
+        var k = catKey(cat);   // "Soccer" files under an existing "Football" sport
+        var syn = k ? sportOrder.filter(function(x){ return catKey(x) === k; })[0] : '';
+        if (syn) sport = syn;
+        if (sportOrder.indexOf(sport) < 0) sportOrder.push(sport);
+        var have = exactGame(gameOrder, cat);
+        if (!have){ gameOrder.push(cat); g2s[cat] = sport; }
+      });
+    },
+
+    open: function(key){
+      var it = items.filter(function(x){ return x.key === key; })[0];
+      if (!it || typeof openMatchWatchScreen !== 'function') return false;
+      var live = it.status === 'LIVE', n = it.servers.length;
+      openMatchWatchScreen(it.servers.map(cloneServer), {
+        name: it.title,
+        team1_code:'', team1_full_name: it.names ? it.names[0] : '', team1_icon_url: it.t1 || '',
+        team2_code:'', team2_full_name: it.names ? it.names[1] : '', team2_icon_url: it.t2 || '',
+        date_label: live ? (n + (n === 1 ? ' server' : ' servers') + ' available') : fmtTime(it.start),
+        details: it.category || '',
+        countdown: (!live && it.start) ? it.start.toISOString() : '',
+        status: live ? 'live' : 'upcoming',
+        banner: it.poster || ''
+      });
+      return false;
+    },
+
+    renderSections: renderSections,
+    renderHome: renderHome,
+    render: function(){ renderSections(); renderHome(); }
+  };
+  window.lmxOpenWatch = LMX.open;
+
+  function normGame(x){ return (typeof smoNormGameName === 'function') ? smoNormGameName(x) : String(x||'').toLowerCase().replace(/[^a-z0-9]/g,''); }
+  function exactGame(list, name){
+    var n = normGame(name); if (!n) return '';
+    for (var i = 0; i < list.length; i++) if (normGame(list[i]) === n) return list[i];
+    return '';
+  }
+
+  /* ── Matches tab: standalone matches, filed under their SPORT ── */
+  function cardHtml(it, timers){
+    var live = it.status === 'LIVE', uid = it.key, badgeId = 'smo-badge-' + uid;
+    var liveBadge = '<span class="fx2-badge fx2-badge-live" id="' + badgeId + '"><span class="fx2-live-dot"></span>LIVE</span>';
+    var badge = live ? liveBadge : '<span class="fx2-badge" id="' + badgeId + '">⏰ UPCOMING</span>';
+    var countdown = (!live && it.start) ? it.start.toISOString() : '';
+    var timerId = 'smo-timer-' + uid, wrapId = 'smo-timerwrap-' + uid;
+    var timer = '<div class="smo-timer" id="' + wrapId + '" style="visibility:' + (countdown ? 'visible' : 'hidden') + '"><div class="timer-label">STARTS IN</div><div class="timer-display" id="' + timerId + '">--:--:--</div></div>';
+    var thumb = it.poster
+      ? '<img src="' + esc(it.poster) + '" alt="' + esc(it.title) + '" class="fx2-thumb-img" onerror="this.style.display=\'none\'">'
+      : (it.t1 || it.t2)
+        ? '<div class="fx2-thumb-teams"><div class="fx2-thumb-team"><img src="' + esc(it.t1) + '" alt="" onerror="this.style.display=\'none\'"></div><div class="fx2-thumb-vs">VS</div><div class="fx2-thumb-team"><img src="' + esc(it.t2) + '" alt="" onerror="this.style.display=\'none\'"></div></div>'
+        : '';
+    if (countdown) timers.push({ timerDisplayId:timerId, timerWrapId:wrapId, badgeId:badgeId, liveBadgeHtml:liveBadge, target:countdown });
+    var n = it.servers.length;
+    return '<div class="smo-card fx2-card lmx-smo-card" data-live="' + (live?1:0) + '" data-finished="0" data-start-ms="' + (it.start ? it.start.getTime() : 0) + '">' +
+      '<div class="fx2-thumb">' + thumb + badge + '</div>' +
+      '<div class="fx2-body">' +
+        '<div class="fx2-title-row"><div class="fx2-title">' + esc(it.title) + '</div><span class="fx2-free">FREE</span></div>' +
+        '<div class="fx2-meta"><span class="fx2-tag">' + esc(it.category || 'Other') + '</span><span class="fx2-date">' + (live ? n + (n === 1 ? ' server' : ' servers') : fmtTime(it.start)) + '</span></div>' +
+        timer +
+        '<a class="smo-btn" href="javascript:void(0)" onclick="event.stopPropagation();return lmxOpenWatch(\'' + escJs(it.key) + '\')">' + (live ? '▶ Watch Now' : '⏰ ' + fmtTime(it.start)) + '</a>' +
+      '</div></div>';
+  }
+
+  function renderSections(){
+    var el = document.getElementById('match-overlay');
+    if (!el) return;
+    el.querySelectorAll('.lmx-smo-section').forEach(function(x){ x.remove(); });
+    el.querySelectorAll('.lmx-smo-card').forEach(function(x){ x.remove(); });
+    build();
+    var ex = extras();
+    var byCat = {}, order = [];
+    ex.forEach(function(it){ var c = it.category || 'Other'; if (!byCat[c]){ byCat[c] = []; order.push(c); } byCat[c].push(it); });
+    var timers = [], g2s = window._smoGameToSport || {};
+    order.forEach(function(cat){
+      var html = byCat[cat].map(function(it){ return cardHtml(it, timers); }).join('');
+      var secs = Array.prototype.slice.call(el.querySelectorAll(':scope > .smo-section'));
+      var existingName = exactGame(secs.map(function(x){ return x.dataset.game || ''; }), cat);
+      var existing = existingName ? secs.filter(function(x){ return x.dataset.game === existingName; })[0] : null;
+      if (existing){
+        existing.insertAdjacentHTML('beforeend', html);
+        if (typeof sxReorderSectionLiveFirst === 'function') sxReorderSectionLiveFirst(existing);
+      } else {
+        el.insertAdjacentHTML('beforeend', '<div class="smo-section lmx-smo-section"><div class="smo-section-label">' + esc(cat) + '</div>' + html + '</div>');
+        var all = el.querySelectorAll('.lmx-smo-section'), sec = all[all.length - 1];
+        if (sec){
+          sec.dataset.game = cat;
+          sec.dataset.sport = g2s[cat] || ((typeof fcxResolveSport === 'function') ? fcxResolveSport(cat) : cat);
+        }
+      }
+    });
+    if (typeof sxReorderAllSectionsLiveThenTime === 'function') sxReorderAllSectionsLiveThenTime(el);
+    timers.forEach(function(t){ setTimeout(function(){ if (typeof wireAutoLiveCountdown === 'function') wireAutoLiveCountdown(t.target, t); }, 100); });
+    if (typeof smoApplyFilter === 'function') smoApplyFilter();
+  }
+
+  /* ── Homescreen: LIVE NOW — every live match from every source ── */
+  function homeLive(){
+    var list = [];
+    // Sheet rows (with FanCode / SonyLIV / API servers already folded in)
+    (window._matchCardsData || []).forEach(function(c){
+      if (typeof matchStatusText !== 'function' || matchStatusText(c).toLowerCase() !== 'live') return;
+      var name = (c.team1_full_name || c.team1_code || '') + ' vs ' + (c.team2_full_name || c.team2_code || '');
+      var label = (c.team1_code || '') + ' vs ' + (c.team2_code || '');
+      var sd = (typeof sxMatchStartDate === 'function') ? sxMatchStartDate(c) : null;
+      var n = (typeof sxGetMatchServers === 'function') ? sxGetMatchServers(c).length : 0;
+      var banner = c.banner_url || c.banner_image_url || c._fcxBanner || '';
+      var thumb = banner
+        ? '<img src="' + esc(banner) + '" alt="" class="fx2-thumb-img" onerror="this.style.display=\'none\'">'
+        : '<div class="fx2-thumb-teams"><div class="fx2-thumb-team"><img src="' + esc(c.team1_icon_url||'') + '" alt="" onerror="this.style.display=\'none\'"></div><div class="fx2-thumb-vs">VS</div><div class="fx2-thumb-team"><img src="' + esc(c.team2_icon_url||'') + '" alt="" onerror="this.style.display=\'none\'"></div></div>';
+      list.push({ t: sd ? sd.getTime() : Infinity, name: name, tag: c.game || 'Live Sports', n: n, thumb: thumb,
+        click: 'return sxHandleMatchWatch(event,\'' + sxServersEnc(c) + '\',\'' + escJs(c.btn_url) + '\',\'' + escJs(label) + '\',\'' + sxMatchInfoEnc(c, label) + '\')' });
+    });
+    // FanCode live matches not already a Sheet card
+    (window._fcxMatchesCache || []).forEach(function(m){
+      if (m.status !== 'LIVE') return;
+      if (typeof fcxHasSheetCard === 'function' && fcxHasSheetCard(m)) return;
+      var n = 1 + LMX.serversForFcx(m).length;
+      list.push({ t: (typeof fcxStartMs === 'function') ? fcxStartMs(m) : Infinity, name: m.title || 'Live', tag: m.tournament || m.category || 'FanCode', n: n,
+        thumb: '<img src="' + esc(m.image || '') + '" alt="" class="fx2-thumb-img" onerror="this.style.display=\'none\'">',
+        click: 'return fcxOpenWatchById(\'' + escJs(String(m.id)) + '\')' });
+    });
+    // SonyLIV / API-feed matches with no Sheet / FanCode twin
+    extras().forEach(function(it){
+      if (it.status !== 'LIVE') return;
+      var thumb = it.poster
+        ? '<img src="' + esc(it.poster) + '" alt="" class="fx2-thumb-img" onerror="this.style.display=\'none\'">'
+        : (it.t1 || it.t2)
+          ? '<div class="fx2-thumb-teams"><div class="fx2-thumb-team"><img src="' + esc(it.t1) + '" alt="" onerror="this.style.display=\'none\'"></div><div class="fx2-thumb-vs">VS</div><div class="fx2-thumb-team"><img src="' + esc(it.t2) + '" alt="" onerror="this.style.display=\'none\'"></div></div>' : '';
+      list.push({ t: it.start ? it.start.getTime() : Infinity, name: it.title, tag: it.category || 'Live Sports', n: it.servers.length, thumb: thumb,
+        click: 'return lmxOpenWatch(\'' + escJs(it.key) + '\')' });
+    });
+    list.sort(function(a, b){ return a.t - b.t; });
+    return list;
+  }
+
+  function renderHome(){
+    var grid = document.getElementById('fixtures-grid');
+    if (!grid || !grid.parentNode) return;
+    var box = document.getElementById('lmx-live-box');
+    var list = homeLive();
+    if (!list.length){
+      if (box) box.remove();
+      grid.querySelectorAll('.fx2-card[data-live="1"]').forEach(function(c){ c.style.removeProperty('display'); });
+      return;
+    }
+    if (!box){ box = document.createElement('div'); box.id = 'lmx-live-box'; grid.parentNode.insertBefore(box, grid); }
+    box.innerHTML = '<div class="lmx-live-head"><span class="lmx-live-bar"></span>Live Now<span class="lmx-live-count">' + list.length + '</span></div>' +
+      '<div class="lmx-live-grid">' + list.map(function(x){
+        return '<a class="fx2-card" data-live="1" href="javascript:void(0)" onclick="' + x.click + '">' +
+          '<div class="fx2-thumb">' + x.thumb + '<span class="fx2-badge fx2-badge-live"><span class="fx2-live-dot"></span>LIVE</span></div>' +
+          '<div class="fx2-body"><div class="fx2-title-row"><div class="fx2-title">' + esc(x.name) + '</div><span class="fx2-free">FREE</span></div>' +
+          '<div class="fx2-meta"><span class="fx2-tag">' + esc(x.tag) + '</span><span class="fx2-date">' + x.n + (x.n === 1 ? ' server' : ' servers') + '</span></div></div></a>';
+      }).join('') + '</div>';
+    // The live cards already shown above must not repeat in the preview grid below.
+    grid.querySelectorAll('.fx2-card[data-live="1"]').forEach(function(c){ c.style.setProperty('display', 'none', 'important'); });
+  }
+
+  /* ── Take over the old per-source renderers ── */
+  window._msxAugment = LMX.augment;                       // renderMatchCards -> fold SonyLIV + API servers into Sheet rows
+  window.slxAppendHomeSections = function(){ LMX.render(); };   // end of renderMatchCards / SLX refresh
+  window.msxAppendHomeSections = function(){};             // MSX cards are now part of the merged list
+
+  // FanCode refresh (30s) rebuilds its own sections / preview: re-run ours afterwards so nothing doubles up.
+  var _fcxSec = window.fcxAppendHomeSections;
+  if (typeof _fcxSec === 'function') window.fcxAppendHomeSections = function(){ var r = _fcxSec.apply(this, arguments); try { renderSections(); } catch(e){ console.error('LMX', e); } return r; };
+  var _fcxPrev = window.fcxAppendFixturesPreview;
+  if (typeof _fcxPrev === 'function') window.fcxAppendFixturesPreview = function(){ var r = _fcxPrev.apply(this, arguments); try { renderHome(); } catch(e){ console.error('LMX', e); } return r; };
+
+  if (window._matchCardsRawRows && typeof renderMatchCards === 'function') { try { renderMatchCards(window._matchCardsRawRows); } catch(e){} }
 })();
 </script>
 
