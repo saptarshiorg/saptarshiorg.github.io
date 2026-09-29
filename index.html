@@ -6271,9 +6271,12 @@ function sxNormalizeApiValue(value, key) {
       return json;
     })
     .catch(function(err){
+      // MSX is optional: a failed/slow MSX request must NEVER block CMS.
+      // Resolve with null instead of rejecting so the CMS startup pipeline
+      // remains completely independent and can render normally.
       window.__msxFirstError = err;
-      console.warn('MSX first-load failed:', err);
-      throw err;
+      console.warn('MSX first-load failed; continuing with CMS:', err);
+      return null;
     });
 })();
 
@@ -6286,23 +6289,62 @@ function sxNormalizeApiValue(value, key) {
   if (window.__sheetsCMSFirstPromise) return;
   try {
     if (!SHEET_ID || SHEET_ID === 'YOUR_SPREADSHEET_ID_HERE') return;
-    var tabs = ['MATCH CARDS'];
+    // Start ALL CMS tabs immediately, in parallel with MSX. MATCH CARDS is
+    // still treated as the first-paint critical tab, but no CMS tab waits for
+    // DOMContentLoaded/init() before its network request begins.
+    var tabs = ['SETTINGS','TICKER','NAVBAR','HERO SLIDES','MATCH CARDS','LIVE CHANNELS','CATEGORIES','BROADCAST','SCHEDULE','SOCIAL LINKS','FOOTER','WATCH POPUP'];
     window.__sheetsCMSFirstStartedAt = (performance && performance.now) ? performance.now() : Date.now();
-    window.__sheetsCMSFirstPromise = Promise.all(tabs.map(function(name){
-      var url = 'https://docs.google.com/spreadsheets/d/' + encodeURIComponent(SHEET_ID) + '/gviz/tq?tqx=out:json&sheet=' + encodeURIComponent(name);
-      return fetch(url, { cache:'no-cache', priority:'high' })
+    window.__sheetsCMSFirstPromises = Object.create(null);
+    tabs.forEach(function(name){
+      var url = 'https://docs.google.com/spreadsheets/d/' + encodeURIComponent(SHEET_ID) + '/gviz/tq?tqx=out:csv&sheet=' + encodeURIComponent(name);
+      window.__sheetsCMSFirstPromises[name] = fetch(url, { cache:'no-cache', priority:'high' })
         .then(function(r){ if(!r.ok) throw new Error('Sheets HTTP ' + r.status); return r.text(); })
-        .then(function(raw){ return {name:name, raw:raw}; });
-    })).then(function(rows){
-      window.__sheetsCMSFirstData = rows;
-      window.__sheetsCMSFirstLoadedAt = (performance && performance.now) ? performance.now() : Date.now();
-      return rows;
-    }).catch(function(err){
-      window.__sheetsCMSFirstError = err;
-      console.warn('Sheets CMS first-load failed:', err);
-      return null;
+        .then(function(raw){
+          var hit = {name:name, raw:raw};
+          window.__sheetsCMSFirstDataByName = window.__sheetsCMSFirstDataByName || Object.create(null);
+          window.__sheetsCMSFirstDataByName[name] = hit;
+          return hit;
+        })
+        .catch(function(err){
+          console.warn('[CMS] startup preload failed for '+name+':', err);
+          return null;
+        });
     });
+    // Backward-compatible aggregate promise for existing MATCH CARDS code.
+    window.__sheetsCMSFirstPromise = window.__sheetsCMSFirstPromises['MATCH CARDS'];
   } catch(e) {}
+})();
+
+// Render critical CMS sheets independently as soon as each response arrives.
+// No CMS sheet waits for the slowest sheet, and MATCH CARDS remains first-paint critical.
+(function wireImmediateCmsRenders(){
+  if (!window.__sheetsCMSFirstPromises) return;
+  var renderMap = {
+    'SETTINGS': renderSettings,
+    'TICKER': renderTicker,
+    'NAVBAR': renderNav,
+    'HERO SLIDES': renderSlides,
+    'MATCH CARDS': renderMatchCards,
+    'LIVE CHANNELS': renderChannels,
+    'CATEGORIES': renderCategories,
+    'BROADCAST': renderBroadcast,
+    'SCHEDULE': renderSchedule,
+    'SOCIAL LINKS': renderSocial,
+    'FOOTER': renderFooter,
+    'WATCH POPUP': renderWatchPopup
+  };
+  Object.keys(renderMap).forEach(function(name){
+    window.__sheetsCMSFirstPromises[name].then(function(hit){
+      if (!hit || typeof hit.raw !== 'string') return;
+      try {
+        var data = sxNormalizeCmsRows(toObj(parseCSV(hit.raw)));
+        if (name === 'MATCH CARDS') console.log('[MATCH CARDS] fastest startup render:', data.length);
+        renderMap[name](data);
+      } catch(e) {
+        console.warn('[CMS] immediate render failed for '+name+':', e);
+      }
+    });
+  });
 })();
 
 const CMS_CACHE_TTL_MS = 60000; // reuse a sheet's data for 60s within the same tab session
@@ -6314,6 +6356,22 @@ async function fetchSheet(name) {
   }
 
   const cacheKey = `cms_cache_${SHEET_ID}_${name}`;
+
+  // Consume the startup CMS request for this tab before using sessionStorage.
+  // This prevents stale cached data from delaying or replacing the fresh first load.
+  if (window.__sheetsCMSFirstPromises && window.__sheetsCMSFirstPromises[name]) {
+    try {
+      const hit = await window.__sheetsCMSFirstPromises[name];
+      if (hit && typeof hit.raw === 'string') {
+        const data = sxNormalizeCmsRows(toObj(parseCSV(hit.raw)));
+        try { sessionStorage.setItem(cacheKey, JSON.stringify({ t: Date.now(), data })); } catch (e) {}
+        return data;
+      }
+    } catch (e) {
+      console.warn('[CMS] startup preload unavailable for '+name+', falling back to cache/direct fetch:', e);
+    }
+  }
+
   try {
     const cached = sessionStorage.getItem(cacheKey);
     if (cached) {
@@ -6324,7 +6382,7 @@ async function fetchSheet(name) {
 
   const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(name)}`;
   try {
-    const r = await fetch(url);
+    const r = await fetch(url, { cache:'no-cache', priority:'high' });
     if (!r.ok) throw new Error(r.status);
     const text = await r.text();
     const rows = parseCSV(text);
@@ -8532,11 +8590,30 @@ async function init() {
 
   setProgress(40, 'Fetching CMS data…');
 
-  // Fire every sheet fetch in parallel instead of one-by-one — this is the
-  // single biggest speed win, since 13 sequential round-trips become 1 wait
-  // for the slowest of them, run together.
+  // MATCH CARDS must not wait for unrelated CMS sheets. Its preload starts
+  // at script startup alongside MSX, so render it the instant its response
+  // arrives. The normal all-sheets Promise.all below still runs in parallel
+  // for the remaining CMS renderers.
+  const matchCardsFastPromise = fetchSheet('MATCH CARDS')
+    .then(data => {
+      if (data) {
+        setProgress(46, 'Loading match cards…');
+        try { renderMatchCards(data); }
+        catch (e) { console.warn('[MATCH CARDS] immediate render failed:', e); }
+      }
+      return data;
+    })
+    .catch(e => {
+      console.warn('[MATCH CARDS] immediate load failed:', e);
+      return null;
+    });
+
+  // Fire every other sheet fetch in parallel instead of one-by-one.
   const results = await Promise.all(
-    steps.map(([sheet]) => fetchSheet(sheet).catch(e => { console.warn(`Sheet "${sheet}" failed:`, e); return null; }))
+    steps.map(([sheet]) => {
+      if (sheet === 'MATCH CARDS') return matchCardsFastPromise;
+      return fetchSheet(sheet).catch(e => { console.warn(`Sheet "${sheet}" failed:`, e); return null; });
+    })
   );
 
   // Render in the original, correct visual order once all data is back.
@@ -8547,7 +8624,12 @@ async function init() {
       // HERO SLIDES also gets the LIVE CHANNELS rows, so that if the sheet
       // has no active slides it can fall back to a channels banner instead
       // of rendering nothing.
-      if (sheet === 'HERO SLIDES') {
+      // MATCH CARDS was already rendered by matchCardsFastPromise. Do not
+      // rebuild it here unless the fast path returned data before the render
+      // callback ran (normally it is already on screen).
+      if (sheet === 'MATCH CARDS') {
+        if (!window._matchCardsRawRows && results[i]) render(results[i]);
+      } else if (sheet === 'HERO SLIDES') {
         render(results[i], results[liveChannelsIdx]);
       } else {
         render(results[i]);
@@ -16370,6 +16452,10 @@ function sxApplySheetCountryFlags(cards){
     // MSX was started at global startup and is always consumed first.
     var first = window.__msxFirstPromise || fetch(API, { cache: 'no-cache', priority: 'high' }).then(function(r){ return r.json(); });
     first.then(function(json){
+        // MSX may fail completely; CMS MATCH CARDS and all other CMS sheets
+        // must continue rendering independently. Do not let a missing MSX
+        // response prevent the normal CMS-backed match cards from appearing.
+        if (!json) return;
         var entries = buildEntries(json);
         var sig = JSON.stringify(entries.map(function(m){ return [m.key, m.title, m.status, m.servers.map(function(s){ return s.text+s.url; })]; }));
         window._msxEntries = entries;
