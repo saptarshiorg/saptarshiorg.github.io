@@ -7859,7 +7859,7 @@ setInterval(() => {
   if (window._matchCardsRawRows) renderMatchCards(window._matchCardsRawRows);
 }, 60000);
 
-function renderMatchCards(rows) {
+async function renderMatchCards(rows) {
   if (!rows) { console.warn('[MATCH CARDS] fetchSheet returned null — check the tab name is exactly "MATCH CARDS" and the sheet is shared ("Anyone with the link can view").'); return; }
 
   // ── SETTINGS!maintain_matches ────────────────────────────────
@@ -7893,6 +7893,9 @@ function renderMatchCards(rows) {
   const allActiveCards = active(rows);
   // API/CMS country values override any supplied team logo/flag URL.
   allActiveCards.forEach(c => sxApplyCountryTeamFlags(c, c));
+  // If a card has only a SofaScore team image URL, resolve its team country
+  // and replace the image with the corresponding FlagCDN flag before render.
+  await Promise.all(allActiveCards.map(c => sxApplySofaScoreFlagFallback(c, c)));
   console.log('[MATCH CARDS] after active() filter:', allActiveCards.length, allActiveCards);
   // Drop anything already 15h+ past its scheduled start (countdown_to_iso_datetime)
   // so old matches disappear from the site on their own.
@@ -8710,6 +8713,42 @@ function sxTeamCountry(row, side){
     if (row[k] !== undefined && row[k] !== null && String(row[k]).trim()) return String(row[k]).trim();
   }
   return '';
+}
+
+// SofaScore team images are logos/flags served as /team/<ID>/image.
+// When one of these URLs is supplied by an API, resolve the team country from
+// SofaScore's team metadata and use FlagCDN instead. This keeps country flags
+// consistent even when the API does not expose a separate country field.
+const sxSofaCountryCache = new Map();
+async function sxCountryFromSofaImage(url){
+  const m = String(url || '').match(/(?:img\.)?sofascore\.com\/api\/v1\/team\/(\d+)\/image/i);
+  if (!m) return '';
+  const id = m[1];
+  if (sxSofaCountryCache.has(id)) return sxSofaCountryCache.get(id) || '';
+  try {
+    const r = await fetch(`https://www.sofascore.com/api/v1/team/${id}`);
+    if (!r.ok) throw new Error(String(r.status));
+    const j = await r.json();
+    const t = j && j.team ? j.team : j;
+    const c = t && (t.country || t.nationality || {});
+    const value = typeof c === 'string' ? c : (c && (c.alpha2 || c.alpha3 || c.name || c.code)) || '';
+    sxSofaCountryCache.set(id, value);
+    return value;
+  } catch (e) {
+    sxSofaCountryCache.set(id, '');
+    return '';
+  }
+}
+
+async function sxApplySofaScoreFlagFallback(target, source){
+  target = target || {}; source = source || target;
+  const jobs = [];
+  const f1 = target.team1_icon_url || source.team1Flag || source.teamAFlag || source.teamA_flag || '';
+  const f2 = target.team2_icon_url || source.team2Flag || source.teamBFlag || source.teamB_flag || '';
+  if (!target.team1_country && /(?:img\.)?sofascore\.com\/api\/v1\/team\/\d+\/image/i.test(String(f1))) jobs.push(sxCountryFromSofaImage(f1).then(c => { if (c) { target.team1_country = c; target.team1_icon_url = sxCountryFlagUrl(c); } }));
+  if (!target.team2_country && /(?:img\.)?sofascore\.com\/api\/v1\/team\/\d+\/image/i.test(String(f2))) jobs.push(sxCountryFromSofaImage(f2).then(c => { if (c) { target.team2_country = c; target.team2_icon_url = sxCountryFlagUrl(c); } }));
+  if (jobs.length) await Promise.all(jobs);
+  return target;
 }
 
 function sxApplyCountryTeamFlags(target, source){
@@ -15464,7 +15503,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
     });
   }
 
-  function buildEntries(json){
+  async function buildEntries(json){
     var list = (json && json.matches) || [];
     var out = [];
     list.forEach(function(e, idx){
@@ -15512,6 +15551,10 @@ button, a.btn, [class*="btn-"], input, select, textarea{
       });
       // Country from the API is authoritative over teamAFlag/teamBFlag.
       sxApplyCountryTeamFlags(out[out.length - 1], e);
+      // If the API only supplied SofaScore team-image URLs such as
+      // https://img.sofascore.com/api/v1/team/4791/image, resolve the team
+      // country and replace those images with FlagCDN flags.
+      await sxApplySofaScoreFlagFallback(out[out.length - 1], info);
       if (!out[out.length - 1].team1_country) out[out.length - 1].team1_country = sxTeamCountry(info, '1') || '';
       if (!out[out.length - 1].team2_country) out[out.length - 1].team2_country = sxTeamCountry(info, '2') || '';
       if (out[out.length - 1].team1_country || out[out.length - 1].team2_country) {
@@ -15633,7 +15676,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
     fetch(API, { cache: 'no-cache', priority: 'high' })
       .then(function(r){ return r.json(); })
       .then(function(json){
-        var entries = buildEntries(json);
+        var entries = await buildEntries(json);
         var sig = JSON.stringify(entries.map(function(m){ return [m.key, m.title, m.status, m.servers.map(function(s){ return s.text+s.url; })]; }));
         window._msxEntries = entries;
         if (sig === lastSig) return;
