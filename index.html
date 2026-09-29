@@ -6277,6 +6277,34 @@ function sxNormalizeApiValue(value, key) {
     });
 })();
 
+/* ── MATCH FEEDS FIRST: preload Sheets CMS concurrently with MSX ────────
+   Both primary match sources are started during the same startup phase.
+   Neither request waits for the other; the normal renderers can consume
+   their promises/data as soon as each source responds.
+*/
+(function startSheetsCMSPreload(){
+  if (window.__sheetsCMSFirstPromise) return;
+  try {
+    if (!SHEET_ID || SHEET_ID === 'YOUR_SPREADSHEET_ID_HERE') return;
+    var tabs = ['MATCH CARDS'];
+    window.__sheetsCMSFirstStartedAt = (performance && performance.now) ? performance.now() : Date.now();
+    window.__sheetsCMSFirstPromise = Promise.all(tabs.map(function(name){
+      var url = 'https://docs.google.com/spreadsheets/d/' + encodeURIComponent(SHEET_ID) + '/gviz/tq?tqx=out:json&sheet=' + encodeURIComponent(name);
+      return fetch(url, { cache:'no-cache', priority:'high' })
+        .then(function(r){ if(!r.ok) throw new Error('Sheets HTTP ' + r.status); return r.text(); })
+        .then(function(raw){ return {name:name, raw:raw}; });
+    })).then(function(rows){
+      window.__sheetsCMSFirstData = rows;
+      window.__sheetsCMSFirstLoadedAt = (performance && performance.now) ? performance.now() : Date.now();
+      return rows;
+    }).catch(function(err){
+      window.__sheetsCMSFirstError = err;
+      console.warn('Sheets CMS first-load failed:', err);
+      return null;
+    });
+  } catch(e) {}
+})();
+
 const CMS_CACHE_TTL_MS = 60000; // reuse a sheet's data for 60s within the same tab session
 
 async function fetchSheet(name) {
