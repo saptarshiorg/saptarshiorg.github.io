@@ -6144,14 +6144,15 @@ function toObj(rows) {
   });
 }
 
-// Preserve both HTTP and HTTPS URLs exactly as supplied by the API/CMS.
-// No application-level protocol rewriting is performed here. Browser security
-// rules still apply: an HTTPS page cannot load insecure HTTP subresources when
-// the browser blocks them as mixed content.
+// CMS URLs must follow the protocol of the page. A local file:// build may
+// still load an http:// source, but an https:// deployment is not allowed to
+// request http:// images, logos, banners or HLS manifests (mixed content).
+// Do NOT force https on file://, because that can break sources which only
+// exist on plain HTTP. On the live HTTPS site we upgrade CMS http:// URLs.
 function sxCmsUrl(u) {
   const v = String(u || '').trim();
   if (!v) return '';
-  return v;
+  return sxUpgradeHttpUrl(v);
 }
 
 // Normalize URL-bearing CMS columns as soon as Sheets data is received so
@@ -6171,11 +6172,16 @@ function sxNormalizeCmsRows(rows) {
   });
 }
 
-// ── URL PROTOCOL COMPATIBILITY ─────────────────────────────────────────
-// Keep explicit http:// and https:// URLs unchanged. This lets the site
-// support sources using either protocol instead of silently rewriting them.
+// ── GLOBAL HTTPS URL SAFETY ───────────────────────────────────────────────
+// APIs are handled exactly like the Sheets CMS.  On an HTTPS deployment,
+// browsers reject HTTP API endpoints, images, logos and HLS manifests as
+// mixed content.  Local file:// builds keep the original URLs.
 function sxUpgradeHttpUrl(value) {
-  return value;
+  const v = String(value == null ? '' : value).trim();
+  if (!v) return value;
+  return (location.protocol === 'https:' && /^http:\/\//i.test(v))
+    ? v.replace(/^http:\/\//i, 'https://')
+    : value;
 }
 
 function sxNormalizeApiValue(value, key) {
@@ -6245,6 +6251,32 @@ function sxNormalizeApiValue(value, key) {
   } catch(e) {}
 })();
 
+
+/* ── MSX FIRST: start the primary match feed immediately ────────────────
+   Sports_data.json is the first match-listing request.  Other match feeds
+   may start afterward, but they reuse this promise so MSX is not fetched
+   twice.  This is intentionally a data preload, not a player/stream preload.
+*/
+(function startMSXFirst(){
+  if (window.__msxFirstPromise) return;
+  var msxUrl = 'https://raw.githubusercontent.com/sm-monirulislam/Upcoming-and-Live-Sports-Data/refs/heads/main/Sports_data.json';
+  window.__msxFirstStartedAt = (performance && performance.now) ? performance.now() : Date.now();
+  window.__msxFirstPromise = fetch(msxUrl, { cache: 'no-cache', priority: 'high' })
+    .then(function(r){
+      if (!r.ok) throw new Error('MSX HTTP ' + r.status);
+      return r.json();
+    })
+    .then(function(json){
+      window.__msxFirstData = json;
+      window.__msxFirstLoadedAt = (performance && performance.now) ? performance.now() : Date.now();
+      return json;
+    })
+    .catch(function(err){
+      window.__msxFirstError = err;
+      console.warn('MSX first-load failed:', err);
+      throw err;
+    });
+})();
 
 const CMS_CACHE_TTL_MS = 60000; // reuse a sheet's data for 60s within the same tab session
 
@@ -6864,8 +6896,8 @@ function sxMatchInfoEnc(m, name) {
   m = m || {};
   const info = {
     name: name || '',
-    team1_code: m.team1_code || '', team1_full_name: m.team1_full_name || '', team1_icon_url: m.team1_icon_url || '', team1_country: m.team1_country || '',
-    team2_code: m.team2_code || '', team2_full_name: m.team2_full_name || '', team2_icon_url: m.team2_icon_url || '', team2_country: m.team2_country || '',
+    team1_code: m.team1_code || '', team1_full_name: m.team1_full_name || '', team1_icon_url: m.team1_icon_url || '',
+    team2_code: m.team2_code || '', team2_full_name: m.team2_full_name || '', team2_icon_url: m.team2_icon_url || '',
     date_label: smoCardDateLabel(m), details: m.details || '',
     countdown: m.countdown_to_iso_datetime || m.countdown_to || '',
     status: matchStatusText(m).toLowerCase(),
@@ -6956,10 +6988,6 @@ function sxHandleMatchWatch(e, serversEnc, fallbackUrl, name, matchInfoEnc) {
 
 function openMatchWatchScreen(servers, info) {
   info = info || {};
-  // Country-derived FlagCDN visuals remain authoritative even on the
-  // fullscreen watch screen.
-  if (info.team1_country) info.team1_icon_url = sxCountryFlagUrl(info.team1_country) || info.team1_icon_url || '';
-  if (info.team2_country) info.team2_icon_url = sxCountryFlagUrl(info.team2_country) || info.team2_icon_url || '';
   const label = info.name || 'Live Stream';
 
   const isLive = info.status === 'live';
@@ -7105,19 +7133,21 @@ function openMatchWatchScreen(servers, info) {
           ? `<img class="mws-server-icon" src="${keywordLogo}" alt="" onerror="this.outerHTML='<span class=\\'mws-server-num\\'>${i + 1}</span>'">`
           : `<span class="mws-server-num">${i + 1}</span>`;
       const isRawStream = !sheetServersLocked && sxIsRawStreamUrl(s.url);
-      const vlcIcon = '';
+      const vlcIcon = isRawStream ? `<img class="mws-vlc-icon" src="https://images.icon-icons.com/1381/PNG/512/vlc_93519.png" alt="VLC" title="Direct stream \u2014 plays in VLC" onerror="this.style.display='none'">` : '';
       // Auto-connected badge for servers linked from LIVE CHANNELS
       const autoConnectBadge = s.auto_connected ? `<span class="mws-auto-badge" title="Auto-connected from LIVE TV">📡 LIVE TV</span>` : '';
       const srvClick = sheetServersLocked
         ? `onclick="mwsLockedServerTap(this)"`
-        : `onclick="closeMatchWatchScreen();sxGoToMatchUrl(null,'${escJs(s.url)}','${escJs(s.playName || label)}')"`;
+        : isRawStream
+          ? `onclick="closeMatchWatchScreen();sxOpenVlcPopup('${escJs(s.url)}','${escJs(label)}')"`
+          : `onclick="closeMatchWatchScreen();sxGoToMatchUrl(null,'${escJs(s.url)}','${escJs(s.playName || label)}')"`;
       return `
       <button type="button" class="mws-server-btn${sheetServersLocked ? ' mws-server-locked' : ''}${isRawStream ? ' mws-server-btn-raw' : ''}" ${srvClick}>
         ${iconHtml}
         <span class="mws-server-info">
           <span class="mws-server-label">${s.text || ('Server ' + (i + 1))}${vlcIcon}${autoConnectBadge}</span>
           <span class="mws-server-sub">${sheetServersLocked ? 'Locked until ' + startText : (s.sub || 'Tap to play this stream')}</span>
-          ${s.appOnly ? '<span class="mws-server-app-note">Only Play Through EV STREAMS APP</span>' : ''}
+          ${(s.appOnly || (sxIsStreamUrl(s.url) && /^http:\/\//i.test(String(s.url).trim()) && location.protocol === 'https:')) ? '<span class="mws-server-app-note">Only Play Through EV STREAMS APP</span>' : ''}
         </span>
         <span class="mws-server-play">${sheetServersLocked ? MWS_LOCK_SVG : MWS_PLAY_SVG}</span>
       </button>`;
@@ -7859,7 +7889,7 @@ setInterval(() => {
   if (window._matchCardsRawRows) renderMatchCards(window._matchCardsRawRows);
 }, 60000);
 
-async function renderMatchCards(rows) {
+function renderMatchCards(rows) {
   if (!rows) { console.warn('[MATCH CARDS] fetchSheet returned null — check the tab name is exactly "MATCH CARDS" and the sheet is shared ("Anyone with the link can view").'); return; }
 
   // ── SETTINGS!maintain_matches ────────────────────────────────
@@ -7891,11 +7921,6 @@ async function renderMatchCards(rows) {
   console.log('[MATCH CARDS] raw rows from sheet:', rows.length, rows);
   console.log('[MATCH CARDS] active-flag per row:', rows.map(r => ({ game: r.game, flag_used: activeFlagRaw(r), kept: isRowActive(r) })));
   const allActiveCards = active(rows);
-  // API/CMS country values override any supplied team logo/flag URL.
-  allActiveCards.forEach(c => sxApplyCountryTeamFlags(c, c));
-  // If a card has only a SofaScore team image URL, resolve its team country
-  // and replace the image with the corresponding FlagCDN flag before render.
-  await Promise.all(allActiveCards.map(c => sxApplySofaScoreFlagFallback(c, c)));
   console.log('[MATCH CARDS] after active() filter:', allActiveCards.length, allActiveCards);
   // Drop anything already 15h+ past its scheduled start (countdown_to_iso_datetime)
   // so old matches disappear from the site on their own.
@@ -8612,175 +8637,20 @@ const COUNTRY_TO_ISO2 = {
   'israel':'il','iran':'ir','iraq':'iq','jordan':'jo','lebanon':'lb',
   'international':'', 'global':'', 'world':''
 };
-function sxCountryIso2(rawCountry){
-  const raw = String(rawCountry || '').trim();
-  if (!raw) return '';
-  let clean = raw.replace(/^['\"\s]+|['\"\s]+$/g,'').trim().toLowerCase();
-  // Accept values such as `India (IN)`, `IN - India`, `IND`, etc.
-  clean = clean.replace(/\s*\([^)]*\)\s*$/,'').trim();
-  const ISO3_TO_ISO2 = {
-    ind:'in', aus:'au', pak:'pk', ban:'bd', lka:'lk', npl:'np', btn:'bt', afg:'af',
-    are:'ae', sau:'sa', qat:'qa', kwt:'kw', omn:'om', deu:'de', fra:'fr', esp:'es',
-    ita:'it', prt:'pt', nld:'nl', bel:'be', che:'ch', aut:'at', swe:'se', nor:'no',
-    dnk:'dk', fin:'fi', pol:'pl', irl:'ie', gbr:'gb', sco:'gb-sct', wls:'gb-wls',
-    rus:'ru', ukr:'ua', grc:'gr', tur:'tr', jpn:'jp', kor:'kr', chn:'cn', hkg:'hk',
-    twn:'tw', sgp:'sg', mys:'my', idn:'id', phl:'ph', tha:'th', vnm:'vn', mmr:'mm',
-    bra:'br', mex:'mx', arg:'ar', col:'co', chl:'cl', per:'pe', zaf:'za', nga:'ng',
-    ken:'ke', egy:'eg', mar:'ma', isr:'il', irn:'ir', irq:'iq', jor:'jo', lbn:'lb',
-    usa:'us', can:'ca', nzl:'nz'
-  };
-  let iso = clean;
-  if (COUNTRY_TO_ISO2.hasOwnProperty(clean)) iso = COUNTRY_TO_ISO2[clean];
-  else if (ISO3_TO_ISO2[clean]) iso = ISO3_TO_ISO2[clean];
-  else if (/^[a-z]{2}$/.test(clean)) { /* already ISO-2 */ }
-  else {
-    const m = clean.match(/\b([a-z]{2})\b/i);
-    if (m) iso = m[1].toLowerCase();
-    else iso = '';
-  }
-  return iso || '';
-}
-
-function sxCountryFlagUrl(rawCountry){
-  const iso = sxCountryIso2(rawCountry);
-  return iso ? `https://flagcdn.com/w80/${encodeURIComponent(iso)}.png` : '';
-}
-
-// Resolve a team-specific country from API/CMS data. Supports the common
-// team1/team2, teamA/teamB and nested-team shapes, while falling back to a
-// match-level country when that is all the API provides.
-function sxTeamCountry(row, side){
-  row = row || {};
-  const is1 = String(side || '1') === '1' || String(side).toUpperCase() === 'A';
-  const n = is1 ? 1 : 2;
-
-  // API/CMS field names seen in different feeds. Keep this deliberately
-  // broad so Team A/Team B country data is not missed just because the
-  // provider uses a different naming convention.
-  const directKeys = is1 ? [
-    'team1_country','team1Country','team1country','team_1_country','team1_country_name','team1CountryName',
-    'teamA_country','teamACountry','teamAcountry','team_a_country','team_a_country_name','teamACountryName',
-    'home_country','homeCountry','home_country_name','homeCountryName','homeTeamCountry','home_team_country',
-    'country1','country_1','countryA','country_a','team1nation','teamANation','team_a_nation','homeNation'
-  ] : [
-    'team2_country','team2Country','team2country','team_2_country','team2_country_name','team2CountryName',
-    'teamB_country','teamBCountry','teamBcountry','team_b_country','team_b_country_name','teamBCountryName',
-    'away_country','awayCountry','away_country_name','awayCountryName','awayTeamCountry','away_team_country',
-    'country2','country_2','countryB','country_b','team2nation','teamBNation','team_b_nation','awayNation'
-  ];
-
-  for (const key of directKeys){
-    const v = row[key];
-    if (v !== undefined && v !== null && typeof v !== 'object' && String(v).trim()) return String(v).trim();
-  }
-
-  // Case-insensitive fallback for APIs that use unusual capitalization.
-  const wanted = new Set(directKeys.map(k => k.toLowerCase()));
-  for (const key of Object.keys(row)){
-    if (wanted.has(String(key).toLowerCase())){
-      const v = row[key];
-      if (v !== undefined && v !== null && typeof v !== 'object' && String(v).trim()) return String(v).trim();
-    }
-  }
-
-  // Nested team objects: { teamA: { country: "India" } } etc.
-  const prefixes = is1 ? ['team1','teamA','home','homeTeam','team_a','home_team'] : ['team2','teamB','away','awayTeam','team_b','away_team'];
-  for (const prefix of prefixes){
-    const obj = row[prefix];
-    if (obj && typeof obj === 'object'){
-      for (const k of ['country','country_code','countryCode','country_name','countryName','nation','nation_code','nationCode','nationality']){
-        if (obj[k] !== undefined && obj[k] !== null && String(obj[k]).trim()) return String(obj[k]).trim();
-      }
-    }
-  }
-
-  // Some APIs put team data in a teams array.
-  const arr = row.teams || row.teams_data || row.team_data || row.teamsData;
-  if (Array.isArray(arr)){
-    const obj = arr[is1 ? 0 : 1];
-    if (obj && typeof obj === 'object'){
-      for (const k of ['country','country_code','countryCode','country_name','countryName','nation','nation_code','nationCode']){
-        if (obj[k] !== undefined && obj[k] !== null && String(obj[k]).trim()) return String(obj[k]).trim();
-      }
-    }
-  }
-
-  // Only use a match-level country when it is the sole country supplied.
-  // This prevents accidentally giving both teams the same flag when the API
-  // has two separate country values.
-  const matchKeys = ['country','country_name','countryName','country_code','countryCode','nation'];
-  for (const k of matchKeys){
-    if (row[k] !== undefined && row[k] !== null && String(row[k]).trim()) return String(row[k]).trim();
-  }
-  return '';
-}
-
-// SofaScore team images are logos/flags served as /team/<ID>/image.
-// When one of these URLs is supplied by an API, resolve the team country from
-// SofaScore's team metadata and use FlagCDN instead. This keeps country flags
-// consistent even when the API does not expose a separate country field.
-const sxSofaCountryCache = new Map();
-async function sxCountryFromSofaImage(url){
-  const m = String(url || '').match(/(?:img\.)?sofascore\.com\/api\/v1\/team\/(\d+)\/image/i);
-  if (!m) return '';
-  const id = m[1];
-  if (sxSofaCountryCache.has(id)) return sxSofaCountryCache.get(id) || '';
-  try {
-    const r = await fetch(`https://www.sofascore.com/api/v1/team/${id}`);
-    if (!r.ok) throw new Error(String(r.status));
-    const j = await r.json();
-    const t = j && j.team ? j.team : j;
-    const c = t && (t.country || t.nationality || {});
-    const value = typeof c === 'string' ? c : (c && (c.alpha2 || c.alpha3 || c.name || c.code)) || '';
-    sxSofaCountryCache.set(id, value);
-    return value;
-  } catch (e) {
-    sxSofaCountryCache.set(id, '');
-    return '';
-  }
-}
-
-async function sxApplySofaScoreFlagFallback(target, source){
-  target = target || {}; source = source || target;
-  const jobs = [];
-  const f1 = target.team1_icon_url || source.team1Flag || source.teamAFlag || source.teamA_flag || '';
-  const f2 = target.team2_icon_url || source.team2Flag || source.teamBFlag || source.teamB_flag || '';
-  if (!target.team1_country && /(?:img\.)?sofascore\.com\/api\/v1\/team\/\d+\/image/i.test(String(f1))) jobs.push(sxCountryFromSofaImage(f1).then(c => { if (c) { target.team1_country = c; target.team1_icon_url = sxCountryFlagUrl(c); } }));
-  if (!target.team2_country && /(?:img\.)?sofascore\.com\/api\/v1\/team\/\d+\/image/i.test(String(f2))) jobs.push(sxCountryFromSofaImage(f2).then(c => { if (c) { target.team2_country = c; target.team2_icon_url = sxCountryFlagUrl(c); } }));
-  if (jobs.length) await Promise.all(jobs);
-  return target;
-}
-
-function sxApplyCountryTeamFlags(target, source){
-  target = target || {}; source = source || target;
-
-  // Check both the API object and its common nested eventInfo/matchInfo
-  // containers. This is the key fix for feeds where country is nested.
-  const sources = [source];
-  if (source.eventInfo && typeof source.eventInfo === 'object') sources.push(source.eventInfo);
-  if (source.matchInfo && typeof source.matchInfo === 'object') sources.push(source.matchInfo);
-  if (source.data && typeof source.data === 'object') sources.push(source.data);
-
-  let c1 = '', c2 = '';
-  for (const src of sources){
-    if (!c1) c1 = sxTeamCountry(src, '1');
-    if (!c2) c2 = sxTeamCountry(src, '2');
-  }
-
-  const f1 = sxCountryFlagUrl(c1), f2 = sxCountryFlagUrl(c2);
-  if (f1) target.team1_icon_url = f1;
-  if (f2) target.team2_icon_url = f2;
-  if (c1) target.team1_country = c1;
-  if (c2) target.team2_country = c2;
-  return target;
-}
-
 function countryFlagHTML(rawCountry){
   const raw = String(rawCountry || '').trim();
   if (!raw) return '';
   // Sheets sometimes supplies values such as `IN`, `in`, `India `, or
   // `India (IN)`. Normalize those variants before looking up the flag.
-  const iso = sxCountryIso2(raw);
+  let clean = raw.replace(/^['"\s]+|['"\s]+$/g,'').trim().toLowerCase();
+  let iso = clean;
+  if (COUNTRY_TO_ISO2.hasOwnProperty(clean)) iso = COUNTRY_TO_ISO2[clean];
+  else if (/^[a-z]{2}$/.test(clean)) { /* already ISO-2 */ }
+  else {
+    const m = clean.match(/\(([a-z]{2})\)$/i);
+    if (m) iso = m[1].toLowerCase();
+    else iso = '';
+  }
   if (!iso) return '';
   const src = `https://flagcdn.com/w40/${encodeURIComponent(iso)}.png`;
   const safeAlt = raw.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -10991,7 +10861,7 @@ function closeAdminChatDiscordPopup(){
 /* SX SPORTS 4K PLAYER
    Standalone:  SXSPORTS4K.html?src=<url-encoded .m3u8>&title=<name>
    Embedded:    the site injects window.SX4K_BOOT = { url, title, embed:true }
-   Attempts HLS/DASH playback without proactively refusing DRM streams. */
+   Plays clear (non-DRM) HLS only. DRM-protected streams are detected and refused. */
 :root{
   --accent:#F0146E; --accent-2:#FF8FBB; --accent-dim:rgba(240,20,110,.20);
   --glass:rgba(22,22,26,.58); --glass-strong:rgba(16,16,20,.88);
@@ -11066,16 +10936,12 @@ body.embed #top{justify-content:flex-end}
 #err{position:absolute;inset:0;z-index:9;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(0,0,0,.88);
   backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 #err.show{display:flex}
-#err .box{max-width:460px;text-align:center}
-#err .ev-fallback-logo{width:72px;height:72px;object-fit:contain;display:block;margin:0 auto 14px;border-radius:18px;background:rgba(255,255,255,.06);padding:8px;border:1px solid var(--line)}
+#err .box{max-width:430px;text-align:center}
 #err .ic{width:54px;height:54px;margin:0 auto 14px;border-radius:50%;display:grid;place-items:center;background:var(--accent-dim);color:var(--accent-2)}
 #err .ic svg{width:26px;height:26px}
 #err h2{font-size:18px;font-weight:800;margin-bottom:8px}
 #err p{font-size:13px;line-height:1.6;color:var(--muted);margin-bottom:18px}
 #err .acts{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
-#err .ev-fallback-note{font-size:12px;line-height:1.55;color:var(--faint);margin:0 auto 16px;max-width:390px}
-#err .ev-app-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 17px;border-radius:11px;font-size:13px;font-weight:850;background:var(--accent);color:#fff;border:1px solid transparent;text-decoration:none;transition:transform .15s,background .15s}
-#err .ev-app-btn:hover{background:#FF3D96;transform:translateY(-1px)}
 .btn{padding:10px 16px;border-radius:10px;font-size:13px;font-weight:800;background:rgba(255,255,255,.09);border:1px solid var(--line);transition:background .15s}
 .btn:hover{background:rgba(255,255,255,.16)}
 .btn.pri{background:var(--accent);border-color:transparent}
@@ -11190,12 +11056,9 @@ body.embed #top{justify-content:flex-end}
 
   <div id="err" role="alert">
     <div class="box">
-      <img class="ev-fallback-logo" src="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/main/logo.png" alt="EV SPORTS" onerror="this.style.display='none'">
       <div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></svg></div>
       <h2 id="err-t"></h2>
       <p id="err-b"></p>
-      <p class="ev-fallback-note">If the stream still does not play, use another server. If you are using the EV STREAMS app, try another server there as well.</p>
-      <a class="ev-app-btn" href="https://evstreams.pages.dev/" target="_blank" rel="noopener">Download EV SPORTS</a>
       <div class="acts" id="err-a"></div>
     </div>
   </div>
@@ -11309,18 +11172,18 @@ function poke(){
 
 /* ── errors ── */
 var ERR = {
-  cors:       { i:'warn', t:'Stream could not be played', b:'The stream server did not allow playback in this browser. Try another server or use EV SPORTS.', a:[] },
-  mixed:      { i:'warn', t:'Stream could not be played', b:'This stream is blocked by browser security. Try another server or use EV SPORTS.', a:[] },
-  forbidden:  { i:'warn', t:'Stream could not be played', b:'The stream refused this browser request. Try another server or use EV SPORTS.', a:[] },
-  offline:    { i:'warn', t:'Stream unavailable', b:'This stream is not available right now. Try another server or use EV SPORTS.', a:[] },
-  timeout:    { i:'warn', t:'Stream did not start', b:'The stream took too long to connect. Try another server or use EV SPORTS.', a:[] },
-  media:      { i:'warn', t:'Playback failed', b:'This browser could not play this stream. Try another server or use EV SPORTS.', a:[] },
-  native:     { i:'warn', t:'Playback failed', b:'This browser could not play this stream. Try another server or use EV SPORTS.', a:[] },
-  unsupported:{ i:'warn', t:'Playback is not supported', b:'This browser could not play this stream. Try another server or use EV SPORTS.', a:[] },
-  lib:        { i:'warn', t:'Player failed to load', b:'The playback component could not be loaded. Try another server or use EV SPORTS.', a:[] },
-  invalid:    { i:'warn', t:'Invalid stream', b:'This stream link is not playable here. Try another server or use EV SPORTS.', a:[] },
-  drm:        { i:'warn', t:'Stream could not be played', b:'This browser could not complete playback of this protected stream. Try another server or use EV SPORTS.', a:[] }
-}
+  cors:      { i:'warn', t:'This stream can\u2019t play in the browser', b:'The stream\u2019s server doesn\u2019t allow web players to load it. It may still play in VLC.', a:['vlc','copy','retry'] },
+  mixed:     { i:'warn', t:'Blocked by browser security', b:'This stream is served over plain http, and this page is secure, so the browser blocks it. Try VLC instead.', a:['vlc','copy','retry'] },
+  forbidden: { i:'warn', t:'The stream refused the request', b:'Its server denied access (the link may have expired or need a login). You can try again or open it in VLC.', a:['retry','vlc','copy'] },
+  offline:   { i:'warn', t:'Stream unavailable', b:'The stream isn\u2019t live right now, or its link has changed. Try again in a moment.', a:['retry'] },
+  timeout:   { i:'warn', t:'The stream didn\u2019t start', b:'It took too long to connect. Check your connection, then try again.', a:['retry','vlc','copy'] },
+  media:     { i:'warn', t:'Playback stopped', b:'The stream broke or uses a format this browser can\u2019t play.', a:['retry','vlc','copy'] },
+  native:    { i:'warn', t:'This browser couldn\u2019t play the stream', b:'Try VLC, or open this page in Chrome, Edge or Firefox.', a:['retry','vlc','copy'] },
+  unsupported:{i:'warn', t:'This browser can\u2019t play HLS', b:'Open this page in a current version of Chrome, Edge, Firefox or Safari.', a:['copy'] },
+  lib:       { i:'warn', t:'Player failed to load', b:'The video library couldn\u2019t be downloaded. Check your connection, then try again.', a:['retry'] },
+  invalid:   { i:'warn', t:'No valid stream link', b:'This player needs an http or https link to an .m3u8 (HLS) or .mpd (DASH) stream.', a:[] },
+  drm:       { i:'lock', t:'Protected stream', b:'This stream uses DRM, which can\u2019t be played here. Pick another server or channel.', a:[] }
+};
 var ACT = {
   retry:'<button class="btn pri" type="button" data-a="retry">Try again</button>',
   vlc:'<button class="btn" type="button" data-a="vlc">Open in VLC</button>',
@@ -11343,13 +11206,43 @@ function showError(kind){
 }
 function hideError(){ st.errShown = false; $('err').classList.remove('show'); setClass('err', false); }
 
-/* ── DRM compatibility ──
-   Do not proactively block encrypted/DRM media.
-   The browser/player is allowed to attempt playback. Legitimate DRM
-   content still requires the stream provider's license/CDM configuration;
-   this code does not bypass or decrypt DRM. */
+/* ── DRM detection ──
+   Refuses anything that needs a licence/CDM (Widevine, PlayReady, FairPlay,
+   SAMPLE-AES). Plain AES-128 HLS (key URL in the playlist) is ordinary clear
+   HLS and is allowed. */
+function keyIsDrm(k){
+  if (!k) return false;
+  var m = String(k.method || '').toUpperCase();
+  if (m === 'NONE' || m === '') return false;
+  var f = String(k.keyFormat || 'identity').toLowerCase();
+  if (f !== 'identity') return true;
+  return m.indexOf('SAMPLE-AES') === 0;
+}
+function detailsIsDrm(det){
+  if (!det) return false;
+  try {
+    var frags = det.fragments || [];
+    for (var i = 0; i < frags.length; i++) {
+      var f = frags[i];
+      if (f.decryptdata && keyIsDrm(f.decryptdata)) return true;
+      var lk = f.levelkeys;
+      if (lk) for (var k in lk) { if (keyIsDrm(lk[k])) return true; }
+    }
+  } catch(e){}
+  return false;
+}
+function manifestIsDrm(d){
+  try {
+    var sk = d && d.sessionKeys;
+    if (sk) for (var i = 0; i < sk.length; i++) { if (keyIsDrm(sk[i])) return true; }
+  } catch(e){}
+  return false;
+}
 function drmDetected(){
-  st.drm = false;
+  if (st.drm) return;
+  st.drm = true;
+  teardown(true);
+  showError('drm');
 }
 
 /* ── teardown / load ── */
@@ -11425,6 +11318,7 @@ function startHls(url){
   });
   st.hls = hls;
 
+  hls.on(Hls.Events.MANIFEST_LOADED, function(_, d){ if (manifestIsDrm(d)) drmDetected(); });
   hls.on(Hls.Events.MANIFEST_PARSED, function(_, d){
     st.levels = (d && d.levels) || [];
     var saved = lsGet('quality');
@@ -11432,6 +11326,8 @@ function startHls(url){
     buildMenu(); applyQuality(); tryPlay();
   });
   hls.on(Hls.Events.LEVEL_LOADED, function(_, d){
+    if (st.drm) return;
+    if (detailsIsDrm(d && d.details)) return drmDetected();
     st.live = !!(d && d.details && d.details.live);
     buildMenuIfNeeded(); renderTime();
   });
@@ -11491,9 +11387,10 @@ function applyDashQuality(){
   updateMenuChecks();
 }
 function onDashError(e){
-  if (!e) return;
+  if (st.drm || !e) return;
   var err = e.error || {};
   var code = err.code, msg = String(err.message || err || '');
+  if (/protect|drm|key ?system|license|encrypt|widevine|playready|mediakeys/i.test(msg)) return drmDetected();
   if (code === 25 || (/manifest/i.test(msg) && /download|load|fetch/i.test(msg))) {
     if (pageProto() === 'https:' && /^http:/i.test(st.src)) return showError('mixed');
     return showError(st.started ? 'offline' : 'cors');
@@ -11523,8 +11420,9 @@ function applyQuality(){
 }
 
 function onHlsError(_, data){
-  if (!data) return;
+  if (st.drm || !data) return;
   var det = String(data.details || '');
+  if (/^keySystem/i.test(det)) return drmDetected();
   if (!data.fatal) {
     if (det === 'bufferStalledError') noteStall();
     return;
@@ -12067,9 +11965,12 @@ window.addEventListener('message', function(e){
   }
 });
 
-// Legacy external-player helper retained for compatibility with older data.
-// Normal stream playback stays in the browser player; playback failures use
-// the EV SPORTS fallback UI instead of exposing external-player actions.
+// Full-screen popup offered for any raw HLS/DASH stream link (channel rows
+// and match servers alike) instead of loading it in our own iframe player.
+// Auto-attempts to hand the stream straight to VLC via the vlc:// scheme on
+// both mobile and desktop; the popup itself stays open underneath with a
+// manual retry plus a platform-appropriate fallback (MX Player on mobile,
+// Copy Link on desktop) in case the OS has nothing registered for vlc://.
 function sxOpenVlcPopup(rawUrl, name){
   name = name || 'Live Stream';
   let ov = document.getElementById('sx-vlc-popup-overlay');
@@ -15319,7 +15220,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
         seen[it.lang] = (seen[it.lang] || 0) + 1;
         var label = it.lang === 'Default' ? 'Server ' + (si + 1)
           : (seen[it.lang] > 1 ? it.lang + ' ' + seen[it.lang] : it.lang);
-        return { url: it.url, text: label, icon: LOGO, sub: 'SonyLIV · tap to play', playName: title + ' · ' + label, appOnly: false };
+        return { url: it.url, text: label, icon: LOGO, sub: 'SonyLIV · tap to play', playName: title + ' · ' + label, appOnly: !!it.drm };
       });
       var poster = ''; g.items.forEach(function(it){ if (!poster && it.e.poster) poster = it.e.poster; });
       var gStatus = g.items.some(function(it){ return it.st === 'LIVE'; }) ? 'LIVE' : g.items.every(function(it){ return it.st === 'ENDED'; }) ? 'ENDED' : 'UPCOMING';
@@ -15416,15 +15317,20 @@ button, a.btn, [class*="btn-"], input, select, textarea{
        already shows it.
    Whatever's left gets its own "More Matches · <Category>" section.
 
-   Playability: the feed can contain HLS, DASH and DRM metadata. The site
-   does not proactively hide DRM streams; they are offered to the browser/player
-   and the normal playback error fallback is shown if the browser cannot play them.
-   Streams that explicitly require custom request headers may still need the app.
+   Playability: this feed mixes plain HLS (.m3u8) links with DASH (.mpd)
+   manifests, some ClearKey-DRM protected (kid/key pairs) and some that
+   need a spoofed Referer/User-Agent. The site's own player (EV
+   StreamPulse) has no DASH/EME engine and browsers can't force a custom
+   Referer on media requests from JS, so none of those would actually
+   play if offered — only direct, header-free .m3u8 streams are kept.
+   A fixture whose every stream is .mpd/DRM-only is skipped entirely
+   rather than shown with a dead "Watch Now" button.
    ══════════════════════════════════════════════════════════════════════ */
 (function(){
   'use strict';
   var API = 'https://raw.githubusercontent.com/sm-monirulislam/Upcoming-and-Live-Sports-Data/refs/heads/main/Sports_data.json';
-  var REFRESH_MS = 90000;
+  var REFRESH_MS = 90000; // MSX remains the primary match feed; refresh every 90s
+
   window._msxEntries = [];
   var lastSig = null;
 
@@ -15503,7 +15409,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
     });
   }
 
-  async function buildEntries(json){
+  function buildEntries(json){
     var list = (json && json.matches) || [];
     var out = [];
     list.forEach(function(e, idx){
@@ -15520,10 +15426,10 @@ button, a.btn, [class*="btn-"], input, select, textarea{
       (e.streams || []).forEach(function(s){
         if (!s) return;                                                          // DRM (kid/key/license) streams are kept — flagged app-only below
         var su = (window.LMX && LMX.scan(s)[0]) || (s.stream_url && isHls(s.stream_url) ? String(s.stream_url).trim() : '');
-        if (su) streams.push({ stream_url: su, channel_name: s.channel_name || s.name || s.title, appOnly: needsApp(s) || needsApp(e) });
+        if (su) streams.push({ stream_url: su, channel_name: s.channel_name || s.name || s.title, appOnly: needsApp(s) || needsApp(e) || !!(window.LMX && (LMX.hasDrm(s) || LMX.hasDrm(e, true))) });
       });
       if (!streams.length && !(e.streams && e.streams.length) && window.LMX)     // no streams[] at all — scan the whole entry
-        LMX.scan(e).forEach(function(u, k){ streams.push({ stream_url: u, channel_name: 'Server ' + (k + 1), appOnly: needsApp(e) }); });
+        LMX.scan(e).forEach(function(u, k){ streams.push({ stream_url: u, channel_name: 'Server ' + (k + 1), appOnly: needsApp(e) || !!(window.LMX && LMX.hasDrm(e, true)) }); });
       // (no streams yet -> still listed, card shows 'No stream yet')
       var seenNames = {};
       var servers = streams.map(function(s){
@@ -15545,31 +15451,15 @@ button, a.btn, [class*="btn-"], input, select, textarea{
         // Team A flag = Team A logo, Team B flag = Team B logo.
         // (Single-name events carry the same image on both sides — that is the event logo, not two teams.)
         team1_icon_url: sameTeamEvent ? '' : up(info.teamAFlag), team2_icon_url: sameTeamEvent ? '' : up(info.teamBFlag),
-        team1_country: sxTeamCountry(e, '1') || sxTeamCountry(info, '1') || '',
-        team2_country: sxTeamCountry(e, '2') || sxTeamCountry(info, '2') || '',
         servers: servers
       });
-      // Country from the API is authoritative over teamAFlag/teamBFlag.
-      sxApplyCountryTeamFlags(out[out.length - 1], e);
-      // If the API only supplied SofaScore team-image URLs such as
-      // https://img.sofascore.com/api/v1/team/4791/image, resolve the team
-      // country and replace those images with FlagCDN flags.
-      await sxApplySofaScoreFlagFallback(out[out.length - 1], info);
-      if (!out[out.length - 1].team1_country) out[out.length - 1].team1_country = sxTeamCountry(info, '1') || '';
-      if (!out[out.length - 1].team2_country) out[out.length - 1].team2_country = sxTeamCountry(info, '2') || '';
-      if (out[out.length - 1].team1_country || out[out.length - 1].team2_country) {
-        const f1 = sxCountryFlagUrl(out[out.length - 1].team1_country);
-        const f2 = sxCountryFlagUrl(out[out.length - 1].team2_country);
-        if (f1 && !sameTeamEvent) out[out.length - 1].team1_icon_url = f1;
-        if (f2 && !sameTeamEvent) out[out.length - 1].team2_icon_url = f2;
-      }
     });
     return out;
   }
 
-  function up(u){ return sxCmsUrl(u); }   // Preserve both HTTP and HTTPS API/image/stream URLs
-  // A browser page cannot reliably set arbitrary Referer / User-Agent / Origin / Cookie
-  // headers for media requests, so entries explicitly requiring them remain app-only.
+  function up(u){ return sxCmsUrl(u); }   // HTTPS pages upgrade HTTP API image/stream URLs; file:// keeps originals
+  // A browser cannot set Referer / User-Agent / Origin / Cookie on media requests, so a stream whose
+  // feed entry lists any of them is blocked in the browser -> app only. Plain http:// on an https page too.
   function needsApp(o){
     if (!o || typeof o !== 'object') return false;
     return ['referer','referrer','origin','user_agent','useragent','user-agent','cookie','headers','http_headers'].some(function(k){
@@ -15673,10 +15563,10 @@ button, a.btn, [class*="btn-"], input, select, textarea{
   };
 
   function load(){
-    fetch(API, { cache: 'no-cache', priority: 'high' })
-      .then(function(r){ return r.json(); })
-      .then(function(json){
-        var entries = await buildEntries(json);
+    // MSX was started at global startup and is always consumed first.
+    var first = window.__msxFirstPromise || fetch(API, { cache: 'no-cache', priority: 'high' }).then(function(r){ return r.json(); });
+    first.then(function(json){
+        var entries = buildEntries(json);
         var sig = JSON.stringify(entries.map(function(m){ return [m.key, m.title, m.status, m.servers.map(function(s){ return s.text+s.url; })]; }));
         window._msxEntries = entries;
         if (sig === lastSig) return;
@@ -15720,7 +15610,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
    3. Homescreen "LIVE NOW" block lists EVERY live match from every source
       (never capped, not "today only"), one card per fixture.
    4. Stream scanner: any m3u8 / mpd / dash / hls link found anywhere in an
-      API entry is picked up, including entries carrying DRM metadata.
+      API entry is picked up. DRM (kid/key/license) entries are skipped.
    ══════════════════════════════════════════════════════════════════════ */
 (function(){
   'use strict';
@@ -15785,6 +15675,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
     if (typeof o === 'string'){ var u = o.trim(); if (isStream(u) && out.indexOf(u) < 0) out.push(u); return out; }
     if (Array.isArray(o)){ o.forEach(function(x){ scan(x, out, depth + 1); }); return out; }
     if (typeof o === 'object'){
+      if (depth > 0 && hasDrm(o)) return out;
       Object.keys(o).forEach(function(k){ scan(o[k], out, depth + 1); });
     }
     if (depth === 0){   // HLS first, DASH after
