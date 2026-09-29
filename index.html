@@ -6289,42 +6289,71 @@ function sxNormalizeApiValue(value, key) {
   if (window.__sheetsCMSFirstPromise) return;
   try {
     if (!SHEET_ID || SHEET_ID === 'YOUR_SPREADSHEET_ID_HERE') return;
-    // Start ALL CMS tabs immediately, in parallel with MSX. MATCH CARDS is
-    // still treated as the first-paint critical tab, but no CMS tab waits for
-    // DOMContentLoaded/init() before its network request begins.
-    var tabs = ['SETTINGS','TICKER','NAVBAR','HERO SLIDES','MATCH CARDS','LIVE CHANNELS','CATEGORIES','BROADCAST','SCHEDULE','SOCIAL LINKS','FOOTER','WATCH POPUP'];
+
+    // MATCH CARDS is the primary CMS dataset. Start ONLY this request first.
+    // Nothing from MSX or another CMS sheet can block it.
+    var base = 'https://docs.google.com/spreadsheets/d/' + encodeURIComponent(SHEET_ID) + '/gviz/tq?tqx=out:csv&sheet=';
+    var matchUrl = base + encodeURIComponent('MATCH CARDS');
     window.__sheetsCMSFirstStartedAt = (performance && performance.now) ? performance.now() : Date.now();
+    window.__sheetsCMSFirstPromise = fetch(matchUrl, { cache:'no-cache', priority:'high' })
+      .then(function(r){
+        if(!r.ok) throw new Error('Sheets MATCH CARDS HTTP ' + r.status);
+        return r.text();
+      })
+      .then(function(raw){
+        var hit = {name:'MATCH CARDS', raw:raw};
+        window.__sheetsCMSFirstData = hit;
+        window.__sheetsCMSFirstLoadedAt = (performance && performance.now) ? performance.now() : Date.now();
+        return hit;
+      })
+      .catch(function(err){
+        window.__sheetsCMSFirstError = err;
+        console.warn('[CMS] MATCH CARDS startup fetch failed:', err);
+        return null;
+      });
+
+    // Start the remaining CMS sheets immediately AFTER MATCH CARDS has
+    // completed its first fetch/render. They never depend on MSX.
+    var tabs = ['SETTINGS','TICKER','NAVBAR','HERO SLIDES','LIVE CHANNELS','CATEGORIES','BROADCAST','SCHEDULE','SOCIAL LINKS','FOOTER','WATCH POPUP'];
     window.__sheetsCMSFirstPromises = Object.create(null);
-    tabs.forEach(function(name){
-      var url = 'https://docs.google.com/spreadsheets/d/' + encodeURIComponent(SHEET_ID) + '/gviz/tq?tqx=out:csv&sheet=' + encodeURIComponent(name);
-      window.__sheetsCMSFirstPromises[name] = fetch(url, { cache:'no-cache', priority:'high' })
-        .then(function(r){ if(!r.ok) throw new Error('Sheets HTTP ' + r.status); return r.text(); })
-        .then(function(raw){
-          var hit = {name:name, raw:raw};
-          window.__sheetsCMSFirstDataByName = window.__sheetsCMSFirstDataByName || Object.create(null);
-          window.__sheetsCMSFirstDataByName[name] = hit;
-          return hit;
-        })
-        .catch(function(err){
-          console.warn('[CMS] startup preload failed for '+name+':', err);
-          return null;
-        });
+    window.__sheetsCMSFirstPromises['MATCH CARDS'] = window.__sheetsCMSFirstPromise;
+    window.__sheetsCMSFirstPromise.then(function(){
+      tabs.forEach(function(name){
+        var url = base + encodeURIComponent(name);
+        window.__sheetsCMSFirstPromises[name] = fetch(url, { cache:'no-cache', priority:'high' })
+          .then(function(r){ if(!r.ok) throw new Error('Sheets HTTP ' + r.status); return r.text(); })
+          .then(function(raw){ return {name:name, raw:raw}; })
+          .catch(function(err){ console.warn('[CMS] startup preload failed for '+name+':', err); return null; });
+      });
     });
-    // Backward-compatible aggregate promise for existing MATCH CARDS code.
-    window.__sheetsCMSFirstPromise = window.__sheetsCMSFirstPromises['MATCH CARDS'];
-  } catch(e) {}
+  } catch(e) { console.warn('[CMS] startup preload setup failed:', e); }
 })();
 
-// Render critical CMS sheets independently as soon as each response arrives.
-// No CMS sheet waits for the slowest sheet, and MATCH CARDS remains first-paint critical.
-(function wireImmediateCmsRenders(){
+// MATCH CARDS renders from its own response immediately. This path has no
+// dependency on MSX, SETTINGS, LIVE CHANNELS, or any other CMS sheet.
+(function wireImmediateCmsMatchCards(){
+  if (!window.__sheetsCMSFirstPromise) return;
+  window.__sheetsCMSFirstPromise.then(function(hit){
+    if (!hit || typeof hit.raw !== 'string') return;
+    try {
+      var data = sxNormalizeCmsRows(toObj(parseCSV(hit.raw)));
+      window.__cmsMatchCardsStartupData = data;
+      console.log('[MATCH CARDS] CMS primary render:', data.length);
+      if (typeof renderMatchCards === 'function') renderMatchCards(data);
+    } catch(e) {
+      console.error('[MATCH CARDS] CMS parse/render failed:', e);
+    }
+  });
+})();
+
+// Render other CMS sheets independently when each response arrives.
+(function wireImmediateOtherCmsRenders(){
   if (!window.__sheetsCMSFirstPromises) return;
   var renderMap = {
     'SETTINGS': renderSettings,
     'TICKER': renderTicker,
     'NAVBAR': renderNav,
     'HERO SLIDES': renderSlides,
-    'MATCH CARDS': renderMatchCards,
     'LIVE CHANNELS': renderChannels,
     'CATEGORIES': renderCategories,
     'BROADCAST': renderBroadcast,
@@ -6333,16 +6362,15 @@ function sxNormalizeApiValue(value, key) {
     'FOOTER': renderFooter,
     'WATCH POPUP': renderWatchPopup
   };
-  Object.keys(renderMap).forEach(function(name){
-    window.__sheetsCMSFirstPromises[name].then(function(hit){
-      if (!hit || typeof hit.raw !== 'string') return;
-      try {
-        var data = sxNormalizeCmsRows(toObj(parseCSV(hit.raw)));
-        if (name === 'MATCH CARDS') console.log('[MATCH CARDS] fastest startup render:', data.length);
-        renderMap[name](data);
-      } catch(e) {
-        console.warn('[CMS] immediate render failed for '+name+':', e);
-      }
+  window.__sheetsCMSFirstPromise.then(function(){
+    Object.keys(renderMap).forEach(function(name){
+      var promise = window.__sheetsCMSFirstPromises[name];
+      if (!promise) return;
+      promise.then(function(hit){
+        if (!hit || typeof hit.raw !== 'string') return;
+        try { renderMap[name](sxNormalizeCmsRows(toObj(parseCSV(hit.raw)))); }
+        catch(e) { console.warn('[CMS] immediate render failed for '+name+':', e); }
+      });
     });
   });
 })();
