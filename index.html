@@ -3212,6 +3212,13 @@ body::before{ display:none !important; }
   };
 })();
 </script>
+
+<!-- API connection warm-up: establish TLS/DNS early so live feeds start faster -->
+<link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin>
+<link rel="preconnect" href="https://saptarshixtrasports.pages.dev" crossorigin>
+<link rel="preconnect" href="https://saptarshiorg.github.io" crossorigin>
+<link rel="preconnect" href="https://iptv-org.github.io" crossorigin>
+<link rel="preconnect" href="https://docs.google.com" crossorigin>
 </head>
 <body>
  
@@ -6137,6 +6144,114 @@ function toObj(rows) {
   });
 }
 
+// CMS URLs must follow the protocol of the page. A local file:// build may
+// still load an http:// source, but an https:// deployment is not allowed to
+// request http:// images, logos, banners or HLS manifests (mixed content).
+// Do NOT force https on file://, because that can break sources which only
+// exist on plain HTTP. On the live HTTPS site we upgrade CMS http:// URLs.
+function sxCmsUrl(u) {
+  const v = String(u || '').trim();
+  if (!v) return '';
+  return sxUpgradeHttpUrl(v);
+}
+
+// Normalize URL-bearing CMS columns as soon as Sheets data is received so
+// every renderer (cards, search, watch screen, logos and flags) gets the same
+// HTTPS-safe value. Non-URL fields such as country/group/name are untouched.
+function sxNormalizeCmsRows(rows) {
+  return (rows || []).map(row => {
+    const o = Object.assign({}, row);
+    Object.keys(o).forEach(k => {
+      const v = o[k];
+      if (!v) return;
+      if (/(^|_)(url|uri|src|image|icon|logo|banner|poster|thumb|thumbnail|stream|manifest|link|watch)(_|$)/i.test(k)) {
+        o[k] = sxCmsUrl(v);
+      }
+    });
+    return o;
+  });
+}
+
+// ── GLOBAL HTTPS URL SAFETY ───────────────────────────────────────────────
+// APIs are handled exactly like the Sheets CMS.  On an HTTPS deployment,
+// browsers reject HTTP API endpoints, images, logos and HLS manifests as
+// mixed content.  Local file:// builds keep the original URLs.
+function sxUpgradeHttpUrl(value) {
+  const v = String(value == null ? '' : value).trim();
+  if (!v) return value;
+  return (location.protocol === 'https:' && /^http:\/\//i.test(v))
+    ? v.replace(/^http:\/\//i, 'https://')
+    : value;
+}
+
+function sxNormalizeApiValue(value, key) {
+  if (typeof value === 'string') {
+    // Only change strings that are actually URL-like. This avoids modifying
+    // ordinary API text while still catching unknown image/stream fields.
+    if (/^https?:\/\//i.test(value) ||
+        /(url|uri|src|image|icon|logo|banner|poster|thumb|thumbnail|stream|manifest|link|watch|flag|cdn|source|server)/i.test(String(key || ''))) {
+      return sxUpgradeHttpUrl(value);
+    }
+    return value;
+  }
+  if (Array.isArray(value)) return value.map(v => sxNormalizeApiValue(v, key));
+  if (value && typeof value === 'object') {
+    const out = {};
+    Object.keys(value).forEach(k => { out[k] = sxNormalizeApiValue(value[k], k); });
+    return out;
+  }
+  return value;
+}
+
+// Patch fetch globally so ALL API requests are upgraded before the browser
+// makes them, not just CMS requests. JSON responses are recursively
+// normalized too, covering image/flag/HLS fields from any API.
+(function installGlobalHttpsFetchPatch(){
+  if (window.__sxHttpsFetchPatch) return;
+  window.__sxHttpsFetchPatch = true;
+  const nativeFetch = window.fetch.bind(window);
+  window.fetch = function(input, init){
+    try {
+      if (typeof input === 'string') input = sxUpgradeHttpUrl(input);
+      else if (input && input.url) {
+        const upgraded = sxUpgradeHttpUrl(input.url);
+        if (upgraded !== input.url) input = new Request(upgraded, input);
+      }
+    } catch(e) {}
+
+    // Prioritise API GETs so live match/channel data is scheduled before non-critical assets.
+    try {
+      const method = String((init && init.method) || (input && input.method) || 'GET').toUpperCase();
+      if (method === 'GET') {
+        init = Object.assign({ priority: 'high' }, init || {});
+      }
+    } catch(e) {}
+
+    return nativeFetch(input, init).then(function(response){
+      try {
+        const originalJson = response.json.bind(response);
+        response.json = function(){
+          return originalJson().then(function(data){
+            return sxNormalizeApiValue(data, 'api');
+          });
+        };
+      } catch(e) {}
+      return response;
+    });
+  };
+
+  // Catch API code that still uses XMLHttpRequest instead of fetch().
+  try {
+    const nativeOpen = XMLHttpRequest.prototype.open;
+    XMLHttpRequest.prototype.open = function(method, url){
+      const args = Array.prototype.slice.call(arguments);
+      if (typeof url === 'string') args[1] = sxUpgradeHttpUrl(url);
+      return nativeOpen.apply(this, args);
+    };
+  } catch(e) {}
+})();
+
+
 const CMS_CACHE_TTL_MS = 60000; // reuse a sheet's data for 60s within the same tab session
 
 async function fetchSheet(name) {
@@ -6150,7 +6265,7 @@ async function fetchSheet(name) {
     const cached = sessionStorage.getItem(cacheKey);
     if (cached) {
       const { t, data } = JSON.parse(cached);
-      if (Date.now() - t < CMS_CACHE_TTL_MS) return data;
+      if (Date.now() - t < CMS_CACHE_TTL_MS) return sxNormalizeCmsRows(data);
     }
   } catch (e) { /* ignore cache read errors, fall through to fetch */ }
 
@@ -6160,7 +6275,7 @@ async function fetchSheet(name) {
     if (!r.ok) throw new Error(r.status);
     const text = await r.text();
     const rows = parseCSV(text);
-    const data = toObj(rows);
+    const data = sxNormalizeCmsRows(toObj(rows));
     try {
       sessionStorage.setItem(cacheKey, JSON.stringify({ t: Date.now(), data }));
     } catch (e) { /* storage full/unavailable — non-fatal, skip caching */ }
@@ -8497,14 +8612,23 @@ const COUNTRY_TO_ISO2 = {
   'international':'', 'global':'', 'world':''
 };
 function countryFlagHTML(rawCountry){
-  const raw = (rawCountry || '').trim();
+  const raw = String(rawCountry || '').trim();
   if (!raw) return '';
-  let iso = raw.toLowerCase();
-  if (COUNTRY_TO_ISO2.hasOwnProperty(iso)) iso = COUNTRY_TO_ISO2[iso];
-  else if (/^[a-z]{2}$/.test(iso)) { /* already a bare ISO-2 code from the sheet */ }
-  else iso = '';
+  // Sheets sometimes supplies values such as `IN`, `in`, `India `, or
+  // `India (IN)`. Normalize those variants before looking up the flag.
+  let clean = raw.replace(/^['"\s]+|['"\s]+$/g,'').trim().toLowerCase();
+  let iso = clean;
+  if (COUNTRY_TO_ISO2.hasOwnProperty(clean)) iso = COUNTRY_TO_ISO2[clean];
+  else if (/^[a-z]{2}$/.test(clean)) { /* already ISO-2 */ }
+  else {
+    const m = clean.match(/\(([a-z]{2})\)$/i);
+    if (m) iso = m[1].toLowerCase();
+    else iso = '';
+  }
   if (!iso) return '';
-  return `<img class="epg-flag" src="https://flagcdn.com/w40/${iso}.png" alt="${raw}" title="${raw}" loading="lazy">`;
+  const src = `https://flagcdn.com/w40/${encodeURIComponent(iso)}.png`;
+  const safeAlt = raw.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return `<img class="epg-flag" src="${src}" alt="${safeAlt}" title="${safeAlt}" loading="lazy" onerror="this.style.display='none'">`;
 }
 
 // ── CMS-DRIVEN CHANNELS BROWSER (reads LIVE CHANNELS sheet) — EPG list UI ──
@@ -10711,7 +10835,7 @@ function closeAdminChatDiscordPopup(){
 /* SX SPORTS 4K PLAYER
    Standalone:  SXSPORTS4K.html?src=<url-encoded .m3u8>&title=<name>
    Embedded:    the site injects window.SX4K_BOOT = { url, title, embed:true }
-   Plays clear (non-DRM) HLS only. DRM-protected streams are detected and refused. */
+   Attempts HLS/DASH playback without proactively refusing DRM streams. */
 :root{
   --accent:#F0146E; --accent-2:#FF8FBB; --accent-dim:rgba(240,20,110,.20);
   --glass:rgba(22,22,26,.58); --glass-strong:rgba(16,16,20,.88);
@@ -11056,43 +11180,13 @@ function showError(kind){
 }
 function hideError(){ st.errShown = false; $('err').classList.remove('show'); setClass('err', false); }
 
-/* ── DRM detection ──
-   Refuses anything that needs a licence/CDM (Widevine, PlayReady, FairPlay,
-   SAMPLE-AES). Plain AES-128 HLS (key URL in the playlist) is ordinary clear
-   HLS and is allowed. */
-function keyIsDrm(k){
-  if (!k) return false;
-  var m = String(k.method || '').toUpperCase();
-  if (m === 'NONE' || m === '') return false;
-  var f = String(k.keyFormat || 'identity').toLowerCase();
-  if (f !== 'identity') return true;
-  return m.indexOf('SAMPLE-AES') === 0;
-}
-function detailsIsDrm(det){
-  if (!det) return false;
-  try {
-    var frags = det.fragments || [];
-    for (var i = 0; i < frags.length; i++) {
-      var f = frags[i];
-      if (f.decryptdata && keyIsDrm(f.decryptdata)) return true;
-      var lk = f.levelkeys;
-      if (lk) for (var k in lk) { if (keyIsDrm(lk[k])) return true; }
-    }
-  } catch(e){}
-  return false;
-}
-function manifestIsDrm(d){
-  try {
-    var sk = d && d.sessionKeys;
-    if (sk) for (var i = 0; i < sk.length; i++) { if (keyIsDrm(sk[i])) return true; }
-  } catch(e){}
-  return false;
-}
+/* ── DRM compatibility ──
+   Do not proactively block encrypted/DRM media.
+   The browser/player is allowed to attempt playback. Legitimate DRM
+   content still requires the stream provider's license/CDM configuration;
+   this code does not bypass or decrypt DRM. */
 function drmDetected(){
-  if (st.drm) return;
-  st.drm = true;
-  teardown(true);
-  showError('drm');
+  st.drm = false;
 }
 
 /* ── teardown / load ── */
@@ -11168,7 +11262,6 @@ function startHls(url){
   });
   st.hls = hls;
 
-  hls.on(Hls.Events.MANIFEST_LOADED, function(_, d){ if (manifestIsDrm(d)) drmDetected(); });
   hls.on(Hls.Events.MANIFEST_PARSED, function(_, d){
     st.levels = (d && d.levels) || [];
     var saved = lsGet('quality');
@@ -11176,8 +11269,6 @@ function startHls(url){
     buildMenu(); applyQuality(); tryPlay();
   });
   hls.on(Hls.Events.LEVEL_LOADED, function(_, d){
-    if (st.drm) return;
-    if (detailsIsDrm(d && d.details)) return drmDetected();
     st.live = !!(d && d.details && d.details.live);
     buildMenuIfNeeded(); renderTime();
   });
@@ -11237,10 +11328,9 @@ function applyDashQuality(){
   updateMenuChecks();
 }
 function onDashError(e){
-  if (st.drm || !e) return;
+  if (!e) return;
   var err = e.error || {};
   var code = err.code, msg = String(err.message || err || '');
-  if (/protect|drm|key ?system|license|encrypt|widevine|playready|mediakeys/i.test(msg)) return drmDetected();
   if (code === 25 || (/manifest/i.test(msg) && /download|load|fetch/i.test(msg))) {
     if (pageProto() === 'https:' && /^http:/i.test(st.src)) return showError('mixed');
     return showError(st.started ? 'offline' : 'cors');
@@ -11270,9 +11360,8 @@ function applyQuality(){
 }
 
 function onHlsError(_, data){
-  if (st.drm || !data) return;
+  if (!data) return;
   var det = String(data.details || '');
-  if (/^keySystem/i.test(det)) return drmDetected();
   if (!data.fatal) {
     if (det === 'bufferStalledError') noteStall();
     return;
@@ -11960,6 +12049,7 @@ const SP_LOADING_LABELS = {
   match:   'Loading Live Match'
 };
 function openStreamPlayer(url, name, type){
+  url = sxCmsUrl(url);
   if (!url || url === '#') return;
   // Match cards, hero slides, and Live TV all funnel every stream link
   // through here — so this is the single choke point to catch any
@@ -15130,7 +15220,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
   };
 
   function load(){
-    fetch(API + '?t=' + Date.now(), { cache: 'no-store' })
+    fetch(API, { cache: 'no-cache', priority: 'high' })
       .then(function(r){ return r.json(); })
       .then(function(json){
         var groups = buildGroups(json);
@@ -15305,7 +15395,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
     return out;
   }
 
-  function up(u){ u = String(u || '').trim(); return u.replace(/^http:\/\//i, 'https://'); }   // no mixed-content blocked logos
+  function up(u){ return sxCmsUrl(u); }   // HTTPS pages upgrade HTTP API image/stream URLs; file:// keeps originals
   // A browser cannot set Referer / User-Agent / Origin / Cookie on media requests, so a stream whose
   // feed entry lists any of them is blocked in the browser -> app only. Plain http:// on an https page too.
   function needsApp(o){
@@ -15411,7 +15501,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
   };
 
   function load(){
-    fetch(API + '?t=' + Date.now(), { cache: 'no-store' })
+    fetch(API, { cache: 'no-cache', priority: 'high' })
       .then(function(r){ return r.json(); })
       .then(function(json){
         var entries = buildEntries(json);
