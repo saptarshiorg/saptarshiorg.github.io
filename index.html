@@ -23,6 +23,16 @@
 <meta name="referrer" content="no-referrer-when-downgrade">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<script>
+/* Mixed content: when this page is served over https, ask the browser to upgrade every
+   http:// sub-request (images, iframes, player XHR/fetch, HLS/DASH segments) to https://
+   instead of blocking it. On an http:// page nothing is changed, so http and https
+   both keep working. */
+(function(){ try { if (location.protocol === 'https:') {
+  var m = document.createElement('meta'); m.httpEquiv = 'Content-Security-Policy'; m.content = 'upgrade-insecure-requests';
+  document.head.appendChild(m);
+} } catch(e){} })();
+</script>
 <title id="page-title">EV SPORTS (Powered by Saptarshi SX Sports)</title>
 <link id="favicon" rel="icon" type="image/png" href="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/magenta.png">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Rajdhani:wght@400;500;600;700&family=Chakra+Petch:wght@400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -10974,7 +10984,7 @@ if (EMBED) document.body.classList.add('embed');
 
 var stage = $('stage'), video = $('v');
 var st = {
-  src:'', title:'', hls:null, live:false, levels:[], mode:'best', started:false, drm:false,
+  src:'', orig:'', cands:[], isDash:false, title:'', hls:null, live:false, levels:[], mode:'best', started:false, drm:false,
   retries:0, mediaRetries:0, lastRecoverT:0, stalls:[], loadTimer:0, idleT:0, toastT:0,
   menuOpen:false, dmcaOpen:false, errShown:false, dragging:false, lastPointer:'mouse'
 };
@@ -11004,6 +11014,45 @@ function fmt(s){
   return (h ? h + ':' + (m < 10 ? '0' : '') : '') + m + ':' + (x < 10 ? '0' : '') + x;
 }
 function pageProto(){ try { return new URL(document.baseURI).protocol; } catch(e){ return location.protocol; } }
+
+/* ── WebView detection ──  (Android WebView, iOS WKWebView, common in-app browsers)
+   Override with ?webview=1 / ?webview=0 or SX4K_BOOT.webview. */
+function isWebView(){
+  try {
+    var q = new URLSearchParams(location.search).get('webview');
+    if (q === '1') return true;
+    if (q === '0') return false;
+    if (boot && typeof boot.webview === 'boolean') return boot.webview;
+  } catch(e){}
+  var ua = navigator.userAgent || '';
+  if (/; wv\)/i.test(ua)) return true;                                                     // Android WebView
+  if (/Android/i.test(ua) && /Version\/[\d.]+/i.test(ua) && /Chrome\/[\d.]+/i.test(ua)) return true;   // older Android WebView
+  if (/(iPhone|iPod|iPad)/i.test(ua) && !/Safari\//i.test(ua) && !navigator.standalone) return true;  // iOS WKWebView
+  if (/\b(FBAN|FBAV|FB_IAB|Instagram|Line\/|MicroMessenger|Snapchat|GSA\/)/i.test(ua)) return true;   // in-app browsers
+  try { if (window.ReactNativeWebView || window.flutter_inappwebview || window.AndroidBridge) return true; } catch(e){}
+  return false;
+}
+
+/* ── Mixed-content helpers ──
+   The browser hard-blocks http:// requests made from an https:// page, so instead of
+   letting that fail we (1) upgrade the manifest URL and every request made by
+   hls.js / dash.js to https://, and (2) optionally fall back to an https proxy.
+   Set PROXY_URL to something like 'https://your-worker.workers.dev/?url=' to also
+   cover http-only servers and servers without CORS (leave '' to disable). */
+var PROXY_URL = '';
+function httpsUp(u){ return String(u || '').replace(/^http:\/\//i, 'https://'); }
+function upReq(u){ return (pageProto() === 'https:' && /^http:\/\//i.test(u)) ? httpsUp(u) : u; }
+function buildCands(u){
+  var out = [];
+  if (pageProto() === 'https:' && /^http:\/\//i.test(u)) {
+    out.push(httpsUp(u));
+    if (PROXY_URL) out.push(PROXY_URL + encodeURIComponent(u));
+  } else {
+    out.push(u);
+    if (PROXY_URL) out.push(PROXY_URL + encodeURIComponent(u));
+  }
+  return out;
+}
 function toParent(msg){ try { if (window.parent && window.parent !== window) { window.parent.postMessage(msg, '*'); return true; } } catch(e){} return false; }
 function toast(text, ms){
   var t = $('toast'); t.textContent = text; t.classList.add('show');
@@ -11040,7 +11089,12 @@ var ACT = {
   copy:'<button class="btn" type="button" data-a="copy">Copy link</button>'
 };
 function showError(kind){
-  var e = ERR[kind] || ERR.media;
+  // Not started yet and another candidate URL is left (https upgrade -> proxy): try it silently.
+  if (!st.started && st.cands && st.cands.length && kind !== 'drm' && kind !== 'invalid' && kind !== 'lib') return startNext();
+  var webview = isWebView();
+  // Inside a WebView every stream failure is shown as plain "Stream unavailable" (Try again only);
+  // in a normal browser the specific message is kept.
+  var e = ERR[webview ? 'offline' : kind] || ERR.media;
   st.errShown = true; st.started = false;
   clearTimeout(st.loadTimer);
   try { if (st.hls) st.hls.stopLoad(); } catch(x){}
@@ -11052,7 +11106,7 @@ function showError(kind){
   $('err').classList.add('show');
   $('loader').classList.add('hide');
   setClass('err', true); setClass('loading', false); setClass('buffering', false); setClass('idle', false);
-  toParent({ type:'sx4k:state', state:'error', kind:kind });
+  toParent({ type:'sx4k:state', state:'error', kind:kind, webview:webview });
 }
 function hideError(){ st.errShown = false; $('err').classList.remove('show'); setClass('err', false); }
 
@@ -11121,7 +11175,10 @@ function ensureHls(cb){
 function load(url, title){
   teardown();
   hideError();
-  st.src = String(url || '').trim();
+  st.orig = String(url || '').trim();
+  st.isDash = isDashUrl(st.orig);
+  st.cands = buildCands(st.orig);
+  st.src = st.cands.shift() || st.orig;
   st.title = title || '';
   clearWait();
   st.started = false; st.drm = false; st.retries = 0; st.mediaRetries = 0; st.lastRecoverT = 0; st.stalls = [];
@@ -11137,7 +11194,11 @@ function load(url, title){
 
   st.loadTimer = setTimeout(function(){ if (!st.started && !st.errShown) { teardown(true); showError('timeout'); } }, LOAD_TIMEOUT_MS);
 
-  if (isDashUrl(st.src)) {
+  launch();
+}
+
+function launch(){
+  if (st.isDash) {
     return ensureDash(function(ok){
       if (ok && window.dashjs) return startDash(st.src);
       showError('lib');
@@ -11148,6 +11209,17 @@ function load(url, title){
     if (video.canPlayType('application/vnd.apple.mpegurl')) return startNative(st.src);
     showError(ok ? 'unsupported' : 'lib');
   });
+}
+
+/* Next fallback URL (https upgrade, then proxy) after a failed first attempt. */
+function startNext(){
+  var next = st.cands.shift();
+  if (!next) return;
+  teardown(true);
+  st.src = next; st.retries = 0; st.mediaRetries = 0; st.errShown = false;
+  $('loader-lbl').textContent = 'Connecting to stream';
+  st.loadTimer = setTimeout(function(){ if (!st.started && !st.errShown) { teardown(true); showError('timeout'); } }, LOAD_TIMEOUT_MS);
+  launch();
 }
 
 function startNative(url){
@@ -11164,7 +11236,9 @@ function startHls(url){
     enableWorker:true, lowLatencyMode:false,
     maxBufferLength:120, maxMaxBufferLength:300, backBufferLength:90,
     liveSyncDurationCount:3, liveMaxLatencyDurationCount:10,
-    capLevelToPlayerSize:false
+    capLevelToPlayerSize:false,
+    xhrSetup: function(xhr, u){ var n = upReq(u); if (n !== u) { try { xhr.open('GET', n, true); } catch(e){} } },
+    fetchSetup: function(ctx, init){ return new Request(upReq(ctx.url), init); }
   });
   st.hls = hls;
 
@@ -11206,10 +11280,24 @@ function ensureDash(cb){
 function startDash(url){
   var p = dashjs.MediaPlayer().create();
   st.dash = p;
+  // Upgrade every http:// request (manifest, init + media segments, absolute BaseURLs) on an https page.
+  try {
+    p.extend('RequestModifier', function(){
+      return { modifyRequestURL: function(u){ return upReq(u); }, modifyRequestHeader: function(x){ return x; } };
+    }, true);
+  } catch(e){}
   try {
     p.updateSettings({ streaming: {
       buffer: { bufferTimeAtTopQuality: 30, bufferTimeAtTopQualityLongForm: 60 },
       abr: { autoSwitchBitrate: { video: true, audio: true } }
+    }});
+  } catch(e){}
+  try {   // more forgiving retries for flaky live MPDs
+    p.updateSettings({ streaming: {
+      retryAttempts:  { MPD: 3, MediaSegment: 4, InitializationSegment: 4, BitstreamSwitchingSegment: 4, IndexSegment: 4, XLinkExpansion: 1, other: 2 },
+      retryIntervals: { MPD: 1000, MediaSegment: 1000, InitializationSegment: 1000, BitstreamSwitchingSegment: 1000, IndexSegment: 1000, XLinkExpansion: 500, other: 1000 },
+      gaps: { jumpGaps: true, jumpLargeGaps: true, smallGapLimit: 1.5 },
+      text: { defaultEnabled: false }
     }});
   } catch(e){}
   var E = dashjs.MediaPlayer.events;
@@ -11241,10 +11329,11 @@ function onDashError(e){
   var err = e.error || {};
   var code = err.code, msg = String(err.message || err || '');
   if (/protect|drm|key ?system|license|encrypt|widevine|playready|mediakeys/i.test(msg)) return drmDetected();
-  if (code === 25 || (/manifest/i.test(msg) && /download|load|fetch/i.test(msg))) {
-    if (pageProto() === 'https:' && /^http:/i.test(st.src)) return showError('mixed');
+  if (code === 25 || code === 11 || (/manifest/i.test(msg) && /download|load|fetch/i.test(msg))) {
+    if (pageProto() === 'https:' && /^http:/i.test(st.orig)) return showError('mixed');
     return showError(st.started ? 'offline' : 'cors');
   }
+  if (code === 10 || code === 32) return showError('media');   // manifest unparsable / no playable streams
   if (code === 30 || code === 31) return showError('offline');
   if (code === 27 || code === 28) {            // segment download — dash.js already retries these itself
     if (st.started) { toast('Reconnecting...'); return; }
@@ -11284,7 +11373,7 @@ function onHlsError(_, data){
     var code = data.response && data.response.code;
     if (!st.started) {
       if (!code) {
-        if (pageProto() === 'https:' && /^http:/i.test(st.src)) return showError('mixed');
+        if (pageProto() === 'https:' && /^http:/i.test(st.orig)) return showError('mixed');
         return showError('cors');
       }
       if (code === 401 || code === 403) return showError('forbidden');
@@ -11530,17 +11619,17 @@ $('menu').addEventListener('click', function(e){
 
 /* ── error actions (VLC / copy / retry) ── */
 function openVlc(){
-  if (EMBED && toParent({ type:'sx4k:vlc', url:st.src, title:st.title })) return;
+  if (EMBED && toParent({ type:'sx4k:vlc', url:st.orig || st.src, title:st.title })) return;
   toast('Opening VLC...');
-  location.href = 'vlc://' + st.src;
+  location.href = 'vlc://' + (st.orig || st.src);
 }
 function copyLink(){
-  if (EMBED && toParent({ type:'sx4k:copy', url:st.src })) return;
+  if (EMBED && toParent({ type:'sx4k:copy', url:st.orig || st.src })) return;
   var done = function(){ toast('Stream link copied'); };
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(st.src).then(done).catch(function(){ toast('Could not copy the link'); });
+    navigator.clipboard.writeText(st.orig || st.src).then(done).catch(function(){ toast('Could not copy the link'); });
   } else {
-    var ta = document.createElement('textarea'); ta.value = st.src; ta.style.cssText = 'position:fixed;opacity:0';
+    var ta = document.createElement('textarea'); ta.value = (st.orig || st.src); ta.style.cssText = 'position:fixed;opacity:0';
     document.body.appendChild(ta); ta.select();
     try { document.execCommand('copy'); done(); } catch(e){ toast('Could not copy the link'); }
     document.body.removeChild(ta);
@@ -11549,7 +11638,7 @@ function copyLink(){
 $('err-a').addEventListener('click', function(e){
   var b = e.target.closest('[data-a]'); if (!b) return;
   var a = b.getAttribute('data-a');
-  if (a === 'retry') load(st.src, st.title);
+  if (a === 'retry') load(st.orig || st.src, st.title);
   else if (a === 'vlc') openVlc();
   else if (a === 'copy') copyLink();
 });
@@ -11746,6 +11835,21 @@ function sxIsDashUrl(u){
 function sxIsStreamUrl(u){ return sxIsHlsUrl(u) || sxIsDashUrl(u); }
 window.sxIsHlsUrl = sxIsHlsUrl; window.sxIsDashUrl = sxIsDashUrl; window.sxIsStreamUrl = sxIsStreamUrl;
 
+// WebView detection (Android WebView / iOS WKWebView / in-app browsers) — passed into the
+// player so stream errors read "Stream unavailable" there, but stay specific in a browser.
+function sxIsWebView(){
+  var ua = navigator.userAgent || '';
+  if (/; wv\)/i.test(ua)) return true;
+  if (/Android/i.test(ua) && /Version\/[\d.]+/i.test(ua) && /Chrome\/[\d.]+/i.test(ua)) return true;
+  if (/(iPhone|iPod|iPad)/i.test(ua) && !/Safari\//i.test(ua) && !navigator.standalone) return true;
+  if (/\b(FBAN|FBAV|FB_IAB|Instagram|Line\/|MicroMessenger|Snapchat|GSA\/)/i.test(ua)) return true;
+  try { if (window.ReactNativeWebView || window.flutter_inappwebview || window.AndroidBridge) return true; } catch(e){}
+  return false;
+}
+window.sxIsWebView = sxIsWebView;
+// http:// -> https:// when this page is https (avoids mixed-content blocking in Multiview slots).
+function sxUpHttps(u){ u = String(u || ''); return (location.protocol === 'https:' && /^http:\/\//i.test(u)) ? u.replace(/^http:\/\//i, 'https://') : u; }
+
 // Broader "is this a direct, playable stream link rather than a page/embed"
 // check — DASH (.mpd) and plain .m3u playlists count too, not just .m3u8.
 // Used to flag channel rows / match servers as "external player" cards
@@ -11797,7 +11901,7 @@ function sx4kDoc(url, title){
     var el = document.getElementById('sx4k-player-src');
     _sx4kTpl = el ? el.textContent.replace(/<\\\/script/gi, '</script') : '';
   }
-  var boot = 'window.SX4K_BOOT=' + JSON.stringify({ url: url, title: title || '', embed: true }).replace(/</g, '\\u003c') + ';';
+  var boot = 'window.SX4K_BOOT=' + JSON.stringify({ url: url, title: title || '', embed: true, webview: sxIsWebView() }).replace(/</g, '\\u003c') + ';';
   return _sx4kTpl.replace('/*__SX4K_BOOT__*/', function(){ return boot; });
 }
 window.addEventListener('message', function(e){
@@ -12330,7 +12434,7 @@ function mvSlotHtml(i){
 // India-source switch above (spIndiaPlayerDoc) — injected via srcdoc so
 // each slot plays its own independent .m3u8 without touching the others.
 function mvHlsDoc(m3u8, muted){
-  const u = JSON.stringify(String(m3u8));
+  const u = JSON.stringify(sxUpHttps(m3u8));
   const m = muted ? 'true' : 'false';
   if (typeof sxIsDashUrl === 'function' && sxIsDashUrl(m3u8)) {
     return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
@@ -12338,7 +12442,7 @@ function mvHlsDoc(m3u8, muted){
       + '<video id="v" autoplay playsinline' + (muted ? ' muted' : '') + '></video>'
       + '<script src="https://cdnjs.cloudflare.com/ajax/libs/dashjs/4.7.4/dash.all.min.js"><\/script>'
       + '<script>(function(){var u=' + u + ',v=document.getElementById("v");v.muted=' + m + ';'
-      + 'try{var p=dashjs.MediaPlayer().create();p.initialize(v,u,true);}catch(e){}'
+      + 'try{var p=dashjs.MediaPlayer().create();try{p.extend("RequestModifier",function(){return{modifyRequestURL:function(x){return location.protocol==="https:"?String(x).replace(/^http:\\/\\//i,"https://"):x;},modifyRequestHeader:function(x){return x;}};},true);}catch(e){}p.initialize(v,u,true);}catch(e){}'
       + '})();<\/script></body></html>';
   }
   return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
@@ -14936,6 +15040,78 @@ button, a.btn, [class*="btn-"], input, select, textarea{
 .btn-slide-watch:hover{ background:var(--pm-magenta-hover,#C21764) !important; }
 </style>
 
+<script id="sx-flagcdn-helper">
+/* ══════════════════════════════════════════════════════════════════════
+   SX FLAG HELPER — team flags come ONLY from flagcdn.com, resolved from the
+   country NAME or its ISO-3166 alpha-2 / alpha-3 code. The feed's own
+   teamAFlag / teamBFlag images are no longer used.
+   window.sxFlagUrl("India" | "IN" | "IND" | "Zimbabwe Women" ...) -> URL or ''
+   ══════════════════════════════════════════════════════════════════════ */
+(function(){
+  'use strict';
+  // "iso2 iso3 Name;Alias;Alias"
+  var RAW = [
+'af AFG Afghanistan','al ALB Albania','dz DZA Algeria','as ASM American Samoa','ad AND Andorra','ao AGO Angola','ai AIA Anguilla',
+'ag ATG Antigua and Barbuda;Antigua','ar ARG Argentina','am ARM Armenia','aw ABW Aruba','au AUS Australia','at AUT Austria',
+'az AZE Azerbaijan','bs BHS Bahamas;The Bahamas','bh BHR Bahrain','bd BGD Bangladesh','bb BRB Barbados','by BLR Belarus',
+'be BEL Belgium','bz BLZ Belize','bj BEN Benin','bm BMU Bermuda','bt BTN Bhutan','bo BOL Bolivia','ba BIH Bosnia and Herzegovina;Bosnia',
+'bw BWA Botswana','br BRA Brazil','vg VGB British Virgin Islands','bn BRN Brunei;Brunei Darussalam','bg BGR Bulgaria',
+'bf BFA Burkina Faso','bi BDI Burundi','kh KHM Cambodia','cm CMR Cameroon','ca CAN Canada','cv CPV Cabo Verde;Cape Verde',
+'ky CYM Cayman Islands','cf CAF Central African Republic','td TCD Chad','cl CHL Chile','cn CHN China;China PR;PR China','co COL Colombia',
+'km COM Comoros','cg COG Congo Republic;Republic of the Congo;Congo;Congo Brazzaville','cd COD DR Congo;Congo DR;Democratic Republic of the Congo',
+'ck COK Cook Islands','cr CRI Costa Rica','ci CIV Cote d Ivoire;Ivory Coast','hr HRV Croatia','cu CUB Cuba','cw CUW Curacao',
+'cy CYP Cyprus','cz CZE Czechia;Czech Republic','dk DNK Denmark','dj DJI Djibouti','dm DMA Dominica','do DOM Dominican Republic',
+'ec ECU Ecuador','eg EGY Egypt','sv SLV El Salvador','gq GNQ Equatorial Guinea','er ERI Eritrea','ee EST Estonia','sz SWZ Eswatini;Swaziland',
+'et ETH Ethiopia','fo FRO Faroe Islands;Faroes','fj FJI Fiji','fi FIN Finland','fr FRA France','gf GUF French Guiana','pf PYF Tahiti;French Polynesia',
+'ga GAB Gabon','gm GMB Gambia;The Gambia','ge GEO Georgia','de DEU Germany;GER','gh GHA Ghana','gi GIB Gibraltar','gr GRC Greece;GRE',
+'gd GRD Grenada','gp GLP Guadeloupe','gu GUM Guam','gt GTM Guatemala','gn GIN Guinea','gw GNB Guinea-Bissau;Guinea Bissau','gy GUY Guyana',
+'ht HTI Haiti','hn HND Honduras','hk HKG Hong Kong','hu HUN Hungary','is ISL Iceland','in IND India','id IDN Indonesia',
+'ir IRN Iran;IR Iran','iq IRQ Iraq','ie IRL Ireland;Republic of Ireland','il ISR Israel','it ITA Italy','jm JAM Jamaica','jp JPN Japan',
+'jo JOR Jordan','kz KAZ Kazakhstan','ke KEN Kenya','xk XKX Kosovo','kw KWT Kuwait','kg KGZ Kyrgyzstan;Kyrgyz Republic','la LAO Laos',
+'lv LVA Latvia','lb LBN Lebanon','ls LSO Lesotho','lr LBR Liberia','ly LBY Libya','li LIE Liechtenstein','lt LTU Lithuania',
+'lu LUX Luxembourg','mo MAC Macau;Macao','mg MDG Madagascar','mw MWI Malawi','my MYS Malaysia','mv MDV Maldives','ml MLI Mali',
+'mt MLT Malta','mq MTQ Martinique','mr MRT Mauritania','mu MUS Mauritius','mx MEX Mexico','md MDA Moldova','mc MCO Monaco','mn MNG Mongolia',
+'me MNE Montenegro','ms MSR Montserrat','ma MAR Morocco','mz MOZ Mozambique','mm MMR Myanmar;Burma','na NAM Namibia','np NPL Nepal',
+'nl NLD Netherlands;Holland;NED','nc NCL New Caledonia','nz NZL New Zealand','ni NIC Nicaragua','ne NER Niger','ng NGA Nigeria',
+'kp PRK North Korea;Korea DPR;DPR Korea','mk MKD North Macedonia;Macedonia','no NOR Norway','om OMN Oman','pk PAK Pakistan','ps PSE Palestine',
+'pa PAN Panama','pg PNG Papua New Guinea','py PRY Paraguay','pe PER Peru','ph PHL Philippines','pl POL Poland','pt PRT Portugal',
+'pr PRI Puerto Rico','qa QAT Qatar','ro ROU Romania','ru RUS Russia','rw RWA Rwanda','kn KNA Saint Kitts and Nevis;St Kitts and Nevis',
+'lc LCA Saint Lucia;St Lucia','vc VCT Saint Vincent and the Grenadines;St Vincent and the Grenadines','ws WSM Samoa','sm SMR San Marino',
+'st STP Sao Tome and Principe','sa SAU Saudi Arabia','sn SEN Senegal','rs SRB Serbia','sc SYC Seychelles','sl SLE Sierra Leone',
+'sg SGP Singapore','sx SXM Sint Maarten','sk SVK Slovakia','si SVN Slovenia','sb SLB Solomon Islands','so SOM Somalia','za ZAF South Africa;RSA',
+'kr KOR South Korea;Korea Republic;Korea;Republic of Korea','ss SSD South Sudan','es ESP Spain','lk LKA Sri Lanka','sd SDN Sudan',
+'sr SUR Suriname','se SWE Sweden','ch CHE Switzerland;SUI','sy SYR Syria','tw TWN Chinese Taipei;Taiwan','tj TJK Tajikistan','tz TZA Tanzania',
+'th THA Thailand','tl TLS East Timor;Timor-Leste;Timor Leste','tg TGO Togo','to TON Tonga','tt TTO Trinidad and Tobago','tn TUN Tunisia',
+'tr TUR Turkey;Turkiye','tm TKM Turkmenistan','tc TCA Turks and Caicos Islands;Turks and Caicos','ug UGA Uganda','ua UKR Ukraine',
+'ae ARE United Arab Emirates;UAE','gb GBR United Kingdom;UK;Great Britain','us USA USA;United States;United States of America;America',
+'vi VIR US Virgin Islands;U S Virgin Islands;United States Virgin Islands','uy URY Uruguay','uz UZB Uzbekistan','vu VUT Vanuatu',
+'ve VEN Venezuela','vn VNM Vietnam;Viet Nam','ye YEM Yemen','zm ZMB Zambia','zw ZWE Zimbabwe',
+'gb-eng ENG England','gb-sct SCO Scotland','gb-wls WAL Wales','gb-nir NIR Northern Ireland'
+  ];
+  var MAP = {};
+  function key(s){
+    return String(s == null ? '' : s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+      .replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+  RAW.forEach(function(row){
+    var m = /^(\S+)\s+(\S+)\s+(.+)$/.exec(row); if (!m) return;
+    var iso2 = m[1];
+    MAP[key(iso2)] = iso2;               // ISO alpha-2   (e.g. "in", "gb-eng")
+    MAP[key(m[2])] = iso2;               // ISO alpha-3   (e.g. "ind")
+    m[3].split(';').forEach(function(n){ MAP[key(n)] = iso2; });   // names + aliases
+  });
+  // "Zimbabwe Women", "India U19", "Brazil Under 20", "Japan (W)" -> base country
+  var SUFFIX = /\s+(women|womens|woman|ladies|w|men|mens|u ?\d{2}|under ?\d{2}|olympic|olympics|reserves?|b|a|national team|nt)$/;
+  window.sxFlagUrl = function(name){
+    var k = key(name), guard = 0;
+    if (!k) return '';
+    while (guard++ < 3 && !MAP.hasOwnProperty(k) && SUFFIX.test(k)) k = k.replace(SUFFIX, '');
+    var iso = MAP.hasOwnProperty(k) ? MAP[k] : '';
+    return iso ? 'https://flagcdn.com/w80/' + iso + '.png' : '';
+  };
+})();
+</script>
+
 <script id="slx-sonyliv-bridge">
 /* ══════════════════════════════════════════════════════════════════════
    SLX BRIDGE — SonyLIV LIVE matches (kajju027/SonyLiv-Events-Json).
@@ -14993,23 +15169,27 @@ button, a.btn, [class*="btn-"], input, select, textarea{
     t = String(t||'').toLowerCase().replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();
     return ALIAS[t] || t;
   }
-  var DATE_RE = /(\d{1,2}\s*(st|nd|rd|th)?\s*[a-z]{3,9},?\s*\d{2,4})|(\d{4}-\d{2}-\d{2})|(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})/i;
+  // Any date written anywhere in a title: "29 Sep 2026", "29th September", "Sep 29, 2026", "2026-09-29", "29/09/2026"
+  var MON = '(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*';
+  var DATE_SRC = '\\b\\d{1,2}(?:st|nd|rd|th)?\\s+' + MON + '\\.?(?:,?\\s*\\d{2,4})?\\b' +
+                 '|\\b' + MON + '\\.?\\s+\\d{1,2}(?:st|nd|rd|th)?(?:,?\\s*\\d{2,4})?\\b' +
+                 '|\\b\\d{4}-\\d{2}-\\d{2}\\b|\\b\\d{1,2}[\\/.-]\\d{1,2}[\\/.-]\\d{2,4}\\b';
+  function stripDates(s){ return String(s||'').replace(new RegExp(DATE_SRC, 'gi'), ' ').replace(/\s+/g, ' ').trim(); }
   function parse(name){
     var s = String(name||'').replace(/\[[^\]]*\]/g,' ')
       .replace(/^\s*(live|upcoming|completed)\s*[-:–—]\s*/i,'').replace(/\s+/g,' ').trim();
-    var parts = s.split(/\s+[-–—|]\s+/);
-    var head = parts[0] || s;
+    var dm = new RegExp(DATE_SRC, 'i').exec(s);
+    var date = dm ? dm[0].toLowerCase().replace(/[^a-z0-9]/g,'') : '';
+    // teams / sport are read from the title WITH the date removed, so
+    // "India vs Brazil - 29 Sep 2026" and "India vs Brazil" are the same match
+    var bare = stripDates(s).replace(/\s+[-–—|]\s*(?=[-–—|]|$)/g, ' ').replace(/^[-–—|\s]+|[-–—|\s]+$/g, '');
+    var parts = bare.split(/\s+[-–—|]\s+/).map(function(x){ return x.trim(); }).filter(Boolean);
+    var head = parts[0] || bare;
     var vs = head.split(/\s+(?:vs\.?|v\.?|versus)\s+/i);
-    var sport = '', date = '';
-    parts.slice(1).forEach(function(x){
-      x = x.trim();
-      if (!date && DATE_RE.test(x)) date = x.toLowerCase().replace(/[^a-z0-9]/g,'');
-      else if (!sport) sport = x;
-    });
     return {
       clean: s,
       teams: vs.length >= 2 ? [normTeam(vs[0]), normTeam(vs[1])] : [normTeam(head)],
-      sport: sport,
+      sport: parts[1] || '',
       date: date
     };
   }
@@ -15027,9 +15207,14 @@ button, a.btn, [class*="btn-"], input, select, textarea{
     if (Math.min(a.length, b.length) >= 3 && (a.indexOf(b) === 0 || b.indexOf(a) === 0)) return true;
     return 1 - lev(a, b) / Math.max(a.length, b.length) >= 0.78;
   }
+  function sameDate(x, y){                                   // date written on only ONE side (or a year-less prefix of the other) = same day
+    if (!x || !y) return true;
+    return x === y || x.indexOf(y) === 0 || y.indexOf(x) === 0;
+  }
   function sameMatch(A, B){
-    if (A.cat && B.cat && A.cat.toLowerCase() !== B.cat.toLowerCase()) return false;
-    if (A.p.date && B.p.date && A.p.date !== B.p.date) return false;
+    var ca = GENERIC_CAT.test(A.cat || '') ? '' : A.cat.toLowerCase(), cb = GENERIC_CAT.test(B.cat || '') ? '' : B.cat.toLowerCase();
+    if (ca && cb && ca !== cb) return false;                 // a generic "Sports" never blocks a merge
+    if (!sameDate(A.p.date, B.p.date)) return false;
     var a = A.p.teams, b = B.p.teams;
     if (a.length !== b.length) return false;
     if (a.length === 1) return 1 - lev(a[0], b[0]) / Math.max(a[0].length, b[0].length, 1) >= 0.85;
@@ -15049,6 +15234,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
       var cat = String(e.category || '').trim();
       if (GENERIC_CAT.test(cat) && p.sport) cat = p.sport;                         // "Sports" -> "Volleyball"
       if (!cat) cat = 'Other';
+      if (st !== 'LIVE') return;                                                   // SonyLIV: LIVE only — no upcoming / finished
       items.push({ e:e, url:url, lang:langOf(e), p:p, cat:cat, st:st, drm: !!(window.LMX && LMX.hasDrm(e, true)) });
     });
     var groups = [];
@@ -15264,7 +15450,8 @@ button, a.btn, [class*="btn-"], input, select, textarea{
       if (!e) return;
       var status = String(e.status||'').trim().toUpperCase();
       if (/^(ENDED|COMPLETED|FINISHED|OVER|CLOSED)$/.test(status)) status = 'ENDED';
-      else if (status !== 'LIVE') status = 'UPCOMING';          // nothing is ever dropped for its status
+      else if (status !== 'LIVE') status = 'UPCOMING';
+      if (status === 'ENDED') return;                            // MSX: everything EXCEPT finished matches (live + upcoming)
       var info = e.eventInfo || {};
       var teamA = (info.teamA || '').trim(), teamB = (info.teamB || '').trim();
       if (!teamA || !teamB){                                     // no team names -> shown under its event name
@@ -15295,10 +15482,10 @@ button, a.btn, [class*="btn-"], input, select, textarea{
         blob: (window.sxBlob ? sxBlob(e) : ''),
         status: status,
         start: parseStart(info.startTime),
-        poster: up(info.event_logo) || (sameTeamEvent ? up(info.teamAFlag) : ''),
-        // Team A flag = Team A logo, Team B flag = Team B logo.
-        // (Single-name events carry the same image on both sides — that is the event logo, not two teams.)
-        team1_icon_url: sameTeamEvent ? '' : up(info.teamAFlag), team2_icon_url: sameTeamEvent ? '' : up(info.teamBFlag),
+        poster: up(info.event_logo),                               // tournament / event logo only (never a team flag)
+        // Team flags: flagcdn.com by country name / ISO-2 / ISO-3 — the feed's teamAFlag / teamBFlag are NOT used.
+        team1_icon_url: sameTeamEvent ? '' : (window.sxFlagUrl ? sxFlagUrl(info.teamACode || info.teamAIso || teamA) || sxFlagUrl(teamA) : ''),
+        team2_icon_url: sameTeamEvent ? '' : (window.sxFlagUrl ? sxFlagUrl(info.teamBCode || info.teamBIso || teamB) || sxFlagUrl(teamB) : ''),
         servers: servers
       });
     });
@@ -15491,6 +15678,8 @@ button, a.btn, [class*="btn-"], input, select, textarea{
     var d = window.sxDetectSport ? window.sxDetectSport(cat, [title], blob) : '';
     return d || cat || 'Other';
   }
+  var LMX_DATE = new RegExp('\\b\\d{1,2}(?:st|nd|rd|th)?\\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\\.?(?:,?\\s*\\d{2,4})?\\b|\\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\\.?\\s+\\d{1,2}(?:st|nd|rd|th)?(?:,?\\s*\\d{2,4})?\\b|\\b\\d{4}-\\d{2}-\\d{2}\\b|\\b\\d{1,2}[\\/.-]\\d{1,2}[\\/.-]\\d{2,4}\\b', 'gi');
+  function stripDates(s){ return String(s||'').replace(LMX_DATE, ' ').replace(/\s+/g, ' ').trim(); }
   function catKey(c){
     c = String(c||'').trim().toLowerCase();
     if (/^(sports?|live|other|events?)?$/.test(c)) return '';
@@ -15564,13 +15753,15 @@ button, a.btn, [class*="btn-"], input, select, textarea{
       return (sameTeam(a.teams[0], b.teams[0]) && sameTeam(a.teams[1], b.teams[1])) ||
              (sameTeam(a.teams[0], b.teams[1]) && sameTeam(a.teams[1], b.teams[0]));
     if (a.teams && b.teams) return false;
-    return norm(a.title) && norm(a.title) === norm(b.title);
+    var ta = norm(stripDates(a.title)), tb = norm(stripDates(b.title));   // "Day 10 - 29 Sep 2026" == "Day 10"
+    return !!ta && ta === tb;
   }
   function build(){
     var raw = [];
     (window._slxGroups || []).forEach(function(g){
       raw.push({ src:'slx', title:g.title, teams:(g.teams && g.teams.length === 2) ? g.teams : null, names:null,
-        category:LCAT(g.category, g.title, g.blob), status:g.status || 'LIVE', start:null, poster:g.poster || '', t1:'', t2:'', servers:g.servers.map(cloneServer) });
+        category:LCAT(g.category, g.title, g.blob), status:g.status || 'LIVE', start:null, poster:g.poster || '',
+        t1:(g.teams && g.teams.length === 2 && window.sxFlagUrl) ? sxFlagUrl(g.teams[0]) : '', t2:(g.teams && g.teams.length === 2 && window.sxFlagUrl) ? sxFlagUrl(g.teams[1]) : '', servers:g.servers.map(cloneServer) });
     });
     (window._msxEntries || []).forEach(function(m){
       raw.push({ src:'msx', title:m.title, teams:m.sameTeamEvent ? null : [m.teamA, m.teamB], names:m.sameTeamEvent ? null : [m.teamA, m.teamB],
@@ -15578,6 +15769,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
         servers:m.servers.map(cloneServer) });
     });
     var out = [];
+    raw = raw.filter(function(it){ return it.status !== 'ENDED'; });   // never list finished matches
     raw.forEach(function(it){
       var hit = out.filter(function(x){ return sameFixture(x, it); })[0];
       if (!hit){ out.push(it); return; }
