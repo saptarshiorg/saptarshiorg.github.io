@@ -2087,6 +2087,7 @@ footer { background: rgba(4,4,14,0.94); padding: 48px 0 24px; }
 .mws-server-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .mws-server-label { font-size: 14px; font-weight: 700; letter-spacing: 0.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mws-server-sub { font-size: 10px; color: rgba(255,255,255,0.4); letter-spacing: 0.04em; }
+.mws-server-app-note { display: block; margin-top: 3px; font-size: 9px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: #F5C518; }
 /* Visual enhancement for auto-connected servers from LIVE CHANNELS */
 .mws-server-btn:has(.mws-auto-badge) {
   border-left-color: #667eea;
@@ -3028,6 +3029,189 @@ body::before{ display:none !important; }
 
 </style>
 <script defer src="https://cloud.umami.is/script.js" data-website-id="42676c0d-b886-471b-b6d5-d2ecc1d8b7e9"></script>
+<script id="sx-sport-detect">
+/* ══════════════════════════════════════════════════════════════════════
+   SPORT DETECTOR — files every match under the right sport.
+   Reads the category, the match/game name and any other text on the entry
+   (league, event, tournament…). A sport keyword found ANYWHERE counts
+   ("Wimbledon", "ATP", "tennis" → Tennis). Category text that is only a
+   50%+ fuzzy match of a sport name ("Tenis", "Foot ball") also counts.
+   Used by the Matches tab sport selector AND the "MORE MATCHES" rail.
+   ══════════════════════════════════════════════════════════════════════ */
+(function(){
+  'use strict';
+  var RAW = {
+    'Cricket': ['cricket','ipl','bbl','psl','cpl','t20','t20i','odi','ranji','wpl','icc','the hundred','sa20','ilt20','lpl','bpl','wicket','test match','mumbai indians','chennai super kings','royal challengers','knight riders','sunrisers','rajasthan royals','gujarat titans','lucknow super giants','punjab kings'],
+    'Football': ['football','soccer','association football','futsal','beach soccer','fifa','uefa','premier league','epl','la liga','laliga','bundesliga','serie a','ligue 1','mls','isl','i league','champions league','europa league','conference league','nations league','afc','caf','conmebol','copa america','copa libertadores','fa cup','carabao cup','asean cup','fc','cf','ea sports fc','efootball'],
+    'American Football': ['american football','flag football','arena football','canadian football','nfl','ncaaf','super bowl','cfl'],
+    'Australian Rules Football': ['australian rules football','australian rules','afl','aussie rules'],
+    'Gaelic Football': ['gaelic football','gaa'],
+    'Rugby': ['rugby','rugby union','rugby league','rugby sevens','six nations','super rugby','nrl'],
+    'Baseball': ['baseball','mlb','npb','kbo','softball','t ball','tee ball','kickball','rounders','pesapallo','stoolball','lapta','brannboll'],
+    'Basketball': ['basketball','3x3 basketball','nba','wnba','ncaab','euroleague','fiba','nbl'],
+    'Netball': ['netball'],
+    'Handball': ['handball','beach handball'],
+    'Kabaddi': ['kabaddi','pkl','pro kabaddi'],
+    'Kho Kho': ['kho kho','ultimate kho kho'],
+    'Goalball': ['goalball'], 'Dodgeball': ['dodgeball'],
+    'Tennis': ['tennis','real tennis','soft tennis','platform tennis','beach tennis','atp','wta','wimbledon','roland garros','french open','us open','australian open','grand slam','davis cup','billie jean king cup','itf','sky tennis'],
+    'Table Tennis': ['table tennis','ping pong','wtt','ttfi','utt'],
+    'Badminton': ['badminton','speed badminton','bwf','thomas cup','uber cup','sudirman cup'],
+    'Squash': ['squash','racquetball','frontenis'],
+    'Pickleball': ['pickleball'], 'Padel': ['padel'], 'Jai Alai': ['jai alai','pelota','basque pelota'],
+    'Boxing': ['boxing','wbc','wba','ibf','wbo'],
+    'Kickboxing': ['kickboxing','muay thai','muay boran','savate','lethwei','glory kickboxing'],
+    'MMA': ['mma','ufc','bellator','pfl','one championship','cage warriors','pankration','sanda','krav maga'],
+    'Wrestling': ['wrestling','freestyle wrestling','greco roman wrestling','beach wrestling','mongolian wrestling','wwe','aew','pwl','nxt','kushti','ssirum'],
+    'Martial Arts': ['karate','judo','brazilian jiu jitsu','bjj','taekwondo','wushu','sambo','aikido','kendo','capoeira','hapkido','silat','kurash','gatka','silambam','thang ta','kalari','kalaripayattu','mallakhamb'],
+    'Sumo': ['sumo'],
+    'Fencing': ['fencing'],
+    'Athletics': ['athletics','track and field','diamond league','sprinting','hurdles','steeplechase','relay','race walking','cross country running','trail running','ultra running','mountain running','high jump','long jump','triple jump','pole vault','shot put','discus','javelin','hammer throw','decathlon','heptathlon','pentathlon','marathon','half marathon'],
+    'Swimming': ['swimming','open water swimming','finswimming','artistic swimming'],
+    'Diving': ['diving','high diving'],
+    'Water Polo': ['water polo','underwater hockey','underwater rugby'],
+    'Surfing': ['surfing','bodyboarding','windsurfing','kitesurfing'],
+    'Sailing': ['sailing'],
+    'Rowing': ['rowing'],
+    'Canoeing': ['canoeing','kayaking','rafting','dragon boat','dragon boat racing','stand up paddleboarding','sup','canoe sprint','canoe slalom'],
+    'Powerboating': ['jet ski','powerboat racing','powerboating'],
+    'Cycling': ['cycling','road cycling','track cycling','mountain biking','bmx','bmx racing','bmx freestyle','cyclocross','gravel cycling','downhill mountain biking','cycle speedway','artistic cycling','tour de france','giro d italia','vuelta','uci'],
+    'Motorsport': ['motorsport','f1','f2','f3','formula 1','formula one','formula 2','formula 3','formula e','indycar','nascar','rally','rallycross','karting','motocross','supercross','motogp','moto gp','moto2','moto3','superbike','wsbk','speedway','endurance racing','drag racing','drifting','hill climb','off road racing','air racing','grand prix','wrc','le mans'],
+    'Golf': ['golf','mini golf','disc golf','pga','lpga','liv golf','ryder cup','dp world tour'],
+    'Archery': ['archery'], 'Darts': ['darts','pdc'],
+    'Snooker': ['snooker','billiards','carom','pool billiards'],
+    'Bowling': ['bowling','ten pin bowling','nine pin bowling','bocce','petanque','lawn bowls'],
+    'Curling': ['curling'], 'Croquet': ['croquet'],
+    'Horse Racing': ['horse racing','dressage','show jumping','eventing','horseball','equestrian','rodeo','barrel racing','reining','tent pegging','vaulting'],
+    'Polo': ['polo'],
+    'Climbing': ['climbing','sport climbing','bouldering','speed climbing','mountaineering','ice climbing'],
+    'Skateboarding': ['skateboarding','inline skating','roller skating','parkour','freerunning'],
+    'Skiing': ['skiing','alpine skiing','cross country skiing','freestyle skiing','ski jumping','speed skiing','biathlon','nordic combined'],
+    'Snowboarding': ['snowboarding'],
+    'Ice Skating': ['figure skating','speed skating','short track speed skating','short track','ice skating'],
+    'Ice Hockey': ['ice hockey','nhl','khl','stanley cup','bandy'],
+    'Hockey': ['hockey','field hockey','fih','hockey india league','hil'],
+    'Sliding Sports': ['luge','bobsleigh','bobsled','skeleton racing','snowmobile racing'],
+    'Air Sports': ['skydiving','base jumping','bungee jumping','paragliding','hang gliding','wingsuit flying','aeromodelling','drone racing','hot air ballooning','paramotoring','canopy piloting'],
+    'Gymnastics': ['gymnastics','artistic gymnastics','rhythmic gymnastics','trampoline','aerobic gymnastics','acrobatic gymnastics','teamgym','cheerleading','dancesport','breakdancing'],
+    'Sepak Takraw': ['sepak takraw','takraw'],
+    'Yogasana': ['yogasana','yoga'],
+    'Hurling': ['hurling','shinty','camogie'],
+    'Buzkashi': ['buzkashi'],
+    'Volleyball': ['volleyball','beach volleyball','vnl','prime volleyball','footvolley','frescobol'],
+    'Chess': ['chess','fide','xiangqi','shogi','draughts','checkers','contract bridge','speedcubing'],
+    'Esports': ['esports','e sports','valorant','csgo','cs2','counter strike','dota','dota 2','pubg','pubg mobile','bgmi','free fire','league of legends','fortnite','rocket league','overwatch','rainbow six','starcraft','warcraft','street fighter','tekken','mortal kombat','super smash bros','call of duty','mobile legends'],
+    'Shooting': ['shooting','sport shooting','air rifle','air pistol','rifle shooting','pistol shooting','trap shooting','skeet shooting','sporting clays','practical shooting'],
+    'Archery ': [],
+    'Swimming ': []
+  };
+  delete RAW['Archery '];
+  delete RAW['Swimming '];
+  var GENERIC = /^(sports?|live|other|others|misc|general|various|more|events?|special events?)?$/i;
+  function norm(s){ return String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); }
+  function flat(x){ return Array.isArray(x) ? x.map(flat).join(' ') : norm(x); }
+  function lev(a, b){
+    var m = a.length, n = b.length, i, j, d = [];
+    for (i = 0; i <= m; i++) d[i] = [i];
+    for (j = 1; j <= n; j++) d[0][j] = j;
+    for (i = 1; i <= m; i++) for (j = 1; j <= n; j++)
+      d[i][j] = Math.min(d[i-1][j]+1, d[i][j-1]+1, d[i-1][j-1] + (a[i-1] === b[j-1] ? 0 : 1));
+    return d[m][n];
+  }
+  var SP = {};
+  Object.keys(RAW).forEach(function(name){
+    var kws = RAW[name].slice(); var nm = norm(name); if (kws.indexOf(nm) < 0) kws.push(nm);
+    SP[name] = kws.map(function(k){
+      k = norm(k);
+      var re = new RegExp('(^| )' + k + (k.indexOf(' ') < 0 && k.length >= 5 ? '[a-z]*' : '') + '( |$)');
+      return { k: k, re: re, len: k.length, single: k.indexOf(' ') < 0 };
+    });
+  });
+  var NAMES = Object.keys(SP);
+
+  function detect(cat, title, blob){
+    var c = flat(cat), t = flat(title), b = flat(blob);
+    if (GENERIC.test(c)) c = '';
+    var srcs = [[c, 4, true], [t, 2, false], [b, 1, false]].filter(function(x){ return x[0]; });
+    if (!srcs.length) return '';
+    var best = '', bestScore = 0;
+    // pass 1 — a sport keyword appears as a word anywhere
+    NAMES.forEach(function(name){
+      var total = 0;
+      srcs.forEach(function(s){
+        var hit = false, len = 0;
+        SP[name].forEach(function(K){ if (K.re.test(s[0])){ hit = true; if (K.len > len) len = K.len; } });
+        if (hit) total += s[1] + len / 1000;
+      });
+      if (total > bestScore){ bestScore = total; best = name; }
+    });
+    if (best) return best;
+    // pass 2 — fuzzy: category text ≥50% like a sport name, other text ≥80%
+    srcs.forEach(function(s){
+      var need = s[2] ? 0.5 : 0.8;
+      s[0].split(' ').forEach(function(tok){
+        if (tok.length < 4) return;
+        NAMES.forEach(function(name){
+          SP[name].forEach(function(K){
+            if (!K.single || K.len < 5 || K.k[0] !== tok[0]) return;
+            var sim = 1 - lev(tok, K.k) / Math.max(tok.length, K.len);
+            var sc = sim * s[1];
+            if (sim >= need && sc > bestScore){ bestScore = sc; best = name; }
+          });
+        });
+      });
+    });
+    return best;
+  }
+  window.sxDetectSport = detect;
+  // Women's / under-age tag of a team or title: "India Women" and "India" are DIFFERENT teams.
+  window.sxQual = function(t){
+    t = String(t == null ? '' : t).toLowerCase(); var q = [];
+    if (/\b(women'?s?|woman|ladies|girls)\b|\(w\)/.test(t)) q.push('w');
+    var u = t.match(/\bu[- ]?(\d{2})\b/); if (u) q.push('u' + u[1]);
+    return q.join();
+  };
+
+  // Same sport? ("Soccer" == "Football", "CRICKET" == "Cricket")
+  function key(s){ var d = detect(s, '', ''); return d ? d.toLowerCase() : norm(s); }
+  window.sxSameSport = function(a, b){ var x = key(a), y = key(b); return !!x && x === y; };
+
+  // Every useful text field of an API entry (skips URLs / streams / logos).
+  window.sxBlob = function(o){
+    var out = [];
+    (function w(x, d){
+      if (x == null || d > 3 || out.length > 40) return;
+      if (typeof x === 'string'){
+        var s = x.trim();
+        if (s && s.length <= 90 && !/^(https?:|\/\/)|\.(m3u8|mpd|png|jpe?g|webp|svg)/i.test(s)) out.push(s);
+        return;
+      }
+      if (Array.isArray(x)){ x.slice(0, 10).forEach(function(y){ w(y, d + 1); }); return; }
+      if (typeof x === 'object') Object.keys(x).forEach(function(k){
+        if (/stream|server|channel|url|link|logo|flag|image|poster|thumb|icon|key|kid|license|token|drm|lang/i.test(k)) return;
+        w(x[k], d + 1);
+      });
+    })(o, 0);
+    return out.join(' | ');
+  };
+
+  // Sport of a MATCH CARDS sheet row. A blank / generic sport cell is filled
+  // from the game name, team names and details; different spellings of the
+  // same sport ("Soccer" / "Football") collapse into the first one seen.
+  window._sxSheetSportSpell = {};
+  window.sxSheetSport = function(c){
+    var raw = String((c && (c.sport || c.sports)) || '').trim();
+    var generic = GENERIC.test(raw);
+    var teams = [c.team1_full_name, c.team2_full_name, c.team1_code, c.team2_code, c.details, c.tournament, c.btn_text];
+    var det = generic ? detect('', [c.game], teams) : detect(raw, '', '');
+    if (generic && !det) return 'Other';
+    var k = (det || raw).toLowerCase();
+    var map = window._sxSheetSportSpell;
+    if (!map[k]) map[k] = generic ? det : raw;
+    return map[k];
+  };
+})();
+</script>
 </head>
 <body>
  
@@ -5196,10 +5380,15 @@ function fcxGroupCategory(cards){
 }
 function fcxResolveSport(category){
   const cat = (category || '').trim();
-  if (!cat) return 'Other';
+  const extra = Array.prototype.slice.call(arguments, 1);   // tournament / match titles — sport can hide in these
+  const generic = /^(sports?|live|other|events?)?$/i.test(cat);
+  const det = window.sxDetectSport ? window.sxDetectSport(generic ? '' : cat, extra, '') : '';
+  if (!cat && !det) return 'Other';
   const sheetSports = window._smoSheetSports || [];
-  const merged = sheetSports.find(sp => (sp || '').trim().toLowerCase() === cat.toLowerCase());
-  return merged || cat; // merged → use the sheet's exact spelling
+  const merged = sheetSports.find(sp => (sp || '').trim().toLowerCase() === cat.toLowerCase())
+    || (det && sheetSports.find(sp => window.sxDetectSport(sp, '', '') === det));
+  if (merged) return merged;   // merged → use the sheet's exact spelling
+  return det || (generic ? 'Other' : cat);
 }
 // Look a cached FanCode match back up by id (used by the watch-screen
 // handlers wired into inline onclick attributes).
@@ -5276,6 +5465,12 @@ function fcxWatchBtnHtml(m, cls){
 // word (e.g. "IND" in "IND vs PAK, 1st T20I") or its full name as a
 // substring (e.g. "India" in "India tour of Pakistan").
 function fcxTitleHasTeam(title, code, fullName){
+  // "Victoria Women" in the title must not match the men's "Victoria" row (and vice-versa), same for U19 etc.
+  if (window.sxQual && sxQual(title) !== sxQual(fullName || code)) {
+    // title-level tag only counts when the team name itself is what carries it — compare with the tag on the team side
+    if (sxQual(title) && !sxQual(fullName || code)) return false;
+    if (!sxQual(title) && sxQual(fullName || code)) return false;
+  }
   const t = (title || '').toLowerCase();
   const c = (code || '').trim().toLowerCase();
   if (c && c.length >= 2) {
@@ -5331,6 +5526,7 @@ function fcxAugmentSheetCards(cards){
   const urlSlots = ['btn_url', 'btn_url_2', 'btn_url_3', 'btn_url_4', 'btn_url_5'];
   const textSlots = ['btn_text', 'btn_text_2', 'btn_text_3', 'btn_text_4', 'btn_text_5'];
   (cards || []).forEach(c => {
+    c._fcxOverflow = null;
     const already = textSlots.some(t => (c[t] || '').trim().toLowerCase() === 'fancode');
     if (already) return;
     const fm = fcxFindSheetMatch(c);
@@ -5339,7 +5535,7 @@ function fcxAugmentSheetCards(cards){
       const v = (c[s] || '').toString().trim();
       return !v || v === '#';
     });
-    if (emptyIdx === -1) return; // all 5 server slots already taken
+    if (emptyIdx === -1) { c._fcxOverflow = fm; c._fcxBanner = fm.image; return; } // all 5 slots taken — added as an extra server instead
     c[urlSlots[emptyIdx]] = fcxJsUrl(fm);
     c[textSlots[emptyIdx]] = 'FanCode';
     c._fcxBanner = fm.image; // let the card's thumbnail fall back to FanCode's own banner too
@@ -5609,7 +5805,7 @@ window.fcxAppendHomeSections = function(){
       // sport/game toolbars (which read these two properties) can filter it.
       const secs = el.querySelectorAll('.fcx-smo-section');
       const sec = secs[secs.length - 1];
-      if (sec) { sec.dataset.game = tournament; sec.dataset.sport = fcxResolveSport(fcxGroupCategory(cards)); }
+      if (sec) { sec.dataset.game = tournament; sec.dataset.sport = fcxResolveSport(fcxGroupCategory(cards), tournament, cards.map(m => m.title)); }
     }
   });
   // Every section is now in the DOM — sheet-driven sections (possibly with
@@ -6474,11 +6670,13 @@ function sxGetMatchServers(m) {
     { url: m.btn_url_4, text: m.btn_text_4 || 'Server 4' },
     { url: m.btn_url_5, text: m.btn_text_5 || 'Server 5' }
   ];
+  // FanCode when the sheet row had no free slot left
+  if (m._fcxOverflow && typeof fcxJsUrl === 'function') raw.push({ url: fcxJsUrl(m._fcxOverflow), text: 'FanCode' });
   // Extra servers folded in by the LMX merge layer (SonyLIV languages, sm-monirulislam channels, ...)
   // — no 5-slot limit, de-duplicated by URL.
   (m._lmxServers || []).forEach(function(x){
     if (!raw.some(function(r){ return r.url && String(r.url).trim() === x.url; }))
-      raw.push({ url: x.url, text: x.text, icon: x.icon, sub: x.sub, playName: x.playName });
+      raw.push({ url: x.url, text: x.text, icon: x.icon, sub: x.sub, playName: x.playName, appOnly: !!x.appOnly });
   });
   
   // AUTO-CONNECT LOGIC: If a server name matches LIVE CHANNELS but has no URL,
@@ -6808,6 +7006,7 @@ function openMatchWatchScreen(servers, info) {
         <span class="mws-server-info">
           <span class="mws-server-label">${s.text || ('Server ' + (i + 1))}${vlcIcon}${autoConnectBadge}</span>
           <span class="mws-server-sub">${sheetServersLocked ? 'Locked until ' + startText : (s.sub || 'Tap to play this stream')}</span>
+          ${(s.appOnly || (sxIsStreamUrl(s.url) && /^http:\/\//i.test(String(s.url).trim()) && location.protocol === 'https:')) ? '<span class="mws-server-app-note">Only Play Through EV STREAMS APP</span>' : ''}
         </span>
         <span class="mws-server-play">${sheetServersLocked ? MWS_LOCK_SVG : MWS_PLAY_SVG}</span>
       </button>`;
@@ -6832,9 +7031,12 @@ function renderMwsMoreLive(info) {
   if (old) old.remove();
 
   const all = window._fcxMatchesCache || [];
+  const curFm = info.fcxId ? fcxFindById(info.fcxId) : null;
+  const curSp = curFm ? fcxResolveSport(curFm.category, curFm.tournament, curFm.title) : sxDetectSport(info.details || '', info.name || '', '');
   const others = all.filter(m =>
     m.status === 'LIVE' &&
-    (info.fcxId ? String(m.id) !== String(info.fcxId) : m.title !== info.name)
+    (info.fcxId ? String(m.id) !== String(info.fcxId) : m.title !== info.name) &&
+    (!curSp || curSp === 'Other' || sxSameSport(fcxResolveSport(m.category, m.tournament, m.title), curSp))
   ).slice(0, 8);
 
   const wrap = document.createElement('div');
@@ -7611,7 +7813,8 @@ function renderMatchCards(rows) {
   // rendered game/event section — parallel array to gameOrder, one entry
   // per section, filled in below as sections are built.
   const sportPerSection = [];
-  const sportOf = c => (c.sport || c.sports || '').trim() || 'Other';
+  window._sxSheetSportSpell = {};
+  const sportOf = c => (window.sxSheetSport ? window.sxSheetSport(c) : ((c.sport || c.sports || '').trim() || 'Other'));
 
   // ── Live-first ordering ──────────────────────────────────────────
   // 1) Within each game/category group: LIVE matches first, then
@@ -7773,7 +7976,7 @@ function renderMatchCards(rows) {
   window._smoSheetSports = sportOrder.slice();
   const fcxGroups = (typeof fcxTournamentGroups === 'function') ? fcxTournamentGroups() : [];
   fcxGroups.forEach(([tournament, fcxCards]) => {
-    const sport = fcxResolveSport(fcxGroupCategory(fcxCards));
+    const sport = fcxResolveSport(fcxGroupCategory(fcxCards), tournament, fcxCards.map(m => m.title));
     if (!sportOrder.includes(sport)) sportOrder.push(sport);
     // A FanCode tournament whose name already exists as a sheet game/event
     // (compared case- and space-insensitively) is the SAME tournament —
@@ -11857,7 +12060,21 @@ function populateStreamPlayerRail(type, currentLabel){
   if (titleEl) titleEl.textContent = isMatch ? 'MORE MATCHES' : 'MORE CHANNELS';
 
   if (isMatch) {
-    const sheetList = (window._matchCardsData || []).filter(c => !isMatchFinished(c) && matchStatusText(c).toLowerCase() === 'live');
+    // Only matches of the SAME sport as the one playing (tennis → tennis).
+    let curSport = '';
+    try {
+      const sc = (window._matchCardsData || []).find(c => ((c.team1_code||'') + ' vs ' + (c.team2_code||'')) === currentLabel);
+      const fm = (window._fcxMatchesCache || []).find(m => m.title === currentLabel);
+      const lm = (window.LMX && LMX.items || []).find(i => i.title === currentLabel);
+      curSport = sc ? sxSheetSport(sc)
+        : fm ? fcxResolveSport(fm.category, fm.tournament, fm.title)
+        : lm ? fcxResolveSport(lm.category, lm.title)
+        : sxDetectSport('', currentLabel, '');
+      if (curSport === 'Other') curSport = '';
+    } catch (e) { curSport = ''; }
+    const sameSp = s => !curSport || sxSameSport(s, curSport);
+    if (titleEl && curSport) titleEl.textContent = 'MORE ' + curSport.toUpperCase() + ' MATCHES';
+    const sheetList = (window._matchCardsData || []).filter(c => !isMatchFinished(c) && matchStatusText(c).toLowerCase() === 'live' && sameSp(sxSheetSport(c)));
     const sheetItems = sheetList.map(c => {
       const label = (c.team1_code||'') + ' vs ' + (c.team2_code||'');
       return `
@@ -11879,7 +12096,8 @@ function populateStreamPlayerRail(type, currentLabel){
     const fcxList = (window._fcxMatchesCache || []).filter(m =>
       m.status === 'LIVE' &&
       m.title !== currentLabel &&
-      (typeof fcxHasSheetCard !== 'function' || !fcxHasSheetCard(m))
+      (typeof fcxHasSheetCard !== 'function' || !fcxHasSheetCard(m)) &&
+      sameSp(fcxResolveSport(m.category, m.tournament, m.title))
     );
     const fcxItems = fcxList.map(m => `
       <button type="button" class="sp-rail-item${m.title===currentLabel?' active':''}" onclick="fcxOpenWatchById('${escJs(String(m.id))}')">
@@ -11892,7 +12110,7 @@ function populateStreamPlayerRail(type, currentLabel){
     ).join('');
     const items = sheetItems + fcxItems;
     const viewAll = `<button type="button" class="sp-rail-viewall" onclick="closeStreamPlayer();openMatches();">View All Matches</button>`;
-    rail.innerHTML = (items || `<div class="sp-rail-empty">No other live matches right now</div>`) + viewAll;
+    rail.innerHTML = (items || `<div class="sp-rail-empty">No other live ${curSport ? curSport + ' ' : ''}matches right now</div>`) + viewAll;
   } else {
     const list = (window._cmsChannels || []).filter(c => (c.status_live_off||'').toUpperCase() === 'LIVE');
     const items = list.map(c => {
@@ -14755,7 +14973,6 @@ button, a.btn, [class*="btn-"], input, select, textarea{
     return /^https?:\/\/[^#?]+\.(m3u8|mpd)(\?|#|$)/i.test(u);
   }
   function pickUrl(e){
-    if (window.LMX && LMX.hasDrm(e, true)) return '';                            // DRM entries can't play
     var c = [e.video_url, e.dai_url, e.pub_url];
     for (var i = 0; i < c.length; i++) if (c[i] && isHls(c[i])) return String(c[i]).trim();
     var all = (window.LMX && LMX.scan) ? LMX.scan(e) : [];                       // any other field holding m3u8 / mpd
@@ -14823,15 +15040,16 @@ button, a.btn, [class*="btn-"], input, select, textarea{
     var list = (json && json.matches) || [];
     var items = [];
     list.forEach(function(e){
-      if (!e || String(e.status || '').trim().toLowerCase() !== 'live') return;   // LIVE only
-      var url = pickUrl(e);
-      if (!url) return;                                                            // HLS only
+      if (!e) return;
+      var stl = String(e.status || '').trim().toLowerCase();
+      var st = stl === 'live' ? 'LIVE' : /^(ended|completed|finished|over)$/.test(stl) ? 'ENDED' : 'UPCOMING';
+      var url = pickUrl(e) || '';                                                  // no stream yet -> still listed
       var name = e.match_name || e.event_name || '';
       var p = parse(name);
       var cat = String(e.category || '').trim();
       if (GENERIC_CAT.test(cat) && p.sport) cat = p.sport;                         // "Sports" -> "Volleyball"
       if (!cat) cat = 'Other';
-      items.push({ e:e, url:url, lang:langOf(e), p:p, cat:cat });
+      items.push({ e:e, url:url, lang:langOf(e), p:p, cat:cat, st:st, drm: !!(window.LMX && LMX.hasDrm(e, true)) });
     });
     var groups = [];
     items.forEach(function(it){
@@ -14847,14 +15065,15 @@ button, a.btn, [class*="btn-"], input, select, textarea{
       });
       var seen = {};
       var title = g.items.reduce(function(best, it){ return it.p.clean.length > best.length ? it.p.clean : best; }, g.ref.p.clean);
-      var servers = g.items.map(function(it, si){
+      var servers = g.items.filter(function(it){ return it.url; }).map(function(it, si){
         seen[it.lang] = (seen[it.lang] || 0) + 1;
         var label = it.lang === 'Default' ? 'Server ' + (si + 1)
           : (seen[it.lang] > 1 ? it.lang + ' ' + seen[it.lang] : it.lang);
-        return { url: it.url, text: label, icon: LOGO, sub: 'SonyLIV · tap to play', playName: title + ' · ' + label };
+        return { url: it.url, text: label, icon: LOGO, sub: 'SonyLIV · tap to play', playName: title + ' · ' + label, appOnly: !!it.drm };
       });
       var poster = ''; g.items.forEach(function(it){ if (!poster && it.e.poster) poster = it.e.poster; });
-      return { key: 'slx' + idx, title: title, category: g.ref.cat, poster: poster, servers: servers, teams: g.ref.p.teams, date: g.ref.p.date };
+      var gStatus = g.items.some(function(it){ return it.st === 'LIVE'; }) ? 'LIVE' : g.items.every(function(it){ return it.st === 'ENDED'; }) ? 'ENDED' : 'UPCOMING';
+      return { key: 'slx' + idx, status: gStatus, title: title, category: g.ref.cat, blob: (window.sxBlob ? sxBlob(g.ref.e) : ''), poster: poster, servers: servers, teams: g.ref.p.teams, date: g.ref.p.date };
     });
   }
 
@@ -14915,7 +15134,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
       .then(function(r){ return r.json(); })
       .then(function(json){
         var groups = buildGroups(json);
-        var sig = JSON.stringify(groups.map(function(g){ return [g.title, g.category, g.servers.map(function(s){ return s.text + s.url; })]; }));
+        var sig = JSON.stringify(groups.map(function(g){ return [g.title, g.status, g.category, g.servers.map(function(s){ return s.text + s.url; })]; }));
         var el = document.getElementById('match-overlay');
         var present = !!(el && el.querySelector('.slx-smo-section'));
         window._slxGroups = groups;
@@ -15044,25 +15263,28 @@ button, a.btn, [class*="btn-"], input, select, textarea{
     list.forEach(function(e, idx){
       if (!e) return;
       var status = String(e.status||'').trim().toUpperCase();
-      if (status !== 'LIVE' && status !== 'UPCOMING') return;
+      if (/^(ENDED|COMPLETED|FINISHED|OVER|CLOSED)$/.test(status)) status = 'ENDED';
+      else if (status !== 'LIVE') status = 'UPCOMING';          // nothing is ever dropped for its status
       var info = e.eventInfo || {};
       var teamA = (info.teamA || '').trim(), teamB = (info.teamB || '').trim();
-      if (!teamA || !teamB) return;
+      if (!teamA || !teamB){                                     // no team names -> shown under its event name
+        teamA = teamB = String(info.eventName || e.event_name || teamA || teamB || 'Match').trim();
+      }
       var streams = [];
       (e.streams || []).forEach(function(s){
-        if (!s || (window.LMX && LMX.hasDrm(s))) return;                        // skip DRM (kid/key/license) streams
+        if (!s) return;                                                          // DRM (kid/key/license) streams are kept — flagged app-only below
         var su = (window.LMX && LMX.scan(s)[0]) || (s.stream_url && isHls(s.stream_url) ? String(s.stream_url).trim() : '');
-        if (su) streams.push({ stream_url: su, channel_name: s.channel_name || s.name || s.title });
+        if (su) streams.push({ stream_url: su, channel_name: s.channel_name || s.name || s.title, appOnly: needsApp(s) || needsApp(e) || !!(window.LMX && (LMX.hasDrm(s) || LMX.hasDrm(e, true))) });
       });
       if (!streams.length && !(e.streams && e.streams.length) && window.LMX)     // no streams[] at all — scan the whole entry
-        LMX.scan(e).forEach(function(u, k){ streams.push({ stream_url: u, channel_name: 'Server ' + (k + 1) }); });
-      if (!streams.length) return; // nothing directly playable in-page — skip
+        LMX.scan(e).forEach(function(u, k){ streams.push({ stream_url: u, channel_name: 'Server ' + (k + 1), appOnly: needsApp(e) || !!(window.LMX && LMX.hasDrm(e, true)) }); });
+      // (no streams yet -> still listed, card shows 'No stream yet')
       var seenNames = {};
       var servers = streams.map(function(s){
         var name = (s.channel_name || 'Server').trim() || 'Server';
         if (seenNames[name]) { seenNames[name]++; name = name + ' ' + seenNames[name]; }
         else seenNames[name] = 1;
-        return { url: s.stream_url.trim(), text: name, sub: 'tap to play' };
+        return { url: s.stream_url.trim(), text: name, sub: 'tap to play', appOnly: !!s.appOnly };
       });
       var sameTeamEvent = teamA.toLowerCase() === teamB.toLowerCase();
       out.push({
@@ -15070,16 +15292,28 @@ button, a.btn, [class*="btn-"], input, select, textarea{
         title: sameTeamEvent ? (info.eventName || e.event_name || teamA) : (teamA + ' vs ' + teamB),
         teamA: teamA, teamB: teamB, sameTeamEvent: sameTeamEvent,
         category: (e.Category || '').trim() || 'Other',
+        blob: (window.sxBlob ? sxBlob(e) : ''),
         status: status,
         start: parseStart(info.startTime),
-        poster: info.event_logo || info.teamAFlag || '',
-        team1_icon_url: info.teamAFlag || '', team2_icon_url: info.teamBFlag || '',
+        poster: up(info.event_logo) || (sameTeamEvent ? up(info.teamAFlag) : ''),
+        // Team A flag = Team A logo, Team B flag = Team B logo.
+        // (Single-name events carry the same image on both sides — that is the event logo, not two teams.)
+        team1_icon_url: sameTeamEvent ? '' : up(info.teamAFlag), team2_icon_url: sameTeamEvent ? '' : up(info.teamBFlag),
         servers: servers
       });
     });
     return out;
   }
 
+  function up(u){ u = String(u || '').trim(); return u.replace(/^http:\/\//i, 'https://'); }   // no mixed-content blocked logos
+  // A browser cannot set Referer / User-Agent / Origin / Cookie on media requests, so a stream whose
+  // feed entry lists any of them is blocked in the browser -> app only. Plain http:// on an https page too.
+  function needsApp(o){
+    if (!o || typeof o !== 'object') return false;
+    return ['referer','referrer','origin','user_agent','useragent','user-agent','cookie','headers','http_headers'].some(function(k){
+      var v = o[k]; return v && (typeof v !== 'object' || Object.keys(v).length) && String(v).trim() !== '';
+    });
+  }
   function findEntry(key){ return (window._msxEntries || []).find(function(m){ return m.key === key; }) || null; }
 
   window.msxOpenWatch = function(key){
@@ -15246,11 +15480,16 @@ button, a.btn, [class*="btn-"], input, select, textarea{
     return d[m][n];
   }
   function sameTeam(a, b){
+    if (window.sxQual && sxQual(a) !== sxQual(b)) return false;   // India ≠ India Women ≠ India U19
     a = norm(a); b = norm(b);
     if (!a || !b) return false;
     if (a === b) return true;
     if (Math.min(a.length, b.length) >= 3 && (a.indexOf(b) === 0 || b.indexOf(a) === 0)) return true;
     return 1 - lev(a, b) / Math.max(a.length, b.length) >= 0.78;
+  }
+  function LCAT(cat, title, blob){
+    var d = window.sxDetectSport ? window.sxDetectSport(cat, [title], blob) : '';
+    return d || cat || 'Other';
   }
   function catKey(c){
     c = String(c||'').trim().toLowerCase();
@@ -15303,7 +15542,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
     h = h % 12; if (h === 0) h = 12;
     return dp + ', ' + h + ':' + mm + ' ' + ap;
   }
-  function cloneServer(s){ return { url:s.url, text:s.text, icon:s.icon, sub:s.sub, playName:s.playName }; }
+  function cloneServer(s){ return { url:s.url, text:s.text, icon:s.icon, sub:s.sub, playName:s.playName, appOnly:!!s.appOnly }; }
   function relabel(it){
     var seen = {};
     it.servers.forEach(function(s){
@@ -15318,6 +15557,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
     list.forEach(function(s){ if (have[s.url]) return; have[s.url] = 1; it.servers.push(cloneServer(s)); });
   }
   function sameFixture(a, b){
+    if ((a.status === 'ENDED') !== (b.status === 'ENDED')) return false;   // a finished fixture never merges into a live/upcoming one
     var ca = catKey(a.category), cb = catKey(b.category);
     if (ca && cb && ca !== cb) return false;
     if (a.teams && b.teams && a.teams.length === 2 && b.teams.length === 2)
@@ -15330,11 +15570,11 @@ button, a.btn, [class*="btn-"], input, select, textarea{
     var raw = [];
     (window._slxGroups || []).forEach(function(g){
       raw.push({ src:'slx', title:g.title, teams:(g.teams && g.teams.length === 2) ? g.teams : null, names:null,
-        category:g.category, status:'LIVE', start:null, poster:g.poster || '', t1:'', t2:'', servers:g.servers.map(cloneServer) });
+        category:LCAT(g.category, g.title, g.blob), status:g.status || 'LIVE', start:null, poster:g.poster || '', t1:'', t2:'', servers:g.servers.map(cloneServer) });
     });
     (window._msxEntries || []).forEach(function(m){
       raw.push({ src:'msx', title:m.title, teams:m.sameTeamEvent ? null : [m.teamA, m.teamB], names:m.sameTeamEvent ? null : [m.teamA, m.teamB],
-        category:m.category, status:m.status, start:m.start, poster:m.poster || '', t1:m.team1_icon_url || '', t2:m.team2_icon_url || '',
+        category:LCAT(m.category, m.title, m.blob), status:m.status, start:m.start, poster:m.poster || '', t1:m.team1_icon_url || '', t2:m.team2_icon_url || '',
         servers:m.servers.map(cloneServer) });
     });
     var out = [];
@@ -15343,11 +15583,15 @@ button, a.btn, [class*="btn-"], input, select, textarea{
       if (!hit){ out.push(it); return; }
       addServers(hit, it.servers);
       if (it.status === 'LIVE') hit.status = 'LIVE';
+      else if (hit.status === 'ENDED' && it.status !== 'ENDED') hit.status = it.status;
       if (!hit.poster && it.poster) hit.poster = it.poster;
       if (!hit.start && it.start) hit.start = it.start;
       if (!hit.names && it.names) hit.names = it.names;
-      if (!hit.t1) hit.t1 = it.t1;
-      if (!hit.t2) hit.t2 = it.t2;
+      var swp = hit.teams && it.teams && !(sameTeam(hit.teams[0], it.teams[0]) && sameTeam(hit.teams[1], it.teams[1]));
+      var n1 = swp ? it.t2 : it.t1, n2 = swp ? it.t1 : it.t2;
+      if (!hit.t1) hit.t1 = n1;
+      if (!hit.t2) hit.t2 = n2;
+      if (!hit.names && it.names) hit.names = swp ? [it.names[1], it.names[0]] : it.names;
     });
     out.forEach(function(it, i){ it.key = 'lmx' + i; relabel(it); });
     items = out;
@@ -15368,7 +15612,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
   }
   function classify(it, cards){
     it.sheet = null; it.fcx = null;
-    if (!it.teams) return it;
+    if (!it.teams || it.status === 'ENDED') return it;      // finished feed matches always get their own card
     cards = cards || window._matchCardsData || [];
     it.sheet = cards.filter(function(c){
       if (typeof isMatchFinished === 'function' && isMatchFinished(c)) return false;
@@ -15397,6 +15641,11 @@ button, a.btn, [class*="btn-"], input, select, textarea{
         classify(it, cards);
         if (!it.sheet) return;
         it.servers.forEach(function(s){ if (!it.sheet._lmxServers.some(function(x){ return x.url === s.url; })) it.sheet._lmxServers.push(cloneServer(s)); });
+        if ((it.t1 || it.t2) && it.teams){
+          var c = it.sheet, dir = eqAny(it.teams[0], [c.team1_full_name, c.team1_code]) || eqAny(it.teams[1], [c.team2_full_name, c.team2_code]);
+          if (!(c.team1_icon_url || '').trim()) c.team1_icon_url = dir ? it.t1 : it.t2;
+          if (!(c.team2_icon_url || '').trim()) c.team2_icon_url = dir ? it.t2 : it.t1;
+        }
         if (it.status === 'LIVE') it.sheet._lmxLive = true;
       });
       if (typeof fcxFindSheetMatch === 'function') cards.forEach(function(c){
@@ -15461,27 +15710,31 @@ button, a.btn, [class*="btn-"], input, select, textarea{
   }
 
   /* ── Matches tab: standalone matches, filed under their SPORT ── */
+  function thumbHtml(it){
+    var i1 = (it.t1 || '').trim(), i2 = (it.t2 || '').trim();
+    if (i1 || i2)
+      return '<div class="fx2-thumb-teams"><div class="fx2-thumb-team"><img src="' + esc(i1) + '" alt="' + esc((it.names && it.names[0]) || '') + '" onerror="this.style.display=\'none\'"></div><div class="fx2-thumb-vs">VS</div><div class="fx2-thumb-team"><img src="' + esc(i2) + '" alt="' + esc((it.names && it.names[1]) || '') + '" onerror="this.style.display=\'none\'"></div></div>';
+    return it.poster ? '<img src="' + esc(it.poster) + '" alt="' + esc(it.title) + '" class="fx2-thumb-img" onerror="this.style.display=\'none\'">' : '';
+  }
   function cardHtml(it, timers){
-    var live = it.status === 'LIVE', uid = it.key, badgeId = 'smo-badge-' + uid;
+    var live = it.status === 'LIVE', ended = it.status === 'ENDED', uid = it.key, badgeId = 'smo-badge-' + uid;
     var liveBadge = '<span class="fx2-badge fx2-badge-live" id="' + badgeId + '"><span class="fx2-live-dot"></span>LIVE</span>';
-    var badge = live ? liveBadge : '<span class="fx2-badge" id="' + badgeId + '">⏰ UPCOMING</span>';
-    var countdown = (!live && it.start) ? it.start.toISOString() : '';
+    var badge = live ? liveBadge : ended ? '<span class="fx2-badge" id="' + badgeId + '">FINISHED</span>' : '<span class="fx2-badge" id="' + badgeId + '">⏰ UPCOMING</span>';
+    var countdown = (!live && !ended && it.start) ? it.start.toISOString() : '';
     var timerId = 'smo-timer-' + uid, wrapId = 'smo-timerwrap-' + uid;
     var timer = '<div class="smo-timer" id="' + wrapId + '" style="visibility:' + (countdown ? 'visible' : 'hidden') + '"><div class="timer-label">STARTS IN</div><div class="timer-display" id="' + timerId + '">--:--:--</div></div>';
-    var thumb = it.poster
-      ? '<img src="' + esc(it.poster) + '" alt="' + esc(it.title) + '" class="fx2-thumb-img" onerror="this.style.display=\'none\'">'
-      : (it.t1 || it.t2)
-        ? '<div class="fx2-thumb-teams"><div class="fx2-thumb-team"><img src="' + esc(it.t1) + '" alt="" onerror="this.style.display=\'none\'"></div><div class="fx2-thumb-vs">VS</div><div class="fx2-thumb-team"><img src="' + esc(it.t2) + '" alt="" onerror="this.style.display=\'none\'"></div></div>'
-        : '';
+    var thumb = thumbHtml(it);
     if (countdown) timers.push({ timerDisplayId:timerId, timerWrapId:wrapId, badgeId:badgeId, liveBadgeHtml:liveBadge, target:countdown });
     var n = it.servers.length;
-    return '<div class="smo-card fx2-card lmx-smo-card" data-live="' + (live?1:0) + '" data-finished="0" data-start-ms="' + (it.start ? it.start.getTime() : 0) + '">' +
+    return '<div class="smo-card fx2-card lmx-smo-card" data-live="' + (live?1:0) + '" data-finished="' + (ended?1:0) + '" data-start-ms="' + (it.start ? it.start.getTime() : (live ? 0 : 8640000000000000)) + '">' +
       '<div class="fx2-thumb">' + thumb + badge + '</div>' +
       '<div class="fx2-body">' +
         '<div class="fx2-title-row"><div class="fx2-title">' + esc(it.title) + '</div><span class="fx2-free">FREE</span></div>' +
-        '<div class="fx2-meta"><span class="fx2-tag">' + esc(it.category || 'Other') + '</span><span class="fx2-date">' + (live ? n + (n === 1 ? ' server' : ' servers') : fmtTime(it.start)) + '</span></div>' +
+        '<div class="fx2-meta"><span class="fx2-tag">' + esc(it.category || 'Other') + '</span><span class="fx2-date">' + (ended ? 'Match over' : live ? n + (n === 1 ? ' server' : ' servers') : fmtTime(it.start)) + '</span></div>' +
         timer +
-        '<a class="smo-btn" href="javascript:void(0)" onclick="event.stopPropagation();return lmxOpenWatch(\'' + escJs(it.key) + '\')">' + (live ? '▶ Watch Now' : '⏰ ' + fmtTime(it.start)) + '</a>' +
+        (ended ? '<span class="smo-btn" style="opacity:.5;pointer-events:none;">MATCH OVER</span>'
+          : !n ? '<span class="smo-btn" style="opacity:.6;pointer-events:none;">' + (live ? 'NO STREAM YET' : '⏰ ' + (it.start ? fmtTime(it.start) : 'NO STREAM YET')) + '</span>'
+          : '<a class="smo-btn" href="javascript:void(0)" onclick="event.stopPropagation();return lmxOpenWatch(\'' + escJs(it.key) + '\')">' + (live ? '▶ Watch Now' : '⏰ ' + fmtTime(it.start)) + '</a>') +
       '</div></div>';
   }
 
@@ -15546,10 +15799,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
     // SonyLIV / API-feed matches with no Sheet / FanCode twin
     extras().forEach(function(it){
       if (it.status !== 'LIVE') return;
-      var thumb = it.poster
-        ? '<img src="' + esc(it.poster) + '" alt="" class="fx2-thumb-img" onerror="this.style.display=\'none\'">'
-        : (it.t1 || it.t2)
-          ? '<div class="fx2-thumb-teams"><div class="fx2-thumb-team"><img src="' + esc(it.t1) + '" alt="" onerror="this.style.display=\'none\'"></div><div class="fx2-thumb-vs">VS</div><div class="fx2-thumb-team"><img src="' + esc(it.t2) + '" alt="" onerror="this.style.display=\'none\'"></div></div>' : '';
+      var thumb = thumbHtml(it);
       list.push({ t: it.start ? it.start.getTime() : Infinity, name: it.title, tag: it.category || 'Live Sports', n: it.servers.length, thumb: thumb,
         click: 'return lmxOpenWatch(\'' + escJs(it.key) + '\')' });
     });
