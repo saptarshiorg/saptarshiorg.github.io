@@ -6781,7 +6781,7 @@ function openMatchWatchScreen(servers, info) {
       // 16:9 thumbnail treatment. A keyword-guessed logo (no real match)
       // or no logo at all falls back to the plain small icon/number.
       const liveChannelLogo = sxFindLiveTvLogoForLabel(s.text);
-      const keywordLogo = liveChannelLogo ? null : sxServerKeywordLogo(s.text);
+      const keywordLogo = liveChannelLogo ? null : (s.icon || sxServerKeywordLogo(s.text));
       const iconHtml = liveChannelLogo
         ? `<span class="mws-server-thumb"><img src="${liveChannelLogo}" alt="" onerror="this.outerHTML='<span class=\\'mws-server-num\\'>${i + 1}</span>'"></span>`
         : keywordLogo
@@ -6795,13 +6795,13 @@ function openMatchWatchScreen(servers, info) {
         ? `onclick="mwsLockedServerTap(this)"`
         : isRawStream
           ? `onclick="closeMatchWatchScreen();sxOpenVlcPopup('${escJs(s.url)}','${escJs(label)}')"`
-          : `onclick="closeMatchWatchScreen();sxGoToMatchUrl(null,'${escJs(s.url)}','${escJs(label)}')"`;
+          : `onclick="closeMatchWatchScreen();sxGoToMatchUrl(null,'${escJs(s.url)}','${escJs(s.playName || label)}')"`;
       return `
       <button type="button" class="mws-server-btn${sheetServersLocked ? ' mws-server-locked' : ''}${isRawStream ? ' mws-server-btn-raw' : ''}" ${srvClick}>
         ${iconHtml}
         <span class="mws-server-info">
           <span class="mws-server-label">${s.text || ('Server ' + (i + 1))}${vlcIcon}${autoConnectBadge}</span>
-          <span class="mws-server-sub">${sheetServersLocked ? 'Locked until ' + startText : 'Tap to play this stream'}</span>
+          <span class="mws-server-sub">${sheetServersLocked ? 'Locked until ' + startText : (s.sub || 'Tap to play this stream')}</span>
         </span>
         <span class="mws-server-play">${sheetServersLocked ? MWS_LOCK_SVG : MWS_PLAY_SVG}</span>
       </button>`;
@@ -7829,6 +7829,7 @@ function renderMatchCards(rows) {
   // previously-appended FanCode section) — put it back using whatever FCX
   // data is currently cached, so it survives this 30s cycle too.
   if (typeof window.fcxAppendHomeSections === 'function') window.fcxAppendHomeSections();
+  if (typeof window.slxAppendHomeSections === 'function') window.slxAppendHomeSections();
 }
 
 function renderChannels(rows) {
@@ -14600,6 +14601,217 @@ button, a.btn, [class*="btn-"], input, select, textarea{
 }
 .btn-slide-watch:hover{ background:var(--pm-magenta-hover,#C21764) !important; }
 </style>
+
+<script id="slx-sonyliv-bridge">
+/* ══════════════════════════════════════════════════════════════════════
+   SLX BRIDGE — SonyLIV LIVE matches (kajju027/SonyLiv-Events-Json).
+   • Only LIVE entries that carry a direct HLS (.m3u8) link are kept, so
+     every stream plays inside the EV StreamPulse (SX 4K) player.
+   • Same match in several languages ("Qatar vs India ... [ENG]" / "[TAM]")
+     — and near-identical names ("Ind v Brazil" / "india v braxil") — are
+     merged into ONE card; each language becomes a server in the selector.
+   • One Matches-tab section per category (sport).
+   ══════════════════════════════════════════════════════════════════════ */
+(function(){
+  'use strict';
+  var API  = 'https://raw.githubusercontent.com/kajju027/SonyLiv-Events-Json/refs/heads/main/sonyliv.json';
+  var LOGO = 'https://upload.wikimedia.org/wikipedia/commons/f/f7/SonyLIV_2020.png';
+  var REFRESH_MS = 60000;
+  window._slxGroups = [];
+  var lastSig = null;
+
+  var LANGS = { ENG:'English', EN:'English', HIN:'Hindi', HI:'Hindi', TAM:'Tamil', TA:'Tamil',
+    TEL:'Telugu', TE:'Telugu', KAN:'Kannada', KA:'Kannada', MAL:'Malayalam', ML:'Malayalam',
+    BEN:'Bengali', BAN:'Bengali', BN:'Bengali', MAR:'Marathi', MR:'Marathi', GUJ:'Gujarati', GU:'Gujarati',
+    PUN:'Punjabi', PA:'Punjabi', ODI:'Odia', ORI:'Odia', OD:'Odia', BHO:'Bhojpuri', URD:'Urdu', UR:'Urdu', ASM:'Assamese' };
+  var ALIAS = { ind:'india', bra:'brazil', pak:'pakistan', eng:'england', aus:'australia', nz:'new zealand',
+    sl:'sri lanka', sa:'south africa', wi:'west indies', ban:'bangladesh', afg:'afghanistan', jpn:'japan',
+    qat:'qatar', tha:'thailand', chn:'china', kor:'south korea', irn:'iran', usa:'united states' };
+  var GENERIC_CAT = /^(sports?|live|other|events?)?$/i;
+
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
+  function titleCase(s){ return String(s||'').toLowerCase().replace(/\b[a-z]/g, function(c){ return c.toUpperCase(); }); }
+
+  function isHls(u){
+    u = String(u || '').trim();
+    if (typeof window.sxIsHlsUrl === 'function') return window.sxIsHlsUrl(u);
+    return /^https?:\/\/[^#?]+\.m3u8(\?|#|$)/i.test(u);
+  }
+  function pickUrl(e){
+    var c = [e.video_url, e.dai_url, e.pub_url];
+    for (var i = 0; i < c.length; i++) if (c[i] && isHls(c[i])) return String(c[i]).trim();
+    return '';
+  }
+  function langOf(e){
+    var raw = (e.match_name || '') + ' ' + (e.event_name || '');
+    var m = raw.match(/\[([^\]]+)\]/);
+    if (m){
+      var code = m[1].trim().toUpperCase();
+      if (LANGS[code]) return LANGS[code];
+      if (code.length > 3) return titleCase(code);
+    }
+    if (e.language) return LANGS[String(e.language).trim().toUpperCase()] || titleCase(e.language);
+    return 'Default';
+  }
+  function normTeam(t){
+    t = String(t||'').toLowerCase().replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();
+    return ALIAS[t] || t;
+  }
+  var DATE_RE = /(\d{1,2}\s*(st|nd|rd|th)?\s*[a-z]{3,9},?\s*\d{2,4})|(\d{4}-\d{2}-\d{2})|(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})/i;
+  function parse(name){
+    var s = String(name||'').replace(/\[[^\]]*\]/g,' ')
+      .replace(/^\s*(live|upcoming|completed)\s*[-:–—]\s*/i,'').replace(/\s+/g,' ').trim();
+    var parts = s.split(/\s+[-–—|]\s+/);
+    var head = parts[0] || s;
+    var vs = head.split(/\s+(?:vs\.?|v\.?|versus)\s+/i);
+    var sport = '', date = '';
+    parts.slice(1).forEach(function(x){
+      x = x.trim();
+      if (!date && DATE_RE.test(x)) date = x.toLowerCase().replace(/[^a-z0-9]/g,'');
+      else if (!sport) sport = x;
+    });
+    return {
+      clean: s,
+      teams: vs.length >= 2 ? [normTeam(vs[0]), normTeam(vs[1])] : [normTeam(head)],
+      sport: sport,
+      date: date
+    };
+  }
+  function lev(a, b){
+    var m = a.length, n = b.length, i, j, d = [];
+    for (i = 0; i <= m; i++){ d[i] = [i]; }
+    for (j = 1; j <= n; j++){ d[0][j] = j; }
+    for (i = 1; i <= m; i++) for (j = 1; j <= n; j++)
+      d[i][j] = Math.min(d[i-1][j] + 1, d[i][j-1] + 1, d[i-1][j-1] + (a[i-1] === b[j-1] ? 0 : 1));
+    return d[m][n];
+  }
+  function sameTeam(a, b){
+    if (a === b) return true;
+    if (!a || !b) return false;
+    if (Math.min(a.length, b.length) >= 3 && (a.indexOf(b) === 0 || b.indexOf(a) === 0)) return true;
+    return 1 - lev(a, b) / Math.max(a.length, b.length) >= 0.78;
+  }
+  function sameMatch(A, B){
+    if (A.cat && B.cat && A.cat.toLowerCase() !== B.cat.toLowerCase()) return false;
+    if (A.p.date && B.p.date && A.p.date !== B.p.date) return false;
+    var a = A.p.teams, b = B.p.teams;
+    if (a.length !== b.length) return false;
+    if (a.length === 1) return 1 - lev(a[0], b[0]) / Math.max(a[0].length, b[0].length, 1) >= 0.85;
+    return (sameTeam(a[0], b[0]) && sameTeam(a[1], b[1])) || (sameTeam(a[0], b[1]) && sameTeam(a[1], b[0]));
+  }
+
+  function buildGroups(json){
+    var list = (json && json.matches) || [];
+    var items = [];
+    list.forEach(function(e){
+      if (!e || String(e.status || '').trim().toLowerCase() !== 'live') return;   // LIVE only
+      var url = pickUrl(e);
+      if (!url) return;                                                            // HLS only
+      var name = e.match_name || e.event_name || '';
+      var p = parse(name);
+      var cat = String(e.category || '').trim();
+      if (GENERIC_CAT.test(cat) && p.sport) cat = p.sport;                         // "Sports" -> "Volleyball"
+      if (!cat) cat = 'Other';
+      items.push({ e:e, url:url, lang:langOf(e), p:p, cat:cat });
+    });
+    var groups = [];
+    items.forEach(function(it){
+      var g = groups.find(function(x){ return sameMatch(x.ref, it); });
+      if (!g){ g = { ref: it, items: [] }; groups.push(g); }
+      g.items.push(it);
+    });
+    return groups.map(function(g, idx){
+      var order = { English:0, Hindi:1 };
+      g.items.sort(function(a, b){
+        var oa = a.lang in order ? order[a.lang] : 9, ob = b.lang in order ? order[b.lang] : 9;
+        return oa - ob || a.lang.localeCompare(b.lang);
+      });
+      var seen = {};
+      var title = g.items.reduce(function(best, it){ return it.p.clean.length > best.length ? it.p.clean : best; }, g.ref.p.clean);
+      var servers = g.items.map(function(it, si){
+        seen[it.lang] = (seen[it.lang] || 0) + 1;
+        var label = it.lang === 'Default' ? 'Server ' + (si + 1)
+          : (seen[it.lang] > 1 ? it.lang + ' ' + seen[it.lang] : it.lang);
+        return { url: it.url, text: label, icon: LOGO, sub: 'SonyLIV · HLS · tap to play', playName: title + ' · ' + label };
+      });
+      var poster = ''; g.items.forEach(function(it){ if (!poster && it.e.poster) poster = it.e.poster; });
+      return { key: 'slx' + idx, title: title, category: g.ref.cat, poster: poster, servers: servers };
+    });
+  }
+
+  function findGroup(key){ return (window._slxGroups || []).find(function(g){ return g.key === key; }) || null; }
+
+  window.slxOpenWatch = function(key){
+    var g = findGroup(key);
+    if (!g || typeof openMatchWatchScreen !== 'function') return false;
+    openMatchWatchScreen(g.servers, {
+      name: g.title,
+      team1_code:'', team1_full_name:'', team1_icon_url:'',
+      team2_code:'', team2_full_name:'', team2_icon_url:'',
+      date_label: g.servers.length + (g.servers.length === 1 ? ' language' : ' languages') + ' available',
+      details: g.category,
+      countdown: '', status: 'live', banner: g.poster || ''
+    });
+    return false;
+  };
+
+  window.slxAppendHomeSections = function(){
+    var el = document.getElementById('match-overlay');
+    if (!el) return;
+    el.querySelectorAll('.slx-smo-section').forEach(function(s){ s.remove(); });
+    var groups = window._slxGroups || [];
+    if (!groups.length) return;
+    var byCat = {}, order = [];
+    groups.forEach(function(g){ if (!byCat[g.category]){ byCat[g.category] = []; order.push(g.category); } byCat[g.category].push(g); });
+    order.forEach(function(cat){
+      var cards = byCat[cat].map(function(g){
+        var n = g.servers.length;
+        return '<div class="smo-card fx2-card" data-live="1" data-finished="0" data-start-ms="0">' +
+          '<div class="fx2-thumb">' +
+            (g.poster ? '<img src="' + esc(g.poster) + '" alt="' + esc(g.title) + '" class="fx2-thumb-img" onerror="this.style.display=\'none\'">' : '') +
+            '<span class="fx2-badge fx2-badge-live"><span class="fx2-live-dot"></span>LIVE</span>' +
+          '</div>' +
+          '<div class="fx2-body">' +
+            '<div class="fx2-title-row"><div class="fx2-title">' + esc(g.title) + '</div><span class="fx2-free">FREE</span></div>' +
+            '<div class="fx2-meta"><span class="fx2-tag">' + esc(g.category) + '</span>' +
+              '<span class="fx2-date">' + n + (n === 1 ? ' language' : ' languages') + '</span></div>' +
+            '<div class="smo-timer" style="visibility:hidden"><div class="timer-label">STARTS IN</div><div class="timer-display">--:--:--</div></div>' +
+            '<a class="smo-btn" href="javascript:void(0)" onclick="event.stopPropagation();return slxOpenWatch(\'' + g.key + '\')">▶ Watch Now</a>' +
+          '</div></div>';
+      }).join('');
+      el.insertAdjacentHTML('beforeend', '<div class="smo-section slx-smo-section"><div class="smo-section-label">SonyLIV · ' + esc(cat) + '</div>' + cards + '</div>');
+      var secs = el.querySelectorAll('.slx-smo-section');
+      var sec = secs[secs.length - 1];
+      if (sec){
+        sec.dataset.game = 'SonyLIV · ' + cat;
+        sec.dataset.sport = (typeof fcxResolveSport === 'function') ? fcxResolveSport(cat) : cat;
+      }
+    });
+    if (typeof sxReorderAllSectionsLiveThenTime === 'function') sxReorderAllSectionsLiveThenTime(el);
+    if (typeof smoApplyFilter === 'function') smoApplyFilter();
+  };
+
+  function load(){
+    fetch(API + '?t=' + Date.now(), { cache: 'no-store' })
+      .then(function(r){ return r.json(); })
+      .then(function(json){
+        var groups = buildGroups(json);
+        var sig = JSON.stringify(groups.map(function(g){ return [g.title, g.category, g.servers.map(function(s){ return s.text + s.url; })]; }));
+        var el = document.getElementById('match-overlay');
+        var present = !!(el && el.querySelector('.slx-smo-section'));
+        window._slxGroups = groups;
+        if (sig === lastSig && (present || !groups.length)) return;
+        lastSig = sig;
+        if (window._matchCardsRawRows && typeof renderMatchCards === 'function') renderMatchCards(window._matchCardsRawRows);
+        else window.slxAppendHomeSections();
+      })
+      .catch(function(err){ console.error('SLX load error:', err); });
+  }
+  load();
+  setInterval(load, REFRESH_MS);
+})();
+</script>
 
 </body>
 </html>
