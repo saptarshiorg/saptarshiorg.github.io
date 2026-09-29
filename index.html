@@ -1130,12 +1130,14 @@ header.scrolled {
   display: flex; flex-direction: column; gap: 10px;
   max-width: 1280px; margin: 0 auto; padding: 10px 20px 0;
 }
-/* Netflix-style genre bar: categories wrap onto multiple rows on desktop
-   when they no longer fit in one line. No horizontal overflow is used. */
+/* Netflix-style genre bar: no box, no dividers, no border anywhere —
+   just borderless tabs with generous spacing on a transparent strip.
+   Only the active tab gets a solid magenta fill; everything else is
+   flat text until hovered or picked. */
 .smo-sport-tabs {
   display: flex;
-  flex-wrap: wrap;
-  overflow: visible;
+  flex-wrap: nowrap;
+  overflow-x: auto;
   scrollbar-width: none; -ms-overflow-style: none;
   gap: 10px;
   width: 100%;
@@ -1147,7 +1149,6 @@ header.scrolled {
   display: inline-flex; align-items: center; justify-content: center;
   flex: 0 0 auto;
   background: transparent;
-  max-width: 100%;
   border: none;
   color: rgba(255,255,255,0.65);
   font-family: var(--font-display); font-weight: 700; font-size: 12px; letter-spacing: 0.6px; text-transform: uppercase;
@@ -3211,13 +3212,6 @@ body::before{ display:none !important; }
   };
 })();
 </script>
-
-<!-- API connection warm-up: establish TLS/DNS early so live feeds start faster -->
-<link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin>
-<link rel="preconnect" href="https://saptarshixtrasports.pages.dev" crossorigin>
-<link rel="preconnect" href="https://saptarshiorg.github.io" crossorigin>
-<link rel="preconnect" href="https://iptv-org.github.io" crossorigin>
-<link rel="preconnect" href="https://docs.google.com" crossorigin>
 </head>
 <body>
  
@@ -6143,230 +6137,6 @@ function toObj(rows) {
   });
 }
 
-// CMS URLs must follow the protocol of the page. A local file:// build may
-// still load an http:// source, but an https:// deployment is not allowed to
-// request http:// images, logos, banners or HLS manifests (mixed content).
-// Do NOT force https on file://, because that can break sources which only
-// exist on plain HTTP. On the live HTTPS site we upgrade CMS http:// URLs.
-function sxCmsUrl(u) {
-  const v = String(u || '').trim();
-  if (!v) return '';
-  return sxUpgradeHttpUrl(v);
-}
-
-// Normalize URL-bearing CMS columns as soon as Sheets data is received so
-// every renderer (cards, search, watch screen, logos and flags) gets the same
-// HTTPS-safe value. Non-URL fields such as country/group/name are untouched.
-function sxNormalizeCmsRows(rows) {
-  return (rows || []).map(row => {
-    const o = Object.assign({}, row);
-    Object.keys(o).forEach(k => {
-      const v = o[k];
-      if (!v) return;
-      if (/(^|_)(url|uri|src|image|icon|logo|banner|poster|thumb|thumbnail|stream|manifest|link|watch)(_|$)/i.test(k)) {
-        o[k] = sxCmsUrl(v);
-      }
-    });
-    return o;
-  });
-}
-
-// ── GLOBAL HTTPS URL SAFETY ───────────────────────────────────────────────
-// APIs are handled exactly like the Sheets CMS.  On an HTTPS deployment,
-// browsers reject HTTP API endpoints, images, logos and HLS manifests as
-// mixed content.  Local file:// builds keep the original URLs.
-function sxUpgradeHttpUrl(value) {
-  const v = String(value == null ? '' : value).trim();
-  if (!v) return value;
-  return (location.protocol === 'https:' && /^http:\/\//i.test(v))
-    ? v.replace(/^http:\/\//i, 'https://')
-    : value;
-}
-
-function sxNormalizeApiValue(value, key) {
-  if (typeof value === 'string') {
-    // Only change strings that are actually URL-like. This avoids modifying
-    // ordinary API text while still catching unknown image/stream fields.
-    if (/^https?:\/\//i.test(value) ||
-        /(url|uri|src|image|icon|logo|banner|poster|thumb|thumbnail|stream|manifest|link|watch|flag|cdn|source|server)/i.test(String(key || ''))) {
-      return sxUpgradeHttpUrl(value);
-    }
-    return value;
-  }
-  if (Array.isArray(value)) return value.map(v => sxNormalizeApiValue(v, key));
-  if (value && typeof value === 'object') {
-    const out = {};
-    Object.keys(value).forEach(k => { out[k] = sxNormalizeApiValue(value[k], k); });
-    return out;
-  }
-  return value;
-}
-
-// Patch fetch globally so ALL API requests are upgraded before the browser
-// makes them, not just CMS requests. JSON responses are recursively
-// normalized too, covering image/flag/HLS fields from any API.
-(function installGlobalHttpsFetchPatch(){
-  if (window.__sxHttpsFetchPatch) return;
-  window.__sxHttpsFetchPatch = true;
-  const nativeFetch = window.fetch.bind(window);
-  window.fetch = function(input, init){
-    try {
-      if (typeof input === 'string') input = sxUpgradeHttpUrl(input);
-      else if (input && input.url) {
-        const upgraded = sxUpgradeHttpUrl(input.url);
-        if (upgraded !== input.url) input = new Request(upgraded, input);
-      }
-    } catch(e) {}
-
-    // Prioritise API GETs so live match/channel data is scheduled before non-critical assets.
-    try {
-      const method = String((init && init.method) || (input && input.method) || 'GET').toUpperCase();
-      if (method === 'GET') {
-        init = Object.assign({ priority: 'high' }, init || {});
-      }
-    } catch(e) {}
-
-    return nativeFetch(input, init).then(function(response){
-      try {
-        const originalJson = response.json.bind(response);
-        response.json = function(){
-          return originalJson().then(function(data){
-            return sxNormalizeApiValue(data, 'api');
-          });
-        };
-      } catch(e) {}
-      return response;
-    });
-  };
-
-  // Catch API code that still uses XMLHttpRequest instead of fetch().
-  try {
-    const nativeOpen = XMLHttpRequest.prototype.open;
-    XMLHttpRequest.prototype.open = function(method, url){
-      const args = Array.prototype.slice.call(arguments);
-      if (typeof url === 'string') args[1] = sxUpgradeHttpUrl(url);
-      return nativeOpen.apply(this, args);
-    };
-  } catch(e) {}
-})();
-
-
-/* ── CMS-FIRST STARTUP GATE ─────────────────────────────────────────────
-   Google Sheets CMS is the site's source of truth.  External match feeds
-   (MSX / SonyLIV / other bridges) are NOT allowed to start until init()
-   has fetched and rendered the CMS.  This prevents an external feed from
-   winning the first render or replacing the CMS skeleton state.
-*/
-window.__cmsReadyPromise = new Promise(function(resolve){
-  window.__resolveCmsReady = resolve;
-});
-window.__cmsReady = false;
-
-function sxAfterCmsReady(fn){
-  var p = window.__cmsReadyPromise || Promise.resolve();
-  return p.then(function(){ return fn(); });
-}
-
-/* ── MATCH FEEDS FIRST: preload Sheets CMS ─────────────────────────────
-   MATCH CARDS starts first; the remaining CMS tabs start only after that
-   request has completed.  No MSX request is started here.
-*/
-(function startSheetsCMSPreload(){
-  if (window.__sheetsCMSFirstPromise) return;
-  try {
-    if (!SHEET_ID || SHEET_ID === 'YOUR_SPREADSHEET_ID_HERE') return;
-
-    // MATCH CARDS is the primary CMS dataset. Start ONLY this request first.
-    // Nothing from MSX or another CMS sheet can block it.
-    var base = 'https://docs.google.com/spreadsheets/d/' + encodeURIComponent(SHEET_ID) + '/gviz/tq?tqx=out:csv&sheet=';
-    var matchUrl = base + encodeURIComponent('MATCH CARDS');
-    window.__sheetsCMSFirstStartedAt = (performance && performance.now) ? performance.now() : Date.now();
-    window.__sheetsCMSFirstPromise = fetch(matchUrl, { cache:'no-cache', priority:'high' })
-      .then(function(r){
-        if(!r.ok) throw new Error('Sheets MATCH CARDS HTTP ' + r.status);
-        return r.text();
-      })
-      .then(function(raw){
-        var hit = {name:'MATCH CARDS', raw:raw};
-        window.__sheetsCMSFirstData = hit;
-        window.__sheetsCMSFirstLoadedAt = (performance && performance.now) ? performance.now() : Date.now();
-        return hit;
-      })
-      .catch(function(err){
-        window.__sheetsCMSFirstError = err;
-        console.warn('[CMS] MATCH CARDS startup fetch failed:', err);
-        return null;
-      });
-
-    // Start the remaining CMS sheets immediately AFTER MATCH CARDS has
-    // completed its first fetch/render. They never depend on MSX.
-    var tabs = ['SETTINGS','TICKER','NAVBAR','HERO SLIDES','LIVE CHANNELS','CATEGORIES','BROADCAST','SCHEDULE','SOCIAL LINKS','FOOTER','WATCH POPUP'];
-    window.__sheetsCMSFirstPromises = Object.create(null);
-    window.__sheetsCMSFirstPromises['MATCH CARDS'] = window.__sheetsCMSFirstPromise;
-    window.__sheetsCMSFirstPromise.then(function(){
-      tabs.forEach(function(name){
-        var url = base + encodeURIComponent(name);
-        window.__sheetsCMSFirstPromises[name] = fetch(url, { cache:'no-cache', priority:'high' })
-          .then(function(r){ if(!r.ok) throw new Error('Sheets HTTP ' + r.status); return r.text(); })
-          .then(function(raw){ return {name:name, raw:raw}; })
-          .catch(function(err){ console.warn('[CMS] startup preload failed for '+name+':', err); return null; });
-      });
-    });
-  } catch(e) { console.warn('[CMS] startup preload setup failed:', e); }
-})();
-
-// MATCH CARDS renders from its own response immediately. This path has no
-// dependency on MSX, SETTINGS, LIVE CHANNELS, or any other CMS sheet.
-(function wireImmediateCmsMatchCards(){
-  if (!window.__sheetsCMSFirstPromise) return;
-  window.__sheetsCMSFirstPromise.then(function(hit){
-    var renderNow = function(){
-      if (!hit || typeof hit.raw !== 'string') return;
-      try {
-        var data = sxNormalizeCmsRows(toObj(parseCSV(hit.raw)));
-        window.__cmsMatchCardsStartupData = data;
-        console.log('[MATCH CARDS] CMS primary render:', data.length);
-        if (typeof renderMatchCards === 'function') renderMatchCards(data);
-      } catch(e) {
-        console.error('[MATCH CARDS] CMS parse/render failed:', e);
-      }
-    };
-    // Never attempt the first DOM render while the document body is still
-    // being parsed. init() will also render the data after DOMContentLoaded.
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', renderNow, {once:true});
-    else renderNow();
-  });
-})();
-
-// Render other CMS sheets independently when each response arrives.
-(function wireImmediateOtherCmsRenders(){
-  if (!window.__sheetsCMSFirstPromises) return;
-  var renderMap = {
-    'SETTINGS': renderSettings,
-    'TICKER': renderTicker,
-    'NAVBAR': renderNav,
-    'HERO SLIDES': renderSlides,
-    'LIVE CHANNELS': renderChannels,
-    'CATEGORIES': renderCategories,
-    'BROADCAST': renderBroadcast,
-    'SCHEDULE': renderSchedule,
-    'SOCIAL LINKS': renderSocial,
-    'FOOTER': renderFooter,
-    'WATCH POPUP': renderWatchPopup
-  };
-  window.__sheetsCMSFirstPromise.then(function(){
-    Object.keys(renderMap).forEach(function(name){
-      var promise = window.__sheetsCMSFirstPromises[name];
-      if (!promise) return;
-      promise.then(function(hit){
-        if (!hit || typeof hit.raw !== 'string') return;
-        try { renderMap[name](sxNormalizeCmsRows(toObj(parseCSV(hit.raw)))); }
-        catch(e) { console.warn('[CMS] immediate render failed for '+name+':', e); }
-      });
-    });
-  });
-})();
-
 const CMS_CACHE_TTL_MS = 60000; // reuse a sheet's data for 60s within the same tab session
 
 async function fetchSheet(name) {
@@ -6376,37 +6146,21 @@ async function fetchSheet(name) {
   }
 
   const cacheKey = `cms_cache_${SHEET_ID}_${name}`;
-
-  // Consume the startup CMS request for this tab before using sessionStorage.
-  // This prevents stale cached data from delaying or replacing the fresh first load.
-  if (window.__sheetsCMSFirstPromises && window.__sheetsCMSFirstPromises[name]) {
-    try {
-      const hit = await window.__sheetsCMSFirstPromises[name];
-      if (hit && typeof hit.raw === 'string') {
-        const data = sxNormalizeCmsRows(toObj(parseCSV(hit.raw)));
-        try { sessionStorage.setItem(cacheKey, JSON.stringify({ t: Date.now(), data })); } catch (e) {}
-        return data;
-      }
-    } catch (e) {
-      console.warn('[CMS] startup preload unavailable for '+name+', falling back to cache/direct fetch:', e);
-    }
-  }
-
   try {
     const cached = sessionStorage.getItem(cacheKey);
     if (cached) {
       const { t, data } = JSON.parse(cached);
-      if (Date.now() - t < CMS_CACHE_TTL_MS) return sxNormalizeCmsRows(data);
+      if (Date.now() - t < CMS_CACHE_TTL_MS) return data;
     }
   } catch (e) { /* ignore cache read errors, fall through to fetch */ }
 
   const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(name)}`;
   try {
-    const r = await fetch(url, { cache:'no-cache', priority:'high' });
+    const r = await fetch(url);
     if (!r.ok) throw new Error(r.status);
     const text = await r.text();
     const rows = parseCSV(text);
-    const data = sxNormalizeCmsRows(toObj(rows));
+    const data = toObj(rows);
     try {
       sessionStorage.setItem(cacheKey, JSON.stringify({ t: Date.now(), data }));
     } catch (e) { /* storage full/unavailable — non-fatal, skip caching */ }
@@ -7251,7 +7005,9 @@ function openMatchWatchScreen(servers, info) {
         ${iconHtml}
         <span class="mws-server-info">
           <span class="mws-server-label">${s.text || ('Server ' + (i + 1))}${vlcIcon}${autoConnectBadge}</span>
-          <span class="mws-server-sub">${sheetServersLocked ? 'Locked until ' + startText : (s.sub || 'Tap to play this stream')}</span></span>
+          <span class="mws-server-sub">${sheetServersLocked ? 'Locked until ' + startText : (s.sub || 'Tap to play this stream')}</span>
+          ${(s.appOnly || (sxIsStreamUrl(s.url) && /^http:\/\//i.test(String(s.url).trim()) && location.protocol === 'https:')) ? '<span class="mws-server-app-note">Only Play Through EV STREAMS APP</span>' : ''}
+        </span>
         <span class="mws-server-play">${sheetServersLocked ? MWS_LOCK_SVG : MWS_PLAY_SVG}</span>
       </button>`;
     }).join('');
@@ -7992,7 +7748,7 @@ setInterval(() => {
   if (window._matchCardsRawRows) renderMatchCards(window._matchCardsRawRows);
 }, 60000);
 
-function renderMatchCardsCore(rows) {
+function renderMatchCards(rows) {
   if (!rows) { console.warn('[MATCH CARDS] fetchSheet returned null — check the tab name is exactly "MATCH CARDS" and the sheet is shared ("Anyone with the link can view").'); return; }
 
   // ── SETTINGS!maintain_matches ────────────────────────────────
@@ -8020,7 +7776,6 @@ function renderMatchCardsCore(rows) {
     return;
   }
 
-  sxApplySheetCountryFlags(rows);
   window._matchCardsRawRows = rows; // cached so smoRefreshAutoLive() can re-render without refetching
   console.log('[MATCH CARDS] raw rows from sheet:', rows.length, rows);
   console.log('[MATCH CARDS] active-flag per row:', rows.map(r => ({ game: r.game, flag_used: activeFlagRaw(r), kept: isRowActive(r) })));
@@ -8029,7 +7784,6 @@ function renderMatchCardsCore(rows) {
   // Drop anything already 15h+ past its scheduled start (countdown_to_iso_datetime)
   // so old matches disappear from the site on their own.
   const cards = allActiveCards.filter(c => !smoIsExpired(c));
-  sxApplySheetCountryFlags(cards);
   window._matchCardsData = cards; // store globally for hero card injection + home preview
 
   // ── Cross-link: if a live FanCode stream is for the same fixture as a
@@ -8293,76 +8047,6 @@ function renderMatchCardsCore(rows) {
   if (typeof window.fcxAppendHomeSections === 'function') window.fcxAppendHomeSections();
   if (typeof window.slxAppendHomeSections === 'function') window.slxAppendHomeSections();
   if (typeof window.msxAppendHomeSections === 'function') window.msxAppendHomeSections();
-}
-
-
-// ── SAFE MATCH CARDS RENDERER ──────────────────────────────────────────
-// The CMS data is the source of truth. Keep the full renderer as the
-// primary path, but never leave the initial skeletons on screen if one
-// optional formatter/field in a CMS row throws an exception.
-function renderMatchCards(rows) {
-  try {
-    return renderMatchCardsCore(rows);
-  } catch (err) {
-    console.error('[MATCH CARDS] primary renderer failed; using safe CMS fallback:', err);
-    try {
-      const source = Array.isArray(rows) ? rows : [];
-      const cards = active(source).filter(c => !smoIsExpired(c));
-      window._matchCardsRawRows = source;
-      window._matchCardsData = cards;
-
-      // Keep the homepage preview populated from the same CMS dataset.
-      try { renderFixtures(); } catch (e) {
-        console.warn('[MATCH CARDS] fallback fixtures render failed:', e);
-      }
-
-      const el = document.getElementById('match-overlay');
-      if (!el) return;
-
-      if (!cards.length) {
-        el.innerHTML = '<div class="smo-empty-box">NO MATCHES LISTED</div>';
-        const sec = document.getElementById('match-overlay-section');
-        if (sec) sec.style.display = '';
-        return;
-      }
-
-      // Minimal, deliberately defensive card markup. It uses only plain
-      // CMS fields, so malformed optional server/date/banner fields cannot
-      // prevent the match itself from appearing.
-      const safe = v => String(v == null ? '' : v)
-        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-      const cardsHtml = cards.map((c, i) => {
-        const t1 = safe(c.team1_full_name || c.team1_code || 'Team 1');
-        const t2 = safe(c.team2_full_name || c.team2_code || 'Team 2');
-        const game = safe(c.game || c.sport || c.sports || 'Live Sports');
-        const status = safe(matchStatusText(c) || 'UPCOMING').toUpperCase();
-        const banner = String(c.banner_url || c.banner_image_url || '').trim();
-        const logo1 = String(c.team1_icon_url || '').trim();
-        const logo2 = String(c.team2_icon_url || '').trim();
-        const media = banner
-          ? '<img class="fx2-thumb-img" src="'+safe(banner)+'" alt="" onerror="this.style.display=\'none\'">'
-          : '<div class="fx2-thumb-teams">'
-            + '<div class="fx2-thumb-team">'+(logo1 ? '<img src="'+safe(logo1)+'" alt="" onerror="this.style.display=\'none\'">' : '')+'</div>'
-            + '<div class="fx2-thumb-vs">VS</div>'
-            + '<div class="fx2-thumb-team">'+(logo2 ? '<img src="'+safe(logo2)+'" alt="" onerror="this.style.display=\'none\'">' : '')+'</div>'
-            + '</div>';
-        let date = '';
-        try { date = safe(smoCardDateLabel(c)); } catch(e) { date = safe(c.date_label || ''); }
-        return '<div class="smo-card fx2-card" data-live="'+(status === 'LIVE' ? '1' : '0')+'">'
-          + '<div class="fx2-thumb">'+media+'<span class="fx2-badge'+(status === 'LIVE' ? ' fx2-badge-live' : '')+'">'+status+'</span></div>'
-          + '<div class="fx2-body"><div class="fx2-title-row"><div class="fx2-title">'+t1+' vs '+t2+'</div><span class="fx2-free">FREE</span></div>'
-          + '<div class="fx2-meta"><span class="fx2-tag">'+game+'</span><span class="fx2-date">'+date+'</span></div>'
-          + '<div class="smo-btn" style="margin-top:8px;opacity:.8;">'+(status === 'LIVE' ? '▶ LIVE' : '⏰ UPCOMING')+'</div>'
-          + '</div></div>';
-      }).join('');
-      el.innerHTML = cardsHtml;
-      const sec = document.getElementById('match-overlay-section');
-      if (sec) sec.style.display = '';
-    } catch (fallbackErr) {
-      console.error('[MATCH CARDS] safe CMS fallback also failed:', fallbackErr);
-    }
-  }
 }
 
 function renderChannels(rows) {
@@ -8680,30 +8364,11 @@ async function init() {
 
   setProgress(40, 'Fetching CMS data…');
 
-  // MATCH CARDS must not wait for unrelated CMS sheets. Its preload starts
-  // at script startup alongside MSX, so render it the instant its response
-  // arrives. The normal all-sheets Promise.all below still runs in parallel
-  // for the remaining CMS renderers.
-  const matchCardsFastPromise = fetchSheet('MATCH CARDS')
-    .then(data => {
-      if (data) {
-        setProgress(46, 'Loading match cards…');
-        try { renderMatchCards(data); }
-        catch (e) { console.warn('[MATCH CARDS] immediate render failed:', e); }
-      }
-      return data;
-    })
-    .catch(e => {
-      console.warn('[MATCH CARDS] immediate load failed:', e);
-      return null;
-    });
-
-  // Fire every other sheet fetch in parallel instead of one-by-one.
+  // Fire every sheet fetch in parallel instead of one-by-one — this is the
+  // single biggest speed win, since 13 sequential round-trips become 1 wait
+  // for the slowest of them, run together.
   const results = await Promise.all(
-    steps.map(([sheet]) => {
-      if (sheet === 'MATCH CARDS') return matchCardsFastPromise;
-      return fetchSheet(sheet).catch(e => { console.warn(`Sheet "${sheet}" failed:`, e); return null; });
-    })
+    steps.map(([sheet]) => fetchSheet(sheet).catch(e => { console.warn(`Sheet "${sheet}" failed:`, e); return null; }))
   );
 
   // Render in the original, correct visual order once all data is back.
@@ -8714,12 +8379,7 @@ async function init() {
       // HERO SLIDES also gets the LIVE CHANNELS rows, so that if the sheet
       // has no active slides it can fall back to a channels banner instead
       // of rendering nothing.
-      // MATCH CARDS was already rendered by matchCardsFastPromise. Do not
-      // rebuild it here unless the fast path returned data before the render
-      // callback ran (normally it is already on screen).
-      if (sheet === 'MATCH CARDS') {
-        if (!window._matchCardsRawRows && results[i]) render(results[i]);
-      } else if (sheet === 'HERO SLIDES') {
+      if (sheet === 'HERO SLIDES') {
         render(results[i], results[liveChannelsIdx]);
       } else {
         render(results[i]);
@@ -8739,18 +8399,6 @@ async function init() {
   }
 
   setProgress(100, 'READY');
-
-  // HARD GATE: only now is CMS considered ready. External feeds are allowed
-  // to start after this point and can augment CMS, but can never win the
-  // initial render.
-  window.__cmsReady = true;
-  if (typeof window.__resolveCmsReady === 'function') {
-    window.__resolveCmsReady({
-      matchCards: window._matchCardsData || [],
-      cmsReadyAt: Date.now()
-    });
-    window.__resolveCmsReady = null;
-  }
 }
 
 // ── UI HELPERS ───────────────────────────────────────────────
@@ -8849,23 +8497,14 @@ const COUNTRY_TO_ISO2 = {
   'international':'', 'global':'', 'world':''
 };
 function countryFlagHTML(rawCountry){
-  const raw = String(rawCountry || '').trim();
+  const raw = (rawCountry || '').trim();
   if (!raw) return '';
-  // Sheets sometimes supplies values such as `IN`, `in`, `India `, or
-  // `India (IN)`. Normalize those variants before looking up the flag.
-  let clean = raw.replace(/^['"\s]+|['"\s]+$/g,'').trim().toLowerCase();
-  let iso = clean;
-  if (COUNTRY_TO_ISO2.hasOwnProperty(clean)) iso = COUNTRY_TO_ISO2[clean];
-  else if (/^[a-z]{2}$/.test(clean)) { /* already ISO-2 */ }
-  else {
-    const m = clean.match(/\(([a-z]{2})\)$/i);
-    if (m) iso = m[1].toLowerCase();
-    else iso = '';
-  }
+  let iso = raw.toLowerCase();
+  if (COUNTRY_TO_ISO2.hasOwnProperty(iso)) iso = COUNTRY_TO_ISO2[iso];
+  else if (/^[a-z]{2}$/.test(iso)) { /* already a bare ISO-2 code from the sheet */ }
+  else iso = '';
   if (!iso) return '';
-  const src = `https://flagcdn.com/w40/${encodeURIComponent(iso)}.png`;
-  const safeAlt = raw.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  return `<img class="epg-flag" src="${src}" alt="${safeAlt}" title="${safeAlt}" loading="lazy" onerror="this.style.display='none'">`;
+  return `<img class="epg-flag" src="https://flagcdn.com/w40/${iso}.png" alt="${raw}" title="${raw}" loading="lazy">`;
 }
 
 // ── CMS-DRIVEN CHANNELS BROWSER (reads LIVE CHANNELS sheet) — EPG list UI ──
@@ -11148,7 +10787,6 @@ body.embed #top{justify-content:flex-end}
   backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 #err.show{display:flex}
 #err .box{max-width:430px;text-align:center}
-#err .ev-app-logo{display:block;width:76px;height:76px;object-fit:contain;margin:0 auto 16px;border-radius:18px;box-shadow:0 10px 35px rgba(240,20,110,.22)}
 #err .ic{width:54px;height:54px;margin:0 auto 14px;border-radius:50%;display:grid;place-items:center;background:var(--accent-dim);color:var(--accent-2)}
 #err .ic svg{width:26px;height:26px}
 #err h2{font-size:18px;font-weight:800;margin-bottom:8px}
@@ -11268,10 +10906,9 @@ body.embed #top{justify-content:flex-end}
 
   <div id="err" role="alert">
     <div class="box">
-      <img class="ev-app-logo" src="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/magenta.png" alt="EV STREAMS" onerror="this.style.display='none'">
       <div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></svg></div>
-      <h2 id="err-t">Only Play Through EV STREAMS APP</h2>
-      <p id="err-b">This stream could not be played in the current player. Open it through EV STREAMS APP.</p>
+      <h2 id="err-t"></h2>
+      <p id="err-b"></p>
       <div class="acts" id="err-a"></div>
     </div>
   </div>
@@ -11385,26 +11022,24 @@ function poke(){
 
 /* ── errors ── */
 var ERR = {
-  cors:      { i:'warn', t:'Only Play Through EV STREAMS APP', b:'This stream could not be played in the current player.', a:[] },
-  mixed:     { i:'warn', t:'Only Play Through EV STREAMS APP', b:'This stream could not be played in the current player.', a:[] },
-  forbidden: { i:'warn', t:'Only Play Through EV STREAMS APP', b:'This stream is currently unavailable in the player.', a:[] },
-  offline:   { i:'warn', t:'Only Play Through EV STREAMS APP', b:'This stream is currently unavailable. Please try again.', a:[] },
-  timeout:   { i:'warn', t:'Only Play Through EV STREAMS APP', b:'The stream did not start in the player.', a:[] },
-  media:     { i:'warn', t:'Only Play Through EV STREAMS APP', b:'This stream could not be played in the current player.', a:[] },
-  native:    { i:'warn', t:'Only Play Through EV STREAMS APP', b:'This stream could not be played in the current player.', a:[] },
-  unsupported:{i:'warn', t:'Only Play Through EV STREAMS APP', b:'This stream is not available in the current player.', a:[] },
-  lib:       { i:'warn', t:'Only Play Through EV STREAMS APP', b:'The playback component could not load this stream.', a:[] },
-  invalid:   { i:'warn', t:'Only Play Through EV STREAMS APP', b:'No playable stream is available for this server.', a:[] },
-  drm:       { i:'warn', t:'Only Play Through EV STREAMS APP', b:'This stream requires playback support that is not available in the current player.', a:[] }
-}
+  cors:      { i:'warn', t:'This stream can\u2019t play in the browser', b:'The stream\u2019s server doesn\u2019t allow web players to load it. It may still play in VLC.', a:['vlc','copy','retry'] },
+  mixed:     { i:'warn', t:'Blocked by browser security', b:'This stream is served over plain http, and this page is secure, so the browser blocks it. Try VLC instead.', a:['vlc','copy','retry'] },
+  forbidden: { i:'warn', t:'The stream refused the request', b:'Its server denied access (the link may have expired or need a login). You can try again or open it in VLC.', a:['retry','vlc','copy'] },
+  offline:   { i:'warn', t:'Stream unavailable', b:'The stream isn\u2019t live right now, or its link has changed. Try again in a moment.', a:['retry'] },
+  timeout:   { i:'warn', t:'The stream didn\u2019t start', b:'It took too long to connect. Check your connection, then try again.', a:['retry','vlc','copy'] },
+  media:     { i:'warn', t:'Playback stopped', b:'The stream broke or uses a format this browser can\u2019t play.', a:['retry','vlc','copy'] },
+  native:    { i:'warn', t:'This browser couldn\u2019t play the stream', b:'Try VLC, or open this page in Chrome, Edge or Firefox.', a:['retry','vlc','copy'] },
+  unsupported:{i:'warn', t:'This browser can\u2019t play HLS', b:'Open this page in a current version of Chrome, Edge, Firefox or Safari.', a:['copy'] },
+  lib:       { i:'warn', t:'Player failed to load', b:'The video library couldn\u2019t be downloaded. Check your connection, then try again.', a:['retry'] },
+  invalid:   { i:'warn', t:'No valid stream link', b:'This player needs an http or https link to an .m3u8 (HLS) or .mpd (DASH) stream.', a:[] },
+  drm:       { i:'lock', t:'Protected stream', b:'This stream uses DRM, which can\u2019t be played here. Pick another server or channel.', a:[] }
+};
 var ACT = {
   retry:'<button class="btn pri" type="button" data-a="retry">Try again</button>',
   vlc:'<button class="btn" type="button" data-a="vlc">Open in VLC</button>',
   copy:'<button class="btn" type="button" data-a="copy">Copy link</button>'
 };
 function showError(kind){
-  // Keep all playback status inside the EV player. Never redirect the user
-  // to an external warning/popup or expose browser/DRM implementation text.
   var e = ERR[kind] || ERR.media;
   st.errShown = true; st.started = false;
   clearTimeout(st.loadTimer);
@@ -11413,7 +11048,7 @@ function showError(kind){
   $('err').querySelector('.ic').innerHTML = IC[e.i];
   $('err-t').textContent = e.t;
   $('err-b').textContent = e.b;
-  $('err-a').innerHTML = '';
+  $('err-a').innerHTML = e.a.map(function(k){ return ACT[k]; }).join('');
   $('err').classList.add('show');
   $('loader').classList.add('hide');
   setClass('err', true); setClass('loading', false); setClass('buffering', false); setClass('idle', false);
@@ -12325,7 +11960,6 @@ const SP_LOADING_LABELS = {
   match:   'Loading Live Match'
 };
 function openStreamPlayer(url, name, type){
-  url = sxCmsUrl(url);
   if (!url || url === '#') return;
   // Match cards, hero slides, and Live TV all funnel every stream link
   // through here — so this is the single choke point to catch any
@@ -15496,7 +15130,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
   };
 
   function load(){
-    fetch(API, { cache: 'no-cache', priority: 'high' })
+    fetch(API + '?t=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.json(); })
       .then(function(json){
         var groups = buildGroups(json);
@@ -15511,12 +15145,8 @@ button, a.btn, [class*="btn-"], input, select, textarea{
       })
       .catch(function(err){ console.error('SLX load error:', err); });
   }
-  // SonyLIV is also an external match source. Keep it behind the same
-  // CMS-first gate so it cannot modify the initial CMS match render.
-  sxAfterCmsReady(function(){
-    load();
-    setInterval(load, REFRESH_MS);
-  });
+  load();
+  setInterval(load, REFRESH_MS);
 })();
 </script>
 
@@ -15548,8 +15178,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
 (function(){
   'use strict';
   var API = 'https://raw.githubusercontent.com/sm-monirulislam/Upcoming-and-Live-Sports-Data/refs/heads/main/Sports_data.json';
-  var REFRESH_MS = 90000; // MSX remains the primary match feed; refresh every 90s
-
+  var REFRESH_MS = 90000;
   window._msxEntries = [];
   var lastSig = null;
 
@@ -15628,740 +15257,6 @@ button, a.btn, [class*="btn-"], input, select, textarea{
     });
   }
 
-
-
-// ── UNIVERSAL COUNTRY → FLAGCDN RESOLVER ────────────────────────────────
-// Country names are the source of truth for team flags. This is used by
-// MSX and MATCH CARDS/Sheets. If a team itself is a country (e.g. India),
-// it automatically gets the matching FlagCDN flag even when the feed did
-// not provide an image URL. Explicit country/ISO fields take priority.
-const SX_COUNTRY_ISO2 = {
-  'abw': 'aw',
-  'afg': 'af',
-  'afghanistan': 'af',
-  'ago': 'ao',
-  'aia': 'ai',
-  'ala': 'ax',
-  'alb': 'al',
-  'albania': 'al',
-  'algeria': 'dz',
-  'america': 'us',
-  'american samoa': 'as',
-  'and': 'ad',
-  'andorra': 'ad',
-  'angola': 'ao',
-  'anguilla': 'ai',
-  'antarctica': 'aq',
-  'antigua and barbuda': 'ag',
-  'arab republic of egypt': 'eg',
-  'are': 'ae',
-  'arg': 'ar',
-  'argentina': 'ar',
-  'argentine republic': 'ar',
-  'arm': 'am',
-  'armenia': 'am',
-  'aruba': 'aw',
-  'asm': 'as',
-  'ata': 'aq',
-  'atf': 'tf',
-  'atg': 'ag',
-  'aus': 'au',
-  'australia': 'au',
-  'austria': 'at',
-  'aut': 'at',
-  'aze': 'az',
-  'azerbaijan': 'az',
-  'bahamas': 'bs',
-  'bahrain': 'bh',
-  'bangladesh': 'bd',
-  'barbados': 'bb',
-  'bdi': 'bi',
-  'bel': 'be',
-  'belarus': 'by',
-  'belgium': 'be',
-  'belize': 'bz',
-  'ben': 'bj',
-  'benin': 'bj',
-  'bermuda': 'bm',
-  'bes': 'bq',
-  'bfa': 'bf',
-  'bgd': 'bd',
-  'bgr': 'bg',
-  'bharat': 'in',
-  'bhr': 'bh',
-  'bhs': 'bs',
-  'bhutan': 'bt',
-  'bih': 'ba',
-  'blm': 'bl',
-  'blr': 'by',
-  'blz': 'bz',
-  'bmu': 'bm',
-  'bol': 'bo',
-  'bolivarian republic of venezuela': 've',
-  'bolivia': 'bo',
-  'bolivia, plurinational state of': 'bo',
-  'bonaire, sint eustatius and saba': 'bq',
-  'bosnia and herzegovina': 'ba',
-  'botswana': 'bw',
-  'bouvet island': 'bv',
-  'bra': 'br',
-  'brazil': 'br',
-  'brb': 'bb',
-  'britain': 'gb',
-  'british indian ocean territory': 'io',
-  'british virgin islands': 'vg',
-  'brn': 'bn',
-  'brunei': 'bn',
-  'brunei darussalam': 'bn',
-  'btn': 'bt',
-  'bulgaria': 'bg',
-  'burkina faso': 'bf',
-  'burma': 'mm',
-  'burundi': 'bi',
-  'bvt': 'bv',
-  'bwa': 'bw',
-  'cabo verde': 'cv',
-  'caf': 'cf',
-  'cambodia': 'kh',
-  'cameroon': 'cm',
-  'can': 'ca',
-  'canada': 'ca',
-  'cape verde': 'cv',
-  'cayman islands': 'ky',
-  'cck': 'cc',
-  'central african republic': 'cf',
-  'chad': 'td',
-  'che': 'ch',
-  'chile': 'cl',
-  'china': 'cn',
-  'chl': 'cl',
-  'chn': 'cn',
-  'christmas island': 'cx',
-  'civ': 'ci',
-  'cmr': 'cm',
-  'cocos (keeling) islands': 'cc',
-  'cod': 'cd',
-  'cog': 'cg',
-  'cok': 'ck',
-  'col': 'co',
-  'colombia': 'co',
-  'com': 'km',
-  'commonwealth of dominica': 'dm',
-  'commonwealth of the bahamas': 'bs',
-  'commonwealth of the northern mariana islands': 'mp',
-  'comoros': 'km',
-  'congo': 'cg',
-  'congo, the democratic republic of the': 'cd',
-  'cook islands': 'ck',
-  'costa rica': 'cr',
-  'cote d ivoire': 'ci',
-  'cpv': 'cv',
-  'cri': 'cr',
-  'croatia': 'hr',
-  'cub': 'cu',
-  'cuba': 'cu',
-  'cuw': 'cw',
-  'cxr': 'cx',
-  'cym': 'ky',
-  'cyp': 'cy',
-  'cyprus': 'cy',
-  'cze': 'cz',
-  'czech republic': 'cz',
-  'czechia': 'cz',
-  'democratic republic of sao tome and principe': 'st',
-  'democratic republic of timor-leste': 'tl',
-  'democratic socialist republic of sri lanka': 'lk',
-  'denmark': 'dk',
-  'deu': 'de',
-  'dji': 'dj',
-  'djibouti': 'dj',
-  'dma': 'dm',
-  'dnk': 'dk',
-  'dom': 'do',
-  'dominica': 'dm',
-  'dominican republic': 'do',
-  'dza': 'dz',
-  'eastern republic of uruguay': 'uy',
-  'ecu': 'ec',
-  'ecuador': 'ec',
-  'egy': 'eg',
-  'egypt': 'eg',
-  'el salvador': 'sv',
-  'england': 'gb-eng',
-  'equatorial guinea': 'gq',
-  'eri': 'er',
-  'eritrea': 'er',
-  'esh': 'eh',
-  'esp': 'es',
-  'est': 'ee',
-  'estonia': 'ee',
-  'eswatini': 'sz',
-  'eth': 'et',
-  'ethiopia': 'et',
-  'falkland islands (malvinas)': 'fk',
-  'faroe islands': 'fo',
-  'federal democratic republic of ethiopia': 'et',
-  'federal democratic republic of nepal': 'np',
-  'federal republic of germany': 'de',
-  'federal republic of nigeria': 'ng',
-  'federal republic of somalia': 'so',
-  'federated states of micronesia': 'fm',
-  'federative republic of brazil': 'br',
-  'fiji': 'fj',
-  'fin': 'fi',
-  'finland': 'fi',
-  'fji': 'fj',
-  'flk': 'fk',
-  'fra': 'fr',
-  'france': 'fr',
-  'french guiana': 'gf',
-  'french polynesia': 'pf',
-  'french republic': 'fr',
-  'french southern territories': 'tf',
-  'fro': 'fo',
-  'fsm': 'fm',
-  'gab': 'ga',
-  'gabon': 'ga',
-  'gabonese republic': 'ga',
-  'gambia': 'gm',
-  'gbr': 'gb',
-  'geo': 'ge',
-  'georgia': 'ge',
-  'germany': 'de',
-  'ggy': 'gg',
-  'gha': 'gh',
-  'ghana': 'gh',
-  'gib': 'gi',
-  'gibraltar': 'gi',
-  'gin': 'gn',
-  'glp': 'gp',
-  'gmb': 'gm',
-  'gnb': 'gw',
-  'gnq': 'gq',
-  'grand duchy of luxembourg': 'lu',
-  'grc': 'gr',
-  'grd': 'gd',
-  'great britain': 'gb',
-  'greece': 'gr',
-  'greenland': 'gl',
-  'grenada': 'gd',
-  'grl': 'gl',
-  'gtm': 'gt',
-  'guadeloupe': 'gp',
-  'guam': 'gu',
-  'guatemala': 'gt',
-  'guernsey': 'gg',
-  'guf': 'gf',
-  'guinea': 'gn',
-  'guinea-bissau': 'gw',
-  'gum': 'gu',
-  'guy': 'gy',
-  'guyana': 'gy',
-  'haiti': 'ht',
-  'hashemite kingdom of jordan': 'jo',
-  'heard island and mcdonald islands': 'hm',
-  'hellenic republic': 'gr',
-  'hkg': 'hk',
-  'hmd': 'hm',
-  'hnd': 'hn',
-  'holy see (vatican city state)': 'va',
-  'honduras': 'hn',
-  'hong kong': 'hk',
-  'hong kong special administrative region of china': 'hk',
-  'hrv': 'hr',
-  'hti': 'ht',
-  'hun': 'hu',
-  'hungary': 'hu',
-  'iceland': 'is',
-  'idn': 'id',
-  'imn': 'im',
-  'ind': 'in',
-  'independent state of papua new guinea': 'pg',
-  'independent state of samoa': 'ws',
-  'india': 'in',
-  'indonesia': 'id',
-  'iot': 'io',
-  'iran': 'ir',
-  'iran, islamic republic of': 'ir',
-  'iraq': 'iq',
-  'ireland': 'ie',
-  'irl': 'ie',
-  'irn': 'ir',
-  'irq': 'iq',
-  'isl': 'is',
-  'islamic republic of afghanistan': 'af',
-  'islamic republic of iran': 'ir',
-  'islamic republic of mauritania': 'mr',
-  'islamic republic of pakistan': 'pk',
-  'isle of man': 'im',
-  'isr': 'il',
-  'israel': 'il',
-  'ita': 'it',
-  'italian republic': 'it',
-  'italy': 'it',
-  'ivory coast': 'ci',
-  'jam': 'jm',
-  'jamaica': 'jm',
-  'japan': 'jp',
-  'jersey': 'je',
-  'jey': 'je',
-  'jor': 'jo',
-  'jordan': 'jo',
-  'jpn': 'jp',
-  'kaz': 'kz',
-  'kazakhstan': 'kz',
-  'ken': 'ke',
-  'kenya': 'ke',
-  'kgz': 'kg',
-  'khm': 'kh',
-  'kingdom of bahrain': 'bh',
-  'kingdom of belgium': 'be',
-  'kingdom of bhutan': 'bt',
-  'kingdom of cambodia': 'kh',
-  'kingdom of denmark': 'dk',
-  'kingdom of eswatini': 'sz',
-  'kingdom of lesotho': 'ls',
-  'kingdom of morocco': 'ma',
-  'kingdom of norway': 'no',
-  'kingdom of saudi arabia': 'sa',
-  'kingdom of spain': 'es',
-  'kingdom of sweden': 'se',
-  'kingdom of thailand': 'th',
-  'kingdom of the netherlands': 'nl',
-  'kingdom of tonga': 'to',
-  'kir': 'ki',
-  'kiribati': 'ki',
-  'kna': 'kn',
-  'kor': 'kr',
-  'korea': 'kr',
-  'korea, republic of': 'kr',
-  'kosovo': 'xk',
-  'kuwait': 'kw',
-  'kwt': 'kw',
-  'kyrgyz republic': 'kg',
-  'kyrgyzstan': 'kg',
-  'lao': 'la',
-  'laos': 'la',
-  'latvia': 'lv',
-  'lbn': 'lb',
-  'lbr': 'lr',
-  'lby': 'ly',
-  'lca': 'lc',
-  'lebanese republic': 'lb',
-  'lebanon': 'lb',
-  'lesotho': 'ls',
-  'liberia': 'lr',
-  'libya': 'ly',
-  'lie': 'li',
-  'liechtenstein': 'li',
-  'lithuania': 'lt',
-  'lka': 'lk',
-  'lso': 'ls',
-  'ltu': 'lt',
-  'lux': 'lu',
-  'luxembourg': 'lu',
-  'lva': 'lv',
-  'mac': 'mo',
-  'macao': 'mo',
-  'macao special administrative region of china': 'mo',
-  'macau': 'mo',
-  'madagascar': 'mg',
-  'maf': 'mf',
-  'malawi': 'mw',
-  'malaysia': 'my',
-  'maldives': 'mv',
-  'mali': 'ml',
-  'malta': 'mt',
-  'mar': 'ma',
-  'marshall islands': 'mh',
-  'martinique': 'mq',
-  'mauritania': 'mr',
-  'mauritius': 'mu',
-  'mayotte': 'yt',
-  'mco': 'mc',
-  'mda': 'md',
-  'mdg': 'mg',
-  'mdv': 'mv',
-  'mex': 'mx',
-  'mexico': 'mx',
-  'mhl': 'mh',
-  'micronesia, federated states of': 'fm',
-  'mkd': 'mk',
-  'mli': 'ml',
-  'mlt': 'mt',
-  'mmr': 'mm',
-  'mne': 'me',
-  'mng': 'mn',
-  'mnp': 'mp',
-  'moldova': 'md',
-  'moldova, republic of': 'md',
-  'monaco': 'mc',
-  'mongolia': 'mn',
-  'montenegro': 'me',
-  'montserrat': 'ms',
-  'morocco': 'ma',
-  'moz': 'mz',
-  'mozambique': 'mz',
-  'mrt': 'mr',
-  'msr': 'ms',
-  'mtq': 'mq',
-  'mus': 'mu',
-  'mwi': 'mw',
-  'myanmar': 'mm',
-  'mys': 'my',
-  'myt': 'yt',
-  'nam': 'na',
-  'namibia': 'na',
-  'nauru': 'nr',
-  'ncl': 'nc',
-  'nepal': 'np',
-  'ner': 'ne',
-  'netherlands': 'nl',
-  'new caledonia': 'nc',
-  'new zealand': 'nz',
-  'nfk': 'nf',
-  'nga': 'ng',
-  'nic': 'ni',
-  'nicaragua': 'ni',
-  'niger': 'ne',
-  'nigeria': 'ng',
-  'niu': 'nu',
-  'niue': 'nu',
-  'nld': 'nl',
-  'nor': 'no',
-  'norfolk island': 'nf',
-  'north korea': 'kp',
-  'north macedonia': 'mk',
-  'northern mariana islands': 'mp',
-  'norway': 'no',
-  'npl': 'np',
-  'nru': 'nr',
-  'nzl': 'nz',
-  'oman': 'om',
-  'omn': 'om',
-  'pak': 'pk',
-  'pakistan': 'pk',
-  'palau': 'pw',
-  'palestine': 'ps',
-  'palestine, state of': 'ps',
-  'pan': 'pa',
-  'panama': 'pa',
-  'papua new guinea': 'pg',
-  'paraguay': 'py',
-  'pcn': 'pn',
-  'per': 'pe',
-  'peru': 'pe',
-  'philippines': 'ph',
-  'phl': 'ph',
-  'pitcairn': 'pn',
-  'plurinational state of bolivia': 'bo',
-  'plw': 'pw',
-  'png': 'pg',
-  'pol': 'pl',
-  'poland': 'pl',
-  'portugal': 'pt',
-  'portuguese republic': 'pt',
-  'pri': 'pr',
-  'principality of andorra': 'ad',
-  'principality of liechtenstein': 'li',
-  'principality of monaco': 'mc',
-  'prk': 'kp',
-  'prt': 'pt',
-  'pry': 'py',
-  'pse': 'ps',
-  'puerto rico': 'pr',
-  'pyf': 'pf',
-  'qat': 'qa',
-  'qatar': 'qa',
-  'republic of albania': 'al',
-  'republic of angola': 'ao',
-  'republic of armenia': 'am',
-  'republic of austria': 'at',
-  'republic of azerbaijan': 'az',
-  'republic of belarus': 'by',
-  'republic of benin': 'bj',
-  'republic of bosnia and herzegovina': 'ba',
-  'republic of botswana': 'bw',
-  'republic of bulgaria': 'bg',
-  'republic of burundi': 'bi',
-  'republic of cabo verde': 'cv',
-  'republic of cameroon': 'cm',
-  'republic of chad': 'td',
-  'republic of chile': 'cl',
-  'republic of colombia': 'co',
-  'republic of costa rica': 'cr',
-  'republic of croatia': 'hr',
-  'republic of cuba': 'cu',
-  'republic of cyprus': 'cy',
-  'republic of djibouti': 'dj',
-  'republic of ecuador': 'ec',
-  'republic of el salvador': 'sv',
-  'republic of equatorial guinea': 'gq',
-  'republic of estonia': 'ee',
-  'republic of fiji': 'fj',
-  'republic of finland': 'fi',
-  'republic of ghana': 'gh',
-  'republic of guatemala': 'gt',
-  'republic of guinea': 'gn',
-  'republic of guinea-bissau': 'gw',
-  'republic of guyana': 'gy',
-  'republic of haiti': 'ht',
-  'republic of honduras': 'hn',
-  'republic of iceland': 'is',
-  'republic of india': 'in',
-  'republic of indonesia': 'id',
-  'republic of iraq': 'iq',
-  'republic of kazakhstan': 'kz',
-  'republic of kenya': 'ke',
-  'republic of kiribati': 'ki',
-  'republic of latvia': 'lv',
-  'republic of liberia': 'lr',
-  'republic of lithuania': 'lt',
-  'republic of madagascar': 'mg',
-  'republic of malawi': 'mw',
-  'republic of maldives': 'mv',
-  'republic of mali': 'ml',
-  'republic of malta': 'mt',
-  'republic of mauritius': 'mu',
-  'republic of moldova': 'md',
-  'republic of mozambique': 'mz',
-  'republic of myanmar': 'mm',
-  'republic of namibia': 'na',
-  'republic of nauru': 'nr',
-  'republic of nicaragua': 'ni',
-  'republic of north macedonia': 'mk',
-  'republic of palau': 'pw',
-  'republic of panama': 'pa',
-  'republic of paraguay': 'py',
-  'republic of peru': 'pe',
-  'republic of poland': 'pl',
-  'republic of san marino': 'sm',
-  'republic of senegal': 'sn',
-  'republic of serbia': 'rs',
-  'republic of seychelles': 'sc',
-  'republic of sierra leone': 'sl',
-  'republic of singapore': 'sg',
-  'republic of slovenia': 'si',
-  'republic of south africa': 'za',
-  'republic of south sudan': 'ss',
-  'republic of suriname': 'sr',
-  'republic of tajikistan': 'tj',
-  'republic of the congo': 'cg',
-  'republic of the gambia': 'gm',
-  'republic of the marshall islands': 'mh',
-  'republic of the niger': 'ne',
-  'republic of the philippines': 'ph',
-  'republic of the sudan': 'sd',
-  'republic of trinidad and tobago': 'tt',
-  'republic of tunisia': 'tn',
-  'republic of uganda': 'ug',
-  'republic of uzbekistan': 'uz',
-  'republic of vanuatu': 'vu',
-  'republic of yemen': 'ye',
-  'republic of zambia': 'zm',
-  'republic of zimbabwe': 'zw',
-  'reu': 're',
-  'romania': 'ro',
-  'rou': 'ro',
-  'rus': 'ru',
-  'russia': 'ru',
-  'russian federation': 'ru',
-  'rwa': 'rw',
-  'rwanda': 'rw',
-  'rwandese republic': 'rw',
-  'saint helena, ascension and tristan da cunha': 'sh',
-  'saint kitts and nevis': 'kn',
-  'saint lucia': 'lc',
-  'saint martin (french part)': 'mf',
-  'saint pierre and miquelon': 'pm',
-  'saint vincent and the grenadines': 'vc',
-  'samoa': 'ws',
-  'san marino': 'sm',
-  'sao tome and principe': 'st',
-  'sau': 'sa',
-  'saudi arabia': 'sa',
-  'scotland': 'gb-sct',
-  'sdn': 'sd',
-  'sen': 'sn',
-  'senegal': 'sn',
-  'serbia': 'rs',
-  'seychelles': 'sc',
-  'sgp': 'sg',
-  'sgs': 'gs',
-  'shn': 'sh',
-  'sierra leone': 'sl',
-  'singapore': 'sg',
-  'sint maarten (dutch part)': 'sx',
-  'sjm': 'sj',
-  'slb': 'sb',
-  'sle': 'sl',
-  'slovak republic': 'sk',
-  'slovakia': 'sk',
-  'slovenia': 'si',
-  'slv': 'sv',
-  'smr': 'sm',
-  'socialist republic of viet nam': 'vn',
-  'solomon islands': 'sb',
-  'som': 'so',
-  'somalia': 'so',
-  'south africa': 'za',
-  'south georgia and the south sandwich islands': 'gs',
-  'south korea': 'kr',
-  'south sudan': 'ss',
-  'spain': 'es',
-  'spm': 'pm',
-  'srb': 'rs',
-  'sri lanka': 'lk',
-  'ssd': 'ss',
-  'state of israel': 'il',
-  'state of kuwait': 'kw',
-  'state of palestine': 'ps',
-  'state of qatar': 'qa',
-  'stp': 'st',
-  'sudan': 'sd',
-  'sultanate of oman': 'om',
-  'sur': 'sr',
-  'suriname': 'sr',
-  'svalbard and jan mayen': 'sj',
-  'svk': 'sk',
-  'svn': 'si',
-  'swaziland': 'sz',
-  'swe': 'se',
-  'sweden': 'se',
-  'swiss confederation': 'ch',
-  'switzerland': 'ch',
-  'swz': 'sz',
-  'sxm': 'sx',
-  'syc': 'sc',
-  'syr': 'sy',
-  'syria': 'sy',
-  'syrian arab republic': 'sy',
-  'taiwan': 'tw',
-  'taiwan, province of china': 'tw',
-  'tajikistan': 'tj',
-  'tanzania': 'tz',
-  'tanzania, united republic of': 'tz',
-  'tca': 'tc',
-  'tcd': 'td',
-  'tgo': 'tg',
-  'tha': 'th',
-  'thailand': 'th',
-  'the state of eritrea': 'er',
-  'the state of palestine': 'ps',
-  'timor-leste': 'tl',
-  'tjk': 'tj',
-  'tkl': 'tk',
-  'tkm': 'tm',
-  'tls': 'tl',
-  'togo': 'tg',
-  'togolese republic': 'tg',
-  'tokelau': 'tk',
-  'ton': 'to',
-  'tonga': 'to',
-  'trinidad and tobago': 'tt',
-  'tto': 'tt',
-  'tun': 'tn',
-  'tunisia': 'tn',
-  'tur': 'tr',
-  'turkey': 'tr',
-  'turkmenistan': 'tm',
-  'turks and caicos islands': 'tc',
-  'tuv': 'tv',
-  'tuvalu': 'tv',
-  'twn': 'tw',
-  'tza': 'tz',
-  'uae': 'ae',
-  'uga': 'ug',
-  'uganda': 'ug',
-  'uk': 'gb',
-  'ukr': 'ua',
-  'ukraine': 'ua',
-  'umi': 'um',
-  'union of the comoros': 'km',
-  'united arab emirates': 'ae',
-  'united kingdom': 'gb',
-  'united kingdom of great britain and northern ireland': 'gb',
-  'united mexican states': 'mx',
-  'united republic of tanzania': 'tz',
-  'united states': 'us',
-  'united states minor outlying islands': 'um',
-  'united states of america': 'us',
-  'uruguay': 'uy',
-  'ury': 'uy',
-  'us': 'us',
-  'usa': 'us',
-  'uzb': 'uz',
-  'uzbekistan': 'uz',
-  'vanuatu': 'vu',
-  'vat': 'va',
-  'vct': 'vc',
-  'ven': 've',
-  'venezuela': 've',
-  'venezuela, bolivarian republic of': 've',
-  'vgb': 'vg',
-  'viet nam': 'vn',
-  'vietnam': 'vn',
-  'vir': 'vi',
-  'virgin islands of the united states': 'vi',
-  'virgin islands, british': 'vg',
-  'virgin islands, u.s.': 'vi',
-  'vnm': 'vn',
-  'vut': 'vu',
-  'wales': 'gb-wls',
-  'wallis and futuna': 'wf',
-  'western sahara': 'eh',
-  'wlf': 'wf',
-  'wsm': 'ws',
-  'yem': 'ye',
-  'yemen': 'ye',
-  'zaf': 'za',
-  'zambia': 'zm',
-  'zimbabwe': 'zw',
-  'zmb': 'zm',
-  'zwe': 'zw',
-};
-function sxCountryKey(v){
-  return String(v == null ? '' : v).trim().toLowerCase()
-    .replace(/[’']/g,'')
-    .replace(/[._-]+/g,' ')
-    .replace(/\s+/g,' ');
-}
-function sxCountryIso2(value){
-  const raw = String(value == null ? '' : value).trim();
-  if (!raw) return '';
-  const key = sxCountryKey(raw);
-  if (SX_COUNTRY_ISO2[key]) return SX_COUNTRY_ISO2[key];
-  const parens = key.match(/\(([a-z]{2,3})\)$/);
-  if (parens && SX_COUNTRY_ISO2[parens[1]]) return SX_COUNTRY_ISO2[parens[1]];
-  const code = key.match(/^(?:[a-z]{2}|[a-z]{3})$/);
-  if (code && SX_COUNTRY_ISO2[code[0]]) return SX_COUNTRY_ISO2[code[0]];
-  return '';
-}
-function sxFlagCdnUrl(value){
-  const iso = sxCountryIso2(value);
-  // Direct SVG is vector/lossless and therefore stays sharp at any size.
-  return iso ? ('https://flagcdn.com/' + iso + '.svg') : '';
-}
-function sxTeamCountryFlag(teamName, explicitCountry, fallback){
-  const fromCountry = sxFlagCdnUrl(explicitCountry);
-  if (fromCountry) return fromCountry;
-  const fromTeam = sxFlagCdnUrl(teamName);
-  if (fromTeam) return fromTeam;
-  return fallback ? sxCmsUrl(fallback) : '';
-}
-function sxApplySheetCountryFlags(cards){
-  (cards || []).forEach(function(c){
-    if (!c) return;
-    const aCountry = c.team1_country || c.team1Country || c.team_1_country || c.team1_iso2 || c.team1_iso || c.team1_iso3 || c.team1Iso3 || c.home_country || c.homeCountry || c.home_iso || '';
-    const bCountry = c.team2_country || c.team2Country || c.team_2_country || c.team2_iso2 || c.team2_iso || c.team2_iso3 || c.team2Iso3 || c.away_country || c.awayCountry || c.away_iso || '';
-    const a = sxTeamCountryFlag(c.team1_full_name || c.team1_code || '', aCountry, c.team1_icon_url);
-    const b = sxTeamCountryFlag(c.team2_full_name || c.team2_code || '', bCountry, c.team2_icon_url);
-    if (a) c.team1_icon_url = a;
-    if (b) c.team2_icon_url = b;
-  });
-  return cards;
-}
-
   function buildEntries(json){
     var list = (json && json.matches) || [];
     var out = [];
@@ -16377,29 +15272,19 @@ function sxApplySheetCountryFlags(cards){
       }
       var streams = [];
       (e.streams || []).forEach(function(s){
-        if (!s) return;
-        // Keep every MSX stream in the match data. Do not hide a match because
-        // a server uses DRM, DASH/MPD, special headers, or another playback
-        // requirement. The player will simply attempt playback when selected.
-        var su = (s.stream_url && /^https?:\/\//i.test(String(s.stream_url).trim()))
-          ? String(s.stream_url).trim()
-          : ((window.LMX && LMX.scan(s)[0]) || '');
-        if (su) streams.push({ stream_url: su, channel_name: s.channel_name || s.name || s.title });
+        if (!s) return;                                                          // DRM (kid/key/license) streams are kept — flagged app-only below
+        var su = (window.LMX && LMX.scan(s)[0]) || (s.stream_url && isHls(s.stream_url) ? String(s.stream_url).trim() : '');
+        if (su) streams.push({ stream_url: su, channel_name: s.channel_name || s.name || s.title, appOnly: needsApp(s) || needsApp(e) || !!(window.LMX && (LMX.hasDrm(s) || LMX.hasDrm(e, true))) });
       });
-      if (!streams.length && window.LMX) {
-        // Best-effort URL discovery only; never discard the match because the
-        // feed entry is DRM/app-only/MPD. If no URL is exposed, the match still
-        // remains visible with an empty server list.
-        LMX.scan(e).forEach(function(u, k){
-          if (u) streams.push({ stream_url: u, channel_name: 'Server ' + (k + 1) });
-        });
-      }
+      if (!streams.length && !(e.streams && e.streams.length) && window.LMX)     // no streams[] at all — scan the whole entry
+        LMX.scan(e).forEach(function(u, k){ streams.push({ stream_url: u, channel_name: 'Server ' + (k + 1), appOnly: needsApp(e) || !!(window.LMX && LMX.hasDrm(e, true)) }); });
+      // (no streams yet -> still listed, card shows 'No stream yet')
       var seenNames = {};
       var servers = streams.map(function(s){
         var name = (s.channel_name || 'Server').trim() || 'Server';
         if (seenNames[name]) { seenNames[name]++; name = name + ' ' + seenNames[name]; }
         else seenNames[name] = 1;
-        return { url: s.stream_url.trim(), text: name, sub: 'tap to play' };
+        return { url: s.stream_url.trim(), text: name, sub: 'tap to play', appOnly: !!s.appOnly };
       });
       var sameTeamEvent = teamA.toLowerCase() === teamB.toLowerCase();
       out.push({
@@ -16410,45 +15295,17 @@ function sxApplySheetCountryFlags(cards){
         blob: (window.sxBlob ? sxBlob(e) : ''),
         status: status,
         start: parseStart(info.startTime),
-        poster: up(info.event_logo) || (sameTeamEvent ? msxFlag({name: teamA, country: msxCountryFor(info, e, 'A', teamA)}, info.teamAFlag) : ''),
-        // MSX country data is the source of truth for team flags. Replace the
-        // feed's Team A/Team B flag URLs with FlagCDN when an ISO-2 code is available.
-        team1_icon_url: sameTeamEvent ? '' : msxFlag({name: teamA, country: msxCountryFor(info, e, 'A', teamA)}, info.teamAFlag),
-        team2_icon_url: sameTeamEvent ? '' : msxFlag({name: teamB, country: msxCountryFor(info, e, 'B', teamB)}, info.teamBFlag),
+        poster: up(info.event_logo) || (sameTeamEvent ? up(info.teamAFlag) : ''),
+        // Team A flag = Team A logo, Team B flag = Team B logo.
+        // (Single-name events carry the same image on both sides — that is the event logo, not two teams.)
+        team1_icon_url: sameTeamEvent ? '' : up(info.teamAFlag), team2_icon_url: sameTeamEvent ? '' : up(info.teamBFlag),
         servers: servers
       });
     });
     return out;
   }
 
-  // MSX flags: explicit country data first; otherwise detect when the
-  // normal Team A / Team B name itself is a country. Ignore the feed image
-  // URL whenever a country match exists and use a sharp FlagCDN SVG.
-  function msxCountryFor(info, entry, side, teamName){
-    var I = info || {}, E = entry || {};
-    var lower = String(side || '').toLowerCase();
-    var keys = lower === 'a'
-      ? ['teamA_country','teamACountry','team_a_country','team1_country','team1Country','teamA_iso2','teamA_iso3','teamA_country_code','teamA_countryCode','home_country','homeCountry','home_iso2','home_iso3','countryA','country_a']
-      : ['teamB_country','teamBCountry','team_b_country','team2_country','team2Country','teamB_iso2','teamB_iso3','teamB_country_code','teamB_countryCode','away_country','awayCountry','away_iso2','away_iso3','countryB','country_b'];
-    for (var i=0;i<keys.length;i++){
-      var k=keys[i];
-      if (I[k] != null && String(I[k]).trim()) return I[k];
-      if (E[k] != null && String(E[k]).trim()) return E[k];
-    }
-    var obj = lower === 'a' ? I.teamA : I.teamB;
-    if (obj && typeof obj === 'object'){
-      var v = obj.countryCode || obj.country_code || obj.iso2 || obj.iso_2 || obj.iso3 || obj.iso_3 || obj.country || obj.nation || obj.nationality;
-      if (v) return v;
-    }
-    // If the feed itself gives the team as a country name/code, the team name is enough.
-    return teamName || '';
-  }
-  function msxFlag(teamValue, flagUrl){
-    var teamName = (typeof teamValue === 'object') ? (teamValue.name || teamValue.full_name || teamValue.team || '') : teamValue;
-    var explicit = (typeof teamValue === 'object') ? (teamValue.countryCode || teamValue.country_code || teamValue.iso2 || teamValue.iso_2 || teamValue.iso3 || teamValue.iso_3 || teamValue.country || '') : '';
-    return sxTeamCountryFlag(teamName, explicit, flagUrl);
-  }
-  function up(u){ return sxCmsUrl(u); }   // HTTPS pages upgrade HTTP API image/stream URLs; file:// keeps originals
+  function up(u){ u = String(u || '').trim(); return u.replace(/^http:\/\//i, 'https://'); }   // no mixed-content blocked logos
   // A browser cannot set Referer / User-Agent / Origin / Cookie on media requests, so a stream whose
   // feed entry lists any of them is blocked in the browser -> app only. Plain http:// on an https page too.
   function needsApp(o){
@@ -16482,7 +15339,6 @@ function sxApplySheetCountryFlags(cards){
   // fixture. Runs after fcxAugmentSheetCards so it only takes slots
   // FanCode's own cross-link left empty.
   function augmentSheetCards(cards, entries){
-    if (typeof sxApplySheetCountryFlags === 'function') sxApplySheetCountryFlags(cards);
     var urlSlots = ['btn_url','btn_url_2','btn_url_3','btn_url_4','btn_url_5'];
     var textSlots = ['btn_text','btn_text_2','btn_text_3','btn_text_4','btn_text_5'];
     (entries||[]).forEach(function(m){
@@ -16555,19 +15411,9 @@ function sxApplySheetCountryFlags(cards){
   };
 
   function load(){
-    // CMS is the source of truth. MSX starts ONLY after the complete CMS
-    // startup (all CMS tabs + panels) has rendered.
-    var first = fetch(API, { cache: 'no-cache', priority: 'high' })
-      .then(function(r){
-        if (!r.ok) throw new Error('MSX HTTP ' + r.status);
-        return r.json();
-      });
-    window.__msxFirstPromise = first;
-    first.then(function(json){
-        // MSX may fail completely; CMS MATCH CARDS and all other CMS sheets
-        // must continue rendering independently. Do not let a missing MSX
-        // response prevent the normal CMS-backed match cards from appearing.
-        if (!json) return;
+    fetch(API + '?t=' + Date.now(), { cache: 'no-store' })
+      .then(function(r){ return r.json(); })
+      .then(function(json){
         var entries = buildEntries(json);
         var sig = JSON.stringify(entries.map(function(m){ return [m.key, m.title, m.status, m.servers.map(function(s){ return s.text+s.url; })]; }));
         window._msxEntries = entries;
@@ -16578,12 +15424,8 @@ function sxApplySheetCountryFlags(cards){
       })
       .catch(function(err){ console.error('MSX load error:', err); });
   }
-  // HARD CMS-FIRST START: do not even request Sports_data.json until CMS
-  // has finished its first render.
-  sxAfterCmsReady(function(){
-    load();
-    setInterval(load, REFRESH_MS);
-  });
+  load();
+  setInterval(load, REFRESH_MS);
 })();
 </script>
 
