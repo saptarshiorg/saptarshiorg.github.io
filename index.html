@@ -7582,6 +7582,9 @@ function renderMatchCards(rows) {
   // add it as an extra server on that row — the sheet card keeps its own
   // banner/thumbnail exactly as configured, this only adds a watch option.
   if (typeof fcxAugmentSheetCards === 'function') fcxAugmentSheetCards(cards);
+  // Same idea, for the sm-monirulislam live+upcoming feed (MSX bridge) —
+  // added second so it only fills slots FanCode's own cross-link left empty.
+  if (typeof window._msxAugment === 'function') window._msxAugment(cards, window._msxEntries || []);
 
   if (typeof renderFixtures === 'function') renderFixtures(); // home "Matches" preview now sources from this same data
   const el = document.getElementById('match-overlay');
@@ -7830,6 +7833,7 @@ function renderMatchCards(rows) {
   // data is currently cached, so it survives this 30s cycle too.
   if (typeof window.fcxAppendHomeSections === 'function') window.fcxAppendHomeSections();
   if (typeof window.slxAppendHomeSections === 'function') window.slxAppendHomeSections();
+  if (typeof window.msxAppendHomeSections === 'function') window.msxAppendHomeSections();
 }
 
 function renderChannels(rows) {
@@ -14807,6 +14811,263 @@ button, a.btn, [class*="btn-"], input, select, textarea{
         else window.slxAppendHomeSections();
       })
       .catch(function(err){ console.error('SLX load error:', err); });
+  }
+  load();
+  setInterval(load, REFRESH_MS);
+})();
+</script>
+
+<script id="msx-bridge">
+/* ══════════════════════════════════════════════════════════════════════
+   MSX BRIDGE — full LIVE + UPCOMING sports feed
+   (sm-monirulislam/Upcoming-and-Live-Sports-Data · Sports_data.json).
+
+   Cross-checked against all three other match sources so nothing ever
+   renders twice:
+     • Already a MATCH CARDS sheet row (same two teams)  → its HLS streams
+       are folded into that row as extra server options (augmentSheetCards),
+       same idea as fcxAugmentSheetCards for FanCode. No separate card.
+     • Already a FanCode (FCX) card                      → dropped, FCX
+       already shows/merges it.
+     • Already a SonyLIV (SLX) card                       → dropped, SLX
+       already shows it.
+   Whatever's left gets its own "More Matches · <Category>" section.
+
+   Playability: this feed mixes plain HLS (.m3u8) links with DASH (.mpd)
+   manifests, some ClearKey-DRM protected (kid/key pairs) and some that
+   need a spoofed Referer/User-Agent. The site's own player (EV
+   StreamPulse) has no DASH/EME engine and browsers can't force a custom
+   Referer on media requests from JS, so none of those would actually
+   play if offered — only direct, header-free .m3u8 streams are kept.
+   A fixture whose every stream is .mpd/DRM-only is skipped entirely
+   rather than shown with a dead "Watch Now" button.
+   ══════════════════════════════════════════════════════════════════════ */
+(function(){
+  'use strict';
+  var API = 'https://raw.githubusercontent.com/sm-monirulislam/Upcoming-and-Live-Sports-Data/refs/heads/main/Sports_data.json';
+  var REFRESH_MS = 90000;
+  window._msxEntries = [];
+  var lastSig = null;
+
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
+  function escJs(s){ return String(s == null ? '' : s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+  function isHls(u){
+    u = String(u || '').trim();
+    if (typeof window.sxIsHlsUrl === 'function') return window.sxIsHlsUrl(u);
+    return /^https?:\/\/[^#?]+\.m3u8(\?|#|$)/i.test(u);
+  }
+
+  function normTeam(t){ return String(t||'').toLowerCase().replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim(); }
+  function lev(a, b){
+    var m = a.length, n = b.length, i, j, d = [];
+    for (i = 0; i <= m; i++){ d[i] = [i]; }
+    for (j = 1; j <= n; j++){ d[0][j] = j; }
+    for (i = 1; i <= m; i++) for (j = 1; j <= n; j++)
+      d[i][j] = Math.min(d[i-1][j] + 1, d[i][j-1] + 1, d[i-1][j-1] + (a[i-1] === b[j-1] ? 0 : 1));
+    return d[m][n];
+  }
+  function sameTeam(a, b){
+    a = normTeam(a); b = normTeam(b);
+    if (!a || !b) return false;
+    if (a === b) return true;
+    if (Math.min(a.length, b.length) >= 3 && (a.indexOf(b) === 0 || b.indexOf(a) === 0)) return true;
+    return 1 - lev(a, b) / Math.max(a.length, b.length) >= 0.78;
+  }
+
+  // "DD/MM/YYYY hh:mm:ss AM/PM" (this feed's format — day values >12 in
+  // the data confirm day-first, not month-first) -> Date, or null.
+  function parseStart(s){
+    var m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2}):(\d{2})\s*(AM|PM)$/i.exec(String(s||'').trim());
+    if (!m) return null;
+    var dd = +m[1], mo = +m[2], yy = +m[3], hh = +m[4], mi = +m[5], ss = +m[6], ap = m[7].toUpperCase();
+    if (ap === 'PM' && hh !== 12) hh += 12;
+    if (ap === 'AM' && hh === 12) hh = 0;
+    var d = new Date(yy, mo - 1, dd, hh, mi, ss);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  function fmtTime(d){
+    if (!d) return 'TBA';
+    var dp = d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}).toUpperCase();
+    var h = d.getHours(); var mm = String(d.getMinutes()).padStart(2,'0');
+    var ap = h>=12?'PM':'AM'; h=h%12; if(h===0)h=12;
+    return dp + ', ' + h + ':' + mm + ' ' + ap;
+  }
+  function startMs(m){ return (m.start instanceof Date) ? m.start.getTime() : Infinity; }
+
+  function findSheetCard(teamA, teamB){
+    var rows = window._matchCardsRawRows || [];
+    return rows.find(function(c){
+      return ((sameTeam(teamA, c.team1_full_name) || sameTeam(teamA, c.team1_code)) &&
+              (sameTeam(teamB, c.team2_full_name) || sameTeam(teamB, c.team2_code))) ||
+             ((sameTeam(teamA, c.team2_full_name) || sameTeam(teamA, c.team2_code)) &&
+              (sameTeam(teamB, c.team1_full_name) || sameTeam(teamB, c.team1_code)));
+    }) || null;
+  }
+  function hasSheetCard(teamA, teamB){ return !!findSheetCard(teamA, teamB); }
+  function hasFcxCard(teamA, teamB){
+    var list = window._fcxMatchesCache || [];
+    if (typeof fcxTitleHasTeam !== 'function') return false;
+    return list.some(function(m){
+      var title = m.title || '';
+      return fcxTitleHasTeam(title, teamA, teamA) && fcxTitleHasTeam(title, teamB, teamB);
+    });
+  }
+  function hasSlxCard(teamA, teamB){
+    var groups = window._slxGroups || [];
+    var a = normTeam(teamA), b = normTeam(teamB);
+    if (!a || !b) return false;
+    return groups.some(function(g){
+      var title = normTeam(g.title || '');
+      return title.indexOf(a) !== -1 && title.indexOf(b) !== -1;
+    });
+  }
+
+  function buildEntries(json){
+    var list = (json && json.matches) || [];
+    var out = [];
+    list.forEach(function(e, idx){
+      if (!e) return;
+      var status = String(e.status||'').trim().toUpperCase();
+      if (status !== 'LIVE' && status !== 'UPCOMING') return;
+      var info = e.eventInfo || {};
+      var teamA = (info.teamA || '').trim(), teamB = (info.teamB || '').trim();
+      if (!teamA || !teamB) return;
+      var streams = (e.streams || []).filter(function(s){ return s && s.stream_url && !s.kid && !s.key && isHls(s.stream_url); });
+      if (!streams.length) return; // nothing directly playable in-page — skip
+      var seenNames = {};
+      var servers = streams.map(function(s){
+        var name = (s.channel_name || 'Server').trim() || 'Server';
+        if (seenNames[name]) { seenNames[name]++; name = name + ' ' + seenNames[name]; }
+        else seenNames[name] = 1;
+        return { url: s.stream_url.trim(), text: name, sub: 'tap to play' };
+      });
+      var sameTeamEvent = teamA.toLowerCase() === teamB.toLowerCase();
+      out.push({
+        key: 'msx' + idx,
+        title: sameTeamEvent ? (info.eventName || e.event_name || teamA) : (teamA + ' vs ' + teamB),
+        teamA: teamA, teamB: teamB, sameTeamEvent: sameTeamEvent,
+        category: (e.Category || '').trim() || 'Other',
+        status: status,
+        start: parseStart(info.startTime),
+        poster: info.event_logo || info.teamAFlag || '',
+        team1_icon_url: info.teamAFlag || '', team2_icon_url: info.teamBFlag || '',
+        servers: servers
+      });
+    });
+    return out;
+  }
+
+  function findEntry(key){ return (window._msxEntries || []).find(function(m){ return m.key === key; }) || null; }
+
+  window.msxOpenWatch = function(key){
+    var m = findEntry(key);
+    if (!m || typeof openMatchWatchScreen !== 'function') return false;
+    var isLive = m.status === 'LIVE';
+    openMatchWatchScreen(m.servers, {
+      name: m.title,
+      team1_code:'', team1_full_name: m.sameTeamEvent ? '' : m.teamA, team1_icon_url: m.team1_icon_url,
+      team2_code:'', team2_full_name: m.sameTeamEvent ? '' : m.teamB, team2_icon_url: m.team2_icon_url,
+      date_label: fmtTime(m.start),
+      details: m.category,
+      countdown: (!isLive && m.start) ? m.start.toISOString() : '',
+      status: isLive ? 'live' : 'upcoming',
+      banner: m.poster || ''
+    });
+    return false;
+  };
+
+  // Drop MSX streams into matching sheet cards as extra server options —
+  // same idea as fcxAugmentSheetCards, but fills every empty slot going
+  // (not just one), since this feed often carries several channels per
+  // fixture. Runs after fcxAugmentSheetCards so it only takes slots
+  // FanCode's own cross-link left empty.
+  function augmentSheetCards(cards, entries){
+    var urlSlots = ['btn_url','btn_url_2','btn_url_3','btn_url_4','btn_url_5'];
+    var textSlots = ['btn_text','btn_text_2','btn_text_3','btn_text_4','btn_text_5'];
+    (entries||[]).forEach(function(m){
+      if (m.sameTeamEvent) return;
+      var c = findSheetCard(m.teamA, m.teamB);
+      if (!c) return;
+      var existing = {};
+      textSlots.forEach(function(t){ var v=(c[t]||'').trim().toLowerCase(); if(v) existing[v]=1; });
+      m.servers.forEach(function(s){
+        if (existing[s.text.toLowerCase()]) return;
+        var emptyIdx = urlSlots.findIndex(function(slot){ var v=(c[slot]||'').toString().trim(); return !v || v==='#'; });
+        if (emptyIdx === -1) return;
+        c[urlSlots[emptyIdx]] = s.url;
+        c[textSlots[emptyIdx]] = s.text;
+        existing[s.text.toLowerCase()] = 1;
+      });
+    });
+  }
+  window._msxAugment = augmentSheetCards;
+
+  window.msxAppendHomeSections = function(){
+    var el = document.getElementById('match-overlay');
+    if (!el) return;
+    el.querySelectorAll('.msx-smo-section').forEach(function(s){ s.remove(); });
+    var entries = window._msxEntries || [];
+    if (!entries.length) return;
+    var fresh = entries.filter(function(m){
+      if (m.sameTeamEvent) return true; // single-name "event" (Golf/Tennis blocks) — no teams to match against
+      if (hasSheetCard(m.teamA, m.teamB)) return false;   // folded into that sheet card above instead
+      if (hasFcxCard(m.teamA, m.teamB)) return false;     // FanCode already shows it
+      if (hasSlxCard(m.teamA, m.teamB)) return false;     // SonyLIV already shows it
+      return true;
+    });
+    if (!fresh.length) return;
+    var byCat = {}, order = [];
+    fresh.forEach(function(m){ if (!byCat[m.category]){ byCat[m.category] = []; order.push(m.category); } byCat[m.category].push(m); });
+    var timers = [];
+    order.forEach(function(cat){
+      var cardsHtml = byCat[cat].map(function(m){
+        var isLive = m.status === 'LIVE';
+        var uid = m.key;
+        var badgeId = 'smo-badge-' + uid;
+        var liveBadgeHtml = '<span class="fx2-badge fx2-badge-live" id="'+badgeId+'"><span class="fx2-live-dot"></span>LIVE</span>';
+        var badge = isLive ? liveBadgeHtml : '<span class="fx2-badge" id="'+badgeId+'">⏰ UPCOMING</span>';
+        var countdown = (!isLive && m.start) ? m.start.toISOString() : '';
+        var timerId = 'smo-timer-' + uid, timerWrapId = 'smo-timerwrap-' + uid;
+        var timerBlock = '<div class="smo-timer" id="'+timerWrapId+'" style="visibility:'+(countdown?'visible':'hidden')+'"><div class="timer-label">STARTS IN</div><div class="timer-display" id="'+timerId+'">--:--:--</div></div>';
+        var thumb = m.poster ? '<img src="'+esc(m.poster)+'" alt="'+esc(m.title)+'" class="fx2-thumb-img" onerror="this.style.display=\'none\'">' : '';
+        var html = '<div class="smo-card fx2-card msx-smo-card" data-live="'+(isLive?'1':'0')+'" data-finished="0" data-start-ms="'+startMs(m)+'">'+
+          '<div class="fx2-thumb">'+thumb+badge+'</div>'+
+          '<div class="fx2-body">'+
+            '<div class="fx2-title-row"><div class="fx2-title">'+esc(m.title)+'</div><span class="fx2-free">FREE</span></div>'+
+            '<div class="fx2-meta"><span class="fx2-tag">'+esc(m.category)+'</span><span class="fx2-date">'+fmtTime(m.start)+'</span></div>'+
+            timerBlock+
+            '<a class="smo-btn" href="javascript:void(0)" onclick="event.stopPropagation();return msxOpenWatch(\''+escJs(m.key)+'\')">'+(isLive?'▶ Watch Now':'⏰ '+fmtTime(m.start))+'</a>'+
+          '</div></div>';
+        if (countdown) timers.push({ timerDisplayId: timerId, timerWrapId: timerWrapId, badgeId: badgeId, liveBadgeHtml: liveBadgeHtml, target: countdown });
+        return html;
+      }).join('');
+      el.insertAdjacentHTML('beforeend', '<div class="smo-section msx-smo-section"><div class="smo-section-label">More Matches · '+esc(cat)+'</div>'+cardsHtml+'</div>');
+      var secs = el.querySelectorAll('.msx-smo-section');
+      var sec = secs[secs.length-1];
+      if (sec){ sec.dataset.game = 'More Matches · ' + cat; sec.dataset.sport = (typeof fcxResolveSport === 'function') ? fcxResolveSport(cat) : cat; }
+    });
+    if (typeof sxReorderAllSectionsLiveThenTime === 'function') sxReorderAllSectionsLiveThenTime(el);
+    timers.forEach(function(t){
+      setTimeout(function(){ if (typeof wireAutoLiveCountdown === 'function') wireAutoLiveCountdown(t.target, t); }, 100);
+    });
+    if (typeof smoApplyFilter === 'function') smoApplyFilter();
+  };
+
+  function load(){
+    fetch(API + '?t=' + Date.now(), { cache: 'no-store' })
+      .then(function(r){ return r.json(); })
+      .then(function(json){
+        var entries = buildEntries(json);
+        var sig = JSON.stringify(entries.map(function(m){ return [m.key, m.title, m.status, m.servers.map(function(s){ return s.text+s.url; })]; }));
+        window._msxEntries = entries;
+        if (sig === lastSig) return;
+        lastSig = sig;
+        if (window._matchCardsRawRows && typeof renderMatchCards === 'function') renderMatchCards(window._matchCardsRawRows);
+        else window.msxAppendHomeSections();
+      })
+      .catch(function(err){ console.error('MSX load error:', err); });
   }
   load();
   setInterval(load, REFRESH_MS);
