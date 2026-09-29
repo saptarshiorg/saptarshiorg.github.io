@@ -7992,7 +7992,7 @@ setInterval(() => {
   if (window._matchCardsRawRows) renderMatchCards(window._matchCardsRawRows);
 }, 60000);
 
-function renderMatchCards(rows) {
+function renderMatchCardsCore(rows) {
   if (!rows) { console.warn('[MATCH CARDS] fetchSheet returned null — check the tab name is exactly "MATCH CARDS" and the sheet is shared ("Anyone with the link can view").'); return; }
 
   // ── SETTINGS!maintain_matches ────────────────────────────────
@@ -8293,6 +8293,76 @@ function renderMatchCards(rows) {
   if (typeof window.fcxAppendHomeSections === 'function') window.fcxAppendHomeSections();
   if (typeof window.slxAppendHomeSections === 'function') window.slxAppendHomeSections();
   if (typeof window.msxAppendHomeSections === 'function') window.msxAppendHomeSections();
+}
+
+
+// ── SAFE MATCH CARDS RENDERER ──────────────────────────────────────────
+// The CMS data is the source of truth. Keep the full renderer as the
+// primary path, but never leave the initial skeletons on screen if one
+// optional formatter/field in a CMS row throws an exception.
+function renderMatchCards(rows) {
+  try {
+    return renderMatchCardsCore(rows);
+  } catch (err) {
+    console.error('[MATCH CARDS] primary renderer failed; using safe CMS fallback:', err);
+    try {
+      const source = Array.isArray(rows) ? rows : [];
+      const cards = active(source).filter(c => !smoIsExpired(c));
+      window._matchCardsRawRows = source;
+      window._matchCardsData = cards;
+
+      // Keep the homepage preview populated from the same CMS dataset.
+      try { renderFixtures(); } catch (e) {
+        console.warn('[MATCH CARDS] fallback fixtures render failed:', e);
+      }
+
+      const el = document.getElementById('match-overlay');
+      if (!el) return;
+
+      if (!cards.length) {
+        el.innerHTML = '<div class="smo-empty-box">NO MATCHES LISTED</div>';
+        const sec = document.getElementById('match-overlay-section');
+        if (sec) sec.style.display = '';
+        return;
+      }
+
+      // Minimal, deliberately defensive card markup. It uses only plain
+      // CMS fields, so malformed optional server/date/banner fields cannot
+      // prevent the match itself from appearing.
+      const safe = v => String(v == null ? '' : v)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      const cardsHtml = cards.map((c, i) => {
+        const t1 = safe(c.team1_full_name || c.team1_code || 'Team 1');
+        const t2 = safe(c.team2_full_name || c.team2_code || 'Team 2');
+        const game = safe(c.game || c.sport || c.sports || 'Live Sports');
+        const status = safe(matchStatusText(c) || 'UPCOMING').toUpperCase();
+        const banner = String(c.banner_url || c.banner_image_url || '').trim();
+        const logo1 = String(c.team1_icon_url || '').trim();
+        const logo2 = String(c.team2_icon_url || '').trim();
+        const media = banner
+          ? '<img class="fx2-thumb-img" src="'+safe(banner)+'" alt="" onerror="this.style.display=\'none\'">'
+          : '<div class="fx2-thumb-teams">'
+            + '<div class="fx2-thumb-team">'+(logo1 ? '<img src="'+safe(logo1)+'" alt="" onerror="this.style.display=\'none\'">' : '')+'</div>'
+            + '<div class="fx2-thumb-vs">VS</div>'
+            + '<div class="fx2-thumb-team">'+(logo2 ? '<img src="'+safe(logo2)+'" alt="" onerror="this.style.display=\'none\'">' : '')+'</div>'
+            + '</div>';
+        let date = '';
+        try { date = safe(smoCardDateLabel(c)); } catch(e) { date = safe(c.date_label || ''); }
+        return '<div class="smo-card fx2-card" data-live="'+(status === 'LIVE' ? '1' : '0')+'">'
+          + '<div class="fx2-thumb">'+media+'<span class="fx2-badge'+(status === 'LIVE' ? ' fx2-badge-live' : '')+'">'+status+'</span></div>'
+          + '<div class="fx2-body"><div class="fx2-title-row"><div class="fx2-title">'+t1+' vs '+t2+'</div><span class="fx2-free">FREE</span></div>'
+          + '<div class="fx2-meta"><span class="fx2-tag">'+game+'</span><span class="fx2-date">'+date+'</span></div>'
+          + '<div class="smo-btn" style="margin-top:8px;opacity:.8;">'+(status === 'LIVE' ? '▶ LIVE' : '⏰ UPCOMING')+'</div>'
+          + '</div></div>';
+      }).join('');
+      el.innerHTML = cardsHtml;
+      const sec = document.getElementById('match-overlay-section');
+      if (sec) sec.style.display = '';
+    } catch (fallbackErr) {
+      console.error('[MATCH CARDS] safe CMS fallback also failed:', fallbackErr);
+    }
+  }
 }
 
 function renderChannels(rows) {
