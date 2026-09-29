@@ -7016,7 +7016,6 @@ function openMatchWatchScreen(servers, info) {
         <span class="mws-server-info">
           <span class="mws-server-label">${s.text || ('Server ' + (i + 1))}${vlcIcon}${autoConnectBadge}</span>
           <span class="mws-server-sub">${sheetServersLocked ? 'Locked until ' + startText : (s.sub || 'Tap to play this stream')}</span>
-          ${(s.appOnly || (sxIsStreamUrl(s.url) && /^http:\/\//i.test(String(s.url).trim()) && location.protocol === 'https:')) ? '<span class="mws-server-app-note">Only Play Through EV STREAMS APP</span>' : ''}
         </span>
         <span class="mws-server-play">${sheetServersLocked ? MWS_LOCK_SVG : MWS_PLAY_SVG}</span>
       </button>`;
@@ -11143,10 +11142,7 @@ function manifestIsDrm(d){
   return false;
 }
 function drmDetected(){
-  if (st.drm) return;
-  st.drm = true;
-  teardown(true);
-  showError('drm');
+  /* DRM is no longer refused up front - always try to play; normal error handling applies if it fails. */
 }
 
 /* ── teardown / load ── */
@@ -11251,7 +11247,6 @@ function startHls(url){
   });
   hls.on(Hls.Events.LEVEL_LOADED, function(_, d){
     if (st.drm) return;
-    if (detailsIsDrm(d && d.details)) return drmDetected();
     st.live = !!(d && d.details && d.details.live);
     buildMenuIfNeeded(); renderTime();
   });
@@ -11328,7 +11323,6 @@ function onDashError(e){
   if (st.drm || !e) return;
   var err = e.error || {};
   var code = err.code, msg = String(err.message || err || '');
-  if (/protect|drm|key ?system|license|encrypt|widevine|playready|mediakeys/i.test(msg)) return drmDetected();
   if (code === 25 || code === 11 || (/manifest/i.test(msg) && /download|load|fetch/i.test(msg))) {
     if (pageProto() === 'https:' && /^http:/i.test(st.orig)) return showError('mixed');
     return showError(st.started ? 'offline' : 'cors');
@@ -11361,7 +11355,6 @@ function applyQuality(){
 function onHlsError(_, data){
   if (st.drm || !data) return;
   var det = String(data.details || '');
-  if (/^keySystem/i.test(det)) return drmDetected();
   if (!data.fatal) {
     if (det === 'bufferStalledError') noteStall();
     return;
