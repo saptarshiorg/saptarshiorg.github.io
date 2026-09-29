@@ -1130,14 +1130,12 @@ header.scrolled {
   display: flex; flex-direction: column; gap: 10px;
   max-width: 1280px; margin: 0 auto; padding: 10px 20px 0;
 }
-/* Netflix-style genre bar: no box, no dividers, no border anywhere —
-   just borderless tabs with generous spacing on a transparent strip.
-   Only the active tab gets a solid magenta fill; everything else is
-   flat text until hovered or picked. */
+/* Netflix-style genre bar: categories wrap onto multiple rows on desktop
+   when they no longer fit in one line. No horizontal overflow is used. */
 .smo-sport-tabs {
   display: flex;
-  flex-wrap: nowrap;
-  overflow-x: auto;
+  flex-wrap: wrap;
+  overflow: visible;
   scrollbar-width: none; -ms-overflow-style: none;
   gap: 10px;
   width: 100%;
@@ -1149,6 +1147,7 @@ header.scrolled {
   display: inline-flex; align-items: center; justify-content: center;
   flex: 0 0 auto;
   background: transparent;
+  max-width: 100%;
   border: none;
   color: rgba(255,255,255,0.65);
   font-family: var(--font-display); font-weight: 700; font-size: 12px; letter-spacing: 0.6px; text-transform: uppercase;
@@ -7146,9 +7145,7 @@ function openMatchWatchScreen(servers, info) {
         ${iconHtml}
         <span class="mws-server-info">
           <span class="mws-server-label">${s.text || ('Server ' + (i + 1))}${vlcIcon}${autoConnectBadge}</span>
-          <span class="mws-server-sub">${sheetServersLocked ? 'Locked until ' + startText : (s.sub || 'Tap to play this stream')}</span>
-          ${(s.appOnly || (sxIsStreamUrl(s.url) && /^http:\/\//i.test(String(s.url).trim()) && location.protocol === 'https:')) ? '<span class="mws-server-app-note">Only Play Through EV STREAMS APP</span>' : ''}
-        </span>
+          <span class="mws-server-sub">${sheetServersLocked ? 'Locked until ' + startText : (s.sub || 'Tap to play this stream')}</span></span>
         <span class="mws-server-play">${sheetServersLocked ? MWS_LOCK_SVG : MWS_PLAY_SVG}</span>
       </button>`;
     }).join('');
@@ -7917,6 +7914,7 @@ function renderMatchCards(rows) {
     return;
   }
 
+  sxApplySheetCountryFlags(rows);
   window._matchCardsRawRows = rows; // cached so smoRefreshAutoLive() can re-render without refetching
   console.log('[MATCH CARDS] raw rows from sheet:', rows.length, rows);
   console.log('[MATCH CARDS] active-flag per row:', rows.map(r => ({ game: r.game, flag_used: activeFlagRaw(r), kept: isRowActive(r) })));
@@ -7925,6 +7923,7 @@ function renderMatchCards(rows) {
   // Drop anything already 15h+ past its scheduled start (countdown_to_iso_datetime)
   // so old matches disappear from the site on their own.
   const cards = allActiveCards.filter(c => !smoIsExpired(c));
+  sxApplySheetCountryFlags(cards);
   window._matchCardsData = cards; // store globally for hero card injection + home preview
 
   // ── Cross-link: if a live FanCode stream is for the same fixture as a
@@ -10937,6 +10936,7 @@ body.embed #top{justify-content:flex-end}
   backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 #err.show{display:flex}
 #err .box{max-width:430px;text-align:center}
+#err .ev-app-logo{display:block;width:76px;height:76px;object-fit:contain;margin:0 auto 16px;border-radius:18px;box-shadow:0 10px 35px rgba(240,20,110,.22)}
 #err .ic{width:54px;height:54px;margin:0 auto 14px;border-radius:50%;display:grid;place-items:center;background:var(--accent-dim);color:var(--accent-2)}
 #err .ic svg{width:26px;height:26px}
 #err h2{font-size:18px;font-weight:800;margin-bottom:8px}
@@ -11056,9 +11056,10 @@ body.embed #top{justify-content:flex-end}
 
   <div id="err" role="alert">
     <div class="box">
+      <img class="ev-app-logo" src="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/magenta.png" alt="EV STREAMS" onerror="this.style.display='none'">
       <div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></svg></div>
-      <h2 id="err-t"></h2>
-      <p id="err-b"></p>
+      <h2 id="err-t">Only Play Through EV STREAMS APP</h2>
+      <p id="err-b">This stream could not be played in the current player. Open it through EV STREAMS APP.</p>
       <div class="acts" id="err-a"></div>
     </div>
   </div>
@@ -11172,24 +11173,26 @@ function poke(){
 
 /* ── errors ── */
 var ERR = {
-  cors:      { i:'warn', t:'This stream can\u2019t play in the browser', b:'The stream\u2019s server doesn\u2019t allow web players to load it. It may still play in VLC.', a:['vlc','copy','retry'] },
-  mixed:     { i:'warn', t:'Blocked by browser security', b:'This stream is served over plain http, and this page is secure, so the browser blocks it. Try VLC instead.', a:['vlc','copy','retry'] },
-  forbidden: { i:'warn', t:'The stream refused the request', b:'Its server denied access (the link may have expired or need a login). You can try again or open it in VLC.', a:['retry','vlc','copy'] },
-  offline:   { i:'warn', t:'Stream unavailable', b:'The stream isn\u2019t live right now, or its link has changed. Try again in a moment.', a:['retry'] },
-  timeout:   { i:'warn', t:'The stream didn\u2019t start', b:'It took too long to connect. Check your connection, then try again.', a:['retry','vlc','copy'] },
-  media:     { i:'warn', t:'Playback stopped', b:'The stream broke or uses a format this browser can\u2019t play.', a:['retry','vlc','copy'] },
-  native:    { i:'warn', t:'This browser couldn\u2019t play the stream', b:'Try VLC, or open this page in Chrome, Edge or Firefox.', a:['retry','vlc','copy'] },
-  unsupported:{i:'warn', t:'This browser can\u2019t play HLS', b:'Open this page in a current version of Chrome, Edge, Firefox or Safari.', a:['copy'] },
-  lib:       { i:'warn', t:'Player failed to load', b:'The video library couldn\u2019t be downloaded. Check your connection, then try again.', a:['retry'] },
-  invalid:   { i:'warn', t:'No valid stream link', b:'This player needs an http or https link to an .m3u8 (HLS) or .mpd (DASH) stream.', a:[] },
-  drm:       { i:'lock', t:'Protected stream', b:'This stream uses DRM, which can\u2019t be played here. Pick another server or channel.', a:[] }
-};
+  cors:      { i:'warn', t:'Only Play Through EV STREAMS APP', b:'This stream could not be played in the current player.', a:[] },
+  mixed:     { i:'warn', t:'Only Play Through EV STREAMS APP', b:'This stream could not be played in the current player.', a:[] },
+  forbidden: { i:'warn', t:'Only Play Through EV STREAMS APP', b:'This stream is currently unavailable in the player.', a:[] },
+  offline:   { i:'warn', t:'Only Play Through EV STREAMS APP', b:'This stream is currently unavailable. Please try again.', a:[] },
+  timeout:   { i:'warn', t:'Only Play Through EV STREAMS APP', b:'The stream did not start in the player.', a:[] },
+  media:     { i:'warn', t:'Only Play Through EV STREAMS APP', b:'This stream could not be played in the current player.', a:[] },
+  native:    { i:'warn', t:'Only Play Through EV STREAMS APP', b:'This stream could not be played in the current player.', a:[] },
+  unsupported:{i:'warn', t:'Only Play Through EV STREAMS APP', b:'This stream is not available in the current player.', a:[] },
+  lib:       { i:'warn', t:'Only Play Through EV STREAMS APP', b:'The playback component could not load this stream.', a:[] },
+  invalid:   { i:'warn', t:'Only Play Through EV STREAMS APP', b:'No playable stream is available for this server.', a:[] },
+  drm:       { i:'warn', t:'Only Play Through EV STREAMS APP', b:'This stream requires playback support that is not available in the current player.', a:[] }
+}
 var ACT = {
   retry:'<button class="btn pri" type="button" data-a="retry">Try again</button>',
   vlc:'<button class="btn" type="button" data-a="vlc">Open in VLC</button>',
   copy:'<button class="btn" type="button" data-a="copy">Copy link</button>'
 };
 function showError(kind){
+  // Keep all playback status inside the EV player. Never redirect the user
+  // to an external warning/popup or expose browser/DRM implementation text.
   var e = ERR[kind] || ERR.media;
   st.errShown = true; st.started = false;
   clearTimeout(st.loadTimer);
@@ -11198,7 +11201,7 @@ function showError(kind){
   $('err').querySelector('.ic').innerHTML = IC[e.i];
   $('err-t').textContent = e.t;
   $('err-b').textContent = e.b;
-  $('err-a').innerHTML = e.a.map(function(k){ return ACT[k]; }).join('');
+  $('err-a').innerHTML = '';
   $('err').classList.add('show');
   $('loader').classList.add('hide');
   setClass('err', true); setClass('loading', false); setClass('buffering', false); setClass('idle', false);
@@ -15409,6 +15412,740 @@ button, a.btn, [class*="btn-"], input, select, textarea{
     });
   }
 
+
+
+// ── UNIVERSAL COUNTRY → FLAGCDN RESOLVER ────────────────────────────────
+// Country names are the source of truth for team flags. This is used by
+// MSX and MATCH CARDS/Sheets. If a team itself is a country (e.g. India),
+// it automatically gets the matching FlagCDN flag even when the feed did
+// not provide an image URL. Explicit country/ISO fields take priority.
+const SX_COUNTRY_ISO2 = {
+  'abw': 'aw',
+  'afg': 'af',
+  'afghanistan': 'af',
+  'ago': 'ao',
+  'aia': 'ai',
+  'ala': 'ax',
+  'alb': 'al',
+  'albania': 'al',
+  'algeria': 'dz',
+  'america': 'us',
+  'american samoa': 'as',
+  'and': 'ad',
+  'andorra': 'ad',
+  'angola': 'ao',
+  'anguilla': 'ai',
+  'antarctica': 'aq',
+  'antigua and barbuda': 'ag',
+  'arab republic of egypt': 'eg',
+  'are': 'ae',
+  'arg': 'ar',
+  'argentina': 'ar',
+  'argentine republic': 'ar',
+  'arm': 'am',
+  'armenia': 'am',
+  'aruba': 'aw',
+  'asm': 'as',
+  'ata': 'aq',
+  'atf': 'tf',
+  'atg': 'ag',
+  'aus': 'au',
+  'australia': 'au',
+  'austria': 'at',
+  'aut': 'at',
+  'aze': 'az',
+  'azerbaijan': 'az',
+  'bahamas': 'bs',
+  'bahrain': 'bh',
+  'bangladesh': 'bd',
+  'barbados': 'bb',
+  'bdi': 'bi',
+  'bel': 'be',
+  'belarus': 'by',
+  'belgium': 'be',
+  'belize': 'bz',
+  'ben': 'bj',
+  'benin': 'bj',
+  'bermuda': 'bm',
+  'bes': 'bq',
+  'bfa': 'bf',
+  'bgd': 'bd',
+  'bgr': 'bg',
+  'bharat': 'in',
+  'bhr': 'bh',
+  'bhs': 'bs',
+  'bhutan': 'bt',
+  'bih': 'ba',
+  'blm': 'bl',
+  'blr': 'by',
+  'blz': 'bz',
+  'bmu': 'bm',
+  'bol': 'bo',
+  'bolivarian republic of venezuela': 've',
+  'bolivia': 'bo',
+  'bolivia, plurinational state of': 'bo',
+  'bonaire, sint eustatius and saba': 'bq',
+  'bosnia and herzegovina': 'ba',
+  'botswana': 'bw',
+  'bouvet island': 'bv',
+  'bra': 'br',
+  'brazil': 'br',
+  'brb': 'bb',
+  'britain': 'gb',
+  'british indian ocean territory': 'io',
+  'british virgin islands': 'vg',
+  'brn': 'bn',
+  'brunei': 'bn',
+  'brunei darussalam': 'bn',
+  'btn': 'bt',
+  'bulgaria': 'bg',
+  'burkina faso': 'bf',
+  'burma': 'mm',
+  'burundi': 'bi',
+  'bvt': 'bv',
+  'bwa': 'bw',
+  'cabo verde': 'cv',
+  'caf': 'cf',
+  'cambodia': 'kh',
+  'cameroon': 'cm',
+  'can': 'ca',
+  'canada': 'ca',
+  'cape verde': 'cv',
+  'cayman islands': 'ky',
+  'cck': 'cc',
+  'central african republic': 'cf',
+  'chad': 'td',
+  'che': 'ch',
+  'chile': 'cl',
+  'china': 'cn',
+  'chl': 'cl',
+  'chn': 'cn',
+  'christmas island': 'cx',
+  'civ': 'ci',
+  'cmr': 'cm',
+  'cocos (keeling) islands': 'cc',
+  'cod': 'cd',
+  'cog': 'cg',
+  'cok': 'ck',
+  'col': 'co',
+  'colombia': 'co',
+  'com': 'km',
+  'commonwealth of dominica': 'dm',
+  'commonwealth of the bahamas': 'bs',
+  'commonwealth of the northern mariana islands': 'mp',
+  'comoros': 'km',
+  'congo': 'cg',
+  'congo, the democratic republic of the': 'cd',
+  'cook islands': 'ck',
+  'costa rica': 'cr',
+  'cote d ivoire': 'ci',
+  'cpv': 'cv',
+  'cri': 'cr',
+  'croatia': 'hr',
+  'cub': 'cu',
+  'cuba': 'cu',
+  'cuw': 'cw',
+  'cxr': 'cx',
+  'cym': 'ky',
+  'cyp': 'cy',
+  'cyprus': 'cy',
+  'cze': 'cz',
+  'czech republic': 'cz',
+  'czechia': 'cz',
+  'democratic republic of sao tome and principe': 'st',
+  'democratic republic of timor-leste': 'tl',
+  'democratic socialist republic of sri lanka': 'lk',
+  'denmark': 'dk',
+  'deu': 'de',
+  'dji': 'dj',
+  'djibouti': 'dj',
+  'dma': 'dm',
+  'dnk': 'dk',
+  'dom': 'do',
+  'dominica': 'dm',
+  'dominican republic': 'do',
+  'dza': 'dz',
+  'eastern republic of uruguay': 'uy',
+  'ecu': 'ec',
+  'ecuador': 'ec',
+  'egy': 'eg',
+  'egypt': 'eg',
+  'el salvador': 'sv',
+  'england': 'gb-eng',
+  'equatorial guinea': 'gq',
+  'eri': 'er',
+  'eritrea': 'er',
+  'esh': 'eh',
+  'esp': 'es',
+  'est': 'ee',
+  'estonia': 'ee',
+  'eswatini': 'sz',
+  'eth': 'et',
+  'ethiopia': 'et',
+  'falkland islands (malvinas)': 'fk',
+  'faroe islands': 'fo',
+  'federal democratic republic of ethiopia': 'et',
+  'federal democratic republic of nepal': 'np',
+  'federal republic of germany': 'de',
+  'federal republic of nigeria': 'ng',
+  'federal republic of somalia': 'so',
+  'federated states of micronesia': 'fm',
+  'federative republic of brazil': 'br',
+  'fiji': 'fj',
+  'fin': 'fi',
+  'finland': 'fi',
+  'fji': 'fj',
+  'flk': 'fk',
+  'fra': 'fr',
+  'france': 'fr',
+  'french guiana': 'gf',
+  'french polynesia': 'pf',
+  'french republic': 'fr',
+  'french southern territories': 'tf',
+  'fro': 'fo',
+  'fsm': 'fm',
+  'gab': 'ga',
+  'gabon': 'ga',
+  'gabonese republic': 'ga',
+  'gambia': 'gm',
+  'gbr': 'gb',
+  'geo': 'ge',
+  'georgia': 'ge',
+  'germany': 'de',
+  'ggy': 'gg',
+  'gha': 'gh',
+  'ghana': 'gh',
+  'gib': 'gi',
+  'gibraltar': 'gi',
+  'gin': 'gn',
+  'glp': 'gp',
+  'gmb': 'gm',
+  'gnb': 'gw',
+  'gnq': 'gq',
+  'grand duchy of luxembourg': 'lu',
+  'grc': 'gr',
+  'grd': 'gd',
+  'great britain': 'gb',
+  'greece': 'gr',
+  'greenland': 'gl',
+  'grenada': 'gd',
+  'grl': 'gl',
+  'gtm': 'gt',
+  'guadeloupe': 'gp',
+  'guam': 'gu',
+  'guatemala': 'gt',
+  'guernsey': 'gg',
+  'guf': 'gf',
+  'guinea': 'gn',
+  'guinea-bissau': 'gw',
+  'gum': 'gu',
+  'guy': 'gy',
+  'guyana': 'gy',
+  'haiti': 'ht',
+  'hashemite kingdom of jordan': 'jo',
+  'heard island and mcdonald islands': 'hm',
+  'hellenic republic': 'gr',
+  'hkg': 'hk',
+  'hmd': 'hm',
+  'hnd': 'hn',
+  'holy see (vatican city state)': 'va',
+  'honduras': 'hn',
+  'hong kong': 'hk',
+  'hong kong special administrative region of china': 'hk',
+  'hrv': 'hr',
+  'hti': 'ht',
+  'hun': 'hu',
+  'hungary': 'hu',
+  'iceland': 'is',
+  'idn': 'id',
+  'imn': 'im',
+  'ind': 'in',
+  'independent state of papua new guinea': 'pg',
+  'independent state of samoa': 'ws',
+  'india': 'in',
+  'indonesia': 'id',
+  'iot': 'io',
+  'iran': 'ir',
+  'iran, islamic republic of': 'ir',
+  'iraq': 'iq',
+  'ireland': 'ie',
+  'irl': 'ie',
+  'irn': 'ir',
+  'irq': 'iq',
+  'isl': 'is',
+  'islamic republic of afghanistan': 'af',
+  'islamic republic of iran': 'ir',
+  'islamic republic of mauritania': 'mr',
+  'islamic republic of pakistan': 'pk',
+  'isle of man': 'im',
+  'isr': 'il',
+  'israel': 'il',
+  'ita': 'it',
+  'italian republic': 'it',
+  'italy': 'it',
+  'ivory coast': 'ci',
+  'jam': 'jm',
+  'jamaica': 'jm',
+  'japan': 'jp',
+  'jersey': 'je',
+  'jey': 'je',
+  'jor': 'jo',
+  'jordan': 'jo',
+  'jpn': 'jp',
+  'kaz': 'kz',
+  'kazakhstan': 'kz',
+  'ken': 'ke',
+  'kenya': 'ke',
+  'kgz': 'kg',
+  'khm': 'kh',
+  'kingdom of bahrain': 'bh',
+  'kingdom of belgium': 'be',
+  'kingdom of bhutan': 'bt',
+  'kingdom of cambodia': 'kh',
+  'kingdom of denmark': 'dk',
+  'kingdom of eswatini': 'sz',
+  'kingdom of lesotho': 'ls',
+  'kingdom of morocco': 'ma',
+  'kingdom of norway': 'no',
+  'kingdom of saudi arabia': 'sa',
+  'kingdom of spain': 'es',
+  'kingdom of sweden': 'se',
+  'kingdom of thailand': 'th',
+  'kingdom of the netherlands': 'nl',
+  'kingdom of tonga': 'to',
+  'kir': 'ki',
+  'kiribati': 'ki',
+  'kna': 'kn',
+  'kor': 'kr',
+  'korea': 'kr',
+  'korea, republic of': 'kr',
+  'kosovo': 'xk',
+  'kuwait': 'kw',
+  'kwt': 'kw',
+  'kyrgyz republic': 'kg',
+  'kyrgyzstan': 'kg',
+  'lao': 'la',
+  'laos': 'la',
+  'latvia': 'lv',
+  'lbn': 'lb',
+  'lbr': 'lr',
+  'lby': 'ly',
+  'lca': 'lc',
+  'lebanese republic': 'lb',
+  'lebanon': 'lb',
+  'lesotho': 'ls',
+  'liberia': 'lr',
+  'libya': 'ly',
+  'lie': 'li',
+  'liechtenstein': 'li',
+  'lithuania': 'lt',
+  'lka': 'lk',
+  'lso': 'ls',
+  'ltu': 'lt',
+  'lux': 'lu',
+  'luxembourg': 'lu',
+  'lva': 'lv',
+  'mac': 'mo',
+  'macao': 'mo',
+  'macao special administrative region of china': 'mo',
+  'macau': 'mo',
+  'madagascar': 'mg',
+  'maf': 'mf',
+  'malawi': 'mw',
+  'malaysia': 'my',
+  'maldives': 'mv',
+  'mali': 'ml',
+  'malta': 'mt',
+  'mar': 'ma',
+  'marshall islands': 'mh',
+  'martinique': 'mq',
+  'mauritania': 'mr',
+  'mauritius': 'mu',
+  'mayotte': 'yt',
+  'mco': 'mc',
+  'mda': 'md',
+  'mdg': 'mg',
+  'mdv': 'mv',
+  'mex': 'mx',
+  'mexico': 'mx',
+  'mhl': 'mh',
+  'micronesia, federated states of': 'fm',
+  'mkd': 'mk',
+  'mli': 'ml',
+  'mlt': 'mt',
+  'mmr': 'mm',
+  'mne': 'me',
+  'mng': 'mn',
+  'mnp': 'mp',
+  'moldova': 'md',
+  'moldova, republic of': 'md',
+  'monaco': 'mc',
+  'mongolia': 'mn',
+  'montenegro': 'me',
+  'montserrat': 'ms',
+  'morocco': 'ma',
+  'moz': 'mz',
+  'mozambique': 'mz',
+  'mrt': 'mr',
+  'msr': 'ms',
+  'mtq': 'mq',
+  'mus': 'mu',
+  'mwi': 'mw',
+  'myanmar': 'mm',
+  'mys': 'my',
+  'myt': 'yt',
+  'nam': 'na',
+  'namibia': 'na',
+  'nauru': 'nr',
+  'ncl': 'nc',
+  'nepal': 'np',
+  'ner': 'ne',
+  'netherlands': 'nl',
+  'new caledonia': 'nc',
+  'new zealand': 'nz',
+  'nfk': 'nf',
+  'nga': 'ng',
+  'nic': 'ni',
+  'nicaragua': 'ni',
+  'niger': 'ne',
+  'nigeria': 'ng',
+  'niu': 'nu',
+  'niue': 'nu',
+  'nld': 'nl',
+  'nor': 'no',
+  'norfolk island': 'nf',
+  'north korea': 'kp',
+  'north macedonia': 'mk',
+  'northern mariana islands': 'mp',
+  'norway': 'no',
+  'npl': 'np',
+  'nru': 'nr',
+  'nzl': 'nz',
+  'oman': 'om',
+  'omn': 'om',
+  'pak': 'pk',
+  'pakistan': 'pk',
+  'palau': 'pw',
+  'palestine': 'ps',
+  'palestine, state of': 'ps',
+  'pan': 'pa',
+  'panama': 'pa',
+  'papua new guinea': 'pg',
+  'paraguay': 'py',
+  'pcn': 'pn',
+  'per': 'pe',
+  'peru': 'pe',
+  'philippines': 'ph',
+  'phl': 'ph',
+  'pitcairn': 'pn',
+  'plurinational state of bolivia': 'bo',
+  'plw': 'pw',
+  'png': 'pg',
+  'pol': 'pl',
+  'poland': 'pl',
+  'portugal': 'pt',
+  'portuguese republic': 'pt',
+  'pri': 'pr',
+  'principality of andorra': 'ad',
+  'principality of liechtenstein': 'li',
+  'principality of monaco': 'mc',
+  'prk': 'kp',
+  'prt': 'pt',
+  'pry': 'py',
+  'pse': 'ps',
+  'puerto rico': 'pr',
+  'pyf': 'pf',
+  'qat': 'qa',
+  'qatar': 'qa',
+  'republic of albania': 'al',
+  'republic of angola': 'ao',
+  'republic of armenia': 'am',
+  'republic of austria': 'at',
+  'republic of azerbaijan': 'az',
+  'republic of belarus': 'by',
+  'republic of benin': 'bj',
+  'republic of bosnia and herzegovina': 'ba',
+  'republic of botswana': 'bw',
+  'republic of bulgaria': 'bg',
+  'republic of burundi': 'bi',
+  'republic of cabo verde': 'cv',
+  'republic of cameroon': 'cm',
+  'republic of chad': 'td',
+  'republic of chile': 'cl',
+  'republic of colombia': 'co',
+  'republic of costa rica': 'cr',
+  'republic of croatia': 'hr',
+  'republic of cuba': 'cu',
+  'republic of cyprus': 'cy',
+  'republic of djibouti': 'dj',
+  'republic of ecuador': 'ec',
+  'republic of el salvador': 'sv',
+  'republic of equatorial guinea': 'gq',
+  'republic of estonia': 'ee',
+  'republic of fiji': 'fj',
+  'republic of finland': 'fi',
+  'republic of ghana': 'gh',
+  'republic of guatemala': 'gt',
+  'republic of guinea': 'gn',
+  'republic of guinea-bissau': 'gw',
+  'republic of guyana': 'gy',
+  'republic of haiti': 'ht',
+  'republic of honduras': 'hn',
+  'republic of iceland': 'is',
+  'republic of india': 'in',
+  'republic of indonesia': 'id',
+  'republic of iraq': 'iq',
+  'republic of kazakhstan': 'kz',
+  'republic of kenya': 'ke',
+  'republic of kiribati': 'ki',
+  'republic of latvia': 'lv',
+  'republic of liberia': 'lr',
+  'republic of lithuania': 'lt',
+  'republic of madagascar': 'mg',
+  'republic of malawi': 'mw',
+  'republic of maldives': 'mv',
+  'republic of mali': 'ml',
+  'republic of malta': 'mt',
+  'republic of mauritius': 'mu',
+  'republic of moldova': 'md',
+  'republic of mozambique': 'mz',
+  'republic of myanmar': 'mm',
+  'republic of namibia': 'na',
+  'republic of nauru': 'nr',
+  'republic of nicaragua': 'ni',
+  'republic of north macedonia': 'mk',
+  'republic of palau': 'pw',
+  'republic of panama': 'pa',
+  'republic of paraguay': 'py',
+  'republic of peru': 'pe',
+  'republic of poland': 'pl',
+  'republic of san marino': 'sm',
+  'republic of senegal': 'sn',
+  'republic of serbia': 'rs',
+  'republic of seychelles': 'sc',
+  'republic of sierra leone': 'sl',
+  'republic of singapore': 'sg',
+  'republic of slovenia': 'si',
+  'republic of south africa': 'za',
+  'republic of south sudan': 'ss',
+  'republic of suriname': 'sr',
+  'republic of tajikistan': 'tj',
+  'republic of the congo': 'cg',
+  'republic of the gambia': 'gm',
+  'republic of the marshall islands': 'mh',
+  'republic of the niger': 'ne',
+  'republic of the philippines': 'ph',
+  'republic of the sudan': 'sd',
+  'republic of trinidad and tobago': 'tt',
+  'republic of tunisia': 'tn',
+  'republic of uganda': 'ug',
+  'republic of uzbekistan': 'uz',
+  'republic of vanuatu': 'vu',
+  'republic of yemen': 'ye',
+  'republic of zambia': 'zm',
+  'republic of zimbabwe': 'zw',
+  'reu': 're',
+  'romania': 'ro',
+  'rou': 'ro',
+  'rus': 'ru',
+  'russia': 'ru',
+  'russian federation': 'ru',
+  'rwa': 'rw',
+  'rwanda': 'rw',
+  'rwandese republic': 'rw',
+  'saint helena, ascension and tristan da cunha': 'sh',
+  'saint kitts and nevis': 'kn',
+  'saint lucia': 'lc',
+  'saint martin (french part)': 'mf',
+  'saint pierre and miquelon': 'pm',
+  'saint vincent and the grenadines': 'vc',
+  'samoa': 'ws',
+  'san marino': 'sm',
+  'sao tome and principe': 'st',
+  'sau': 'sa',
+  'saudi arabia': 'sa',
+  'scotland': 'gb-sct',
+  'sdn': 'sd',
+  'sen': 'sn',
+  'senegal': 'sn',
+  'serbia': 'rs',
+  'seychelles': 'sc',
+  'sgp': 'sg',
+  'sgs': 'gs',
+  'shn': 'sh',
+  'sierra leone': 'sl',
+  'singapore': 'sg',
+  'sint maarten (dutch part)': 'sx',
+  'sjm': 'sj',
+  'slb': 'sb',
+  'sle': 'sl',
+  'slovak republic': 'sk',
+  'slovakia': 'sk',
+  'slovenia': 'si',
+  'slv': 'sv',
+  'smr': 'sm',
+  'socialist republic of viet nam': 'vn',
+  'solomon islands': 'sb',
+  'som': 'so',
+  'somalia': 'so',
+  'south africa': 'za',
+  'south georgia and the south sandwich islands': 'gs',
+  'south korea': 'kr',
+  'south sudan': 'ss',
+  'spain': 'es',
+  'spm': 'pm',
+  'srb': 'rs',
+  'sri lanka': 'lk',
+  'ssd': 'ss',
+  'state of israel': 'il',
+  'state of kuwait': 'kw',
+  'state of palestine': 'ps',
+  'state of qatar': 'qa',
+  'stp': 'st',
+  'sudan': 'sd',
+  'sultanate of oman': 'om',
+  'sur': 'sr',
+  'suriname': 'sr',
+  'svalbard and jan mayen': 'sj',
+  'svk': 'sk',
+  'svn': 'si',
+  'swaziland': 'sz',
+  'swe': 'se',
+  'sweden': 'se',
+  'swiss confederation': 'ch',
+  'switzerland': 'ch',
+  'swz': 'sz',
+  'sxm': 'sx',
+  'syc': 'sc',
+  'syr': 'sy',
+  'syria': 'sy',
+  'syrian arab republic': 'sy',
+  'taiwan': 'tw',
+  'taiwan, province of china': 'tw',
+  'tajikistan': 'tj',
+  'tanzania': 'tz',
+  'tanzania, united republic of': 'tz',
+  'tca': 'tc',
+  'tcd': 'td',
+  'tgo': 'tg',
+  'tha': 'th',
+  'thailand': 'th',
+  'the state of eritrea': 'er',
+  'the state of palestine': 'ps',
+  'timor-leste': 'tl',
+  'tjk': 'tj',
+  'tkl': 'tk',
+  'tkm': 'tm',
+  'tls': 'tl',
+  'togo': 'tg',
+  'togolese republic': 'tg',
+  'tokelau': 'tk',
+  'ton': 'to',
+  'tonga': 'to',
+  'trinidad and tobago': 'tt',
+  'tto': 'tt',
+  'tun': 'tn',
+  'tunisia': 'tn',
+  'tur': 'tr',
+  'turkey': 'tr',
+  'turkmenistan': 'tm',
+  'turks and caicos islands': 'tc',
+  'tuv': 'tv',
+  'tuvalu': 'tv',
+  'twn': 'tw',
+  'tza': 'tz',
+  'uae': 'ae',
+  'uga': 'ug',
+  'uganda': 'ug',
+  'uk': 'gb',
+  'ukr': 'ua',
+  'ukraine': 'ua',
+  'umi': 'um',
+  'union of the comoros': 'km',
+  'united arab emirates': 'ae',
+  'united kingdom': 'gb',
+  'united kingdom of great britain and northern ireland': 'gb',
+  'united mexican states': 'mx',
+  'united republic of tanzania': 'tz',
+  'united states': 'us',
+  'united states minor outlying islands': 'um',
+  'united states of america': 'us',
+  'uruguay': 'uy',
+  'ury': 'uy',
+  'us': 'us',
+  'usa': 'us',
+  'uzb': 'uz',
+  'uzbekistan': 'uz',
+  'vanuatu': 'vu',
+  'vat': 'va',
+  'vct': 'vc',
+  'ven': 've',
+  'venezuela': 've',
+  'venezuela, bolivarian republic of': 've',
+  'vgb': 'vg',
+  'viet nam': 'vn',
+  'vietnam': 'vn',
+  'vir': 'vi',
+  'virgin islands of the united states': 'vi',
+  'virgin islands, british': 'vg',
+  'virgin islands, u.s.': 'vi',
+  'vnm': 'vn',
+  'vut': 'vu',
+  'wales': 'gb-wls',
+  'wallis and futuna': 'wf',
+  'western sahara': 'eh',
+  'wlf': 'wf',
+  'wsm': 'ws',
+  'yem': 'ye',
+  'yemen': 'ye',
+  'zaf': 'za',
+  'zambia': 'zm',
+  'zimbabwe': 'zw',
+  'zmb': 'zm',
+  'zwe': 'zw',
+};
+function sxCountryKey(v){
+  return String(v == null ? '' : v).trim().toLowerCase()
+    .replace(/[’']/g,'')
+    .replace(/[._-]+/g,' ')
+    .replace(/\s+/g,' ');
+}
+function sxCountryIso2(value){
+  const raw = String(value == null ? '' : value).trim();
+  if (!raw) return '';
+  const key = sxCountryKey(raw);
+  if (SX_COUNTRY_ISO2[key]) return SX_COUNTRY_ISO2[key];
+  const parens = key.match(/\(([a-z]{2,3})\)$/);
+  if (parens && SX_COUNTRY_ISO2[parens[1]]) return SX_COUNTRY_ISO2[parens[1]];
+  const code = key.match(/^(?:[a-z]{2}|[a-z]{3})$/);
+  if (code && SX_COUNTRY_ISO2[code[0]]) return SX_COUNTRY_ISO2[code[0]];
+  return '';
+}
+function sxFlagCdnUrl(value){
+  const iso = sxCountryIso2(value);
+  // Direct SVG is vector/lossless and therefore stays sharp at any size.
+  return iso ? ('https://flagcdn.com/' + iso + '.svg') : '';
+}
+function sxTeamCountryFlag(teamName, explicitCountry, fallback){
+  const fromCountry = sxFlagCdnUrl(explicitCountry);
+  if (fromCountry) return fromCountry;
+  const fromTeam = sxFlagCdnUrl(teamName);
+  if (fromTeam) return fromTeam;
+  return fallback ? sxCmsUrl(fallback) : '';
+}
+function sxApplySheetCountryFlags(cards){
+  (cards || []).forEach(function(c){
+    if (!c) return;
+    const aCountry = c.team1_country || c.team1Country || c.team_1_country || c.team1_iso2 || c.team1_iso || c.team1_iso3 || c.team1Iso3 || c.home_country || c.homeCountry || c.home_iso || '';
+    const bCountry = c.team2_country || c.team2Country || c.team_2_country || c.team2_iso2 || c.team2_iso || c.team2_iso3 || c.team2Iso3 || c.away_country || c.awayCountry || c.away_iso || '';
+    const a = sxTeamCountryFlag(c.team1_full_name || c.team1_code || '', aCountry, c.team1_icon_url);
+    const b = sxTeamCountryFlag(c.team2_full_name || c.team2_code || '', bCountry, c.team2_icon_url);
+    if (a) c.team1_icon_url = a;
+    if (b) c.team2_icon_url = b;
+  });
+  return cards;
+}
+
   function buildEntries(json){
     var list = (json && json.matches) || [];
     var out = [];
@@ -15424,19 +16161,29 @@ button, a.btn, [class*="btn-"], input, select, textarea{
       }
       var streams = [];
       (e.streams || []).forEach(function(s){
-        if (!s) return;                                                          // DRM (kid/key/license) streams are kept — flagged app-only below
-        var su = (window.LMX && LMX.scan(s)[0]) || (s.stream_url && isHls(s.stream_url) ? String(s.stream_url).trim() : '');
-        if (su) streams.push({ stream_url: su, channel_name: s.channel_name || s.name || s.title, appOnly: needsApp(s) || needsApp(e) || !!(window.LMX && (LMX.hasDrm(s) || LMX.hasDrm(e, true))) });
+        if (!s) return;
+        // Keep every MSX stream in the match data. Do not hide a match because
+        // a server uses DRM, DASH/MPD, special headers, or another playback
+        // requirement. The player will simply attempt playback when selected.
+        var su = (s.stream_url && /^https?:\/\//i.test(String(s.stream_url).trim()))
+          ? String(s.stream_url).trim()
+          : ((window.LMX && LMX.scan(s)[0]) || '');
+        if (su) streams.push({ stream_url: su, channel_name: s.channel_name || s.name || s.title });
       });
-      if (!streams.length && !(e.streams && e.streams.length) && window.LMX)     // no streams[] at all — scan the whole entry
-        LMX.scan(e).forEach(function(u, k){ streams.push({ stream_url: u, channel_name: 'Server ' + (k + 1), appOnly: needsApp(e) || !!(window.LMX && LMX.hasDrm(e, true)) }); });
-      // (no streams yet -> still listed, card shows 'No stream yet')
+      if (!streams.length && window.LMX) {
+        // Best-effort URL discovery only; never discard the match because the
+        // feed entry is DRM/app-only/MPD. If no URL is exposed, the match still
+        // remains visible with an empty server list.
+        LMX.scan(e).forEach(function(u, k){
+          if (u) streams.push({ stream_url: u, channel_name: 'Server ' + (k + 1) });
+        });
+      }
       var seenNames = {};
       var servers = streams.map(function(s){
         var name = (s.channel_name || 'Server').trim() || 'Server';
         if (seenNames[name]) { seenNames[name]++; name = name + ' ' + seenNames[name]; }
         else seenNames[name] = 1;
-        return { url: s.stream_url.trim(), text: name, sub: 'tap to play', appOnly: !!s.appOnly };
+        return { url: s.stream_url.trim(), text: name, sub: 'tap to play' };
       });
       var sameTeamEvent = teamA.toLowerCase() === teamB.toLowerCase();
       out.push({
@@ -15447,16 +16194,44 @@ button, a.btn, [class*="btn-"], input, select, textarea{
         blob: (window.sxBlob ? sxBlob(e) : ''),
         status: status,
         start: parseStart(info.startTime),
-        poster: up(info.event_logo) || (sameTeamEvent ? up(info.teamAFlag) : ''),
-        // Team A flag = Team A logo, Team B flag = Team B logo.
-        // (Single-name events carry the same image on both sides — that is the event logo, not two teams.)
-        team1_icon_url: sameTeamEvent ? '' : up(info.teamAFlag), team2_icon_url: sameTeamEvent ? '' : up(info.teamBFlag),
+        poster: up(info.event_logo) || (sameTeamEvent ? msxFlag({name: teamA, country: msxCountryFor(info, e, 'A', teamA)}, info.teamAFlag) : ''),
+        // MSX country data is the source of truth for team flags. Replace the
+        // feed's Team A/Team B flag URLs with FlagCDN when an ISO-2 code is available.
+        team1_icon_url: sameTeamEvent ? '' : msxFlag({name: teamA, country: msxCountryFor(info, e, 'A', teamA)}, info.teamAFlag),
+        team2_icon_url: sameTeamEvent ? '' : msxFlag({name: teamB, country: msxCountryFor(info, e, 'B', teamB)}, info.teamBFlag),
         servers: servers
       });
     });
     return out;
   }
 
+  // MSX flags: explicit country data first; otherwise detect when the
+  // normal Team A / Team B name itself is a country. Ignore the feed image
+  // URL whenever a country match exists and use a sharp FlagCDN SVG.
+  function msxCountryFor(info, entry, side, teamName){
+    var I = info || {}, E = entry || {};
+    var lower = String(side || '').toLowerCase();
+    var keys = lower === 'a'
+      ? ['teamA_country','teamACountry','team_a_country','team1_country','team1Country','teamA_iso2','teamA_iso3','teamA_country_code','teamA_countryCode','home_country','homeCountry','home_iso2','home_iso3','countryA','country_a']
+      : ['teamB_country','teamBCountry','team_b_country','team2_country','team2Country','teamB_iso2','teamB_iso3','teamB_country_code','teamB_countryCode','away_country','awayCountry','away_iso2','away_iso3','countryB','country_b'];
+    for (var i=0;i<keys.length;i++){
+      var k=keys[i];
+      if (I[k] != null && String(I[k]).trim()) return I[k];
+      if (E[k] != null && String(E[k]).trim()) return E[k];
+    }
+    var obj = lower === 'a' ? I.teamA : I.teamB;
+    if (obj && typeof obj === 'object'){
+      var v = obj.countryCode || obj.country_code || obj.iso2 || obj.iso_2 || obj.iso3 || obj.iso_3 || obj.country || obj.nation || obj.nationality;
+      if (v) return v;
+    }
+    // If the feed itself gives the team as a country name/code, the team name is enough.
+    return teamName || '';
+  }
+  function msxFlag(teamValue, flagUrl){
+    var teamName = (typeof teamValue === 'object') ? (teamValue.name || teamValue.full_name || teamValue.team || '') : teamValue;
+    var explicit = (typeof teamValue === 'object') ? (teamValue.countryCode || teamValue.country_code || teamValue.iso2 || teamValue.iso_2 || teamValue.iso3 || teamValue.iso_3 || teamValue.country || '') : '';
+    return sxTeamCountryFlag(teamName, explicit, flagUrl);
+  }
   function up(u){ return sxCmsUrl(u); }   // HTTPS pages upgrade HTTP API image/stream URLs; file:// keeps originals
   // A browser cannot set Referer / User-Agent / Origin / Cookie on media requests, so a stream whose
   // feed entry lists any of them is blocked in the browser -> app only. Plain http:// on an https page too.
@@ -15491,6 +16266,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
   // fixture. Runs after fcxAugmentSheetCards so it only takes slots
   // FanCode's own cross-link left empty.
   function augmentSheetCards(cards, entries){
+    if (typeof sxApplySheetCountryFlags === 'function') sxApplySheetCountryFlags(cards);
     var urlSlots = ['btn_url','btn_url_2','btn_url_3','btn_url_4','btn_url_5'];
     var textSlots = ['btn_text','btn_text_2','btn_text_3','btn_text_4','btn_text_5'];
     (entries||[]).forEach(function(m){
