@@ -7157,7 +7157,7 @@ function openMatchWatchScreen(servers, info) {
         // FanCode only ever unlocks once its own API says the match is
         // actually live (s.fcxLive) — never early, unlike the sheet/Live-TV
         // servers below which get a 30-minute pre-match head start.
-        const fcxReady = !!s.fcxLive;
+        const fcxReady = !!s.fcxLive || !sheetServersLocked;   // unlocks 30 min before start, like every other source
         const priorityBadge = `<span style="display:inline-block;background:#F5C518;color:#111;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;margin-left:8px;vertical-align:middle;">High Priority</span>`;
         const clickAttr = fcxReady
           ? ` type="button" onclick="closeMatchWatchScreen();sxGoToMatchUrl(null,'${escJs(s.url)}','${escJs(label)}')"`
@@ -7617,8 +7617,8 @@ function matchStatusText(c) {
 // Once countdown_to_iso_datetime (or countdown_to) is 15+ hours in the
 // past, the match card disappears from the match-overlay/hero on its own —
 // no need to manually mark the sheet row inactive after every match.
-const SMO_HIDE_AFTER_MS = 15 * 60 * 60 * 1000; // 15 hours
-function smoHideAtMs(c) { return null; /* every listed match stays visible */
+const SMO_HIDE_AFTER_MS = 12 * 60 * 60 * 1000; // 12 hours
+function smoHideAtMs(c) {
   const iso = (c.countdown_to_iso_datetime || c.countdown_to || '').trim();
   if (!iso) return null; // no scheduled time given — never auto-hide
   const t = new Date(iso).getTime();
@@ -17456,6 +17456,9 @@ section.section,.section{background:transparent !important;}
       return it;
     });
     /* ── SAME DAY ONLY: live right now, or scheduled / finished on today's calendar date ── */
+    out=out.filter(function(it){   /* 12h after start time -> gone (API feeds that still report LIVE are kept) */
+      if(isFinite(it.at)&&!it.approx&&Date.now()>=it.at+12*3600e3&&!it.members.some(function(m){return m.src!=='s'&&m.live;}))return false;
+      return true;});
     out=out.filter(function(it){return it.live||!it.fin||(isFinite(it.at)&&sameDay(new Date(it.at)));});   /* every listed live + upcoming match (any date); finished ones only for today */
     var spell={};out.forEach(function(it){var k=sportKey(it.sport);try{var d=window.sxDetectSport?sxDetectSport(it.sport,'',''):'';if(d)k=d.toLowerCase();}catch(e){}if(!spell[k])spell[k]=it.sport;it.sport=it.game=spell[k];});
     out.forEach(function(it){if(!it.tour)it.tour=tourFallback(it.sport);});
@@ -17484,18 +17487,40 @@ section.section,.section{background:transparent !important;}
   }
   function render(){
     all=collect();
-    var sig=all.map(function(i){return i.title+(i.live?'L':i.fin?'F':'U')+i.time;}).join('|')+'#'+sel.game+'#'+dayKey()+(all.length?'':(Date.now()-t0>8000?'e':'l'));
+    var sig=all.map(function(i){return i.title+(i.live?'L':i.fin?'F':'U')+i.time;}).join('|')+'#'+sel.game+'#'+sel.tour+'#'+(sel.hero||'')+'#'+dayKey()+(all.length?'':(Date.now()-t0>8000?'e':'l'));
     if(sig===lastSig)return;lastSig=sig;try{hidePop();}catch(e){}
     var cnt={},lv={};all.forEach(function(i){cnt[i.sport]=(cnt[i.sport]||0)+1;if(i.live)lv[i.sport]=1;});
     var sports=Object.keys(cnt).sort(function(a,b){return (lv[b]?1:0)-(lv[a]?1:0)||cnt[b]-cnt[a];});
     if(sel.game&&!cnt[sel.game])sel.game='';
+    if(sel.tour&&!all.some(function(i){return i.tour===sel.tour;}))sel.tour='';
     var dt=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
     var h='<h1 class="sxs-h1">Sports</h1><div class="sxs-day">Today \u00B7 '+esc(dt)+(all.length?' \u00B7 '+all.length+' match'+(all.length>1?'es':''):'')+'</div>';
     if(all.length)h+='<div class="sxs-chips"><button class="sxs-chip'+(sel.game?'':' on')+'" data-g="">All</button>'+sports.map(function(g){return '<button class="sxs-chip'+(sel.game===g?' on':'')+'" data-g="'+esc(g)+'">'+esc(g)+'</button>';}).join('')+'</div>';
     if(!all.length){root.innerHTML=h+'<div class="sxs-empty">'+(Date.now()-t0>8000?'No matches scheduled for today. Check back soon.':'Loading\u2026')+'</div>';return;}
     var idx=function(it){return all.indexOf(it);};
     var list=sel.game?all.filter(function(i){return i.sport===sel.game;}):all;
+    if(sel.tour)list=list.filter(function(i){return i.tour===sel.tour;});
     var live=list.filter(function(i){return i.live;});
+    if(sel.tour)h+='<div class="sxs-chips"><button class="sxs-chip on" data-g="">\u2715 '+esc(sel.tour)+'</button></div>';
+    /* ── tournament header (hero) ── */
+    var cand=live.concat(list.filter(function(i){return !i.live&&!i.fin;}));
+    var hero=cand.filter(function(i){return i.title===sel.hero;})[0]||cand[0];
+    if(hero){
+      var hs=hero.live?'Streaming live right now':'Starts '+hero.time+' \u00B7 stream opens 30 min before start';
+      h+='<div class="sxs-hero">'+(hero.img?'<img class="bg" src="'+esc(hero.img)+'" alt="" onerror="this.remove()">':'')+
+        '<div class="sxs-hero-tag">'+esc(hero.tour||hero.sport)+(hero.sport&&hero.sport!==hero.tour?' \u00B7 '+esc(hero.sport):'')+'</div>'+
+        '<h2>'+esc(evTeamName(hero.title))+'</h2><p>'+esc(hs)+'</p>'+
+        '<button class="sxs-hero-btn" type="button" data-k="'+idx(hero)+'">\u25B6 Watch Now</button>'+
+        (cand.length>1?'<div class="sxs-hero-strip">'+cand.slice(0,8).map(function(i){return '<div class="sxs-hth'+(i===hero?' on':'')+'" data-k="'+idx(i)+'" role="button" tabindex="0">'+(i.img?'<img src="'+esc(i.img)+'" alt="" onerror="this.remove()">':tmHtml(i))+'</div>';}).join('')+'</div>':'')+'</div>';
+    }
+    /* ── Popular Tournaments rail ── */
+    if(!sel.tour){
+      var tl=tiles(list);
+      if(tl.length>1)h+=row('Popular Tournaments',tl.map(function(t){
+        var it=t.it,lg=it.tm?lgHtml(it.tm[0])+'<b>v</b>'+lgHtml(it.tm[1]):'<u>'+esc(ini(t.name))+'</u>';
+        return '<div class="sxs-tile" data-t="'+esc(t.name)+'" role="button" tabindex="0"><div class="lg">'+lg+'</div><span>'+esc(t.name)+(t.live?' \u00B7 LIVE':'')+'</span></div>';
+      }).join(''));
+    }
     if(live.length)h+=row('Live Now',live.map(function(i){return card(i,idx(i));}).join(''));
     /* tournaments: ordinary rows further down the page (not a category list) */
     var tm={},order=[];
@@ -17528,14 +17553,15 @@ section.section,.section{background:transparent !important;}
     var a=d.querySelector('a.smo-btn,a');if(a)a.click();
   }
   root.addEventListener('click',function(e){
-    var c=e.target.closest('.sxs-card'),t=e.target.closest('.sxs-tile'),ch=e.target.closest('.sxs-chip'),b=e.target.closest('.sxs-btn');
+    var c=e.target.closest('.sxs-card'),t=e.target.closest('.sxs-tile'),ch=e.target.closest('.sxs-chip'),b=e.target.closest('.sxs-btn'),hb=e.target.closest('.sxs-hero-btn,.sxs-hth');
+    if(hb){var hk=+hb.getAttribute('data-k'),hi=all[hk];if(hi){if(hb.classList.contains('sxs-hero-btn'))open(hi);else{sel.hero=hi.title;lastSig='';render();}}return;}
     if(b){var tr=b.parentNode.querySelector('.sxs-track');tr.scrollBy({left:(b.classList.contains('l')?-1:1)*tr.clientWidth*.85,behavior:'smooth'});return;}
     if(ch){sel={game:ch.getAttribute('data-g'),tour:''};lastSig='';render();return;}
     if(t){sel={game:'',tour:t.getAttribute('data-t')};lastSig='';render();panel.scrollTop=0;return;}
     if(c){var it=all[+c.getAttribute('data-k')];if(it)open(it);}
   });
   document.addEventListener('error',function(e){var t=e.target;if(t&&t.tagName==='IMG'&&t.dataset&&t.dataset.ini!==undefined&&t.closest('#sxs-root,#sxs-pop')){var u=document.createElement('u');u.style.setProperty('--c',t.dataset.c||'#f04f8c');u.textContent=t.dataset.ini;t.replaceWith(u);}},true);
-  root.addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('sxs-card')){e.preventDefault();e.target.click();}});
+  root.addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&&(e.target.classList.contains('sxs-card')||e.target.classList.contains('sxs-tile')||e.target.classList.contains('sxs-hth'))){e.preventDefault();e.target.click();}});
   /* ═════ hover preview card (Hotstar-style full info) ═════ */
   var pop=document.createElement('div');pop.id='sxs-pop';document.body.appendChild(pop);
   var popIt=null,showT=0,hideT=0,curCard=null;
@@ -17642,6 +17668,24 @@ section.section,.section{background:transparent !important;}
 .sxs-sel:focus-visible{box-shadow:0 0 0 2px rgba(255,255,255,.55);}
 .sxs-sel option{background:#141414;color:#fff;}
 @media(max-width:900px){.sxs-sel{flex:1 1 100%;}}
+</style>
+<style id="sxs-hero-css">
+.sxs-hero{position:relative;min-height:300px;margin:0 0 20px;padding:28px 32px;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;gap:8px;overflow:hidden;background:#111;}
+.sxs-hero>img.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.5;}
+.sxs-hero:after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,#0a0a0a 5%,rgba(10,10,10,.15) 75%),linear-gradient(0deg,#0a0a0a,transparent 50%);}
+.sxs-hero>*:not(img){position:relative;z-index:2;}
+.sxs-hero-tag{font:700 12px var(--pm-font,inherit);letter-spacing:.8px;text-transform:uppercase;color:#d5d9e5;}
+.sxs-hero h2{margin:0;font:800 30px/1.15 var(--pm-font,inherit);max-width:620px;}
+.sxs-hero p{margin:0 0 6px;font:400 15px var(--pm-font,inherit);color:#c9c9c9;max-width:520px;}
+.sxs-hero-btn{border:0;cursor:pointer;color:#fff;font:700 16px var(--pm-font,inherit);padding:12px 44px;background:linear-gradient(90deg,#1e7bff,#e0155f);}
+.sxs-hero-strip{display:flex;gap:8px;margin-top:10px;max-width:100%;overflow-x:auto;scrollbar-width:none;}
+.sxs-hth{position:relative;flex:0 0 78px;height:44px;background:#1a1a1a;cursor:pointer;overflow:hidden;border:2px solid transparent;}
+.sxs-hth.on{border-color:#fff;}
+.sxs-hth img{width:100%;height:100%;object-fit:cover;}
+.sxs-hth .sxs-tm{gap:4px;}.sxs-hth .sxs-tm .lg{width:22px;height:22px;}.sxs-hth .sxs-tm .lg u{width:20px;height:20px;font-size:9px;}.sxs-hth .sxs-tm em,.sxs-hth .sxs-tm b{display:none;}
+.sxs-tile .lg u{text-decoration:none;display:flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:50%;background:var(--c,#f04f8c);color:#fff;font:800 15px var(--pm-font,inherit);}
+.sxs-tile{cursor:pointer;}
+@media(max-width:900px){.sxs-hero{min-height:240px;padding:18px 14px;}.sxs-hero h2{font-size:22px;}.sxs-hero-btn{padding:10px 32px;}}
 </style>
 <script id="sxs-home">
 (function(){
