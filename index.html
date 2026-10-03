@@ -4179,6 +4179,8 @@ function openSxSearch(){
   const bar = document.querySelector('.sx-search-bar');
   if (bar) bar.classList.remove('has-text');
   sxRunSearch('');
+  try{ if (typeof window.vaInit === 'function'){ window.vaInit(); window.vaInit = null; } }catch(e){}
+  try{ ['movie','tv'].forEach(function(t){ if (window.vaPools && !vaPools[t].all.length && !vaPools[t].loading && typeof vaBulkPreload==='function') vaBulkPreload(t); }); }catch(e){}
 }
 function closeSxSearch(){
   document.getElementById('sx-search-overlay').classList.remove('open');
@@ -13290,6 +13292,7 @@ const vaPools = {
   movie: { all: [], page: 1, totalPages: null, loading: false },
   tv:    { all: [], page: 1, totalPages: null, loading: false }
 };
+window.vaPools = vaPools;   // search reads window.vaPools — a top-level const is NOT a window property
 let vaCurrentType = 'movie';      // 'movie' | 'tv'
 let vaCurrentSort = 'popularity'; // 'popularity' | 'rating'
 let vaCurrentGenre = '';
@@ -15843,6 +15846,10 @@ button, a.btn, [class*="btn-"], input, select, textarea{
       g.items.forEach(function(it){
         if (it.start && (!gS || it.start < gS)) gS = it.start;
         if (!gT) gT = String(it.e.tournament || it.e.tournament_name || it.e.series || it.e.series_name || it.e.league || it.e.competition || '').trim();
+        if (!gT && it.e.event_name) {   /* SonyLIV feed: event_name = tournament, sometimes wrapped as "Upcoming - A vs B - Tournament" */
+          gT = String(it.e.event_name).replace(/^\s*(upcoming|live|completed|ended|finished)\s*[-:\u2013\u2014]\s*/i, '')
+            .split(/\s+[-\u2013\u2014]\s+/).filter(function(p){ return p && !/\b(vs?\.?|versus)\b/i.test(p); }).join(' - ').replace(/\s+/g, ' ').trim();
+        }
       });
       var gStatus = g.items.some(function(it){ return it.st === 'LIVE'; }) ? 'LIVE' : g.items.every(function(it){ return it.st === 'ENDED'; }) ? 'ENDED' : 'UPCOMING';
       return { key: 'slx' + idx, status: gStatus, title: title, category: g.ref.cat, blob: (window.sxBlob ? sxBlob(g.ref.e) : ''), poster: poster, servers: servers, teams: g.ref.p.teams, date: g.ref.p.date, start: gS, tour: gT };
@@ -16575,6 +16582,7 @@ section.section,.section{background:transparent !important;}
   build();
   setInterval(build,3000);                            /* picks up FanCode / SonyLIV / sheet data as it loads */
   window.hsHeroRefresh=function(){clearTimeout(pend);pend=setTimeout(build,60);};
+  window.hsHeroNav={count:function(){return slides.length;},index:function(){return cur;},go:function(i){show(i);restart();},next:function(){show(cur+1);restart();},prev:function(){show(cur-1);restart();}};
 
   /* arrow buttons on the horizontal rails */
   ['channelsPreviewGrid','fixtures-grid'].forEach(function(id){
@@ -17272,12 +17280,12 @@ section.section,.section{background:transparent !important;}
   }
   /* sheet row: tournament / series columns first, then details, then game — skipping plain sport names */
   function sheetTourReal(c,sport){
-    var f=['tournament','tournament_name','series','series_name','league','competition','event','event_name','details','game'];
+    var f=['game','tournament','tournament_name','series','series_name','league','competition','event','event_name'];   /* game = tournament; details = match info (1st T20I), never a tournament */
     for(var i=0;i<f.length;i++){var v=cleanTour(c[f[i]]);if(v&&!isGenericT(v,sport))return v;}
     return '';
   }
   function tourFallback(sport){return (sport&&!GENERIC_T.test(String(sport).trim())||/^(cricket|football|soccer|tennis|hockey|basketball|kabaddi)$/i.test(String(sport||'')))?String(sport).trim()+' Matches':'Other Matches';}
-  function tkey(t){var s=String(t||'');for(var i=0;i<KNOWN_T.length;i++){if(KNOWN_T[i][0].test(s)&&KNOWN_T[i][1]===knownTour(s).replace(/\s+20\d\d$/,''))return 'k'+i;}return nk(s.replace(/\b20\d\d\b/g,''));}
+  function tkey(t){return nk(String(t||'').replace(/\b20\d\d(-\d\d)?\b/g,'').replace(/\b(men'?s|mens)\b/ig,''));}
   function guessTitle(c){
     var a=nm(c.team1_full_name||c.team1_code),b=nm(c.team2_full_name||c.team2_code);
     if(a&&b)return a+' v '+b;
@@ -17415,7 +17423,7 @@ section.section,.section{background:transparent !important;}
     sheet.forEach(function(c){
       var live=false,fin=false;try{live=matchStatusText(c).toLowerCase()==='live';fin=!live&&isMatchFinished(c);}catch(e){}
       var sp='Other';try{sp=(window.sxSheetSport?sxSheetSport(c):(c.sport||c.sports))||'Other';}catch(e){}
-      raw.push({src:'s',raw:c,title:guessTitle(c),sport:String(sp).trim()||'Other',tour:sheetTourReal(c,sp),tourG:guessTour([guessTitle(c),c.details,c.btn_text,c.game,c.title],sp),live:live,fin:fin,at:startMs(c),img:c.banner_url||c.banner_image_url||c._fcxBanner||'',i1:c.team1_icon_url,i2:c.team2_icon_url,c1:c.team1_code,c2:c.team2_code});
+      raw.push({src:'s',raw:c,title:guessTitle(c),sport:String(sp).trim()||'Other',tour:sheetTourReal(c,sp),tourG:guessTour([c.game,guessTitle(c),c.btn_text,c.title],sp),live:live,fin:fin,at:startMs(c),img:c.banner_url||c.banner_image_url||c._fcxBanner||'',i1:c.team1_icon_url,i2:c.team2_icon_url,c1:c.team1_code,c2:c.team2_code});
     });
     /* ── source 2: FanCode API ── */
     fcx.forEach(function(m){
@@ -17502,23 +17510,11 @@ section.section,.section{background:transparent !important;}
     if(sel.tour)list=list.filter(function(i){return i.tour===sel.tour;});
     var live=list.filter(function(i){return i.live;});
     if(sel.tour)h+='<div class="sxs-chips"><button class="sxs-chip on" data-g="">\u2715 '+esc(sel.tour)+'</button></div>';
-    /* ── tournament header (hero) ── */
-    var cand=live.concat(list.filter(function(i){return !i.live&&!i.fin;}));
-    var hero=cand.filter(function(i){return i.title===sel.hero;})[0]||cand[0];
-    if(hero){
-      var hs=hero.live?'Streaming live right now':'Starts '+hero.time+' \u00B7 stream opens 30 min before start';
-      h+='<div class="sxs-hero">'+(hero.img?'<img class="bg" src="'+esc(hero.img)+'" alt="" onerror="this.remove()">':'')+
-        '<div class="sxs-hero-tag">'+esc(hero.tour||hero.sport)+(hero.sport&&hero.sport!==hero.tour?' \u00B7 '+esc(hero.sport):'')+'</div>'+
-        '<h2>'+esc(evTeamName(hero.title))+'</h2><p>'+esc(hs)+'</p>'+
-        '<button class="sxs-hero-btn" type="button" data-k="'+idx(hero)+'">\u25B6 Watch Now</button>'+
-        (cand.length>1?'<div class="sxs-hero-strip">'+cand.slice(0,8).map(function(i){return '<div class="sxs-hth'+(i===hero?' on':'')+'" data-k="'+idx(i)+'" role="button" tabindex="0">'+(i.img?'<img src="'+esc(i.img)+'" alt="" onerror="this.remove()">':tmHtml(i))+'</div>';}).join('')+'</div>':'')+'</div>';
-    }
     /* ── Popular Tournaments rail ── */
     if(!sel.tour){
       var tl=tiles(list);
       if(tl.length>1)h+=row('Popular Tournaments',tl.map(function(t){
-        var it=t.it,lg=it.tm?lgHtml(it.tm[0])+'<b>v</b>'+lgHtml(it.tm[1]):'<u>'+esc(ini(t.name))+'</u>';
-        return '<div class="sxs-tile" data-t="'+esc(t.name)+'" role="button" tabindex="0"><div class="lg">'+lg+'</div><span>'+esc(t.name)+(t.live?' \u00B7 LIVE':'')+'</span></div>';
+        return '<div class="sxs-tile sxs-tt" data-t="'+esc(t.name)+'" role="button" tabindex="0"><u>'+esc(ini(t.name))+'</u><span>'+esc(t.name)+'</span>'+(t.live?'<i class="sxs-tl">LIVE</i>':'')+'</div>';
       }).join(''));
     }
     if(live.length)h+=row('Live Now',live.map(function(i){return card(i,idx(i));}).join(''));
@@ -18095,5 +18091,196 @@ button:active,.smo-btn:active,.btn-watch-sm:active,.bc-watch-btn:active{transiti
 #sp-quality-menu .sp-sv-report{justify-content:flex-start;padding-left:12px}
 @media (max-width:560px){#sp-quality-btn .ql{display:none}#sp-quality-btn{padding:0 8px 0 7px}#stream-player-infobar>#sp-quality-menu{top:44px;width:208px}}
 </style>
+<style id="sx-live-white">
+/* every LIVE badge: white background, black text, black pulse dot */
+.sxs-live,#sxs-pop .pm i.lv,#hs-hero .tag .lv,.sxv-bd.lv,.mws-badge-row .smo-live-badge,.smo-live-badge,.hsc-live-badge{background:#fff !important;color:#000 !important;}
+.sxs-live u,.sxv-bd.lv u,#hs-hero .tag .lv u,#hs-hero .tag .lv i{background:#000 !important;}
+</style>
+<style id="sxs-tt-css">
+.sxs-tt{gap:10px;padding:12px;text-align:center;position:relative;}
+.sxs-tt u{text-decoration:none;display:flex;align-items:center;justify-content:center;width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,.1);font:800 18px var(--pm-font,inherit);color:#fff;}
+.sxs-tt span{white-space:normal !important;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.25;font:700 14px var(--pm-font,inherit);}
+.sxs-tt .sxs-tl{position:absolute;left:8px;top:8px;font:700 10px var(--pm-font,inherit);font-style:normal;background:#fff;color:#000;padding:2px 6px;}
+</style>
+<style id="sx-names-helv">
+/* channel names + tournament names: small, centred, Helvetica */
+#sxs-live .sxs-bar,.sxs-card:has(.sxs-lo) .sxs-bar,.sxs-tile span{
+  font-family:"Helvetica Neue",Helvetica,Arial,sans-serif !important;font-size:12.5px !important;font-weight:500 !important;
+  letter-spacing:0 !important;text-align:center !important;}
+.sxs-tt span{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif !important;font-size:12.5px !important;font-weight:500 !important;text-align:center !important;}
+.sxs-tt{align-items:center;justify-content:center;}
+@media(max-width:900px){#sxs-live .sxs-bar,.sxs-card:has(.sxs-lo) .sxs-bar,.sxs-tile span{font-size:11.5px !important;}}
+</style>
+<style id="sx-home-fix">
+/* match names too: small, centred, Helvetica */
+.sxs-bar{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif !important;font-size:12.5px !important;font-weight:500 !important;letter-spacing:0 !important;text-align:center !important;}
+@media(max-width:900px){.sxs-bar{font-size:11.5px !important;}}
+/* extra arrows under the hero slides */
+.hs-rowwrap>.hs-rowbtn,.hs-rowbtn{display:none !important;}
+/* every LIVE badge (home, hero slides, rails): white / black, square */
+.fx2-badge-live,.slide-badge-live,.slide-live-badge,.match-live-tag,.hsc-live-badge,.smo-live-badge,.sxs-live,#hs-hero .tag .lv,.sxv-bd.lv,.fcx-badge:not(.fcx-upcoming){background:#fff !important;color:#000 !important;border-color:#fff !important;}
+.fx2-live-dot,.sxs-live u,#hs-hero .tag .lv i,.sxv-bd.lv u{background:#000 !important;box-shadow:none !important;}
+/* no curves */
+.fx2-badge,.slide-sport-badge,.slide-badge-live,.slide-live-badge,.match-live-tag,.hsc-live-badge,.smo-live-badge,.smo-upcoming-badge,.sxs-live,.sxs-time,.sxs-end,.sxs-tile,.sxs-tt,.sxs-tt u,.sxs-th,.sxs-card,.sxs-chip,#hs-hero .tag .lv,.fcx-badge,.mws-badge-row .smo-live-badge{border-radius:0 !important;}
+</style>
+<style id="hsm-mobile">
+/* ═════ MOBILE — minimal, narrow, Hotstar-style ═════ */
+@media(max-width:900px){
+  body{padding-top:38px !important;padding-bottom:calc(44px + env(safe-area-inset-bottom,0px)) !important;background:#000;}
+  .mobile-topstrip{display:none !important;}
+  #hsm-bar{position:fixed;top:0;left:0;right:0;z-index:1100;height:38px;display:flex;align-items:center;gap:8px;padding:0 10px;background:#000;}
+  #hsm-bar .mts-hamburger{pointer-events:auto;width:28px;height:28px;flex:0 0 28px;gap:3.5px;}
+  #hsm-bar .mts-hamburger span{box-shadow:none;width:16px;height:1.5px;}
+  #hsm-bar .hsm-logo{display:flex;align-items:center;gap:6px;flex:1;min-width:0;}
+  #hsm-bar .hsm-logo img{height:20px;width:20px;object-fit:contain;}
+  #hsm-bar .hsm-logo b{font:600 12px/1 "Helvetica Neue",Helvetica,Arial,sans-serif;letter-spacing:.08em;color:#fff;white-space:nowrap;}
+  #hsm-bar .hsm-search{width:30px;height:30px;border:0;background:none;color:#fff;display:flex;align-items:center;justify-content:center;padding:0;}
+  #hsm-bar .hsm-search svg{width:18px;height:18px;}
+
+  .slides-container,.hero-cards-section{display:none !important;}
+  .hero{padding:0 !important;margin:0 !important;}
+  #hs-hero:not([style*="none"]){display:block !important;height:min(44vh,340px);min-height:240px;background:#000;}
+  #hs-hero .bg{background-position:center 30%;}
+  #hs-hero .sh{background:linear-gradient(0deg,#000 0%,rgba(0,0,0,.82) 26%,rgba(0,0,0,.1) 70%,rgba(0,0,0,.25) 100%) !important;}
+  #hs-hero .txt{left:0 !important;right:0;bottom:12px !important;width:auto !important;padding:0 14px;display:flex;flex-direction:column;align-items:flex-start;text-align:left;}
+  #hs-hero .tag{justify-content:flex-start;margin:0 0 5px !important;font-size:9.5px !important;}
+  #hs-hero .tag .lv{padding:3px 7px !important;}
+  #hs-hero h1{font:700 18px/1.2 "Helvetica Neue",Helvetica,Arial,sans-serif !important;margin:0 0 3px !important;text-align:left;}
+  #hs-hero .sub{font-size:11px !important;margin:0 0 10px !important;text-align:left;}
+  #hs-hero .btns{width:100%;gap:6px !important;}
+  #hs-hero .go{flex:0 1 150px;width:auto !important;min-width:0 !important;height:34px !important;border-radius:0 !important;font-size:12.5px !important;padding:0 14px !important;}
+  #hs-hero .plus{flex:0 0 34px;height:34px !important;width:34px !important;border-radius:0 !important;font-size:18px !important;}
+
+  /* slim icon-only bottom nav */
+  .mobile-tabbar{height:calc(44px + env(safe-area-inset-bottom,0px)) !important;align-items:flex-start !important;background:#000 !important;border-top:1px solid rgba(255,255,255,.07) !important;}
+  .mtab{flex-direction:column !important;justify-content:center !important;height:44px !important;color:#7c7c7c !important;position:relative;}
+  .mtab svg{width:20px !important;height:20px !important;}
+  .mtab .mtab-l{display:none !important;}
+  .mtab.active{color:#fff !important;}
+  .mtab.active:before{content:"";position:absolute;top:0;left:34%;right:34%;height:2px;background:linear-gradient(90deg,#1e7bff,#e0155f);}
+  .mtab.active .mtab-fill-part{fill:none !important;}
+  footer{padding-bottom:calc(20px + 44px + env(safe-area-inset-bottom,0px)) !important;}
+
+  /* rails: tighter */
+  #sxs-home,#sxs-live{padding:4px 0 20px !important;}
+  #sxs-home .sxs-t,#sxs-live .sxs-t,#sxs-root .sxs-t{font:600 14px/1.2 "Helvetica Neue",Helvetica,Arial,sans-serif;padding:0 12px;}
+  #sxs-home .sxs-track,#sxs-live .sxs-track,#sxs-root .sxs-track{padding:0 12px;gap:8px;scroll-snap-type:x proximity;}
+  #sxs-home .sxs-card,#sxs-live .sxs-card:not(.sxs-po),#sxs-root .sxs-card{flex:0 0 132px;width:132px;scroll-snap-align:start;}
+  #sxs-home .sxs-bar,#sxs-live .sxs-bar,#sxs-root .sxs-bar{font-size:11px !important;margin-top:6px;}
+  #sxs-root{padding-left:0;padding-right:0;}
+  #sxs-root .sxs-h1{font-size:18px;padding:0 12px;}
+  #sxs-root .sxs-day{padding:0 12px;font-size:11px;}
+  #sxs-root .sxs-chips{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;padding:0 12px 4px;scrollbar-width:none;}
+  #sxs-root .sxs-chips::-webkit-scrollbar{display:none;}
+  #sxs-root .sxs-chip{flex:0 0 auto;font-size:10.5px;padding:5px 11px;}
+  #sxs-root .sxs-tile{flex:0 0 112px;width:112px;}
+  #sxs-root .sxs-tt u{width:40px;height:40px;font-size:14px;}
+}
+</style>
+<script id="hsm-mobile-js">
+(function(){
+  function build(){
+    if(document.getElementById('hsm-bar'))return;
+    var bar=document.createElement('div');bar.id='hsm-bar';
+    var logo=document.getElementById('nav-logo-img');
+    bar.innerHTML='<div class="hsm-logo">'+(logo&&logo.src?'<img src="'+logo.src+'" alt="">':'')+'<b>EV SPORTS</b></div><button class="hsm-search" type="button" aria-label="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.3 15.3 20 20"/></svg></button>';
+    var ham=document.getElementById('mts-hamburger');
+    if(ham)bar.insertBefore(ham,bar.firstChild);        /* same button, same drawer behaviour */
+    bar.querySelector('.hsm-search').onclick=function(){if(window.openSxSearch)openSxSearch();};
+    document.body.appendChild(bar);
+    var L={home:'Home',matches:'Sports',search:'Search',livetv:'Live TV',favourites:'Favourites'};
+    document.querySelectorAll('.mtab[data-sxtab]').forEach(function(t){
+      if(t.querySelector('.mtab-l'))return;
+      var sp=document.createElement('span');sp.className='mtab-l';sp.textContent=L[t.getAttribute('data-sxtab')]||t.getAttribute('aria-label')||'';t.appendChild(sp);
+    });
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',build);else build();
+})();
+</script>
+<style id="hsm-narrow">
+@media(max-width:900px){
+  body{padding-top:30px !important;padding-bottom:calc(34px + env(safe-area-inset-bottom,0px)) !important;}
+  #hsm-bar{height:30px;padding:0 8px;gap:6px;}
+  #hsm-bar .mts-hamburger{width:24px;height:24px;flex:0 0 24px;gap:3px;}
+  #hsm-bar .mts-hamburger span{width:14px;}
+  #hsm-bar .hsm-logo img{height:16px;width:16px;}
+  #hsm-bar .hsm-logo b{font-size:11px;}
+  #hsm-bar .hsm-search{width:26px;height:26px;}#hsm-bar .hsm-search svg{width:16px;height:16px;}
+  .mobile-tabbar{height:calc(34px + env(safe-area-inset-bottom,0px)) !important;border-top:1px solid rgba(255,255,255,.1) !important;}
+  .mtab{height:34px !important;}
+  .mtab svg{width:17px !important;height:17px !important;}
+  .mtab.active:before{height:1px;left:38%;right:38%;background:#fff !important;}
+  footer{padding-bottom:calc(20px + 34px + env(safe-area-inset-bottom,0px)) !important;}
+  /* no colours: pure black / white / grey */
+  #hs-hero .go{background:#fff !important;color:#000 !important;}
+  #hs-hero .plus{background:rgba(255,255,255,.16) !important;}
+  #hs-hero .sh{background:linear-gradient(0deg,#000 0%,rgba(0,0,0,.82) 26%,rgba(0,0,0,.1) 70%,rgba(0,0,0,.25) 100%) !important;}
+}
+</style>
+<style id="hsm-hero-fix">
+/* the base hero rules only existed for desktop — give mobile the full set */
+@media(max-width:900px){
+  #hs-hero{position:relative;overflow:hidden;touch-action:pan-y;}
+  #hs-hero .bg{position:absolute;inset:0;background-size:cover;background-position:center 30%;opacity:0;transition:opacity .5s ease;}
+  #hs-hero .bg.on{opacity:1;}
+  #hs-hero .sh{position:absolute;inset:0;pointer-events:none;}
+  #hs-hero .txt{position:absolute;z-index:2;}
+  #hs-hero .tag{display:flex;align-items:center;gap:8px;color:rgba(255,255,255,.75);text-transform:uppercase;letter-spacing:.12em;font-weight:600;}
+  #hs-hero .tag:empty{display:none;}
+  #hs-hero .tag .lv{display:inline-flex;align-items:center;gap:5px;font-weight:700;border-radius:0;background:#fff !important;color:#000 !important;}
+  #hs-hero .tag .lv i{width:5px;height:5px;border-radius:50%;background:#000 !important;animation:hsPulse 1.4s ease-in-out infinite;}
+  #hs-hero h1{color:#fff;text-transform:none;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  #hs-hero .sub{color:rgba(255,255,255,.7);display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;}
+  #hs-hero .sub:empty{display:none;}
+  #hs-hero .btns{display:flex;align-items:center;}
+  #hs-hero .go{display:flex;align-items:center;justify-content:center;gap:6px;border:0;cursor:pointer;font-weight:600;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;}
+  #hs-hero .plus{border:0;color:#fff;cursor:pointer;}
+  #hs-hero .thumbs{display:none !important;}
+  #hsm-dots{position:absolute;z-index:3;right:14px;bottom:18px;display:flex;gap:4px;}
+  #hsm-dots i{width:12px;height:2px;background:rgba(255,255,255,.35);transition:background .2s,width .2s;}
+  #hsm-dots i.on{background:#fff;width:20px;}
+}
+@keyframes hsPulse{0%,100%{opacity:1}50%{opacity:.35}}
+</style>
+<script id="hsm-hero-js">
+(function(){
+  function mobile(){return window.matchMedia&&matchMedia('(max-width:900px)').matches;}
+  var hero,dots,sx=0,sy=0,n=-1,cur=-1;
+  function sync(){
+    if(!mobile()||!window.hsHeroNav)return;
+    hero=hero||document.getElementById('hs-hero');if(!hero)return;
+    if(!dots){dots=document.createElement('div');dots.id='hsm-dots';hero.appendChild(dots);}
+    var c=hsHeroNav.count(),i=hsHeroNav.index();
+    if(c!==n){n=c;dots.innerHTML=new Array(c+1).join('<i></i>');cur=-1;}
+    if(i!==cur){cur=i;[].forEach.call(dots.children,function(d,k){d.classList.toggle('on',k===i);});}
+    dots.style.display=c>1?'flex':'none';
+  }
+  setInterval(sync,400);
+  document.addEventListener('touchstart',function(e){
+    var h=e.target.closest&&e.target.closest('#hs-hero');if(!h||!mobile())return;
+    sx=e.touches[0].clientX;sy=e.touches[0].clientY;
+  },{passive:true});
+  document.addEventListener('touchend',function(e){
+    var h=e.target.closest&&e.target.closest('#hs-hero');if(!h||!mobile()||!window.hsHeroNav)return;
+    var dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
+    if(Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)*1.5){dx<0?hsHeroNav.next():hsHeroNav.prev();}
+  },{passive:true});
+})();
+</script>
+<style id="sx-search-fix">
+@media(min-width:901px){#sx-search-overlay{padding-left:92px !important;}}
+</style>
+<script id="sx-search-fix-js">
+(function(){
+  var last='';
+  setInterval(function(){
+    var ov=document.getElementById('sx-search-overlay');
+    if(!ov||!ov.classList.contains('open')||!window.vaPools||typeof sxRunSearch!=='function')return;
+    var sig=vaPools.movie.all.length+'|'+vaPools.tv.all.length+'|'+((window._cmsChannels||[]).length);
+    if(sig===last)return;last=sig;
+    var inp=document.getElementById('sx-search-input');sxRunSearch(inp?inp.value:'');
+  },1200);
+})();
+</script>
 </body>
 </html>
