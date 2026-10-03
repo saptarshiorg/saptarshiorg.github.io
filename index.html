@@ -16278,7 +16278,6 @@ section.section,.section{background:transparent !important;}
   .section-inner{padding-left:40px !important;padding-right:40px !important;max-width:none !important;}
 }
 @media(max-width:900px){#hs-rail,#hs-hero{display:none !important;}}
-@media(min-width:901px){#hs-hero,#hero-section,.sx-hero-override,#sxHeroOverride{display:none !important;}}
 </style>
 <script>
 (function(){
@@ -16323,7 +16322,7 @@ section.section,.section{background:transparent !important;}
   if(!host||!track)return;
   var hero=document.createElement('div');hero.id='hs-hero';
   hero.innerHTML='<div class="bg on"></div><div class="bg"></div><div class="sh"></div><div class="txt"><div class="tag"></div><h1></h1><div class="sub"></div><div class="btns"><button class="go" type="button">&#9654;&nbsp; Watch Now</button><button class="plus" type="button" title="More matches">+</button></div></div><div class="thumbs"><div class="thw"></div><button class="nx" type="button">&#10095;</button></div>';
-  /* hero slider removed: the banner is no longer inserted into the page */
+  host.insertBefore(hero,host.firstChild);
   var bgs=hero.querySelectorAll('.bg'),cur=0,cards=[],timer=null,flip=0;
   function bgOf(c){var el=c.querySelector('.hsc-banner-bg');var m=el&&el.style.backgroundImage;return m||'';}
   function show(i){
@@ -16345,7 +16344,7 @@ section.section,.section{background:transparent !important;}
     cards.forEach(function(c,k){var d=document.createElement('div');d.className='th';d.style.backgroundImage=bgOf(c);d.onclick=function(){show(k);restart();};w.appendChild(d);});
     cur=0;show(0);restart();
   }
-  function restart(){}
+  function restart(){clearInterval(timer);timer=setInterval(function(){show(cur+1);},6500);}
   hero.querySelector('.go').onclick=function(){cards[cur]&&cards[cur].click();};
   hero.querySelector('.plus').onclick=function(){window.sxSwitchTab&&sxSwitchTab('matches');var e=document.getElementById('sxTabPanels');e&&e.scrollIntoView({behavior:'smooth'});};
   hero.querySelector('.nx').onclick=function(){show(cur+1);restart();};
