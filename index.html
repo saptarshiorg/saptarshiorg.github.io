@@ -1403,7 +1403,7 @@ header.scrolled {
   background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08);
   border-radius: 10px; overflow:hidden; transition: transform 0.18s var(--ease), border-color 0.18s var(--ease);
 }
-.fx2-card:hover{ transform: translateY(-4px); border-color: rgba(255,255,255,0.2); }
+.fx2-card:hover{ transform:none !important; border-color: rgba(255,255,255,0.2); }
 .fx2-thumb{ position:relative; width:100%; aspect-ratio:16/9; background:#0a0a0a; overflow:hidden; }
 .fx2-thumb-img{ width:100%; height:100%; object-fit:cover; display:block; }
 .fx2-thumb-teams{
@@ -5965,58 +5965,177 @@ window.fcxAppendFixturesPreview = function(){
 // site-wide via CSS so it's skipped. Inserted right before the trailing
 // "all channels" banner slide, which always stays last.
 window.fcxAppendHeroSlides = function(){
+  // Unified API hero: FanCode + SonyLIV.  Keep one banner per fixture/day,
+  // prefer the newest dated record, and include API match information.
   const container = document.getElementById('slides-container');
   if (!container || typeof totalSlides === 'undefined') return;
-  container.querySelectorAll('.fcx-hero-slide').forEach(s => s.remove());
-  container.querySelectorAll('.fcx-hero-dot').forEach(d => d.remove());
-  const picks = (window._fcxMatchesCache || [])
-    .filter(m => m.status !== 'COMPLETED')
-    .filter(m => !fcxHasSheetCard(m)) // already shown as a sheet card — don't duplicate it here
-    .slice()
-    // Sort FanCode matches: LIVE first, then UPCOMING by date (ascending/soonest first)
-    .sort((a,b) => {
-      const statusA = fcxStatusRank(a); // 0=LIVE, 1=UPCOMING, 2=COMPLETED
-      const statusB = fcxStatusRank(b);
-      if (statusA !== statusB) return statusA - statusB; // Primary sort by status
-      return fcxStartMs(a) - fcxStartMs(b); // Secondary sort by time ascending
-    })
-    .slice(0, 3);
+
+  container.querySelectorAll('.api-hero-slide').forEach(s => s.remove());
+  container.querySelectorAll('.api-hero-dot').forEach(d => d.remove());
+
+  const norm = v => String(v || '').toLowerCase()
+    .replace(/\[[^\]]*\]/g,' ')
+    .replace(/\b(vs?|versus|x)\b/g,' ')
+    .replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ');
+  const startMs = m => {
+    if (m && m.time instanceof Date && !isNaN(m.time)) return m.time.getTime();
+    if (m && m.start instanceof Date && !isNaN(m.start)) return m.start.getTime();
+    if (m && m.start) { const d=new Date(m.start); if(!isNaN(d)) return d.getTime(); }
+    if (m && m.time) { const d=new Date(m.time); if(!isNaN(d)) return d.getTime(); }
+    return fcxStartMs(m) || 0;
+  };
+  const cleanFixture = v => String(v || '').toLowerCase()
+    .replace(/\[[^\]]*\]/g,' ')
+    .replace(/\b(?:vs?|versus|v|x)\b/g,' ')
+    .replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ');
+  const fixture = m => {
+    if (m._teams && m._teams.length >= 2) return m._teams.map(cleanFixture).filter(Boolean).sort().join(' vs ');
+    if (m.teams && m.teams.length >= 2) return m.teams.map(cleanFixture).filter(Boolean).sort().join(' vs ');
+    const titleRaw = String(m.title || m.name || '');
+    // Prefer the explicit TEAM v TEAM portion. This is the important bridge
+    // for CMS HERO SLIDES titles such as "IND v AUS" / "India vs Australia".
+    const parts = titleRaw.replace(/\[[^\]]*\]/g,' ').split(/\s+(?:vs?\.?|versus|x)\s+/i);
+    if (parts.length >= 2) {
+      const left = cleanFixture(parts[0]).split(/\b(?:1st|2nd|3rd|4th|5th|final|semi|qualifier|match)\b/i)[0].trim();
+      const right = cleanFixture(parts[1]).replace(/\b(?:1st|2nd|3rd|4th|5th|final|semi|qualifier|match).*$/i,'').trim();
+      if (left && right) return [left,right].sort().join(' vs ');
+    }
+    const title = norm(titleRaw);
+    return title.replace(/\b\d{1,2}(?:st|nd|rd|th)?\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\s+\d{0,4}\b/g,' ')
+      .replace(/\b\d{4}[-/]\d{1,2}[-/]\d{1,2}\b/g,' ')
+      .replace(/\s+/g,' ').trim();
+  };
+  const sameFixture = (a,b) => {
+    if (!a || !b) return false;
+    const A = fixture(a), B = fixture(b);
+    if (A && B && (A === B || A.includes(B) || B.includes(A))) return true;
+    // Fallback for sheet rows whose codes/full names are separate fields.
+    const teamsA = a._teams || a.teams || [a.team1_full_name || a.team1_code, a.team2_full_name || a.team2_code];
+    const teamsB = b._teams || b.teams || [b.team1_full_name || b.team1_code, b.team2_full_name || b.team2_code];
+    if (!teamsA || !teamsB || teamsA.length < 2 || teamsB.length < 2) return false;
+    const normTeam = x => cleanFixture(x);
+    const aa = teamsA.map(normTeam).filter(Boolean), bb = teamsB.map(normTeam).filter(Boolean);
+    return aa.length >= 2 && bb.length >= 2 && aa.every(x => bb.some(y => x === y || x.includes(y) || y.includes(x))) && bb.every(y => aa.some(x => x === y || x.includes(y) || y.includes(x)));
+  };
+  const isLive = m => String(m.status || '').toUpperCase() === 'LIVE';
+  const apiRows = [];
+
+  // MATCH CARDS sheet rows are the canonical CMS fixture bridge. They are
+  // checked first so a CMS TEAM v TEAM slide can inherit its exact banner,
+  // details, schedule and Watch Now servers even when the API title is
+  // abbreviated differently.
+  (window._matchCardsData || window._matchCardsRawRows || []).forEach(m => {
+    if (typeof isMatchFinished === 'function' && isMatchFinished(m)) return;
+    const key = fixture(m); if (!key) return;
+    apiRows.push({
+      source:'MATCH CARDS', key, title:[m.team1_code || m.team1_full_name, m.team2_code || m.team2_full_name].filter(Boolean).join(' vs ') || m.title || 'Match',
+      info:[m.game, m.details, m.date_label].filter(Boolean).join(' · ') || 'MATCH CARDS',
+      image:m.banner_url || m.banner_image_url || m._fcxBanner || '',
+      status:(typeof matchStatusText === 'function' ? matchStatusText(m) : (m.status || '')).toUpperCase(),
+      start:(typeof sxMatchStartDate === 'function' && sxMatchStartDate(m)) ? sxMatchStartDate(m).getTime() : 0,
+      click:`return sxHeroWatch('${escJs(m.btn_url || '#')}','matches','${escJs([m.team1_code || m.team1_full_name, m.team2_code || m.team2_full_name].filter(Boolean).join(' vs '))}')`,
+      raw:m
+    });
+  });
+
+  // FanCode API rows.
+  (window._fcxMatchesCache || []).forEach(m => {
+    if (String(m.status || '').toUpperCase() === 'COMPLETED') return;
+    const key = fixture(m); if (!key) return;
+    apiRows.push({
+      source:'FanCode', key, title:m.title || 'FanCode Match',
+      info:m.tournament || m.category || 'FanCode', image:m.image || '',
+      status:String(m.status || '').toUpperCase(), start:startMs(m),
+      click:`return fcxOpenWatchById('${escJs(String(m.id))}')`, raw:m
+    });
+  });
+
+  // SonyLIV API groups. The poster is the API banner and the group already
+  // merges language variants into one fixture.
+  (window._slxGroups || []).forEach(g => {
+    if (String(g.status || '').toUpperCase() === 'ENDED') return;
+    const key = fixture({teams:g.teams, title:g.title}); if (!key) return;
+    apiRows.push({
+      source:'SonyLIV', key, title:g.title || 'SonyLIV Match',
+      info:[g.category, g.tour].filter(Boolean).join(' · ') || 'SonyLIV',
+      image:g.poster || '', status:String(g.status || '').toUpperCase(),
+      start:g.start ? new Date(g.start).getTime() : 0,
+      click:`return slxOpenWatchByTitle('${escJs(g.title || '')}')`, raw:g
+    });
+  });
+
+  // Collapse duplicate API entries for the same fixture. Prefer LIVE; then
+  // choose the newest dated/banner record. If FanCode and Sony both exist,
+  // retain the newest record with a usable image and expose the provider in
+  // the badge/info line.
+  const byKey = new Map();
+  apiRows.forEach(r => {
+    const prev = byKey.get(r.key);
+    if (!prev || (isLive(r.raw) && !isLive(prev.raw)) ||
+        ((r.image ? 1 : 0) > (prev.image ? 1 : 0)) || r.start > prev.start) byKey.set(r.key,r);
+  });
+
+  // If a sheet hero already represents the fixture, update that hero with
+  // the API banner/info instead of creating a second slide.
+  const baseSlides = Array.from(container.querySelectorAll(':scope > .slide')).filter(s => !s.classList.contains('api-hero-slide'));
+  const remaining = [];
+  Array.from(byKey.values()).forEach(r => {
+    const hit = baseSlides.find(s => {
+      const title = s.dataset.origTitle || s.querySelector('.slide-title')?.textContent || '';
+      return sameFixture({title}, r.raw) || norm(title).includes(r.key) || r.key.includes(norm(title));
+    });
+    if (hit) {
+      // CMS title remains authoritative; matched MATCH CARDS/API data only
+      // supplies the connected banner, match info and live state.
+      if (r.image) { const bg = hit.querySelector('.slide-bg'); if (bg) bg.style.backgroundImage = `url('${r.image}')`; }
+      const sub = hit.querySelector('.slide-sub'); if (sub) sub.textContent = r.info || r.source;
+      const badge = hit.querySelector('.slide-sport-badge'); if (badge) badge.textContent = isLive(r.raw) ? `${r.source} · LIVE NOW` : `${r.source} · MATCH INFO`;
+      const watch = hit.querySelector('.btn-slide-watch');
+      if (watch && r.click) { watch.setAttribute('onclick', `event.preventDefault();event.stopPropagation();${r.click}`); watch.textContent = isLive(r.raw) ? '▶ Watch Now' : '⏰ Match Info'; }
+      return;
+    }
+    remaining.push(r);
+  });
+
+  // New API-only slides: latest/soonest active matches first, live first.
+  remaining.sort((a,b) => (isLive(a.raw)?0:1)-(isLive(b.raw)?0:1) || b.start-a.start);
+  const picks = remaining.slice(0, 6);
   if (!picks.length) return;
   const slides = container.querySelectorAll(':scope > .slide');
   const bannerSlide = slides.length ? slides[slides.length - 1] : null;
   const dotsWrap = container.querySelector('.slide-dots');
-  picks.forEach((m, j) => {
-    const isLive = m.status === 'LIVE';
-    const idx = totalSlides + j;
+  const baseCount = totalSlides;
+  picks.forEach((r,j) => {
+    const live = isLive(r.raw);
     const slide = document.createElement('div');
-    slide.className = 'slide fcx-hero-slide';
-    slide.dataset.origTitle = '';
+    slide.className = 'slide api-hero-slide';
+    slide.dataset.origTitle = r.title;
+    const timeText = r.start ? new Date(r.start).toLocaleString([], {day:'2-digit',month:'short',hour:'numeric',minute:'2-digit'}) : '';
     slide.innerHTML = `
-      <div class="slide-bg" style="background-image:url('${m.image}')"></div>
+      <div class="slide-bg" style="background-image:url('${esc(r.image || '')}')"></div>
       <div class="slide-overlay"></div>
       <div class="slide-content">
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;">
-          <span class="slide-sport-badge${isLive?' slide-badge-live':''}">${isLive?'LIVE NOW':'⏰ '+fcxFmtMatchTime(m)}</span>
+          <span class="slide-sport-badge${live?' slide-badge-live':''}">${live ? esc(r.source+' · LIVE NOW') : esc(r.source+' · '+(timeText || 'UPCOMING'))}</span>
         </div>
-        <div class="slide-title">${m.title}</div>
-        <div class="slide-sub">${m.tournament||m.category||'Live Sports'}</div>
-        <div class="slide-btns">
-          ${fcxWatchBtnHtml(m, 'btn-slide-watch')}
-        </div>
+        <div class="slide-title">${esc(r.title)}</div>
+        <div class="slide-sub">${esc(r.info)}${timeText ? ' · '+esc(timeText) : ''}</div>
+        <div class="slide-btns"><a class="btn-slide-watch" href="javascript:void(0)" onclick="event.stopPropagation();${r.click}">${live?'▶ Watch Now':'⏰ Match Info'}</a></div>
       </div>`;
-    if (bannerSlide) container.insertBefore(slide, bannerSlide);
-    else if (dotsWrap) container.insertBefore(slide, dotsWrap);
-    else container.appendChild(slide);
+    if (bannerSlide) container.insertBefore(slide,bannerSlide); else if (dotsWrap) container.insertBefore(slide,dotsWrap); else container.appendChild(slide);
     if (dotsWrap) {
-      const dot = document.createElement('div');
-      dot.className = 'dot fcx-hero-dot';
-      dot.onclick = () => { goSlide(idx); startSlider(); };
-      // Keep the trailing "all channels" banner dot last.
-      if (dotsWrap.lastElementChild) dotsWrap.insertBefore(dot, dotsWrap.lastElementChild);
-      else dotsWrap.appendChild(dot);
+      const dot=document.createElement('div'); dot.className='dot api-hero-dot';
+      dot.onclick=()=>{ goSlide(baseCount+j); startSlider(); };
+      if (dotsWrap.lastElementChild) dotsWrap.insertBefore(dot,dotsWrap.lastElementChild); else dotsWrap.appendChild(dot);
     }
   });
   totalSlides += picks.length;
+};
+
+// SonyLIV refreshes independently of FanCode, so it must also refresh the
+// shared hero carousel whenever its API changes.
+window.slxAppendHeroSlides = function(){
+  if (typeof window.fcxAppendHeroSlides === 'function') window.fcxAppendHeroSlides();
 };
 </script>
 
@@ -8454,6 +8573,7 @@ async function init() {
     console.warn('Panels step failed, continuing:', e);
   }
 
+  if (typeof window.fcxAppendHeroSlides === 'function') window.fcxAppendHeroSlides();
   setProgress(100, 'READY');
 }
 
@@ -15639,18 +15759,58 @@ button, a.btn, [class*="btn-"], input, select, textarea{
     });
   }
 
-  function findGroup(key){ return (window._slxGroups || []).find(function(g){ return g.key === key; }) || null; }
+  function slxNormLookup(v){
+    return String(v || '').toLowerCase()
+      .replace(/\[[^\]]*\]/g,' ')
+      .replace(/\b(?:vs?|versus|x)\b/g,' ')
+      .replace(/[^a-z0-9]+/g,' ')
+      .replace(/\s+/g,' ').trim();
+  }
+  function findGroup(key){
+    var groups = window._slxGroups || [];
+    var hit = groups.find(function(g){ return String(g.key) === String(key); });
+    if (hit) return hit;
+    // Hero buttons can outlive a Sony refresh.  If the numeric slxN key has
+    // changed, recover the current group by its fixture title instead of
+    // leaving the button dead.
+    var wanted = slxNormLookup(key);
+    if (!wanted) return null;
+    return groups.find(function(g){
+      var a = slxNormLookup(g.title);
+      return a === wanted || a.indexOf(wanted) >= 0 || wanted.indexOf(a) >= 0;
+    }) || null;
+  }
+
+  window.slxOpenWatchByTitle = function(title){
+    var wanted = slxNormLookup(title);
+    var groups = window._slxGroups || [];
+    var g = groups.find(function(x){
+      var a = slxNormLookup(x.title);
+      return a && wanted && (a === wanted || a.indexOf(wanted) >= 0 || wanted.indexOf(a) >= 0);
+    }) || null;
+    if (!g && window.LMX && Array.isArray(window.LMX.items)) {
+      var it = window.LMX.items.find(function(x){
+        return x.src === 'slx' && x.title && slxNormLookup(x.title) === wanted;
+      });
+      if (it) g = { key: it.key, title: it.title, servers: it.servers || [], category: it.category || '', start: it.start, status: it.status || 'LIVE', poster: it.poster || '' };
+    }
+    if (!g) return false;
+    return window.slxOpenWatch(g.key);
+  };
 
   window.slxOpenWatch = function(key){
     var g = findGroup(key);
     if (!g || typeof openMatchWatchScreen !== 'function') return false;
-    openMatchWatchScreen(g.servers, {
-      name: g.title,
+    var servers = Array.isArray(g.servers) ? g.servers.filter(function(s){ return s && s.url; }) : [];
+    openMatchWatchScreen(servers, {
+      name: g.title || 'SonyLIV Match',
       team1_code:'', team1_full_name:'', team1_icon_url:'',
       team2_code:'', team2_full_name:'', team2_icon_url:'',
-      date_label: g.servers.length + (g.servers.length === 1 ? ' language' : ' languages') + ' available',
-      details: g.category,
-      countdown: '', status: 'live', banner: g.poster || ''
+      date_label: servers.length + (servers.length === 1 ? ' language' : ' languages') + ' available',
+      details: g.category || g.tour || 'SonyLIV',
+      countdown: g.start ? new Date(g.start).toISOString() : '',
+      status: String(g.status || 'LIVE').toLowerCase() === 'ended' ? 'finished' : (String(g.status || 'LIVE').toLowerCase() === 'upcoming' ? 'upcoming' : 'live'),
+      banner: g.poster || ''
     });
     return false;
   };
@@ -15704,6 +15864,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
         lastSig = sig;
         if (window._matchCardsRawRows && typeof renderMatchCards === 'function') renderMatchCards(window._matchCardsRawRows);
         else window.slxAppendHomeSections();
+        if (typeof window.slxAppendHeroSlides === 'function') window.slxAppendHeroSlides();
       })
       .catch(function(err){ console.error('SLX load error:', err); });
   }
@@ -16231,13 +16392,16 @@ section.section,.section{background:transparent !important;}
 .fixture-card,.channel-card,.smo-card,.ott-card,.ott-card-full,.broadcast-card,.fcx-card{background:#131a28 !important;border:0 !important;box-shadow:none !important;}
 @media(hover:hover){
   .fixture-card:hover,.channel-card:hover,.smo-card:hover,.ott-card:hover,.broadcast-card:hover,.fcx-card:hover{transform:scale(1.045) !important;z-index:5;box-shadow:0 14px 34px rgba(0,0,0,.6) !important;}
+  /* Match cards stay fixed under the pointer. Scaling/moving an <a> on
+     hover can make Chromium cancel the subsequent click hit-test. */
+  .fx2-card:hover{transform:none !important;z-index:auto !important;}
 }
+/* No transform animation on match-card hit targets. */
+.fx2-card,.fx2-card:hover{transform:none !important;will-change:auto !important;}
 /* rails: horizontal scroll rows */
 #channelsPreviewGrid,#fixtures-grid{display:flex !important;gap:12px;overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:none;padding:6px 2px 18px;}
 #channelsPreviewGrid::-webkit-scrollbar,#fixtures-grid::-webkit-scrollbar{display:none;}
 #channelsPreviewGrid>*,#fixtures-grid>*{flex:0 0 clamp(210px,16vw,270px);scroll-snap-align:start;}
-.hs-rowbtn{position:absolute;top:50%;width:44px;height:96px;margin-top:-40px;z-index:6;border:0;color:#fff;font-size:26px;cursor:pointer;background:rgba(12,17,27,.82);opacity:0;transition:opacity .15s;}
-.hs-rowwrap{position:relative;}.hs-rowwrap:hover .hs-rowbtn{opacity:1;}.hs-rowbtn.l{left:0}.hs-rowbtn.r{right:0}
 
 @media(min-width:901px){
   body{padding-left:72px;}
@@ -16351,13 +16515,6 @@ section.section,.section{background:transparent !important;}
   var pend=null;new MutationObserver(function(){clearTimeout(pend);pend=setTimeout(build,120);}).observe(track,{childList:true});
   build();
 
-  /* arrow buttons on the horizontal rails */
-  ['channelsPreviewGrid','fixtures-grid'].forEach(function(id){
-    var g=document.getElementById(id);if(!g||!g.parentNode)return;
-    var w=document.createElement('div');w.className='hs-rowwrap';g.parentNode.insertBefore(w,g);w.appendChild(g);
-    ['l','r'].forEach(function(s){var b=document.createElement('button');b.className='hs-rowbtn '+s;b.type='button';b.innerHTML=s==='l'?'&#10094;':'&#10095;';
-      b.onclick=function(){g.scrollBy({left:(s==='l'?-1:1)*g.clientWidth*.8,behavior:'smooth'});};w.appendChild(b);});
-  });
 })();
 </script>
 <style id="hs-shift">
@@ -16904,10 +17061,6 @@ section.section,.section{background:transparent !important;}
 .sxs-wrap{position:relative;}
 .sxs-track{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:none;padding-bottom:2px;}
 .sxs-track::-webkit-scrollbar{display:none;}
-.sxs-btn{position:absolute;top:0;height:calc(var(--sxs-h,129px));width:44px;border:0;color:#fff;font-size:20px;cursor:pointer;opacity:0;transition:opacity .15s;z-index:3;}
-.sxs-btn.l{left:0;background:linear-gradient(90deg,rgba(12,17,27,.95),transparent);}
-.sxs-btn.r{right:0;background:linear-gradient(270deg,rgba(12,17,27,.95),transparent);}
-.sxs-wrap:hover .sxs-btn{opacity:1;}
 .sxs-card{flex:0 0 229px;width:229px;min-width:0;scroll-snap-align:start;cursor:pointer;outline:0;}
 .sxs-th{position:relative;aspect-ratio:16/9;border-radius:0;overflow:hidden;background:linear-gradient(135deg,#2b2c33,#17181d);transition:transform .15s,box-shadow .15s;}
 .sxs-card:hover .sxs-th,.sxs-card:focus-visible .sxs-th{transform:scale(1.03);box-shadow:0 0 0 2px rgba(255,255,255,.55);}
@@ -16936,13 +17089,13 @@ section.section,.section{background:transparent !important;}
   #sxs-root{padding:6px 0 30px;}
   .sxs-h1{font-size:24px;}.sxs-t{font-size:18px;}
   .sxs-card,.sxs-tile{flex-basis:168px;width:168px;}
-  .sxs-btn{display:none;}.sxs-bar{font-size:14px;margin-top:8px;}
-  .sxs-vs span{width:44px;height:44px;}
+    .sxs-vs span{width:44px;height:44px;}
   .sxs-grid{grid-template-columns:repeat(auto-fill,168px);justify-content:space-between;}
 }
 
 #sxs-pop{position:fixed;left:0;top:0;width:340px;z-index:7500;background:#171b27;color:#fff;border-radius:4px;overflow:hidden;box-shadow:0 14px 44px rgba(0,0,0,.65);opacity:0;pointer-events:none;transform:scale(.95);transform-origin:center top;transition:opacity .15s,transform .15s;cursor:pointer;font-family:var(--pm-font,inherit);}
 #sxs-pop.on{opacity:1;pointer-events:auto;transform:none;}
+#sxs-pop .pw,#sxs-pop .ps{pointer-events:auto;cursor:pointer;}
 #sxs-pop .sxs-th{border-radius:0;transform:none !important;box-shadow:none !important;}
 #sxs-pop .pb{padding:12px 14px 14px;}
 #sxs-pop .pt{font:700 17px var(--pm-font,inherit);line-height:1.25;margin:0 0 6px;}
@@ -17167,7 +17320,7 @@ section.section,.section{background:transparent !important;}
     return '<div class="sxs-card" data-k="'+k+'" role="button" tabindex="0"><div class="sxs-th">'+th+bd+'</div><div class="sxs-bar" title="'+esc(evTeamName(it.title))+'">'+esc(evTeamName(it.title))+'</div></div>';
   }
   function row(title,inner){
-    return '<section class="sxs-sec"><h2 class="sxs-t">'+esc(title)+'</h2><div class="sxs-wrap"><button class="sxs-btn l" type="button" aria-label="Scroll left">&#10094;</button><div class="sxs-track">'+inner+'</div><button class="sxs-btn r" type="button" aria-label="Scroll right">&#10095;</button></div></section>';
+    return '<section class="sxs-sec"><h2 class="sxs-t">'+esc(title)+'</h2><div class="sxs-wrap"><div class="sxs-track">'+inner+'</div></div></section>';
   }
   function tiles(list){
     var m={};
@@ -17209,7 +17362,12 @@ section.section,.section{background:transparent !important;}
   window.addEventListener('resize',function(){clearTimeout(fit._t);fit._t=setTimeout(fit,150);});
   if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){requestAnimationFrame(fit);});
   function open(it){
-    if(it.members&&it.members.length>1){var _n=0;try{_n=getServers(it).length;}catch(e){}if(_n){openMerged(it);return;}}
+    if(!it)return;
+    /* Always prefer the merged server/watch screen.  The old path created a
+       temporary card and called a synthetic <a>.click(), which is fragile
+       after the hover preview has appeared and especially for SonyLIV rows. */
+    var _n=0;try{_n=getServers(it).length;}catch(e){}
+    if(_n){openMerged(it);return;}
     if(it.play){it.play();return;}
     if(it.members&&it.members[0]&&it.members[0].src!==it.src){it=it.members[0];}
     if(it.play){it.play();return;}
@@ -17218,8 +17376,20 @@ section.section,.section{background:transparent !important;}
     var a=d.querySelector('a.smo-btn,a');if(a)a.click();
   }
   root.addEventListener('click',function(e){
-    var c=e.target.closest('.sxs-card'),t=e.target.closest('.sxs-tile'),ch=e.target.closest('.sxs-chip'),b=e.target.closest('.sxs-btn');
-    if(b){var tr=b.parentNode.querySelector('.sxs-track');tr.scrollBy({left:(b.classList.contains('l')?-1:1)*tr.clientWidth*.85,behavior:'smooth'});return;}
+    var cc=e.target.closest('.sxs-card');
+    if(cc){
+      var wi=all[+cc.getAttribute('data-k')];
+      if(wi){
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        hidePop();
+        setTimeout(function(){open(wi);},0);
+        return;
+      }
+    }
+  }, true);
+  root.addEventListener('click',function(e){
+    var c=e.target.closest('.sxs-card'),t=e.target.closest('.sxs-tile'),ch=e.target.closest('.sxs-chip');
     if(ch){sel={game:ch.getAttribute('data-g'),tour:''};lastSig='';render();return;}
     if(t){sel={game:'',tour:t.getAttribute('data-t')};lastSig='';render();panel.scrollTop=0;return;}
     if(c){var it=all[+c.getAttribute('data-k')];if(it)open(it);}
@@ -17244,12 +17414,11 @@ section.section,.section{background:transparent !important;}
     popIt=it;curCard=c;
     var th=c.querySelector('.sxs-th'),r=c.getBoundingClientRect(),tr=th.getBoundingClientRect();
     var W=Math.min(340,innerWidth-16);pop.style.width=W+'px';
-    var nsv=0;try{nsv=it.chips?0:getServers(it).length;}catch(e){}
-    var chips=it.chips||((it.live?'<i class="lv">LIVE NOW</i>':it.fin?'<i>ENDED</i>':'<i>UPCOMING</i>')+(it.sport?'<i>'+esc(it.sport)+'</i>':'')+(it.tour&&it.tour!==it.sport?'<i>'+esc(it.tour)+'</i>':'')+((it.time&&!it.live)?'<i>'+esc(it.time)+'</i>':'')+(it.srcName?'<i>'+esc(it.srcName)+'</i>':'')+(nsv>1?'<i>'+nsv+' servers</i>':''));
-    var sv=[];if(it.src==='s'){try{sv=sxGetMatchServers(it.raw)||[];}catch(e){}}else if(it.src==='f'){sv=[{text:'FanCode'}];try{if(window.LMX)sv=sv.concat(window.LMX.serversForFcx(it.raw)||[]);}catch(e){}}
-    sv=it._sv=[];
-    var srv=sv.length?'<div class="ps-row">'+sv.map(function(x,i){return '<span class="ps" data-s="'+i+'">'+esc(x.text||('Server '+(i+1)))+'</span>';}).join('')+'</div>':'';
-    pop.innerHTML='<div class="sxs-th">'+th.innerHTML+'</div><div class="pb"><div class="pt">'+esc(it.title)+'</div><div class="pm">'+chips+'</div><p class="pd">'+esc(it.desc||descOf(it))+'</p>'+srv+'<span class="pw">'+(it.fin?'\u25B6 View':'\u25B6 Watch')+'</span></div>';
+    var chips=it.chips||((it.live?'<i class="lv">LIVE NOW</i>':it.fin?'<i>ENDED</i>':'<i>UPCOMING</i>')+(it.sport?'<i>'+esc(it.sport)+'</i>':'')+(it.tour&&it.tour!==it.sport?'<i>'+esc(it.tour)+'</i>':'')+((it.time&&!it.live)?'<i>'+esc(it.time)+'</i>':'')+(it.srcName?'<i>'+esc(it.srcName)+'</i>':''));
+    /* Hover preview is informational only: never expose the server list or
+       server count here. The Watch button opens the merged watch screen,
+       where all available servers are shown. */
+    pop.innerHTML='<div class="sxs-th">'+th.innerHTML+'</div><div class="pb"><div class="pt">'+esc(it.title)+'</div><div class="pm">'+chips+'</div><p class="pd">'+esc(it.desc||descOf(it))+'</p><span class="pw">'+(it.fin?'▶ View':'▶ Watch')+'</span></div>';
     var h=pop.offsetHeight,thH=W*9/16;
     var left=r.left+r.width/2-W/2,top=tr.top-(thH-tr.height)/2;
     var minL=(innerWidth>900?72:0)+8;
@@ -17274,10 +17443,17 @@ section.section,.section{background:transparent !important;}
   pop.addEventListener('mouseenter',function(){clearTimeout(hideT);});
   pop.addEventListener('mouseleave',function(){hideT=setTimeout(hidePop,120);});
   pop.addEventListener('click',function(e){
-    var it=popIt,b=e.target.closest('.ps');hidePop();if(!it)return;
-    if(b&&it._sv){var x=it._sv[+b.getAttribute('data-s')];
-      if(x&&x.url&&!/fancode/i.test(x.text||'')&&x.fcxLive===undefined){openStreamPlayer(matchWatchHref(x.url),it.title,'match');return;}}
-    open(it);
+    var it=popIt,watch=e.target.closest('.pw');
+    if(!it)return;
+    if(watch){
+      e.preventDefault();
+      e.stopPropagation();
+      hidePop();
+      setTimeout(function(){open(it);},0);
+      return;
+    }
+    hidePop();
+    setTimeout(function(){open(it);},0);
   });
   panel.addEventListener('scroll',hidePop,{passive:true});
   root.addEventListener('scroll',hidePop,true);
@@ -17357,7 +17533,7 @@ section.section,.section{background:transparent !important;}
     return '<div class="sxs-card'+(w.poster?' sxs-po':'')+'" data-r="'+w.ri+'" role="button" tabindex="0"><div class="sxs-th">'+th+bd+'</div><div class="sxs-bar" title="'+esc(evTeamName(w.title))+'">'+esc(evTeamName(w.title))+'</div></div>';
   }
   function row(title,inner,va){
-    return '<section class="sxs-sec"><h2 class="sxs-t">'+esc(title)+(va?'<a class="sxs-va" data-va="'+va+'">View All \u203A</a>':'')+'</h2><div class="sxs-wrap"><button class="sxs-btn l" type="button" aria-label="Scroll left">&#10094;</button><div class="sxs-track">'+inner+'</div><button class="sxs-btn r" type="button" aria-label="Scroll right">&#10095;</button></div></section>';
+    return '<section class="sxs-sec"><h2 class="sxs-t">'+esc(title)+(va?'<a class="sxs-va" data-va="'+va+'">View All \u203A</a>':'')+'</h2><div class="sxs-wrap"><div class="sxs-track">'+inner+'</div></div></section>';
   }
   function after(el){
     el.querySelectorAll('.sxs-wrap').forEach(function(w){var t=w.querySelector('.sxs-th');if(t)w.style.setProperty('--sxs-h',t.offsetHeight+'px');});
@@ -17366,8 +17542,14 @@ section.section,.section{background:transparent !important;}
   function bind(el,extra){
     S.hover(el);
     el.addEventListener('click',function(e){
-      var b=e.target.closest('.sxs-btn'),va=e.target.closest('.sxs-va'),c=e.target.closest('.sxs-card'),ch=e.target.closest('.sxs-chip');
-      if(b){var tr=b.parentNode.querySelector('.sxs-track');tr.scrollBy({left:(b.classList.contains('l')?-1:1)*tr.clientWidth*.85,behavior:'smooth'});return;}
+      var cc=e.target.closest('.sxs-card');
+      if(cc && el.contains(cc)){
+        var wi=cc.hasAttribute('data-r')?(window.__sxsReg||[])[+cc.getAttribute('data-r')]:null;
+        if(wi && wi.play){ e.preventDefault(); e.stopImmediatePropagation(); wi.play(); return; }
+      }
+    }, true);
+    el.addEventListener('click',function(e){
+      var va=e.target.closest('.sxs-va'),c=e.target.closest('.sxs-card'),ch=e.target.closest('.sxs-chip');
       if(va){var v=va.getAttribute('data-va');if(v==='m')openMatches();else if(window.hsmOpen)hsmOpen(v);return;}
       if(ch&&extra){extra(ch);return;}
       if(c){if(c.hasAttribute('data-k')){var it=S.all()[+c.getAttribute('data-k')];if(it)S.open(it);}else{var w=REG[+c.getAttribute('data-r')];if(w)w.play();}}
