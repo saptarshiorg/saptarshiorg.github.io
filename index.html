@@ -6852,6 +6852,65 @@ function sxGetMatchServers(m) {
     if (!raw.some(function(r){ return r.url && String(r.url).trim() === x.url; }))
       raw.push({ url: x.url, text: x.text, icon: x.icon, sub: x.sub, playName: x.playName, appOnly: !!x.appOnly });
   });
+
+  // API fallback for CMS/SHEET cards that have NO server URL in their own
+  // row. The card can still represent the same fixture as FanCode/SonyLIV,
+  // so its selector must use the API servers too. This is deliberately done
+  // at click-time (not only during render) so a fresh API refresh is used.
+  function sxFixtureKey(v) {
+    return String(v || '').toLowerCase()
+      .replace(/\[[^\]]*\]/g,' ')
+      .replace(/\b(?:vs?|versus|x)\b/g,' ')
+      .replace(/[^a-z0-9]+/g,' ')
+      .replace(/\s+/g,' ').trim();
+  }
+  function sxCardMatchesApiTitle(card, title) {
+    var c1 = String(card.team1_full_name || card.team1_code || '').trim();
+    var c2 = String(card.team2_full_name || card.team2_code || '').trim();
+    var t = String(title || '').trim();
+    if (!c1 || !c2 || !t) return false;
+    if (typeof fcxTitleHasTeam === 'function' &&
+        fcxTitleHasTeam(t, c1, card.team1_full_name || c1) &&
+        fcxTitleHasTeam(t, c2, card.team2_full_name || c2)) return true;
+    var ck = sxFixtureKey(c1) + ' ' + sxFixtureKey(c2);
+    var tk = sxFixtureKey(t);
+    return !!(ck && tk && tk.indexOf(sxFixtureKey(c1)) >= 0 && tk.indexOf(sxFixtureKey(c2)) >= 0);
+  }
+  function sxAddApiServer(x) {
+    if (!x || !x.url || String(x.url).trim() === '#') return;
+    var u = String(x.url).trim();
+    if (!raw.some(function(r){ return r.url && String(r.url).trim() === u; })) {
+      raw.push({ url:u, text:x.text || x.name || 'Stream', icon:x.icon || '', sub:x.sub || '', playName:x.playName || '', appOnly:!!x.appOnly });
+    }
+  }
+
+  // SonyLIV: use the currently refreshed merged groups first.
+  (window._slxGroups || []).forEach(function(g){
+    if (sxCardMatchesApiTitle(m, g.title)) {
+      (Array.isArray(g.servers) ? g.servers : []).forEach(sxAddApiServer);
+    }
+  });
+  // LMX is also checked directly, which catches Sony entries even when the
+  // group title changed slightly between API refreshes.
+  if (window.LMX && Array.isArray(window.LMX.items)) {
+    window.LMX.items.forEach(function(it){
+      var teams = it.teams || [];
+      var hit = teams.length >= 2
+        ? ((fcxTitleHasTeam && fcxTitleHasTeam(m.team1_full_name || m.team1_code, teams[0], teams[0]) && fcxTitleHasTeam(m.team2_full_name || m.team2_code, teams[1], teams[1])) ||
+           (fcxTitleHasTeam && fcxTitleHasTeam(m.team1_full_name || m.team1_code, teams[1], teams[1]) && fcxTitleHasTeam(m.team2_full_name || m.team2_code, teams[0], teams[0])))
+        : false;
+      if (hit) (it.servers || []).forEach(sxAddApiServer);
+    });
+  }
+  // FanCode: if the sheet card itself has no FanCode slot, still expose its
+  // live/upcoming API stream in the same selector rather than an empty list.
+  if (typeof fcxFindSheetMatch === 'function') {
+    var fmApi = fcxFindSheetMatch(m);
+    if (fmApi && typeof fcxJsUrl === 'function') {
+      var fu = fcxJsUrl(fmApi);
+      if (fu) raw.push({ url:fu, text:'FanCode', fcxLive:fmApi.status === 'LIVE', fcxTime:(typeof fcxFmtMatchTime === 'function' ? fcxFmtMatchTime(fmApi) : '') });
+    }
+  }
   
   // AUTO-CONNECT LOGIC: If a server name matches LIVE CHANNELS but has no URL,
   // auto-fill it with the channel's watch_url
@@ -7351,6 +7410,7 @@ function injectMatchInfoIntoHeroCards(matchCards) {
     if (!infoEl) return;
 
     const teamsLine = `${m.team1_full_name||m.team1_code||''} vs ${m.team2_full_name||m.team2_code||''}`;
+    const heroInfoLine = [m.game || m.sport_badge || m.sport || 'Live Match', smoCardDateLabel(m)].filter(Boolean).join(' · ');
     // Same banner takeover as the mobile slides / match cards: a row's own
     // banner_url/banner_image_url (or a cross-matched FanCode banner) wins
     // and the two-team-logo layout is dropped.
@@ -7423,6 +7483,7 @@ function injectMatchInfoIntoHeroCards(matchCards) {
     div.className = 'hero-slide-card';
     div.setAttribute('onclick', `return sxHandleMatchWatch(event,'${sxServersEnc(m)}','${escJs(m.btn_url)}','${escJs((m.team1_code||'')+' vs '+(m.team2_code||''))}','${sxMatchInfoEnc(m,(m.team1_code||'')+' vs '+(m.team2_code||''))}')`);
     const teamsLine = `${m.team1_full_name||m.team1_code||''} vs ${m.team2_full_name||m.team2_code||''}`;
+    const heroInfoLine = [m.game || m.sport_badge || m.sport || 'Live Match', smoCardDateLabel(m)].filter(Boolean).join(' · ');
     const bannerSrc = m.banner_url || m.banner_image_url || m._fcxBanner || '';
     const bgImg = bannerSrc || fallbackBanner;
     div.innerHTML = `
@@ -7437,11 +7498,15 @@ function injectMatchInfoIntoHeroCards(matchCards) {
         ${bannerSrc ? `
         <div style="flex:1;min-height:0;overflow:hidden;">
           ${badge}
+          <div class="hsc-title" style="display:none">${esc(teamsLine)}</div>
+          <div class="hsc-sub" style="display:none">${esc(heroInfoLine)}</div>
           <div class="smo-name" style="font-size:12px;line-height:1.2;text-align:center;margin-top:2px;">${teamsLine}</div>
           ${timerBlock}
         </div>` : `
         <div style="flex:1;min-height:0;overflow:hidden;">
           ${badge}
+          <div class="hsc-title" style="display:none">${esc(teamsLine)}</div>
+          <div class="hsc-sub" style="display:none">${esc(heroInfoLine)}</div>
           <div style="display:flex;align-items:center;justify-content:space-between;gap:3px;">
             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;min-width:0;">
               ${img(m.team1_icon_url,'','smo-logo','')}
