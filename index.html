@@ -80,6 +80,7 @@
 </script>
 <title id="page-title">EV SPORTS (Powered by Saptarshi SX Sports)</title>
 <link id="favicon" rel="icon" type="image/png" href="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/magenta.png">
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Rajdhani:wght@400;500;600;700&family=Chakra+Petch:wght@400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
 <!-- ── Google Cast (Chromecast) Sender SDK — lets the stream player cast
@@ -4232,10 +4233,17 @@ function sxLevenshtein(a, b) {
 // commas/&) as separators — so "India vs Australia" is read as two team
 // keywords rather than one literal phrase that has to match verbatim.
 function sxSearchTokens(q) {
-  return (q || '').toLowerCase()
+  // Split on vs/v/versus/,/& first, then split each part into words so word
+  // ORDER no longer matters ("sports star" finds "Star Sports"). Every word
+  // must still match somewhere, so multi-word queries stay precise.
+  const out = [];
+  (q || '').toLowerCase()
     .split(/\s+vs\.?\s+|\s+v\s+|\s+versus\s+|,|&/g)
-    .map(t => t.trim())
-    .filter(Boolean);
+    .forEach(part => part.split(/\s+/).forEach(w => {
+      w = w.replace(/[^\p{L}\p{N}]+/gu, '');
+      if (w) out.push(w);
+    }));
+  return out;
 }
 window.sxSearchTokens = sxSearchTokens;
 // Score one keyword token against one field of text, case-insensitive:
@@ -4246,12 +4254,16 @@ function sxTokenFieldScore(token, text) {
   if (!token || !text) return 0;
   const hay = String(text).toLowerCase();
   if (hay.includes(token)) {
-    return hay.split(/\s+/).some(w => w.startsWith(token)) ? 3 : 2;
+    return hay.split(/[^\p{L}\p{N}]+/u).some(w => w.startsWith(token)) ? 3 : 2;
   }
-  const words = hay.split(/\s+/).filter(Boolean);
+  // No typo tolerance for short words (e.g. "ipl", "odi") — it made them
+  // match unrelated words and flooded results with junk.
+  if (token.length < 4) return 0;
+  const words = hay.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
   let best = 0;
   words.forEach(w => {
-    const tolerance = Math.max(1, Math.floor(Math.max(token.length, w.length) * 0.34));
+    if (Math.abs(token.length - w.length) > 2) return;
+    const tolerance = token.length >= 7 ? 2 : 1;
     if (sxLevenshtein(token, w) <= tolerance) best = 1;
   });
   return best;
@@ -5374,7 +5386,7 @@ window.sxRenderFavouritesOverlay = sxRenderFavouritesOverlay;
   // Cards/slides link straight into the existing play.html player — that
   // page is already set up separately and just needs the match id.
   function fcxPlayUrl(m){
-    return `play.html?id=${encodeURIComponent(m.id)}_eng&s=0`;
+    return `play.html/${encodeURIComponent(m.id)}`;
   }
 
   function fcxBuildSlide(m){
@@ -5556,7 +5568,7 @@ window.sxRenderFavouritesOverlay = sxRenderFavouritesOverlay;
 window._fcxMatchesCache = [];
 
 function fcxJsUrl(m){
-  return `play.html?id=${encodeURIComponent(m.id)}_eng&s=0`;
+  return `play.html/${encodeURIComponent(m.id)}`;
 }
 
 // ── FanCode category → sport (cross-merge with the sheet) ─────────────
@@ -11460,7 +11472,7 @@ function load(url, title){
   setMedia();
   $('chip-q').hidden = true; $('chip-live').hidden = true;
   $('golive').hidden = true; $('time').textContent = '';
-  if (!/^https?:\/\//i.test(st.src)) { showError('invalid'); return; }
+  if (!/^(https?|blob):/i.test(st.src)) { showError('invalid'); return; }
   setClass('loading', true);
   $('loader').classList.remove('hide');
   $('loader-lbl').textContent = 'Connecting to stream';
@@ -12085,74 +12097,7 @@ poke();
 window.SX4K = { load: load, state: st, video: video };
 })();
 <\/script>
-<style id="sx-mb-final">
-/* ═════ MAGENTA + BLACK ONLY ═════ */
-html,body{background:#000000 !important;}
-@media(min-width:901px){
-  #hs-rail,#hs-rail .in{background:#000000 !important;}
-  #hs-rail:hover .in{background:linear-gradient(90deg,#000000 72%,rgba(0,0,0,0)) !important;}
-  /* sidebar Search button */
-  #hs-rail a[title="Search"]{color:#F04F8C !important;}
-  #hs-rail a[title="Search"] svg{stroke-width:2.2;}
-  #hs-rail:hover a[title="Search"]{background:rgba(240,79,140,.12) !important;}
-  #hs-rail a[title="Search"]:hover,#hs-rail a[title="Search"].on{color:#FF8FBB !important;background:rgba(240,79,140,.18) !important;}
-  #hs-rail a[title="Search"]::after{content:"/";position:absolute;right:14px;top:50%;transform:translateY(-50%);font:700 11px var(--pm-font,inherit);color:#F04F8C;border:1px solid rgba(240,79,140,.5);padding:1px 6px;opacity:0;transition:opacity .12s;}
-  #hs-rail:hover a[title="Search"]::after{opacity:1;}
-}
 
-/* ═════ SEARCH v2 — flat, magenta on black ═════ */
-#sx-search-overlay{background:#000000 !important;}
-#sx-search-overlay .sxs2-wrap{max-width:1180px;margin:0 auto;padding:6px 24px 96px;}
-#sx-search-overlay .sxs2-top{position:sticky;top:0;z-index:6;background:#000000;padding:16px 0 12px;}
-#sx-search-overlay .sx-search-topline{display:flex;align-items:center;gap:12px;}
-#sx-search-overlay .sx-search-bar{flex:1;display:flex;align-items:center;gap:12px;height:56px;padding:0 16px;background:#0a0a0a !important;border:1px solid rgba(240,79,140,.35) !important;border-radius:0 !important;color:#F04F8C;transition:border-color .15s,box-shadow .15s;}
-#sx-search-overlay .sx-search-bar:focus-within{border-color:#F04F8C !important;box-shadow:0 0 0 1px #F04F8C,0 0 30px rgba(240,79,140,.22);}
-#sx-search-overlay .sx-search-bar>svg{flex:0 0 22px;width:22px;height:22px;}
-#sx-search-overlay .sx-search-bar input{flex:1;min-width:0;background:none !important;border:0 !important;outline:0 !important;color:#fff !important;font:600 18px var(--pm-font,inherit) !important;}
-#sx-search-overlay .sx-search-bar input::placeholder{color:rgba(255,255,255,.38);font-weight:500;}
-#sx-search-overlay .sx-search-bar:not(.has-text) .sx-search-clear{display:none !important;}
-#sx-search-overlay .sx-search-clear{display:flex;align-items:center;justify-content:center;width:30px;height:30px;border:0;background:rgba(240,79,140,.14);color:#F04F8C;border-radius:0;cursor:pointer;}
-#sx-search-overlay .sx-search-clear svg{width:14px;height:14px;}
-#sx-search-overlay .sx-search-cancel{height:56px;padding:0 20px;border:1px solid rgba(255,255,255,.16);background:transparent;color:#fff;border-radius:0;font:700 13px var(--pm-font,inherit);letter-spacing:.08em;text-transform:uppercase;cursor:pointer;}
-#sx-search-overlay .sx-search-cancel:hover{border-color:#F04F8C;color:#F04F8C;}
-#sx-search-overlay .sx-search-chips{display:flex;gap:8px;margin-top:12px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;}
-#sx-search-overlay .sx-search-chips::-webkit-scrollbar{display:none;}
-#sx-search-overlay .sx-chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 15px;background:transparent !important;border:1px solid rgba(255,255,255,.16) !important;border-radius:0 !important;color:#c8c8c8 !important;font:700 12px var(--pm-font,inherit) !important;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .12s;}
-#sx-search-overlay .sx-chip:hover{border-color:#F04F8C !important;color:#fff !important;}
-#sx-search-overlay .sx-chip.active{background:#F04F8C !important;border-color:#F04F8C !important;color:#000000 !important;}
-#sx-search-overlay .sx-chip .n{font-weight:800;font-size:11px;opacity:.8;}
-#sx-search-overlay .sx-chip .n:empty{display:none;}
-#sx-search-results{padding-top:4px;}
-.sxs-sum{margin:14px 0 2px;font:500 13px var(--pm-font,inherit);color:rgba(255,255,255,.55);}
-.sxs-sum b{color:#F04F8C;font-weight:800;}
-.sxs-sec{margin-top:26px;}
-.sxs-sec-h{display:flex;align-items:center;gap:10px;margin-bottom:14px;font:800 13px var(--pm-font,inherit);letter-spacing:.14em;text-transform:uppercase;color:#fff;}
-.sxs-sec-h::before{content:"";width:3px;height:16px;background:#F04F8C;}
-.sxs-sec-h em{font-style:normal;color:#F04F8C;font-size:12px;}
-.sxs-sec-h em:empty{display:none;}
-.sxs-grid{margin-top:0 !important;}
-.sxs-posters{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:18px 12px;}
-.sxs-poster{display:block;text-align:left;background:none;border:0;padding:0;color:#fff;cursor:pointer;font-family:var(--pm-font,inherit);}
-.sxs-poster .pi{display:block;position:relative;aspect-ratio:2/3;background:#0a0a0a;border:1px solid rgba(255,255,255,.1);overflow:hidden;transition:border-color .15s,transform .15s,box-shadow .15s;}
-.sxs-poster .pi img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}
-.sxs-poster .pf{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:12px;text-align:center;font:700 13px var(--pm-font,inherit);color:rgba(255,255,255,.7);}
-.sxs-poster .tg{position:absolute;top:0;left:0;z-index:2;background:#F04F8C;color:#000;font:800 9px var(--pm-font,inherit);font-style:normal;letter-spacing:.1em;padding:3px 7px;}
-.sxs-poster:hover .pi,.sxs-poster:focus-visible .pi{border-color:#F04F8C;transform:translateY(-3px);box-shadow:0 12px 28px rgba(240,79,140,.2);}
-.sxs-poster .pt{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:9px;font:700 13px/1.25 var(--pm-font,inherit);}
-.sxs-poster .ps{display:block;margin-top:3px;font:600 11px var(--pm-font,inherit);color:rgba(255,255,255,.5);}
-.sxs-more{margin-top:14px;font:500 12px var(--pm-font,inherit);color:rgba(255,255,255,.45);}
-.sxs-empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:72px 16px;color:rgba(255,255,255,.55);}
-.sxs-empty svg{width:48px;height:48px;color:#F04F8C;margin-bottom:6px;}
-.sxs-empty b{font:800 20px var(--pm-font,inherit);color:#fff;}
-.sxs-empty span{font:500 14px var(--pm-font,inherit);max-width:420px;}
-@media(max-width:900px){
-  #sx-search-overlay .sxs2-wrap{padding:6px 14px calc(76px + env(safe-area-inset-bottom,0px));}
-  #sx-search-overlay .sx-search-bar{height:50px;}
-  #sx-search-overlay .sx-search-bar input{font-size:16px !important;}
-  #sx-search-overlay .sx-search-cancel{height:50px;padding:0 14px;}
-  .sxs-posters{grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:14px 9px;}
-}
-</style>
 
 </body>
 </html>
@@ -12459,6 +12404,7 @@ function openStreamPlayer(url, name, type){
     location.href = sxResolveFanCodeMatchUrl(url);
     return;
   }
+  window._fcTok = null;
   if (!window._spServerKeep) window._spServers = null; // keep the server list only when switching server from the dropdown
   window._spServerKeep = false;
   window._spQ = null; try{ spQBtnUpdate(); spCloseQ(); }catch(e){}
@@ -12500,6 +12446,9 @@ function openStreamPlayer(url, name, type){
   const spFrame = document.getElementById('stream-player-frame');
   if (use4k) {
     spFrame.srcdoc = sx4kDoc(url, label);
+  } else if (isFcx) {
+    spFrame.removeAttribute('src');
+    fcLoadIntoFrame(spFrame, url, label); // FanCode plays in the EV StreamPulse player
   } else {
     spFrame.removeAttribute('srcdoc'); // left over from an India-source / 4K session
     spFrame.src = src;
@@ -12791,14 +12740,18 @@ function spToggleFullscreen(){
 window.spToggleFullscreen = spToggleFullscreen;
 
 // ── FanCode source switch (inside the embedder) ──────────────────────
-// World = FanCode's own feed through play.html (unchanged: play.html?id=…_eng&s=0).
+// World = FanCode's own feed through play.html/<id>. The player defaults to English/world (s=0).
 // India = CNP-TV m3u8 from fan.json (cnptv_cdn), played by a tiny hls.js page
 // injected into the same iframe via srcdoc — so it stays inside the embedder
 // and needs nothing from play.html. Only offered while a FanCode match is
 // playing; the India button stays disabled until fan.json has a link for it.
 window._spFcx = null; // { id, label, world, source }
 function spFcxIdFromUrl(url){
-  const m = /play\.html\?id=([^&#]+?)_eng(?:[&#]|$)/i.exec(String(url || ''));
+  const raw = String(url || '');
+  let m = /(?:^|\/)play\.html\/([^?#/]+)/i.exec(raw);
+  if (m) return decodeURIComponent(m[1]);
+  // Backward compatibility for older saved/query-style FanCode URLs.
+  m = /play\.html\?id=([^&#]+?)(?:_eng)?(?:[&#]|$)/i.exec(raw);
   return m ? decodeURIComponent(m[1]) : '';
 }
 function spIndiaPlayerDoc(m3u8){
@@ -12838,6 +12791,7 @@ function spSetFcxSource(which){
   const st = window._spFcx;
   if (!st || st.source === which) return;
   const frame = document.getElementById('stream-player-frame');
+  window._fcTok = null;
   if (!frame) return;
   if (which === 'india'){
     const fm = fcxFindById(st.id);
@@ -12845,16 +12799,14 @@ function spSetFcxSource(which){
     frame.srcdoc = spIndiaPlayerDoc(fm.india);
     sxCurrentStreamRawUrl = fm.india; // Cast works with a direct HLS link
   } else {
-    frame.removeAttribute('srcdoc');
-    const w = st.world;
-    frame.src = w.includes('#') ? w : w + '#' + encodeURIComponent(st.label || 'Live Stream');
-    sxCurrentStreamRawUrl = w;
+    fcLoadIntoFrame(frame, st.world, st.label || 'Live Stream');
   }
   st.source = which;
   spRenderFcxSwitch();
 }
 
 function closeStreamPlayer(){
+  window._fcTok = null;
   document.getElementById('stream-player-overlay').classList.remove('open','rail-open','sp-idle','sv-open','q-open'); try{ spCloseRail(); }catch(e){} window._spQ = null; try{ spQBtnUpdate(); }catch(e){}
   window._spServers = null; window._spServerKeep = false;
   try { if (document.fullscreenElement && document.exitFullscreen) { const p = document.exitFullscreen(); if (p && p.catch) p.catch(function(){}); } else if (document.webkitFullscreenElement && document.webkitExitFullscreen) document.webkitExitFullscreen(); } catch(e){}
@@ -18103,17 +18055,17 @@ button:active,.smo-btn:active,.btn-watch-sm:active,.bc-watch-btn:active{transiti
 .sxs-tt .sxs-tl{position:absolute;left:8px;top:8px;font:700 10px var(--pm-font,inherit);font-style:normal;background:#fff;color:#000;padding:2px 6px;}
 </style>
 <style id="sx-names-helv">
-/* channel names + tournament names: small, centred, Helvetica */
+/* channel names + tournament names: small, centred, Google Sans */
 #sxs-live .sxs-bar,.sxs-card:has(.sxs-lo) .sxs-bar,.sxs-tile span{
-  font-family:"Helvetica Neue",Helvetica,Arial,sans-serif !important;font-size:12.5px !important;font-weight:500 !important;
+  font-family:"Google Sans","Google Sans Text","Product Sans","Helvetica Neue",Helvetica,Arial,sans-serif !important;font-size:12.5px !important;font-weight:500 !important;
   letter-spacing:0 !important;text-align:center !important;}
-.sxs-tt span{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif !important;font-size:12.5px !important;font-weight:500 !important;text-align:center !important;}
+.sxs-tt span{font-family:"Google Sans","Google Sans Text","Product Sans","Helvetica Neue",Helvetica,Arial,sans-serif !important;font-size:12.5px !important;font-weight:500 !important;text-align:center !important;}
 .sxs-tt{align-items:center;justify-content:center;}
 @media(max-width:900px){#sxs-live .sxs-bar,.sxs-card:has(.sxs-lo) .sxs-bar,.sxs-tile span{font-size:11.5px !important;}}
 </style>
 <style id="sx-home-fix">
-/* match names too: small, centred, Helvetica */
-.sxs-bar{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif !important;font-size:12.5px !important;font-weight:500 !important;letter-spacing:0 !important;text-align:center !important;}
+/* match names too: small, centred, Google Sans */
+.sxs-bar{font-family:"Google Sans","Google Sans Text","Product Sans","Helvetica Neue",Helvetica,Arial,sans-serif !important;font-size:12.5px !important;font-weight:500 !important;letter-spacing:0 !important;text-align:center !important;}
 @media(max-width:900px){.sxs-bar{font-size:11.5px !important;}}
 /* extra arrows under the hero slides */
 .hs-rowwrap>.hs-rowbtn,.hs-rowbtn{display:none !important;}
@@ -18124,6 +18076,8 @@ button:active,.smo-btn:active,.btn-watch-sm:active,.bc-watch-btn:active{transiti
 .fx2-badge,.slide-sport-badge,.slide-badge-live,.slide-live-badge,.match-live-tag,.hsc-live-badge,.smo-live-badge,.smo-upcoming-badge,.sxs-live,.sxs-time,.sxs-end,.sxs-tile,.sxs-tt,.sxs-tt u,.sxs-th,.sxs-card,.sxs-chip,#hs-hero .tag .lv,.fcx-badge,.mws-badge-row .smo-live-badge{border-radius:0 !important;}
 </style>
 <style id="hsm-mobile">
+/* mobile-only top bar: hidden on desktop (its styles only exist inside the media query below) */
+#hsm-bar{display:none;}
 /* ═════ MOBILE — minimal, narrow, Hotstar-style ═════ */
 @media(max-width:900px){
   body{padding-top:38px !important;padding-bottom:calc(44px + env(safe-area-inset-bottom,0px)) !important;background:#000;}
@@ -18133,7 +18087,7 @@ button:active,.smo-btn:active,.btn-watch-sm:active,.bc-watch-btn:active{transiti
   #hsm-bar .mts-hamburger span{box-shadow:none;width:16px;height:1.5px;}
   #hsm-bar .hsm-logo{display:flex;align-items:center;gap:6px;flex:1;min-width:0;}
   #hsm-bar .hsm-logo img{height:20px;width:20px;object-fit:contain;}
-  #hsm-bar .hsm-logo b{font:600 12px/1 "Helvetica Neue",Helvetica,Arial,sans-serif;letter-spacing:.08em;color:#fff;white-space:nowrap;}
+  #hsm-bar .hsm-logo b{font:600 12px/1 "Google Sans","Google Sans Text","Product Sans","Helvetica Neue",Helvetica,Arial,sans-serif;letter-spacing:.08em;color:#fff;white-space:nowrap;}
   #hsm-bar .hsm-search{width:30px;height:30px;border:0;background:none;color:#fff;display:flex;align-items:center;justify-content:center;padding:0;}
   #hsm-bar .hsm-search svg{width:18px;height:18px;}
 
@@ -18145,7 +18099,7 @@ button:active,.smo-btn:active,.btn-watch-sm:active,.bc-watch-btn:active{transiti
   #hs-hero .txt{left:0 !important;right:0;bottom:12px !important;width:auto !important;padding:0 14px;display:flex;flex-direction:column;align-items:flex-start;text-align:left;}
   #hs-hero .tag{justify-content:flex-start;margin:0 0 5px !important;font-size:9.5px !important;}
   #hs-hero .tag .lv{padding:3px 7px !important;}
-  #hs-hero h1{font:700 18px/1.2 "Helvetica Neue",Helvetica,Arial,sans-serif !important;margin:0 0 3px !important;text-align:left;}
+  #hs-hero h1{font:700 18px/1.2 "Google Sans","Google Sans Text","Product Sans","Helvetica Neue",Helvetica,Arial,sans-serif !important;margin:0 0 3px !important;text-align:left;}
   #hs-hero .sub{font-size:11px !important;margin:0 0 10px !important;text-align:left;}
   #hs-hero .btns{width:100%;gap:6px !important;}
   #hs-hero .go{flex:0 1 150px;width:auto !important;min-width:0 !important;height:34px !important;border-radius:0 !important;font-size:12.5px !important;padding:0 14px !important;}
@@ -18163,7 +18117,7 @@ button:active,.smo-btn:active,.btn-watch-sm:active,.bc-watch-btn:active{transiti
 
   /* rails: tighter */
   #sxs-home,#sxs-live{padding:4px 0 20px !important;}
-  #sxs-home .sxs-t,#sxs-live .sxs-t,#sxs-root .sxs-t{font:600 14px/1.2 "Helvetica Neue",Helvetica,Arial,sans-serif;padding:0 12px;}
+  #sxs-home .sxs-t,#sxs-live .sxs-t,#sxs-root .sxs-t{font:600 14px/1.2 "Google Sans","Google Sans Text","Product Sans","Helvetica Neue",Helvetica,Arial,sans-serif;padding:0 12px;}
   #sxs-home .sxs-track,#sxs-live .sxs-track,#sxs-root .sxs-track{padding:0 12px;gap:8px;scroll-snap-type:x proximity;}
   #sxs-home .sxs-card,#sxs-live .sxs-card:not(.sxs-po),#sxs-root .sxs-card{flex:0 0 132px;width:132px;scroll-snap-align:start;}
   #sxs-home .sxs-bar,#sxs-live .sxs-bar,#sxs-root .sxs-bar{font-size:11px !important;margin-top:6px;}
@@ -18185,7 +18139,7 @@ button:active,.smo-btn:active,.btn-watch-sm:active,.bc-watch-btn:active{transiti
     var logo=document.getElementById('nav-logo-img');
     bar.innerHTML='<div class="hsm-logo">'+(logo&&logo.src?'<img src="'+logo.src+'" alt="">':'')+'<b>EV SPORTS</b></div><button class="hsm-search" type="button" aria-label="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.3 15.3 20 20"/></svg></button>';
     var ham=document.getElementById('mts-hamburger');
-    if(ham)bar.insertBefore(ham,bar.firstChild);        /* same button, same drawer behaviour */
+    if(ham && window.matchMedia('(max-width:900px)').matches)bar.insertBefore(ham,bar.firstChild);        /* same button, same drawer behaviour */
     bar.querySelector('.hsm-search').onclick=function(){if(window.openSxSearch)openSxSearch();};
     document.body.appendChild(bar);
     var L={home:'Home',matches:'Sports',search:'Search',livetv:'Live TV',favourites:'Favourites'};
@@ -18233,7 +18187,7 @@ button:active,.smo-btn:active,.btn-watch-sm:active,.bc-watch-btn:active{transiti
   #hs-hero .sub{color:rgba(255,255,255,.7);display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;}
   #hs-hero .sub:empty{display:none;}
   #hs-hero .btns{display:flex;align-items:center;}
-  #hs-hero .go{display:flex;align-items:center;justify-content:center;gap:6px;border:0;cursor:pointer;font-weight:600;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;}
+  #hs-hero .go{display:flex;align-items:center;justify-content:center;gap:6px;border:0;cursor:pointer;font-weight:600;font-family:"Google Sans","Google Sans Text","Product Sans","Helvetica Neue",Helvetica,Arial,sans-serif;}
   #hs-hero .plus{border:0;color:#fff;cursor:pointer;}
   #hs-hero .thumbs{display:none !important;}
   #hsm-dots{position:absolute;z-index:3;right:14px;bottom:18px;display:flex;gap:4px;}
@@ -18281,6 +18235,292 @@ button:active,.smo-btn:active,.btn-watch-sm:active,.bc-watch-btn:active{transiti
     var inp=document.getElementById('sx-search-input');sxRunSearch(inp?inp.value:'');
   },1200);
 })();
+</script>
+<style id="sx-mb-final">
+/* ═════ MAGENTA + BLACK ONLY ═════ */
+html,body{background:#000000 !important;}
+@media(min-width:901px){
+  #hs-rail,#hs-rail .in{background:#000000 !important;}
+  #hs-rail:hover .in{background:linear-gradient(90deg,#000000 72%,rgba(0,0,0,0)) !important;}
+  /* sidebar Search button */
+    #hs-rail a[title="Search"] svg{stroke-width:2.2;}
+      #hs-rail a[title="Search"]::after{content:"/";position:absolute;right:14px;top:50%;transform:translateY(-50%);font:700 11px var(--pm-font,inherit);color:#fff;border:1px solid rgba(255,255,255,.4);padding:1px 6px;opacity:0;transition:opacity .12s;}
+  #hs-rail:hover a[title="Search"]::after{opacity:1;}
+}
+
+/* ═════ SEARCH v2 — flat, magenta on black ═════ */
+#sx-search-overlay{background:#000000 !important;}
+#sx-search-overlay .sxs2-wrap{max-width:1180px;margin:0 auto;padding:6px 24px 96px;}
+#sx-search-overlay .sxs2-top{position:sticky;top:0;z-index:6;background:#000000;padding:16px 0 12px;}
+#sx-search-overlay .sx-search-topline{display:flex;align-items:center;gap:12px;}
+#sx-search-overlay .sx-search-bar{flex:1;display:flex;align-items:center;gap:12px;height:56px;padding:0 16px;background:#0a0a0a !important;border:1px solid rgba(255,255,255,.22) !important;border-radius:0 !important;color:#fff;transition:border-color .15s,box-shadow .15s;}
+#sx-search-overlay .sx-search-bar:focus-within{border-color:#fff !important;box-shadow:0 0 0 1px #fff,0 0 30px rgba(255,255,255,.10);}
+#sx-search-overlay .sx-search-bar>svg{flex:0 0 22px;width:22px;height:22px;}
+#sx-search-overlay .sx-search-bar input{flex:1;min-width:0;background:none !important;border:0 !important;outline:0 !important;color:#fff !important;font:600 18px var(--pm-font,inherit) !important;}
+#sx-search-overlay .sx-search-bar input::placeholder{color:rgba(255,255,255,.38);font-weight:500;}
+#sx-search-overlay .sx-search-bar:not(.has-text) .sx-search-clear{display:none !important;}
+#sx-search-overlay .sx-search-clear{display:flex;align-items:center;justify-content:center;width:30px;height:30px;border:0;background:rgba(255,255,255,.12);color:#fff;border-radius:0;cursor:pointer;}
+#sx-search-overlay .sx-search-clear svg{width:14px;height:14px;}
+#sx-search-overlay .sx-search-cancel{height:56px;padding:0 20px;border:1px solid rgba(255,255,255,.16);background:transparent;color:#fff;border-radius:0;font:700 13px var(--pm-font,inherit);letter-spacing:.08em;text-transform:uppercase;cursor:pointer;}
+#sx-search-overlay .sx-search-cancel:hover{border-color:#fff;color:#fff;}
+#sx-search-overlay .sx-search-chips{display:flex;gap:8px;margin-top:12px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;}
+#sx-search-overlay .sx-search-chips::-webkit-scrollbar{display:none;}
+#sx-search-overlay .sx-chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 15px;background:transparent !important;border:1px solid rgba(255,255,255,.16) !important;border-radius:0 !important;color:#c8c8c8 !important;font:700 12px var(--pm-font,inherit) !important;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .12s;}
+#sx-search-overlay .sx-chip:hover{border-color:#fff !important;color:#fff !important;}
+#sx-search-overlay .sx-chip.active{background:#fff !important;border-color:#fff !important;color:#000000 !important;}
+#sx-search-overlay .sx-chip .n{font-weight:800;font-size:11px;opacity:.8;}
+#sx-search-overlay .sx-chip .n:empty{display:none;}
+#sx-search-results{padding-top:4px;}
+.sxs-sum{margin:14px 0 2px;font:500 13px var(--pm-font,inherit);color:rgba(255,255,255,.55);}
+.sxs-sum b{color:#fff;font-weight:800;}
+.sxs-sec{margin-top:26px;}
+.sxs-sec-h{display:flex;align-items:center;gap:10px;margin-bottom:14px;font:800 13px var(--pm-font,inherit);letter-spacing:.14em;text-transform:uppercase;color:#fff;}
+.sxs-sec-h::before{content:"";width:3px;height:16px;background:#fff;}
+.sxs-sec-h em{font-style:normal;color:#fff;font-size:12px;}
+.sxs-sec-h em:empty{display:none;}
+.sxs-grid{margin-top:0 !important;}
+.sxs-posters{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:18px 12px;}
+.sxs-poster{display:block;text-align:left;background:none;border:0;padding:0;color:#fff;cursor:pointer;font-family:var(--pm-font,inherit);}
+.sxs-poster .pi{display:block;position:relative;aspect-ratio:2/3;background:#0a0a0a;border:1px solid rgba(255,255,255,.1);overflow:hidden;transition:border-color .15s,transform .15s,box-shadow .15s;}
+.sxs-poster .pi img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}
+.sxs-poster .pf{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:12px;text-align:center;font:700 13px var(--pm-font,inherit);color:rgba(255,255,255,.7);}
+.sxs-poster .tg{position:absolute;top:0;left:0;z-index:2;background:#fff;color:#000;font:800 9px var(--pm-font,inherit);font-style:normal;letter-spacing:.1em;padding:3px 7px;}
+.sxs-poster:hover .pi,.sxs-poster:focus-visible .pi{border-color:#fff;transform:translateY(-3px);box-shadow:0 12px 28px rgba(255,255,255,.10);}
+.sxs-poster .pt{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:9px;font:700 13px/1.25 var(--pm-font,inherit);}
+.sxs-poster .ps{display:block;margin-top:3px;font:600 11px var(--pm-font,inherit);color:rgba(255,255,255,.5);}
+.sxs-more{margin-top:14px;font:500 12px var(--pm-font,inherit);color:rgba(255,255,255,.45);}
+.sxs-empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:72px 16px;color:rgba(255,255,255,.55);}
+.sxs-empty svg{width:48px;height:48px;color:#fff;margin-bottom:6px;}
+.sxs-empty b{font:800 20px var(--pm-font,inherit);color:#fff;}
+.sxs-empty span{font:500 14px var(--pm-font,inherit);max-width:420px;}
+@media(max-width:900px){
+  #sx-search-overlay .sxs2-wrap{padding:6px 14px calc(76px + env(safe-area-inset-bottom,0px));}
+  #sx-search-overlay .sx-search-bar{height:50px;}
+  #sx-search-overlay .sx-search-bar input{font-size:16px !important;}
+  #sx-search-overlay .sx-search-cancel{height:50px;padding:0 14px;}
+  .sxs-posters{grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:14px 9px;}
+}
+
+/* search fixes: no double box on the input, heart never covers LIVE/OFF AIR badge */
+#sx-search-overlay .sx-search-bar input,#sx-search-overlay .sx-search-bar input:focus,#sx-search-overlay .sx-search-bar input:focus-visible{box-shadow:none !important;border:0 !important;outline:0 !important;background:transparent !important;border-radius:0 !important;padding:0 !important;height:auto !important;}
+#sx-search-overlay .epg-thumb .sx-heart-btn,#sx-fav-overlay .epg-thumb .sx-heart-btn{top:auto !important;bottom:6px !important;right:6px !important;}
+#sx-search-overlay .epg-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;}
+
+#sx-search-overlay .sx-search-bar{min-width:0;}
+#sx-search-overlay .sx-search-cancel{flex:0 0 auto;}
+#sx-search-overlay,#sx-search-overlay .sxs2-wrap{box-sizing:border-box;max-width:100%;overflow-x:hidden;}
+@media(max-width:900px){
+  #sx-search-overlay .epg-list{display:block;}
+  #sx-search-overlay .epg-thumb .sx-heart-btn,#sx-fav-overlay .epg-thumb .sx-heart-btn{top:2px !important;bottom:auto !important;right:2px !important;width:22px;height:22px;}
+  #sx-search-overlay .epg-thumb .sx-heart-btn svg{width:12px;height:12px;}
+}
+
+/* search: LIVE / OFF AIR badges match the white "LIVE NOW" badge */
+#sx-search-overlay .epg-badge-live{background:#fff !important;color:#000 !important;}
+#sx-search-overlay .epg-badge-live .epg-live-blip{background:#000 !important;box-shadow:none !important;}
+#sx-search-overlay .epg-badge-hd{background:rgba(255,255,255,.12) !important;color:#fff !important;}
+#sx-search-overlay .epg-badge-off{background:rgba(255,255,255,.1) !important;color:rgba(255,255,255,.6) !important;}
+#sx-search-overlay .sx-search-bar,#sx-search-overlay .sx-search-bar>svg{color:#fff !important;}
+#sx-search-overlay .sx-search-clear{color:#fff !important;}
+#sx-search-overlay .sxs-empty svg{color:#fff !important;}
+
+#hs-rail a[title="Search"]::after{display:none !important;}
+</style>
+<style id="sx-secbar-css">
+/* ── Mobile section bar: clean transparent back arrow + menu, drawer = PC sidebar ── */
+#sx-secbar,#sx-mdrawer,#sx-mdrawer-ov{display:none;}
+@media(max-width:900px){
+  #sx-secbar{position:fixed;top:0;left:0;right:0;z-index:1250;height:calc(44px + env(safe-area-inset-top,0px));padding:env(safe-area-inset-top,0px) 6px 0;display:none;align-items:center;justify-content:space-between;background:transparent;pointer-events:none;}
+  #sx-secbar.show{display:flex;}
+  #sx-secbar button{pointer-events:auto;width:42px;height:42px;display:flex;align-items:center;justify-content:center;background:transparent !important;border:0 !important;box-shadow:none !important;padding:0;margin:0;color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;filter:drop-shadow(0 1px 3px rgba(0,0,0,.7));}
+  #sx-secbar svg{width:24px;height:24px;display:block;}
+  #sx-secbar .sxb-ham{display:flex;flex-direction:column;gap:5px;}
+  #sx-secbar .sxb-ham i{display:block;width:20px;height:2px;background:#fff;border-radius:2px;}
+  /* the old per-section Back pill is replaced by the arrow */
+  #fancode-back-btn,.sxp-back{display:none !important;}
+  #sx-mdrawer-ov{position:fixed;inset:0;z-index:8100;background:rgba(0,0,0,.6);display:block;opacity:0;pointer-events:none;transition:opacity .2s;}
+  #sx-mdrawer-ov.open{opacity:1;pointer-events:auto;}
+  #sx-mdrawer{position:fixed;top:0;bottom:0;left:0;width:min(78vw,300px);z-index:8101;background:#000;border-right:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;padding:calc(14px + env(safe-area-inset-top,0px)) 0 calc(14px + env(safe-area-inset-bottom,0px));transform:translate3d(-105%,0,0);transition:transform .24s cubic-bezier(.2,.8,.2,1);overflow-y:auto;}
+  #sx-mdrawer.open{transform:translate3d(0,0,0);}
+  #sx-mdrawer .mdl{padding:4px 20px 14px;}
+  #sx-mdrawer .mdl img{height:34px;width:auto;display:block;}
+  #sx-mdrawer a{display:flex;align-items:center;gap:16px;padding:13px 20px;color:#fff;text-decoration:none;font:600 15px "Google Sans","Product Sans","Helvetica Neue",Helvetica,Arial,sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+  #sx-mdrawer a:active{background:rgba(255,255,255,.08);}
+  #sx-mdrawer a svg,#sx-mdrawer a img{width:22px;height:22px;flex:0 0 22px;display:block;}
+  #sx-mdrawer a svg{stroke:currentColor;}
+  #sx-mdrawer .mdsep{flex:1 1 auto;min-height:12px;}
+}
+</style>
+<script id="sx-secbar-js">
+(function(){
+  var mq=window.matchMedia('(max-width:900px)');
+  var SECTIONS=['livetv-overlay','movies-overlay','fifa-overlay','ott-overlay','fancode-overlay','prime-overlay','willow-overlay','vip-overlay','adminchat-overlay','sx-search-overlay','sx-fav-overlay'];
+  var bar=document.createElement('div');bar.id='sx-secbar';
+  bar.innerHTML='<button type="button" class="sxb-back" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>'
+    +'<button type="button" class="sxb-menu" aria-label="Menu"><span class="sxb-ham"><i></i><i></i><i></i></span></button>';
+  var ov=document.createElement('div');ov.id='sx-mdrawer-ov';
+  var dr=document.createElement('nav');dr.id='sx-mdrawer';
+  document.body.appendChild(bar);document.body.appendChild(ov);document.body.appendChild(dr);
+
+  function build(){
+    var rail=document.getElementById('hs-rail');
+    if(!rail||dr.dataset.built)return;
+    var logo=rail.querySelector('.logo img');
+    var h='<div class="mdl">'+(logo&&logo.src?'<img src="'+logo.src+'" alt="EV SPORTS">':'')+'</div>';
+    rail.querySelectorAll('.in > *').forEach(function(n,i){
+      if(n.classList.contains('logo'))return;
+      if(n.classList.contains('sep')){h+='<div class="mdsep"></div>';return;}
+      if(n.tagName==='A'){h+='<a data-k="'+i+'">'+n.innerHTML+'</a>';}
+    });
+    dr.innerHTML=h;dr.dataset.built='1';
+    var src=[];rail.querySelectorAll('.in > *').forEach(function(n){if(!n.classList.contains('logo')&&!n.classList.contains('sep')&&n.tagName==='A')src.push(n);});
+    var idx=0;
+    dr.querySelectorAll('a').forEach(function(a){
+      var target=src[idx++];
+      a.addEventListener('click',function(e){
+        e.preventDefault();closeM();
+        if(!target)return;
+        var href=target.getAttribute('href');
+        if(href&&/^https?:/i.test(href)){window.open(href,'_blank','noopener');return;}
+        target.click(); /* same handler the PC sidebar uses */
+      });
+    });
+  }
+  function openM(){build();dr.classList.add('open');ov.classList.add('open');}
+  function closeM(){dr.classList.remove('open');ov.classList.remove('open');var m=document.getElementById('mts-hamburger');if(m)m.classList.remove('open');}
+  ov.addEventListener('click',closeM);
+
+  /* the existing hamburger (home top bar) opens the same drawer on phones */
+  var _t=window.toggleDrawer,_c=window.closeDrawer;
+  window.toggleDrawer=function(){
+    if(!mq.matches){return _t&&_t.apply(this,arguments);}
+    if(typeof isStreamPlayerActive==='function'&&isStreamPlayerActive())return;
+    dr.classList.contains('open')?closeM():openM();
+  };
+  window.closeDrawer=function(){closeM();return _c&&_c.apply(this,arguments);};
+
+  bar.querySelector('.sxb-menu').addEventListener('click',function(){window.toggleDrawer();});
+  bar.querySelector('.sxb-back').addEventListener('click',function(){
+    if(dr.classList.contains('open')){closeM();return;}
+    var mp=document.getElementById('matches-panel');if(mp)mp.classList.remove('active');
+    if(typeof goHome==='function')goHome();
+  });
+
+  function sectionOpen(){
+    if(!mq.matches)return false;
+    var sp=document.getElementById('stream-player-overlay');
+    if(sp&&sp.classList.contains('open'))return false;
+    for(var i=0;i<SECTIONS.length;i++){var e=document.getElementById(SECTIONS[i]);if(e&&e.classList.contains('open'))return true;}
+    var mp=document.getElementById('matches-panel');
+    return !!(mp&&mp.classList.contains('active'));
+  }
+  function sync(){
+    var on=sectionOpen();
+    bar.classList.toggle('show',on);
+    if(!on&&dr.classList.contains('open')&&!mq.matches)closeM();
+  }
+  setInterval(sync,200);sync();
+})();
+</script>
+<script id="fcplay-glue">
+/* FanCode streams (formerly play.html): the stream is resolved here and played in the
+   EV StreamPulse player, so FanCode has exactly the same controls and UI. */
+var FC_JSON_URL = 'https://raw.githubusercontent.com/kajju027/Fancode-Events-Json/refs/heads/main/fancode.json';
+var FC_LANG = {eng:'ENGLISH',hin:'HINDI',tam:'TAMIL',tel:'TELUGU',ben:'BENGALI',mar:'MARATHI'};
+var FC_Q = [['1080p',1920,1080,5000000],['720p',1280,720,3000000],['540p',960,540,1800000],['480p',854,480,1200000],['360p',640,360,800000],['240p',426,240,400000]];
+var _fcJson = null, _fcJsonT = 0, _fcBlob = '';
+function fcFetchJson(){
+  if (_fcJson && Date.now() - _fcJsonT < 15000) return Promise.resolve(_fcJson);
+  return fetch(FC_JSON_URL, {cache:'no-store'}).then(function(r){
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }).then(function(d){ _fcJson = d; _fcJsonT = Date.now(); return d; });
+}
+function fcResolve(data, id, si){
+  var ui = id.indexOf('_');
+  var matchId = ui > -1 ? id.slice(0, ui) : id;
+  var langCode = ui > -1 ? id.slice(ui + 1) : 'eng';
+  var list = Array.isArray(data) ? data : (data && Array.isArray(data.matches) ? data.matches : []);
+  if (!list.length) throw new Error('No matches in feed');
+  var m = null;
+  for (var i = 0; i < list.length; i++) if (String(list[i].match_id) === String(matchId)) { m = list[i]; break; }
+  if (!m) throw new Error('Match not found in feed');
+  var st = m.streams || {};
+  if (si === 0) {
+    var as = m.auto_streams || {}, keys = Object.keys(as);
+    if (!keys.length) throw new Error('Match not started yet');
+    var lang = FC_LANG[langCode] || m.language || keys[0];
+    var al = as[lang] || as[keys[0]];
+    if (!al || !al.streams || !Object.keys(al.streams).length) throw new Error('Stream URLs empty for this match');
+    return {multi: al.streams};
+  }
+  var u = si === 1 ? st.fancode_lk_cdn : si === 2 ? st.fancode_np_cdn : si === 3 ? st.fancode_bd_cdn : null;
+  if (!u) throw new Error('Regional stream not available');
+  return {single: u};
+}
+function fcMasterUrl(streams){
+  var t = '#EXTM3U\n#EXT-X-VERSION:3\n', first = '';
+  FC_Q.forEach(function(q){
+    var u = streams[q[0]];
+    if (!u) return;
+    if (!first) first = u;
+    t += '#EXT-X-STREAM-INF:BANDWIDTH=' + q[3] + ',RESOLUTION=' + q[1] + 'x' + q[2] + ',NAME="' + q[0] + '"\n' + u + '\n';
+  });
+  if (!first) throw new Error('All quality URLs empty for this match');
+  var url;
+  try {
+    if (_fcBlob) { try { URL.revokeObjectURL(_fcBlob); } catch(e){} }
+    _fcBlob = URL.createObjectURL(new Blob([t], {type:'application/vnd.apple.mpegurl'}));
+    url = _fcBlob;
+  } catch(e) { url = first; }
+  return {url: url, best: first};
+}
+function fcStatusDoc(msg){
+  return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>'
+   + 'html,body{margin:0;height:100%;background:#000;color:#fff;font:600 14px "Google Sans","Helvetica Neue",Helvetica,Arial,sans-serif}'
+   + 'body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px}'
+   + 'i{width:30px;height:30px;border:3px solid rgba(255,255,255,.18);border-top-color:#fff;border-radius:50%;animation:r .9s linear infinite}'
+   + '@keyframes r{to{transform:rotate(360deg)}}small{opacity:.55;font-weight:500}</style></head><body><i></i>'
+   + '<div>' + String(msg).replace(/[<>&]/g, '') + '</div><small>Retrying automatically…</small></body></html>';
+}
+/* FanCode link format: play.html/<matchId>. The player defaults to source s=0.
+   Keep parsing the old query format too so previously cached links continue to work. */
+function fcLoadIntoFrame(frame, url, label){
+  var rawUrl = String(url || '');
+  var id = '', si = 0;
+  var pathMatch = /(?:^|\/)play\.html\/([^?#/]+)/i.exec(rawUrl);
+  if (pathMatch) {
+    id = decodeURIComponent(pathMatch[1]);
+  } else {
+    var q = ''; try { q = rawUrl.split('#')[0].split('?')[1] || ''; } catch(e){}
+    var sp = new URLSearchParams(q);
+    id = sp.get('id') || '';
+    si = parseInt(sp.get('s') || '0', 10) || 0;
+  }
+  var tok = {}; window._fcTok = tok;
+  function alive(){
+    var ov = document.getElementById('stream-player-overlay');
+    return window._fcTok === tok && ov && ov.classList.contains('open');
+  }
+  function go(){
+    if (!alive()) return;
+    if (!id) { frame.srcdoc = fcStatusDoc('Missing match ID'); return; }
+    fcFetchJson().then(function(data){
+      if (!alive()) return;
+      var r = fcResolve(data, id, si), play, raw;
+      if (r.multi) { var mm = fcMasterUrl(r.multi); play = mm.url; raw = mm.best; }
+      else { play = raw = r.single; }
+      sxCurrentStreamRawUrl = raw; // Cast gets a direct HLS link
+      frame.srcdoc = sx4kDoc(play, label);
+    }).catch(function(e){
+      if (!alive()) return;
+      frame.srcdoc = fcStatusDoc((e && e.message) || 'Stream unavailable');
+      setTimeout(go, 8000);
+    });
+  }
+  go();
+}
+window.fcLoadIntoFrame = fcLoadIntoFrame;
 </script>
 </body>
 </html>
