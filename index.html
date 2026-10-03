@@ -5386,7 +5386,7 @@ window.sxRenderFavouritesOverlay = sxRenderFavouritesOverlay;
   // Cards/slides link straight into the existing play.html player — that
   // page is already set up separately and just needs the match id.
   function fcxPlayUrl(m){
-    return `play.html/${encodeURIComponent(m.id)}`;
+    return `play.html?id=${encodeURIComponent(m.id)}_eng&s=0`;
   }
 
   function fcxBuildSlide(m){
@@ -5568,7 +5568,7 @@ window.sxRenderFavouritesOverlay = sxRenderFavouritesOverlay;
 window._fcxMatchesCache = [];
 
 function fcxJsUrl(m){
-  return `play.html/${encodeURIComponent(m.id)}`;
+  return `play.html?id=${encodeURIComponent(m.id)}_eng&s=0`;
 }
 
 // ── FanCode category → sport (cross-merge with the sheet) ─────────────
@@ -12396,13 +12396,11 @@ const SP_LOADING_LABELS = {
 };
 function openStreamPlayer(url, name, type){
   if (!url || url === '#') return;
-  // Match cards, hero slides, and Live TV all funnel every stream link
-  // through here — so this is the single choke point to catch any
-  // famcodexwebs.pages.dev link and send it to the same tab instead of
-  // the in-page iframe overlay (that site doesn't play nicely embedded).
+  // FanCode is embedded exactly like a Live TV channel: its /play.html?id=...
+  // URL is assigned directly to the player's iframe. No JSON/HLS resolution
+  // is performed by the parent page.
   if (/famcodexwebs\.pages\.dev/i.test(url)) {
-    location.href = sxResolveFanCodeMatchUrl(url);
-    return;
+    url = sxResolveFanCodeMatchUrl(url);
   }
   window._fcTok = null;
   if (!window._spServerKeep) window._spServers = null; // keep the server list only when switching server from the dropdown
@@ -12446,11 +12444,11 @@ function openStreamPlayer(url, name, type){
   const spFrame = document.getElementById('stream-player-frame');
   if (use4k) {
     spFrame.srcdoc = sx4kDoc(url, label);
-  } else if (isFcx) {
-    spFrame.removeAttribute('src');
-    fcLoadIntoFrame(spFrame, url, label); // FanCode plays in the EV StreamPulse player
   } else {
-    spFrame.removeAttribute('srcdoc'); // left over from an India-source / 4K session
+    // FanCode uses the SAME plain iframe embedding path as Live TV channels.
+    // Do not resolve its JSON/HLS here and do not inject a custom srcdoc.
+    // The /play.html?id=..._eng&s=0 page is itself the player/embed page.
+    spFrame.removeAttribute('srcdoc');
     spFrame.src = src;
   }
   document.getElementById('stream-player-overlay').classList.remove('rail-open','sv-open');
@@ -12740,18 +12738,14 @@ function spToggleFullscreen(){
 window.spToggleFullscreen = spToggleFullscreen;
 
 // ── FanCode source switch (inside the embedder) ──────────────────────
-// World = FanCode's own feed through play.html/<id>. The player defaults to English/world (s=0).
+// World = FanCode's own feed through play.html (unchanged: play.html?id=…_eng&s=0).
 // India = CNP-TV m3u8 from fan.json (cnptv_cdn), played by a tiny hls.js page
 // injected into the same iframe via srcdoc — so it stays inside the embedder
 // and needs nothing from play.html. Only offered while a FanCode match is
 // playing; the India button stays disabled until fan.json has a link for it.
 window._spFcx = null; // { id, label, world, source }
 function spFcxIdFromUrl(url){
-  const raw = String(url || '');
-  let m = /(?:^|\/)play\.html\/([^?#/]+)/i.exec(raw);
-  if (m) return decodeURIComponent(m[1]);
-  // Backward compatibility for older saved/query-style FanCode URLs.
-  m = /play\.html\?id=([^&#]+?)(?:_eng)?(?:[&#]|$)/i.exec(raw);
+  const m = /(?:play|play\.html)\?id=([^&#]+?)(?:_eng)?(?:[&#]|$)/i.exec(String(url || ''));
   return m ? decodeURIComponent(m[1]) : '';
 }
 function spIndiaPlayerDoc(m3u8){
@@ -13729,7 +13723,8 @@ function sxWatchLinkClick(evt, a){
   const raw = a.getAttribute('href') || '';
   if (!/famcodexwebs\.pages\.dev/i.test(raw)) return true; // navigate normally
   evt.preventDefault();
-  location.href = sxResolveFanCodeMatchUrl(raw);
+  const resolved = sxResolveFanCodeMatchUrl(raw);
+  openStreamPlayer(resolved, (a.textContent || 'FanCode').trim() || 'FanCode', 'match');
   return false;
 }
 function openOTT(){
@@ -18483,20 +18478,11 @@ function fcStatusDoc(msg){
    + '@keyframes r{to{transform:rotate(360deg)}}small{opacity:.55;font-weight:500}</style></head><body><i></i>'
    + '<div>' + String(msg).replace(/[<>&]/g, '') + '</div><small>Retrying automatically…</small></body></html>';
 }
-/* FanCode link format: play.html/<matchId>. The player defaults to source s=0.
-   Keep parsing the old query format too so previously cached links continue to work. */
+/* url looks like play?id=<matchId>_eng&s=0 — kept as the FanCode link format used across the site */
 function fcLoadIntoFrame(frame, url, label){
-  var rawUrl = String(url || '');
-  var id = '', si = 0;
-  var pathMatch = /(?:^|\/)play\.html\/([^?#/]+)/i.exec(rawUrl);
-  if (pathMatch) {
-    id = decodeURIComponent(pathMatch[1]);
-  } else {
-    var q = ''; try { q = rawUrl.split('#')[0].split('?')[1] || ''; } catch(e){}
-    var sp = new URLSearchParams(q);
-    id = sp.get('id') || '';
-    si = parseInt(sp.get('s') || '0', 10) || 0;
-  }
+  var q = ''; try { q = String(url || '').split('#')[0].split('?')[1] || ''; } catch(e){}
+  var sp = new URLSearchParams(q);
+  var id = sp.get('id') || '', si = parseInt(sp.get('s') || '0', 10) || 0;
   var tok = {}; window._fcTok = tok;
   function alive(){
     var ov = document.getElementById('stream-player-overlay');
