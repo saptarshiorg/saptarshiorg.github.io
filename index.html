@@ -21604,5 +21604,123 @@ window.evOpenIG=function(){
   init();
 })();
 </script>
+<style id="sx-smooth-slider">
+/* ═════ SX SMOOTH CARD SLIDER — Live / Movies / TV Shows / Sports rails ═════ */
+.sxs-track,.hsm-track,.mws-more-row,#ev-pop-slider .evp-track{ -webkit-overflow-scrolling:touch; overscroll-behavior-x:contain; scroll-behavior:auto; }
+/* while a rail is moving, cards ignore touches → no accidental opens, no hover/tap flicker */
+.sx-scrolling > *{ pointer-events:none; }
+
+@media(max-width:900px){
+  /* one card at a time snap, finger-flick momentum, peek of the next card */
+  #sxs-home .sxs-track,#sxs-live .sxs-track,#sxs-root .sxs-track,.hsm-track,#ev-pop-slider .evp-track{
+    scroll-snap-type:x mandatory; scroll-padding-left:12px; scroll-padding-right:12px; }
+  .fixtures-grid{ scroll-snap-type:x mandatory !important; scroll-padding-left:16px; scroll-padding-right:16px; overscroll-behavior-x:contain; }
+  .sxs-card,.sxs-tile,.hsm-card,#ev-pop-slider .evp-chip,.fixtures-grid > *{ scroll-snap-align:start; scroll-snap-stop:normal; }
+
+  /* quick press feedback instead of the slow .38s / .6s hover transitions */
+  .sxs-card{ transition:transform .12s ease !important; -webkit-tap-highlight-color:transparent; }
+  .sxs-th{ transition:transform .14s ease !important; }
+  .sxs-card:active .sxs-th{ transform:scale(.97); }
+
+  /* desktop arrow buttons never belong on a touch rail */
+  .sxs-btn{ display:none !important; }
+}
+/* touch screens: sticky :hover after a tap must not scale cards */
+@media(hover:none){
+  .sxs-card:hover .sxs-th,.sxs-card:focus-visible .sxs-th{ transform:none; box-shadow:none; }
+  .hsm-card:hover,.fixture-card:hover,.channel-card:hover,.smo-card:hover,.fcx-card:hover{ transform:none !important; box-shadow:none !important; }
+}
+</style>
+<script id="sx-smooth-slider-js">
+(function(){
+  'use strict';
+  var RAILS='.sxs-track,.hsm-track,.mws-more-row,.fixtures-grid,#ev-pop-slider .evp-track';
+  var pos={}, touching=false, lastScroll=0, timers=new WeakMap();
+
+  function railOf(t){ return (t && t.closest) ? t.closest(RAILS) : null; }
+  function keyOf(tr){
+    var s=tr.closest('section'), h=s&&s.querySelector('.sxs-t'); if(!h) return null;
+    var t=((h.firstChild&&h.firstChild.nodeValue)||h.textContent||'').trim().toLowerCase().replace(/^top 10 /,'');
+    return t||null;
+  }
+  function busy(){ return touching || (Date.now()-lastScroll) < 220; }
+
+  /* 1. remember each home rail's position + mark rails as "moving" while they scroll */
+  document.addEventListener('scroll',function(e){
+    var t=e.target; if(!t||t===document||!t.matches||!t.matches(RAILS)) return;
+    lastScroll=Date.now();
+    t.classList.add('sx-scrolling');
+    clearTimeout(timers.get(t));
+    timers.set(t,setTimeout(function(){ t.classList.remove('sx-scrolling'); },140));
+    var hr=document.getElementById('sxs-home');
+    if(hr&&hr.contains(t)){ var k=keyOf(t); if(k) pos[k]=t.scrollLeft; }
+  },{capture:true,passive:true});
+  document.addEventListener('touchstart',function(e){ if(railOf(e.target)) touching=true; },{capture:true,passive:true});
+  ['touchend','touchcancel'].forEach(function(n){
+    document.addEventListener(n,function(){ touching=false; lastScroll=Date.now(); },{capture:true,passive:true});
+  });
+
+  /* 2. images in a rail load just before the rail comes into view, so cards never pop in mid-swipe */
+  var io=window.IntersectionObserver?new IntersectionObserver(function(es){
+    es.forEach(function(e){
+      if(!e.isIntersecting) return;
+      var t=e.target; io.unobserve(t);
+      t.querySelectorAll('img[loading="lazy"]').forEach(function(i){ i.loading='eager'; });
+      var hr=document.getElementById('sxs-home');
+      if(hr&&hr.contains(t)){ var k=keyOf(t); if(k&&pos[k]>0&&Math.abs(t.scrollLeft-pos[k])>2) t.scrollLeft=pos[k]; }
+    });
+  },{rootMargin:'300px 0px'}):null;
+  function watchAll(){
+    if(!io) return;
+    document.querySelectorAll('.sxs-track,.hsm-track,.mws-more-row,#ev-pop-slider .evp-track').forEach(function(t){
+      if(t.__sxw) return; t.__sxw=1; io.observe(t);
+    });
+  }
+  setInterval(watchAll,2500); watchAll();
+
+  /* 3. the home rows are rebuilt (innerHTML) whenever data loads — that reset every rail to card 1 mid-swipe.
+        Now: keep the swipe position across rebuilds, and hold a rebuild until the finger is up and the rail has stopped. */
+  function restore(hr){
+    hr.querySelectorAll('.sxs-track').forEach(function(t){
+      var k=keyOf(t); if(k&&pos[k]>0) t.scrollLeft=pos[k];
+    });
+  }
+  function hook(hr){
+    if(hr.__sxHooked) return;
+    var d=Object.getOwnPropertyDescriptor(Element.prototype,'innerHTML'); if(!d||!d.set) return;
+    hr.__sxHooked=true;
+    var pending=null, timer=0;
+    function apply(html,full){
+      d.set.call(hr,html);
+      restore(hr);
+      watchAll();
+      if(!full) return;
+      try{   /* the page's own post-render steps ran against the old DOM while we waited — redo them */
+        hr.querySelectorAll('.sxs-wrap').forEach(function(w){ var t=w.querySelector('.sxs-th'); if(t) w.style.setProperty('--sxs-h',t.offsetHeight+'px'); });
+        if(window.__sxs&&window.__sxs.fit) requestAnimationFrame(function(){ window.__sxs.fit(hr); });
+        var mo=hr.querySelector('#hs-more'); if(mo&&window.__hsIO){ window.__hsIO.disconnect(); window.__hsIO.observe(mo); }
+      }catch(_){}
+    }
+    function flush(){
+      if(busy()) return;
+      clearInterval(timer); timer=0;
+      if(pending!=null){ var h=pending; pending=null; apply(h,true); }
+    }
+    Object.defineProperty(hr,'innerHTML',{
+      configurable:true,
+      get:function(){ return d.get.call(this); },
+      set:function(html){
+        if(busy()){ pending=html; if(!timer) timer=setInterval(flush,160); return; }
+        pending=null; apply(html,false);
+      }
+    });
+  }
+  var tries=0, iv=setInterval(function(){
+    var hr=document.getElementById('sxs-home');
+    if(hr){ hook(hr); clearInterval(iv); } else if(++tries>80) clearInterval(iv);
+  },250);
+})();
+</script>
+
 </body>
 </html>
