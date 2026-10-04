@@ -17005,6 +17005,7 @@ window.sxHeroCustom=function(base,all){
   var DB={};
   ['movie','tv'].forEach(function(t){DB[t]={type:t,pool:vaPools[t],ids:new Set(),expected:0,done:false,running:false,next:2,failQ:[],attempts:{},inflight:0,fail:0,pages:[],sc:null};});
   var PATH={movie:'movies',tv:'tvshows'};
+  var MOBL=!!(window.matchMedia&&matchMedia('(max-width:900px)').matches);
 
   function sync(db){   /* guards against anything else having pushed into the pool */
     var a=db.pool.all;
@@ -17049,6 +17050,7 @@ window.sxHeroCustom=function(base,all){
         if(a<10){db.failQ.push(p);db.inflight--;await sleep(Math.min(4000,300*a));continue;}
       }
       db.inflight--;
+      if(MOBL)await sleep(70);
     }
   }
   async function start(db){
@@ -17057,7 +17059,7 @@ window.sxHeroCustom=function(base,all){
     while(!db.pool.totalPages){
       try{await fetchInto(db,1);}catch(e){db.fail++;notify(db);await sleep(Math.min(5000,500*db.fail));}
     }
-    var ws=[];for(var i=0;i<14;i++)ws.push(worker(db));
+    var ws=[];for(var i=0;i<(MOBL?5:14);i++)ws.push(worker(db));
     await Promise.all(ws);
     db.done=true;db.running=false;saveCache(db);db.sc=null;notify(db);
   }
@@ -17104,7 +17106,7 @@ window.sxHeroCustom=function(base,all){
   }
   function card(m,type){
     var c=document.createElement('div');
-    c.className='hsm-card';c.setAttribute('role','button');c.tabIndex=0;
+    c.className='hsm-card';c._m=m;c._ty=type;c.setAttribute('role','button');c.tabIndex=0;
     c.title=m.title||'';c.setAttribute('aria-label',m.title||'Play');
     c.innerHTML=(m.poster_url?'<img src="'+esc(m.poster_url)+'" alt="'+esc(m.title)+'" loading="lazy">':'<div class="ft">'+esc(m.title)+'</div>');
     var im=c.querySelector('img');
@@ -20969,10 +20971,15 @@ img.ev-f.ev-ok{opacity:1;}
   window.evIs18=is18;
   var idx={}, n=-1;
   function norm(t){ return String(t||'').toLowerCase().replace(/\s*\(\d{4}\)\s*$/,'').replace(/\s+s\d+e\d+\s*$/i,'').replace(/[^a-z0-9\u0080-\uffff]+/g,' ').trim(); }
+  var dm=0,dt=0;
+  function add18(m){ if(is18(m)){ var k=norm(m.title); if(k) idx[k]=1; } }
   function build(){
-    var P=window.vaPools; if(!P) return; var a=[].concat((P.movie&&P.movie.all)||[],(P.tv&&P.tv.all)||[]);
-    if(a.length===n) return; n=a.length; idx={};
-    for(var i=0;i<a.length;i++){ var m=a[i]; if(is18(m)){ var k=norm(m.title); if(k) idx[k]=1; } }
+    var P=window.vaPools; if(!P) return;
+    var am=(P.movie&&P.movie.all)||[], at=(P.tv&&P.tv.all)||[], t=am.length+at.length;
+    if(t===n) return; n=t;
+    if(am.length<dm||at.length<dt){ dm=0; dt=0; idx={}; }
+    for(;dm<am.length;dm++) add18(am[dm]);
+    for(;dt<at.length;dt++) add18(at[dt]);
   }
   function titleIs18(t){ build(); var k=norm(t); return !!(k&&(idx[k]||BAD.test(t))); }
   window.evTitleIs18=titleIs18;
@@ -21050,6 +21057,317 @@ img.ev-f.ev-ok{opacity:1;}
     }catch(e){}
     return r;
   };
+})();
+</script>
+<style id="hsm-all-css">
+.hsm-all{margin:34px 0 0;}
+.ha-head{display:flex;align-items:baseline;gap:12px;}
+.ha-count{font-size:11.5px;color:rgba(255,255,255,.45);}
+.ha-ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 14px;}
+.ha-sorts{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;}
+.ha-sorts::-webkit-scrollbar{display:none;}
+.ha-sort{border:0;background:rgba(255,255,255,.07);color:#a7a7a7;font:600 13px var(--pm-font,inherit);padding:6px 14px;border-radius:999px;cursor:pointer;white-space:nowrap;}
+.ha-sort.on{background:rgba(255,255,255,.14);color:#fff;}
+.ha-genre{background:rgba(255,255,255,.07);color:#fff;border:0;border-radius:999px;padding:6px 12px;font:600 13px var(--pm-font,inherit);}
+.ha-genre option{background:#141414;}
+.hsm-vg{position:relative;contain:layout style;}
+.hsm-vg .hsm-card{position:absolute;flex:none;aspect-ratio:auto;}
+#hsm-pop{position:fixed;left:0;top:0;width:340px;z-index:7500;background:#141414;color:#fff;border-radius:4px;overflow:hidden;box-shadow:0 14px 44px rgba(0,0,0,.65);opacity:0;pointer-events:none;transform:scale(.95);transform-origin:center top;transition:opacity .15s,transform .15s;cursor:pointer;font-family:var(--pm-font,inherit);}
+#hsm-pop.on{opacity:1;pointer-events:auto;transform:none;}
+#hsm-pop .hp-th{position:relative;aspect-ratio:16/9;overflow:hidden;background:#0c0d13;}
+#hsm-pop .hp-th::before{content:"";position:absolute;inset:-20px;background:var(--pbg) center/cover no-repeat;filter:blur(18px) brightness(.55) saturate(1.2);}
+#hsm-pop .hp-th>img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:1;}
+#hsm-pop .pb{padding:12px 14px 14px;}
+#hsm-pop .pt{font:700 17px var(--pm-font,inherit);line-height:1.25;margin:0 0 6px;}
+#hsm-pop .pm{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
+#hsm-pop .pm i{font-style:normal;font:600 11px var(--pm-font,inherit);padding:3px 8px;background:rgba(255,255,255,.1);color:#d5d9e5;}
+#hsm-pop .pd{font:400 13.5px/1.45 var(--pm-font,inherit);color:#b8b8b8;margin:0 0 12px;}
+#hsm-pop .pw{display:inline-flex;align-items:center;gap:8px;background:#fff;color:#000;font:700 13px var(--pm-font,inherit);padding:8px 16px;border-radius:2px;}
+@media(max-width:900px),(hover:none){#hsm-pop{display:none !important;}}
+</style>
+<script id="hsm-all-js">
+(function(){
+  var GEN=[['Action','Action'],['Comedy','Comedy'],['Thriller','Thriller'],['Horror','Horror'],['Sci-Fi','Sci-Fi'],['Drama','Drama'],['Animation','Anime & Animation'],['Fantasy','Fantasy'],['Documentary','Documentary']];
+  var SORTS=[['latest','Latest'],['pop','Popular'],['rate','Top rated'],['az','A\u2013Z']];
+  function mob(){return matchMedia('(max-width:900px)').matches;}
+  function canHover(){return matchMedia('(min-width:901px) and (hover:hover)').matches;}
+  function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function P(m){return m._p===undefined?(m._p=parseFloat(m.popularity)||0):m._p;}
+  function R(m){return m._r===undefined?(m._r=parseFloat(m.rating)||0):m._r;}
+  function T(m){return m._t||(m._t=(m.title||'').toLowerCase());}
+  function play(m,type){
+    var label=m.title+(m.year?' ('+m.year+')':'');
+    if(type==='tv'){vaPendingTvItem={id:m.tmdb_id||m.imdb_id,title:m.title};vaOpenTvModal(label);}
+    else openStreamPlayer(vaBuildEmbedUrl(m.embed_url),label,'movie');
+  }
+  function mk(m,type){
+    var c=document.createElement('div');
+    c.className='hsm-card';c._m=m;c._ty=type;c.setAttribute('role','button');c.tabIndex=0;
+    c.title=m.title||'';c.setAttribute('aria-label',m.title||'Play');
+    c.innerHTML=m.poster_url?'<img src="'+esc(m.poster_url)+'" alt="'+esc(m.title)+'" loading="lazy" decoding="async">':'<div class="ft">'+esc(m.title)+'</div>';
+    var im=c.querySelector('img');
+    if(im)im.onerror=function(){im.remove();c.insertAdjacentHTML('beforeend','<div class="ft">'+esc(m.title)+'</div>');};
+    c.onclick=function(){play(m,type);};
+    c.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();play(m,type);}};
+    return c;
+  }
+
+  /* ═════ "All titles": windowed grid — only the posters near the screen exist in the DOM ═════ */
+  function VGrid(type,pageId,scrollId){
+    var host=document.querySelector('#'+pageId+' .hsm-page'),sc=document.getElementById(scrollId);
+    if(!host||!sc||!window.vaPools)return;
+    var pool=vaPools[type],input=host.querySelector('input'),sent=host.querySelector('.hsm-sentinel');
+    var sec=document.createElement('section');sec.className='hsm-all';
+    sec.innerHTML='<div class="ha-head"><h2 class="hsm-row-title">All '+(type==='tv'?'TV Shows':'Movies')+'</h2><span class="ha-count"></span></div>'+
+      '<div class="ha-ctl"><div class="ha-sorts">'+SORTS.map(function(s,i){return '<button type="button" class="ha-sort'+(i?'':' on')+'" data-s="'+s[0]+'">'+s[1]+'</button>';}).join('')+'</div>'+
+      '<select class="ha-genre" aria-label="Genre"><option value="">All genres</option>'+GEN.map(function(g){return '<option value="'+g[0]+'">'+g[1]+'</option>';}).join('')+'</select></div><div class="hsm-vg"></div>';
+    host.insertBefore(sec,sent);
+    var vg=sec.querySelector('.hsm-vg'),cnt=sec.querySelector('.ha-count');
+    var sort='latest',gk='',list=pool.all,scanned=0,snapN=-1,snapAt=0,lastLen=-1,lastGrow=0,cols=0,cw=0,rowH=0,gap=9,nodes=new Map(),raf=0;
+    function gm(m){return (m.genre||'').toLowerCase().indexOf(gk)>-1;}
+    function cmp(a,b){
+      if(sort==='pop')return P(b)-P(a);
+      if(sort==='rate')return R(b)-R(a);
+      var x=T(a),y=T(b);return x<y?-1:x>y?1:0;
+    }
+    function reset(){list=null;scanned=0;snapN=-1;clearNodes();compute(true);render();}
+    function compute(force){
+      var all=pool.all,n=all.length,now=Date.now();
+      if(n!==lastLen){lastLen=n;lastGrow=now;}
+      if(sort==='latest'){                       /* arrival order: only ever appends, so nothing jumps while loading */
+        if(!gk){list=all;return;}
+        if(force||!list||list===all||n<scanned){list=[];scanned=0;}
+        for(;scanned<n;scanned++){if(gm(all[scanned]))list.push(all[scanned]);}
+        return;
+      }
+      var inGrid=vg.getBoundingClientRect().top<sc.getBoundingClientRect().top,settled=now-lastGrow>2500;
+      if(force||!list||(n!==snapN&&now-snapAt>3000&&(settled||!inGrid))){
+        var a=gk?all.filter(gm):all.slice();a.sort(cmp);list=a;snapN=n;snapAt=now;
+      }
+    }
+    function clearNodes(){nodes.forEach(function(el){el.remove();});nodes.clear();}
+    function layout(){
+      var W=vg.clientWidth;if(!W)return false;
+      var m=mob(),g=m?8:10,c=Math.max(2,Math.floor((W+g)/((m?104:150)+g))),w=(W-g*(c-1))/c;
+      if(c!==cols||Math.abs(w-cw)>.5||g!==gap){cols=c;cw=w;gap=g;rowH=w*1.5+g;clearNodes();}
+      return true;
+    }
+    function render(){
+      if(sec.style.display==='none'||!list||!layout())return;
+      var n=list.length,rows=Math.ceil(n/cols);
+      vg.style.height=Math.max(0,rows*rowH-gap)+'px';
+      var y0=sc.getBoundingClientRect().top-vg.getBoundingClientRect().top,vh=sc.clientHeight,buf=vh*1.2;
+      var r0=Math.max(0,Math.floor((y0-buf)/rowH)),r1=Math.min(rows-1,Math.floor((y0+vh+buf)/rowH));
+      if(r1<r0){clearNodes();return;}
+      var from=r0*cols,to=Math.min(n,(r1+1)*cols);
+      nodes.forEach(function(el,i){if(i<from||i>=to){el.remove();nodes.delete(i);}});
+      var frag=document.createDocumentFragment();
+      for(var i=from;i<to;i++){
+        var el=nodes.get(i);
+        if(el&&el._m===list[i])continue;
+        if(el)el.remove();
+        el=mk(list[i],type);
+        el.style.cssText='left:'+((i%cols)*(cw+gap))+'px;top:'+(((i/cols)|0)*rowH)+'px;width:'+cw+'px;height:'+(cw*1.5)+'px';
+        nodes.set(i,el);frag.appendChild(el);
+      }
+      vg.appendChild(frag);
+    }
+    function sched(){if(!raf)raf=requestAnimationFrame(function(){raf=0;render();});}
+    function tick(){
+      if(!sc.classList.contains('open'))return;
+      sec.style.display=input&&input.value.trim()?'none':'';
+      if(sec.style.display==='none')return;
+      compute(false);
+      cnt.textContent=list?list.length.toLocaleString()+' titles'+(Date.now()-lastGrow<3000?' \u00b7 still loading\u2026':''):'';
+      render();
+    }
+    sc.addEventListener('scroll',sched,{passive:true});
+    if(window.ResizeObserver)new ResizeObserver(sched).observe(vg);else window.addEventListener('resize',sched);
+    sec.addEventListener('click',function(e){
+      var b=e.target.closest('.ha-sort');if(!b)return;
+      sort=b.getAttribute('data-s');
+      sec.querySelectorAll('.ha-sort').forEach(function(x){x.classList.toggle('on',x===b);});
+      reset();
+    });
+    sec.querySelector('.ha-genre').addEventListener('change',function(){gk=this.value.toLowerCase();reset();});
+    if(input)input.addEventListener('input',tick);
+    host.addEventListener('click',function(e){if(e.target.closest('.hsm-clear'))setTimeout(tick,0);});
+    setInterval(tick,600);
+  }
+  VGrid('movie','movies-page-inner','movies-overlay');
+  VGrid('tv','tv-page-inner','tv-overlay');
+
+  /* ═════ PC hover info card (same look as the homescreen preview) ═════ */
+  var pop=document.createElement('div');pop.id='hsm-pop';document.body.appendChild(pop);
+  var cur=null,showT=0,hideT=0,popM=null,popTy='';
+  function hide(){clearTimeout(showT);clearTimeout(hideT);pop.classList.remove('on');cur=null;}
+  function show(c){
+    var m=c._m;if(!m||!canHover())return;
+    cur=c;popM=m;popTy=c._ty;
+    var tv=popTy==='tv',gs=String(m.genre||'').split(/[,|]/).map(function(x){return x.trim();}).filter(Boolean).slice(0,3),rt=parseFloat(m.rating),img=m.poster_url||'';
+    var chips='<i>'+(tv?'TV SHOW':'MOVIE')+'</i>'+(m.year?'<i>'+esc(m.year)+'</i>':'')+(rt?'<i>\u2605 '+rt.toFixed(1)+'</i>':'')+gs.map(function(g){return '<i>'+esc(g)+'</i>';}).join('');
+    var desc=(tv?'Stream ':'Watch ')+m.title+(m.year?' ('+m.year+')':'')+(gs.length?' \u2014 '+gs.join(', ').toLowerCase()+(tv?' series':' movie'):'')+(rt?'. Rated '+rt.toFixed(1)+'/10':'')+'. '+(tv?'Pick a season and episode to start.':'Free to stream in HD.');
+    pop.innerHTML='<div class="hp-th" style="--pbg:url(&quot;'+esc(img)+'&quot;)">'+(img?'<img src="'+esc(img)+'" alt="">':'')+'</div><div class="pb"><div class="pt">'+esc(m.title)+'</div><div class="pm">'+chips+'</div><p class="pd">'+esc(desc)+'</p><span class="pw">\u25B6 '+(tv?'Watch Show':'Watch Movie')+'</span></div>';
+    var W=Math.min(340,innerWidth-16);pop.style.width=W+'px';
+    var r=c.getBoundingClientRect(),h=pop.offsetHeight,thH=W*9/16;
+    var left=Math.max(72,Math.min(r.left+r.width/2-W/2,innerWidth-W-8)),top=Math.max(8,Math.min(r.top-(thH-r.height)/2,innerHeight-h-8));
+    pop.style.left=left+'px';pop.style.top=top+'px';pop.classList.add('on');
+  }
+  document.addEventListener('mouseover',function(e){
+    if(!canHover())return;
+    var c=e.target.closest&&e.target.closest('.hsm-card');if(!c||!c._m)return;
+    clearTimeout(hideT);if(c===cur)return;clearTimeout(showT);
+    showT=setTimeout(function(){show(c);},280);
+  });
+  document.addEventListener('mouseout',function(e){
+    var c=e.target.closest&&e.target.closest('.hsm-card');if(!c)return;
+    var to=e.relatedTarget;if(to&&(c.contains(to)||pop.contains(to)))return;
+    clearTimeout(showT);hideT=setTimeout(hide,120);
+  });
+  pop.addEventListener('mouseenter',function(){clearTimeout(hideT);});
+  pop.addEventListener('mouseleave',function(){hideT=setTimeout(hide,120);});
+  pop.addEventListener('click',function(){var m=popM,t=popTy;hide();if(m)play(m,t);});
+  document.addEventListener('scroll',hide,{capture:true,passive:true});
+  window.addEventListener('blur',hide);window.addEventListener('resize',hide);
+})();
+</script>
+<style id="evt-css">
+.sxs-tt.evt{position:relative;overflow:hidden;background:#fff !important;color:#111;gap:6px;padding:10px;border-radius:0 !important;}
+.sxs-tt.evt::before{content:"";position:absolute;inset:-26px;background:var(--evl) center/cover no-repeat;filter:blur(24px) saturate(1.6);opacity:.5;}
+.sxs-tt.evt::after{content:"";position:absolute;inset:0;background:rgba(255,255,255,.58);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);}
+.sxs-tt.evt .evt-lg,.sxs-tt.evt span{position:relative;z-index:1;}
+.sxs-tt.evt .evt-lg{width:78%;height:58%;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.18));}
+.sxs-tt.evt span{color:#111 !important;font-weight:700 !important;-webkit-line-clamp:1 !important;}
+.sxs-tt.evt:hover{box-shadow:0 0 0 2px #fff,0 10px 26px rgba(0,0,0,.55);}
+@media(max-width:900px){.sxs-tt.evt{padding:5px;gap:3px;}.sxs-tt.evt .evt-lg{height:52%;}.sxs-tt.evt span{font-size:10.5px !important;}}
+#evt-pop{position:fixed;left:0;top:0;width:340px;z-index:7500;background:#141414;color:#fff;border-radius:0;overflow:hidden;box-shadow:0 14px 44px rgba(0,0,0,.65);opacity:0;pointer-events:none;transform:scale(.95);transform-origin:center top;transition:opacity .15s,transform .15s;cursor:pointer;font-family:var(--pm-font,inherit);}
+#evt-pop.on{opacity:1;pointer-events:auto;transform:none;}
+#evt-pop .tb{position:relative;aspect-ratio:16/9;overflow:hidden;background:#fff;display:flex;align-items:center;justify-content:center;}
+#evt-pop .tb::before{content:"";position:absolute;inset:-26px;background:var(--evl) center/cover no-repeat;filter:blur(26px) saturate(1.6);opacity:.55;}
+#evt-pop .tb::after{content:"";position:absolute;inset:0;background:rgba(255,255,255,.55);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);}
+#evt-pop .tb img{position:relative;z-index:1;width:62%;height:74%;object-fit:contain;filter:drop-shadow(0 3px 6px rgba(0,0,0,.2));}
+#evt-pop .pb{padding:12px 14px 14px;}
+#evt-pop .pt{font:700 17px var(--pm-font,inherit);line-height:1.25;margin:0 0 6px;}
+#evt-pop .pm{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
+#evt-pop .pm i{font-style:normal;font:600 11px var(--pm-font,inherit);padding:3px 8px;background:rgba(255,255,255,.1);color:#d5d9e5;}
+#evt-pop .pm i.lv{background:#fff;color:#000;}
+#evt-pop .pd{font:400 13.5px/1.45 var(--pm-font,inherit);color:#b8b8b8;margin:0 0 12px;}
+#evt-pop .pw{display:inline-flex;align-items:center;gap:8px;background:#fff;color:#000;font:700 13px var(--pm-font,inherit);padding:8px 16px;}
+@media(max-width:900px),(hover:none){#evt-pop{display:none !important;}}
+#evt-pop .tb.gen{background:linear-gradient(135deg,#fff,#e9e9ee);}
+#evt-pop .tb.gen::before,#evt-pop .tb.gen::after{display:none;}
+#evt-pop .tb .ini{position:relative;z-index:1;font:800 58px var(--pm-font,inherit);color:#111;letter-spacing:1px;}
+/* WCL: black background version of the frosted banner */
+.sxs-tt.evt.evt-dk{background:#000 !important;}
+.sxs-tt.evt.evt-dk::before{opacity:.28;filter:blur(24px) saturate(1.2) brightness(.8);}
+.sxs-tt.evt.evt-dk::after{background:rgba(0,0,0,.5);}
+.sxs-tt.evt.evt-dk span{color:#fff !important;}
+.sxs-tt.evt.evt-dk .evt-lg{filter:drop-shadow(0 2px 6px rgba(255,255,255,.12));}
+.sxs-tt.evt.evt-dk:hover{box-shadow:0 0 0 2px rgba(255,255,255,.6),0 10px 26px rgba(0,0,0,.55);}
+#evt-pop .tb.dk{background:#000;}
+#evt-pop .tb.dk::before{opacity:.3;filter:blur(26px) saturate(1.2) brightness(.8);}
+#evt-pop .tb.dk::after{background:rgba(0,0,0,.5);}
+#evt-pop .tb.dk img{filter:drop-shadow(0 3px 8px rgba(255,255,255,.1));}
+</style>
+<script id="evt-js">
+(function(){
+  /* Recognised tournaments: any tile whose name contains the keyword gets the official logo as a banner + hover info.
+     Order matters: ICC / IPL are tested before the generic "premier league" / "world cup" rules. */
+  var T=[
+    {k:'wcl',dark:1,re:/\bwcl\b|world championship of legends|world champion|legend/i,name:'World Championship of Legends',
+     logo:'https://www.wclcricket.com/assets/wcl-bnw-season3-20260927.png',
+     chips:['Cricket','Legends','T20'],
+     desc:'The World Championship of Legends (WCL) is a T20 cricket tournament starring retired international greats. The first edition was played in England in 2024.'},
+    {k:'icc',re:/\bicc\b|international cricket council|champions trophy|t20 world cup|cricket world cup|world test championship/i,name:'ICC',
+     logo:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR3RBl2jouCdUHrLSHRm2lopxkCV4ZpMhGoAxdCVrLYQkBkYOWnNCkb50U&s=10',
+     chips:['Cricket','Global'],
+     desc:'The International Cricket Council is cricket\u2019s world governing body. It runs the men\u2019s and women\u2019s World Cups, the T20 World Cup, the Champions Trophy and the World Test Championship.'},
+    {k:'ipl',re:/\bipl\b|indian premier league/i,name:'Indian Premier League',
+     logo:'https://crystalpng.com/wp-content/uploads/2025/09/ipl-logo.png',
+     chips:['Cricket','T20','India'],
+     desc:'The Indian Premier League is a franchise T20 cricket league founded by the BCCI in 2008, played every spring across India.'},
+    {k:'fifa',re:/\bfifa\b|(^|\s)world cup(?!.*(cricket|t20|odi))/i,name:'FIFA',
+     logo:'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/aa/FIFA_logo_without_slogan.svg/1280px-FIFA_logo_without_slogan.svg.png',
+     chips:['Football','Global'],
+     desc:'FIFA is football\u2019s world governing body and organises the FIFA World Cup, held every four years. The 2026 edition is hosted by the USA, Canada and Mexico.'},
+    {k:'epl',re:/^(english )?premier league|\bepl\b|english premier league/i,name:'Premier League',
+     logo:'https://thumb.wikimedia.org/wikipedia/en/thumb/f/f2/Premier_League_Logo.svg/1280px-Premier_League_Logo.svg.png',
+     chips:['Football','England'],
+     desc:'The Premier League is England\u2019s top football division, contested by 20 clubs from August to May.'},
+    {k:'laliga',re:/la ?liga/i,name:'LaLiga',
+     logo:'https://thumb.wikimedia.org/wikipedia/commons/thumb/5/54/LaLiga_EA_Sports_2023_Vertical_Logo.svg/1280px-LaLiga_EA_Sports_2023_Vertical_Logo.svg.png',
+     chips:['Football','Spain'],
+     desc:'LaLiga is Spain\u2019s top football division, with 20 clubs including Real Madrid, Barcelona and Atl\u00e9tico Madrid.'},
+    {k:'isl',re:/\bisl\b|indian super league/i,name:'Indian Super League',
+     logo:'https://images.seeklogo.com/logo-png/26/1/indian-super-league-logo-png_seeklogo-269160.png',
+     chips:['Football','India'],
+     desc:'The Indian Super League is the top tier of professional football in India, launched in 2014.'}
+  ];
+  function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function find(n){n=String(n||'');for(var i=0;i<T.length;i++)if(T[i].re.test(n))return T[i];return null;}
+  window.evTournamentLogo=find;
+  function deco(el){
+    if(el._evt)return;el._evt=1;
+    var t=find(el.getAttribute('data-t'));if(!t)return;
+    el._tm=t;el.classList.add('evt');if(t.dark)el.classList.add('evt-dk');el.style.setProperty('--evl','url("'+t.logo+'")');
+    var u=el.querySelector('u');if(!u)return;
+    var im=new Image();im.className='evt-lg';im.alt=t.name;im.decoding='async';im.loading='lazy';
+    im.onerror=function(){im.remove();u.style.display='';el.classList.remove('evt');};   /* logo blocked/dead -> original initials tile */
+    im.src=t.logo;u.style.display='none';el.insertBefore(im,u);
+  }
+  function scan(r){
+    if(r.matches&&r.matches('.sxs-tt'))deco(r);
+    if(r.querySelectorAll)[].forEach.call(r.querySelectorAll('.sxs-tt[data-t]'),deco);
+  }
+  var q=[],raf=0;
+  new MutationObserver(function(ms){
+    for(var i=0;i<ms.length;i++)for(var j=0;j<ms[i].addedNodes.length;j++){var x=ms[i].addedNodes[j];if(x.nodeType===1)q.push(x);}
+    if(!raf)raf=requestAnimationFrame(function(){raf=0;var a=q;q=[];a.forEach(scan);});
+  }).observe(document.documentElement,{childList:true,subtree:true});
+  scan(document.body);
+
+  /* hover info (PC) */
+  function canHover(){return matchMedia('(min-width:901px) and (hover:hover)').matches;}
+  var pop=document.createElement('div');pop.id='evt-pop';document.body.appendChild(pop);
+  var cur=null,showT=0,hideT=0;
+  function hide(){clearTimeout(showT);clearTimeout(hideT);pop.classList.remove('on');cur=null;}
+  function info(el){
+    var name=el.getAttribute('data-t')||'',items=[];
+    try{items=((window.__sxs&&__sxs.all())||[]).filter(function(i){return i.tour===name||i.game===name;});}catch(e){}
+    var lv=0,up=0,sp=[];
+    items.forEach(function(i){if(i.live)lv++;else if(!i.fin)up++;if(i.sport&&sp.indexOf(i.sport)<0)sp.push(i.sport);});
+    return {n:items.length,lv:lv,up:up,sp:sp.slice(0,2)};
+  }
+  function show(el){
+    if(!canHover())return;cur=el;
+    var t=el._tm,name=el.getAttribute('data-t')||'',f=info(el),live=f.lv>0||!!el.querySelector('.sxs-tl');
+    var chips=(live?'<i class="lv">LIVE NOW'+(f.lv>1?' \u00b7 '+f.lv:'')+'</i>':'')+
+      (t?t.chips:f.sp).map(function(c){return '<i>'+esc(c)+'</i>';}).join('')+
+      (f.n?'<i>'+f.n+' match'+(f.n>1?'es':'')+' today</i>':'');
+    var desc=t?t.desc:(name+(f.sp.length?' \u2014 '+f.sp.join(' & ').toLowerCase():'')+'. '+(f.n?f.n+' match'+(f.n>1?'es':'')+' on today'+(f.lv?', '+f.lv+' live right now':(f.up?', '+f.up+' still to come':''))+'.':'No matches scheduled right now.')+' Pick it to see every fixture and stream.');
+    var ue=el.querySelector('u'),ini=ue?ue.textContent:name.slice(0,2).toUpperCase();
+    var head=t?'<div class="tb'+(t.dark?' dk':'')+'"><img src="'+esc(t.logo)+'" alt="" onerror="this.remove()"></div>':'<div class="tb gen"><b class="ini">'+esc(ini)+'</b></div>';
+    if(t)pop.style.setProperty('--evl','url("'+t.logo+'")');
+    pop.innerHTML=head+'<div class="pb"><div class="pt">'+esc(t?t.name:name)+'</div><div class="pm">'+chips+'</div><p class="pd">'+esc(desc)+'</p><span class="pw">\u25B6 View matches</span></div>';
+    var W=Math.min(340,innerWidth-16);pop.style.width=W+'px';
+    var r=el.getBoundingClientRect(),h=pop.offsetHeight,thH=W*9/16;
+    var left=Math.max(72,Math.min(r.left+r.width/2-W/2,innerWidth-W-8)),top=Math.max(8,Math.min(r.top-(thH-r.height)/2,innerHeight-h-8));
+    pop.style.left=left+'px';pop.style.top=top+'px';pop.classList.add('on');
+  }
+  document.addEventListener('mouseover',function(e){
+    if(!canHover())return;var el=e.target.closest&&e.target.closest('.sxs-tt');if(!el)return;
+    clearTimeout(hideT);if(el===cur)return;clearTimeout(showT);showT=setTimeout(function(){show(el);},280);
+  });
+  document.addEventListener('mouseout',function(e){
+    var el=e.target.closest&&e.target.closest('.sxs-tt');if(!el)return;
+    var to=e.relatedTarget;if(to&&(el.contains(to)||pop.contains(to)))return;
+    clearTimeout(showT);hideT=setTimeout(hide,120);
+  });
+  pop.addEventListener('mouseenter',function(){clearTimeout(hideT);});
+  pop.addEventListener('mouseleave',function(){hideT=setTimeout(hide,120);});
+  pop.addEventListener('click',function(){var el=cur;hide();if(el)el.click();});
+  document.addEventListener('scroll',hide,{capture:true,passive:true});
+  window.addEventListener('blur',hide);window.addEventListener('resize',hide);
 })();
 </script>
 </body>
