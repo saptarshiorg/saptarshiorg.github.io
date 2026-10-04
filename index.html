@@ -4366,28 +4366,32 @@ function sxCatalogSearch(type, q, limit){
   if (!qn) return [];
   const toks = qn.split(' ').filter(Boolean);
   const keyToks = toks.filter(t => !SX_STOP.has(t)); const rt = keyToks.length ? keyToks : toks;
-  const res = [];
+  const res = [], strictIdx = new Set();
+  // pass 1 (fast, whole library): every word present
   for (let i = 0; i < pool.length; i++){
     const m = pool[i];
     if (m._n === undefined){ m._n = sxsNorm(m.title); m._s = ' ' + m._n + ' ' + (m.year || ''); }
     const s = m._s;
-    // exact-ish: every word present
     let all = true, allW = true;
     for (let k = 0; k < toks.length; k++){
-      if (s.indexOf(toks[k]) < 0){ all = false; allW = false; break; }
+      if (s.indexOf(toks[k]) < 0){ all = false; break; }
       if (s.indexOf(' ' + toks[k]) < 0) allW = false;
     }
-    let sc;
     if (all){
-      sc = m._n === qn ? 5000 : m._n.indexOf(qn) === 0 ? 4000 : s.indexOf(' ' + qn) >= 0 ? 3000 : allW ? 2500 : 2000;
-    } else {
-      // related: any word / alias / stem / typo, or the genre matches
-      const hay = s + ' ' + String(m.genre || '').toLowerCase();
-      const r = sxHaystackScore(rt, [hay]);
-      if (!r) continue;
-      sc = Math.min(r, 1900);
+      res.push({ m, sc: m._n === qn ? 5000 : m._n.indexOf(qn) === 0 ? 4000 : s.indexOf(' ' + qn) >= 0 ? 3000 : allW ? 2500 : 2000 });
+      strictIdx.add(i);
     }
-    res.push({ m, sc });
+  }
+  // pass 2 (slow fuzzy / related): only when exact hits are few, so big libraries never lag
+  if (res.length < 24){
+    const t0 = performance.now();
+    for (let i = 0; i < pool.length && res.length < 400; i++){
+      if ((i & 255) === 0 && performance.now() - t0 > 30) break; // hard time budget: never block typing
+      if (strictIdx.has(i)) continue;
+      const m = pool[i];
+      const r = sxHaystackScore(rt, [m._s + ' ' + String(m.genre || '').toLowerCase()]);
+      if (r) res.push({ m, sc: Math.min(r, 1900) });
+    }
   }
   res.sort((a, b) => b.sc - a.sc || sxsPop(b.m) - sxsPop(a.m));
   return { total: res.length, list: res.slice(0, limit).map(x => x.m) };
@@ -10820,7 +10824,7 @@ function closeAdminChatDiscordPopup(){
         <div id="sp-info-meta"></div>
       </div>
       <div id="sp-servers-wrap">
-        <button id="sp-servers-btn" type="button" onclick="spToggleServers(event)" aria-haspopup="true" aria-expanded="false">
+        <button id="sp-servers-btn" title="Servers" type="button" onclick="spToggleServers(event)" aria-haspopup="true" aria-expanded="false">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="6.5" rx="1.6"/><rect x="3" y="13.5" width="18" height="6.5" rx="1.6"/><path d="M7 7.25h.01M7 16.75h.01"/></svg>
           <span>Servers</span>
         </button>
@@ -17999,6 +18003,47 @@ window.sxHeroCustom=function(base,all){
   if(fs){
     var hr=document.createElement('div');hr.id='sxs-home';fs.parentNode.insertBefore(hr,fs.nextSibling);bind(hr);
     var hsig='',cache={m:[],t:[],mg:[],tg:[],n:-1,tn:-1,at:0};
+    /* ── Highlights (YouTube playlist, shown as site-native cards) ── */
+    var HLPL='PLijqNbMIJOu92LgYlWBVLgLzdbi3ofFbK',HL=[],HLK='ev:hl:v1';
+    try{var hc=JSON.parse(localStorage.getItem(HLK)||'[]');if(hc&&hc.length)HL=hc;}catch(e){}
+    function hlSave(){try{localStorage.setItem(HLK,JSON.stringify(HL.slice(0,300)));}catch(e){}}
+    function hlGet(u){
+      var P=['https://api.allorigins.win/raw?url=','https://corsproxy.io/?'];
+      return P.reduce(function(pr,p){return pr.catch(function(){return fetch(p+encodeURIComponent(u)).then(function(r){if(!r.ok)throw 0;return r.text();});});},Promise.reject());
+    }
+    function hlScrape(t){
+      var out=[],seen={},re=/"playlistVideoRenderer":\{"videoId":"([\w-]{11})"[\s\S]*?"title":\{"runs":\[\{"text":"((?:[^"\\]|\\.)*)"/g,m;
+      while((m=re.exec(t))){if(seen[m[1]])continue;seen[m[1]]=1;var ti=m[2];try{ti=JSON.parse('"'+ti+'"');}catch(e){}out.push({id:m[1],title:ti});}
+      return out;
+    }
+    function hlRss(t){
+      var out=[],re=/<entry>[\s\S]*?<yt:videoId>([\w-]{11})<\/yt:videoId>[\s\S]*?<title>([\s\S]*?)<\/title>/g,m;
+      while((m=re.exec(t))){out.push({id:m[1],title:m[2].replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/&quot;/g,'"').replace(/&lt;/g,'<').replace(/&gt;/g,'>')});}
+      return out;
+    }
+    function hlLoad(){
+      hlGet('https://www.youtube.com/playlist?list='+HLPL).then(hlScrape).then(function(a){if(a.length<3)throw 0;return a;})
+      .catch(function(){return hlGet('https://www.youtube.com/feeds/videos.xml?playlist_id='+HLPL).then(hlRss);})
+      .then(function(a){if(a&&a.length){HL=a;hlSave();hsig='';try{homeRender();}catch(e){}}}).catch(function(){});
+    }
+    function hlWrap(v){return wrap(v,'hl',function(v){return {title:v.title,img:'https://i.ytimg.com/vi/'+v.id+'/hqdefault.jpg',hl:true,vid:v.id,
+      play:function(){hlPlay(v);}};});}
+    function hlCard(w){
+      return '<div class="sxs-card sxs-hl" data-r="'+w.ri+'" role="button" tabindex="0"><div class="sxs-th"><img loading="lazy" decoding="async" src="'+esc(w.img)+'" alt="" onerror="this.style.display=\'none\'"><i class="sxs-hlp"><svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M8 5v14l11-7z"/></svg></i><i class="sxs-hlb">HIGHLIGHTS</i></div><div class="sxs-bar" title="'+esc(w.title)+'">'+esc(w.title)+'</div></div>';
+    }
+    function hlPlay(v){
+      openStreamPlayer('https://www.youtube.com/embed/'+v.id+'?autoplay=1&rel=0&modestbranding=1&playsinline=1',v.title,'highlight');
+      setTimeout(function(){try{
+        var rail=document.getElementById('stream-player-rail-list'),t=document.getElementById('stream-player-rail-title');if(!rail)return;
+        if(t)t.textContent='More highlights';
+        rail.innerHTML=HL.filter(function(x){return x.id!==v.id;}).slice(0,25).map(function(x,i){
+          return '<button type="button" class="sp-rail-item" data-hl="'+x.id+'"><span class="sp-rail-thumb sp-rail-thumb-banner"><img loading="lazy" src="https://i.ytimg.com/vi/'+x.id+'/mqdefault.jpg" alt=""></span><span class="sp-rail-info"><span class="sp-rail-name">'+esc(x.title)+'</span><span class="sp-rail-meta">Highlights</span></span></button>';}).join('');
+        rail.onclick=function(e){var b=e.target.closest('[data-hl]');if(!b)return;var id=b.getAttribute('data-hl'),x=HL.filter(function(z){return z.id===id;})[0];if(x)hlPlay(x);};
+      }catch(e){}},50);
+    }
+    setTimeout(hlLoad,800);
+    window.__evHL={get:function(){return HL;},play:function(id){var v=HL.filter(function(x){return x.id===id;})[0];if(v)hlPlay(v);},
+      row:function(){return HL.length?'<section class="sxs-sec hs-hl-sec"><h2 class="sxs-t">Highlights</h2><div class="sxs-wrap"><button class="sxs-btn l" type="button" aria-label="Scroll left">&#10094;</button><div class="sxs-track">'+HL.slice(0,40).map(function(v){return hlCard(hlWrap(v)).replace('<div class="sxs-card sxs-hl"','<div class="sxs-card sxs-hl" data-hl="'+v.id+'"');}).join('')+'</div><button class="sxs-btn r" type="button" aria-label="Scroll right">&#10095;</button></div></section>':'';}};
     var homeRender=function(){
       var A=S.refresh(),lv=A.filter(function(i){return i.live;}).slice(0,12),up=A.filter(function(i){return !i.live&&!i.fin;}).slice(0,12),ms=lv.concat(up),now=Date.now();
       if(now-cache.at>6000||cache.n<0){
@@ -18006,7 +18051,7 @@ window.sxHeroCustom=function(base,all){
         if(cache.tn!==vaPools.tv.all.length){cache.tg=top(vaPools.tv.all,window.__hsN||60);cache.t=cache.tg.slice(0,16);cache.tn=vaPools.tv.all.length;}
         cache.at=now;
       }
-      var sig=S.tiles(A).map(function(t){return t.name+t.live;}).join('|')+'@'+ms.map(function(i){return i.title+(i.live?'L':'U')+i.time;}).join('|')+'#'+cache.m.map(function(m){return m.title;}).join(',')+'#'+cache.t.map(function(m){return m.title;}).join(',')+'#'+cache.mg.length+'/'+cache.tg.length+'#'+(window._cmsChannels||[]).map(function(c){return (c.status_live_off||'')[0]||'-';}).join('');
+      var sig=S.tiles(A).map(function(t){return t.name+t.live;}).join('|')+'@'+ms.map(function(i){return i.title+(i.live?'L':'U')+i.time;}).join('|')+'#'+cache.m.map(function(m){return m.title;}).join(',')+'#'+cache.t.map(function(m){return m.title;}).join(',')+'#'+cache.mg.length+'/'+cache.tg.length+'#hl'+HL.length+'#'+(window._cmsChannels||[]).map(function(c){return (c.status_live_off||'')[0]||'-';}).join('');
       if(sig===hsig)return;hsig=sig;
       var h='';
       /* mobile Sports home only: Popular Tournaments rail (CSS hides it everywhere else) */
@@ -18014,6 +18059,7 @@ window.sxHeroCustom=function(base,all){
       if(ptl.length>1)h+=row('Popular Tournaments',ptl.map(function(t){return '<div class="sxs-tile sxs-tt" data-t="'+esc(t.name)+'" role="button" tabindex="0"><u>'+esc(S.ini(t.name))+'</u><span>'+esc(t.name)+'</span>'+(t.live?'<i class="sxs-tl">LIVE</i>':'')+'</div>';}).join('')).replace('<section class="sxs-sec"','<section class="sxs-sec hs-pop"');
       if(lv.length)h+=row('Live Now',lv.map(function(i){return S.card(i,A.indexOf(i));}).join(''),'m');
       if(up.length)h+=row('Upcoming Today',up.map(function(i){return S.card(i,A.indexOf(i));}).join(''),'m');
+      if(HL.length)h+=row('Highlights',HL.slice(0,40).map(function(v){return hlCard(hlWrap(v));}).join(''),'');
       if(cache.m.length)h+=row('Movies',cache.m.map(function(m){return rc(mvWrap(m,'movie'));}).join(''),'movie');
       if(cache.t.length)h+=row('TV Shows',cache.t.map(function(m){return rc(mvWrap(m,'tv'));}).join(''),'tv');
       /* mobile-only vertical grids (shown by CSS in TV / Movies tabs): Live TV channels + TV Shows combined */
@@ -19358,7 +19404,7 @@ window.fcLoadIntoFrame = fcLoadIntoFrame;
     var hr=document.getElementById('sxs-home'); if(!hr) return false;
     hr.querySelectorAll(':scope > section.sxs-sec:not(.hs-gsec)').forEach(function(sec){
       var h=sec.querySelector('.sxs-t'); if(!h) return; var t=(h.firstChild&&h.firstChild.nodeValue||h.textContent||'').trim();
-      if(/live now|upcoming/i.test(t)) sec.classList.add('hs-k-sports');
+      if(/live now|upcoming|highlights/i.test(t)) sec.classList.add('hs-k-sports');
       else if(/^(top 10 )?movies/i.test(t)){ sec.classList.add('hs-k-movies'); if(h.firstChild&&h.firstChild.nodeType===3) h.firstChild.nodeValue='Top 10 Movies'; }
       else if(/tv shows/i.test(t)) sec.classList.add('hs-k-tv');
     });
@@ -21407,6 +21453,13 @@ img.ev-f.ev-ok{opacity:1;}
 #sp-servers-menu .sp-sv-loading{display:flex;flex-direction:column;gap:8px;padding:10px 12px;}
 #sp-servers-menu .sp-sv-loading i{display:block;height:34px;border-radius:10px;background:linear-gradient(90deg,rgba(255,255,255,.06),rgba(255,255,255,.16),rgba(255,255,255,.06));background-size:200% 100%;animation:evSvShim 1.1s linear infinite;}
 @keyframes evSvShim{to{background-position:-200% 0}}
+/* Highlights cards */
+.sxs-hl .sxs-th{position:relative;aspect-ratio:16/9;overflow:hidden;}
+.sxs-hl .sxs-th img{width:100%;height:100%;object-fit:cover;display:block;}
+.sxs-hlp{position:absolute;right:8px;bottom:8px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);color:#fff;display:flex;align-items:center;justify-content:center;transition:transform .2s,background .2s;}
+.sxs-hl:hover .sxs-hlp{transform:scale(1.12);background:#E0155F;}
+.sxs-hlb{position:absolute;left:8px;top:8px;font:800 9px/1 "Google Sans","Inter",sans-serif;letter-spacing:.08em;background:#E0155F;color:#fff;padding:4px 6px;font-style:normal;}
+.sxs-hl .sxs-bar{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-align:left !important;}
 /* mobile grid: cheap off-screen cards */
 .hs-mgrid .sxs-card{content-visibility:auto;contain-intrinsic-size:auto 190px;}
 </style>
@@ -21426,6 +21479,73 @@ img.ev-f.ev-ok{opacity:1;}
       setTimeout(function(){try{if(ov.classList.contains('sv-open'))window.spServersRender();}catch(_){}},650);
     };
   },300);
+})();
+</script>
+<style id="ev-pc-side-controls">
+/* PC: Servers + More buttons sit top-left (under Back); their menus open just below them */
+@media(min-width:901px){
+  #stream-player-overlay #sp-servers-wrap,#stream-player-overlay #sp-info-rail{position:fixed !important;top:64px;z-index:9;pointer-events:auto !important;}
+  #stream-player-overlay #sp-servers-wrap{left:16px;}
+  #stream-player-overlay #sp-info-rail{left:68px;}
+  #stream-player-overlay #sp-servers-btn{width:44px;height:44px;min-width:44px;padding:0 !important;justify-content:center;border-radius:50% !important;background:rgba(0,0,0,.55) !important;backdrop-filter:blur(8px);}
+  #stream-player-overlay #sp-servers-btn span{display:none !important;}
+  #stream-player-overlay #sp-servers-btn svg{width:20px;height:20px;}
+  #stream-player-overlay #sp-info-rail{width:44px !important;height:44px !important;border-radius:50% !important;background:rgba(0,0,0,.55) !important;backdrop-filter:blur(8px);}
+  #stream-player-overlay #stream-player-infobar>#sp-servers-menu{position:fixed !important;top:116px !important;left:16px !important;right:auto !important;bottom:auto !important;width:260px;border-radius:14px !important;background:rgba(0,0,0,.92) !important;transform:translateY(-10px);}
+  #stream-player-overlay.sv-open #stream-player-infobar>#sp-servers-menu{transform:none;}
+  /* More list: dropdown panel just below its button */
+  #stream-player-overlay #stream-player-rail{position:fixed !important;top:116px;left:16px;right:auto;bottom:auto !important;width:320px !important;max-width:none !important;height:auto !important;max-height:calc(100vh - 140px);z-index:9;border:1px solid rgba(255,255,255,.1);border-radius:14px;background:rgba(0,0,0,.94);box-shadow:0 18px 50px rgba(0,0,0,.6);transform:translateY(-10px) !important;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .25s ease,transform .3s ease,visibility 0s linear .3s;}
+  #stream-player-overlay.rail-open #stream-player-rail{transform:none !important;opacity:1;visibility:visible;pointer-events:auto;transition:opacity .25s ease,transform .3s ease,visibility 0s;}
+  #stream-player-overlay #stream-player-rail .sp-ad-box{display:none;}
+}
+</style>
+<script>
+/* PC Sports tab (Matches panel): add the Highlights row */
+(function(){
+  var n=0,iv=setInterval(function(){
+    var root=document.getElementById('sxs-root');
+    if(!root){if(++n>120)clearInterval(iv);return;}
+    clearInterval(iv);
+    var busy=false;
+    function ins(){
+      if(busy||!window.__evHL)return;
+      var sig=window.__evHL.get().length;
+      var ex=root.querySelector('.hs-hl-sec');
+      if(ex&&ex.getAttribute('data-n')==String(sig))return;
+      if(!sig)return;
+      busy=true;
+      if(ex)ex.remove();
+      var h=window.__evHL.row();if(h){var d=document.createElement('div');d.innerHTML=h;var sec=d.firstChild;sec.setAttribute('data-n',sig);var f=root.querySelector(':scope > .sxs-sec');if(f&&f.nextSibling)root.insertBefore(sec,f.nextSibling);else root.appendChild(sec);}
+      busy=false;
+    }
+    new MutationObserver(ins).observe(root,{childList:true});
+    setInterval(ins,2000);ins();
+    root.addEventListener('click',function(e){
+      var sec=e.target.closest('.hs-hl-sec');if(!sec)return;
+      var b=e.target.closest('.sxs-btn');
+      if(b){var tr=sec.querySelector('.sxs-track');tr.scrollBy({left:(b.classList.contains('l')?-1:1)*tr.clientWidth*.85,behavior:'smooth'});e.stopPropagation();return;}
+      var c=e.target.closest('.sxs-card[data-hl]');if(c){e.stopPropagation();window.__evHL.play(c.getAttribute('data-hl'));}
+    },true);
+  },500);
+})();
+</script>
+<script>
+/* Global search covers the whole movie/TV library: keep it loading and refresh results as it grows */
+(function(){
+  var last=0;
+  setInterval(function(){
+    try{
+      var ov=document.getElementById('sx-search-overlay');if(!ov||!ov.classList.contains('open'))return;
+      var inp=document.getElementById('sx-search-input');if(!inp||!inp.value.trim())return;
+      var n=(vaPools.movie.all.length)+(vaPools.tv.all.length);
+      if(n===last)return;last=n;
+      if(document.activeElement===inp&&Date.now()-(window.__sxTypedAt||0)<600)return;
+      sxRunSearch(inp.value);
+    }catch(e){}
+  },1500);
+  var o=window.openSxSearch;
+  if(typeof o==='function')window.openSxSearch=function(){try{vaBulkPreload('movie');vaBulkPreload('tv');}catch(e){}return o.apply(this,arguments);};
+  document.addEventListener('input',function(e){if(e.target&&e.target.id==='sx-search-input')window.__sxTypedAt=Date.now();},true);
 })();
 </script>
 </body>
