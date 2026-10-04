@@ -18021,18 +18021,99 @@ window.sxHeroCustom=function(base,all){
       while((m=re.exec(t))){out.push({id:m[1],title:m[2].replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/&quot;/g,'"').replace(/&lt;/g,'<').replace(/&gt;/g,'>')});}
       return out;
     }
-    function hlLoad(){
-      hlGet('https://www.youtube.com/playlist?list='+HLPL).then(hlScrape).then(function(a){if(a.length<3)throw 0;return a;})
-      .catch(function(){return hlGet('https://www.youtube.com/feeds/videos.xml?playlist_id='+HLPL).then(hlRss);})
-      .then(function(a){if(a&&a.length){HL=a;hlSave();hsig='';try{homeRender();}catch(e){}}}).catch(function(){});
+    function hlRefresh(){hsig='';try{homeRender();}catch(e){}}
+    function hlTitles(){
+      var q=HL.filter(function(v){return !v.t;}),k=0,active=0,dirty=0;
+      function next(){
+        while(active<6&&k<q.length){(function(v){active++;
+          fetch('https://noembed.com/embed?url='+encodeURIComponent('https://www.youtube.com/watch?v='+v.id)).then(function(r){return r.json();})
+          .then(function(d){if(d&&d.title){v.title=d.title;}v.t=1;dirty++;}).catch(function(){v.t=1;})
+          .then(function(){active--;if(dirty>=8||(k>=q.length&&!active)){dirty=0;hlSave();hlRefresh();}next();});
+        })(q[k++]);}
+      }
+      next();
     }
-    function hlWrap(v){return wrap(v,'hl',function(v){return {title:v.title,img:'https://i.ytimg.com/vi/'+v.id+'/hqdefault.jpg',hl:true,vid:v.id,
+    function hlSet(a){
+      if(!a||!a.length)return;
+      var old={};HL.forEach(function(v){old[v.id]=v;});
+      HL=a.map(function(v){var o=old[v.id];return {id:v.id,title:v.title||(o&&o.title)||'ODI Highlights',t:v.t||(o&&o.t)||0};});
+      hlSave();hlRefresh();hlTitles();
+    }
+    /* source 1: YouTube's own player API (no CORS / no proxy needed) returns the playlist's video IDs */
+    function hlViaPlayer(){
+      return new Promise(function(res,rej){
+        var done=false,host=document.createElement('div');host.style.cssText='position:fixed;left:-9999px;top:0;width:2px;height:2px;overflow:hidden;';
+        var d=document.createElement('div');host.appendChild(d);document.body.appendChild(host);
+        function fin(ids){if(done)return;done=true;try{pl&&pl.destroy();}catch(e){}host.remove();ids&&ids.length?res(ids):rej();}
+        var pl;
+        function make(){
+          try{pl=new YT.Player(d,{width:2,height:2,playerVars:{listType:'playlist',list:HLPL,autoplay:0,controls:0},events:{
+            onReady:function(e){var n=0,t=setInterval(function(){var ids=null;try{ids=e.target.getPlaylist();}catch(x){}
+              if(ids&&ids.length){clearInterval(t);fin(ids);}else if(++n>40){clearInterval(t);fin(null);}},300);},
+            onError:function(){fin(null);}}});}catch(e){fin(null);}
+        }
+        if(window.YT&&YT.Player)return make();
+        var prev=window.onYouTubeIframeAPIReady;
+        window.onYouTubeIframeAPIReady=function(){try{prev&&prev();}catch(e){}make();};
+        var sc=document.createElement('script');sc.src='https://www.youtube.com/iframe_api';sc.onerror=function(){fin(null);};document.head.appendChild(sc);
+        setTimeout(function(){fin(null);},20000);
+      }).then(function(ids){return ids.filter(function(x,i){return /^[\w-]{11}$/.test(x)&&ids.indexOf(x)===i;}).map(function(id){return {id:id};});});
+    }
+    /* source 2: proxies / public APIs (first one to answer wins) */
+    function hlViaNet(){
+      var yt='https://www.youtube.com/playlist?list='+HLPL,rss='https://www.youtube.com/feeds/videos.xml?playlist_id='+HLPL;
+      function T(u){var c=window.AbortController?new AbortController():null;if(c)setTimeout(function(){c.abort();},9000);return fetch(u,c?{signal:c.signal}:{}).then(function(r){if(!r.ok)throw 0;return r;});}
+      var jobs=[
+        T('https://pipedapi.kavin.rocks/playlists/'+HLPL).then(function(r){return r.json();}).then(function(d){return (d.relatedStreams||[]).map(function(x){return {id:(x.url||'').split('=').pop(),title:x.title};});}),
+        T('https://inv.nadeko.net/api/v1/playlists/'+HLPL).then(function(r){return r.json();}).then(function(d){return (d.videos||[]).map(function(x){return {id:x.videoId,title:x.title};});}),
+        T('https://api.allorigins.win/raw?url='+encodeURIComponent(yt)).then(function(r){return r.text();}).then(hlScrape),
+        T('https://corsproxy.io/?'+encodeURIComponent(yt)).then(function(r){return r.text();}).then(hlScrape),
+        T('https://api.allorigins.win/raw?url='+encodeURIComponent(rss)).then(function(r){return r.text();}).then(hlRss),
+        T('https://corsproxy.io/?'+encodeURIComponent(rss)).then(function(r){return r.text();}).then(hlRss)
+      ].map(function(p){return p.then(function(a){if(!a||a.length<3)throw 0;return a;});});
+      return new Promise(function(res,rej){var f=0;jobs.forEach(function(p){p.then(res,function(){if(++f===jobs.length)rej();});});});
+    }
+    function hlLoad(){
+      var got=false;
+      function ok(a){if(got&&a.length<=HL.length)return;got=true;hlSet(a);}
+      hlViaPlayer().then(ok).catch(function(){});
+      hlViaNet().then(ok).catch(function(){});
+      /* last resort so the row is never empty: one card that plays the whole playlist */
+      setTimeout(function(){if(!HL.length){HL=[{id:'__pl',title:'ODI Highlights — Full Playlist',t:1}];hlRefresh();}},12000);
+    }
+    function hlWrap(v){return wrap(v,'hl',function(v){return {title:v.title,img:v.id==='__pl'?'':'https://i.ytimg.com/vi/'+v.id+'/hqdefault.jpg',hl:true,vid:v.id,
       play:function(){hlPlay(v);}};});}
     function hlCard(w){
-      return '<div class="sxs-card sxs-hl" data-r="'+w.ri+'" role="button" tabindex="0"><div class="sxs-th"><img loading="lazy" decoding="async" src="'+esc(w.img)+'" alt="" onerror="this.style.display=\'none\'"><i class="sxs-hlp"><svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M8 5v14l11-7z"/></svg></i><i class="sxs-hlb">HIGHLIGHTS</i></div><div class="sxs-bar" title="'+esc(w.title)+'">'+esc(w.title)+'</div></div>';
+      return '<div class="sxs-card sxs-hl" data-r="'+w.ri+'" role="button" tabindex="0"><div class="sxs-th">'+(w.img?'<img loading="lazy" decoding="async" referrerpolicy="no-referrer" src="'+esc(w.img)+'" alt="" onerror="var u=this.src;if(u.indexOf(\'hqdefault\')>-1)this.src=u.replace(\'hqdefault\',\'mqdefault\');else if(u.indexOf(\'mqdefault\')>-1)this.src=u.replace(\'mqdefault\',\'default\');else this.style.display=\'none\'">':'')+'<b class="sxs-hlt">'+esc(w.img?'':'ODI HIGHLIGHTS')+'</b><i class="sxs-hlp"><svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M8 5v14l11-7z"/></svg></i><i class="sxs-hlb">HIGHLIGHTS</i></div><div class="sxs-bar" title="'+esc(w.title)+'">'+esc(w.title)+'</div></div>';
+    }
+    /* YouTube refuses some embeds (owner disabled embedding, or no referrer e.g. opened from file://) with
+       "Video player configuration error" (101/150/153). Detect it and offer a one-tap fallback. */
+    function hlWatchErr(v){
+      var fr=document.getElementById('stream-player-frame');if(!fr)return;
+      var url='https://www.youtube.com/'+(v.id==='__pl'?'playlist?list='+HLPL:'watch?v='+v.id);
+      function onMsg(e){
+        if(e.source!==fr.contentWindow)return;
+        var d=e.data;try{if(typeof d==='string')d=JSON.parse(d);}catch(x){return;}
+        if(d&&(d.event==='onError'||(d.event==='infoDelivery'&&d.info&&d.info.errorCode)||(d.info&&[101,150,153].indexOf(d.info)>-1&&d.event==='onError'))){
+          window.removeEventListener('message',onMsg);hlFallback(url,v);
+        }
+      }
+      window.removeEventListener('message',window.__hlMsg||function(){});
+      window.__hlMsg=onMsg;window.addEventListener('message',onMsg);
+      fr.addEventListener('load',function once(){fr.removeEventListener('load',once);
+        try{fr.contentWindow.postMessage(JSON.stringify({event:'listening',id:1,channel:'widget'}),'*');
+            fr.contentWindow.postMessage(JSON.stringify({event:'command',func:'addEventListener',args:['onError']}),'*');}catch(x){}
+      });
+    }
+    function hlFallback(url,v){
+      var wrap=document.getElementById('stream-player-frame-wrap');if(!wrap||wrap.querySelector('.hl-fb'))return;
+      var d=document.createElement('div');d.className='hl-fb';
+      d.innerHTML='<div><b>This highlight can’t be played inside the site</b><p>YouTube blocks embedding for this video.</p><a href="'+url+'" target="_blank" rel="noopener">▶ Watch on YouTube</a></div>';
+      wrap.appendChild(d);
     }
     function hlPlay(v){
-      openStreamPlayer('https://www.youtube.com/embed/'+v.id+'?autoplay=1&rel=0&modestbranding=1&playsinline=1',v.title,'highlight');
+      var o=document.querySelector('#stream-player-frame-wrap .hl-fb');if(o)o.remove();
+      openStreamPlayer(v.id==='__pl'?'https://www.youtube.com/embed/videoseries?list='+HLPL+'&autoplay=1&rel=0&playsinline=1&enablejsapi=1&origin='+encodeURIComponent(location.origin):'https://www.youtube.com/embed/'+v.id+'?autoplay=1&rel=0&modestbranding=1&playsinline=1&enablejsapi=1&origin='+encodeURIComponent(location.origin),v.title,'highlight');hlWatchErr(v);
       setTimeout(function(){try{
         var rail=document.getElementById('stream-player-rail-list'),t=document.getElementById('stream-player-rail-title');if(!rail)return;
         if(t)t.textContent='More highlights';
@@ -21453,8 +21534,13 @@ img.ev-f.ev-ok{opacity:1;}
 #sp-servers-menu .sp-sv-loading{display:flex;flex-direction:column;gap:8px;padding:10px 12px;}
 #sp-servers-menu .sp-sv-loading i{display:block;height:34px;border-radius:10px;background:linear-gradient(90deg,rgba(255,255,255,.06),rgba(255,255,255,.16),rgba(255,255,255,.06));background-size:200% 100%;animation:evSvShim 1.1s linear infinite;}
 @keyframes evSvShim{to{background-position:-200% 0}}
+.hl-fb{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;text-align:center;background:rgba(0,0,0,.88);color:#fff;padding:20px;font-family:"Google Sans","Inter",sans-serif}
+.hl-fb b{display:block;font-size:16px;margin-bottom:6px}.hl-fb p{margin:0 0 16px;color:rgba(255,255,255,.65);font-size:13px}
+.hl-fb a{display:inline-block;padding:12px 22px;border-radius:999px;background:linear-gradient(135deg,#F5A623,#E0155F);color:#fff;font-weight:800;text-decoration:none}
 /* Highlights cards */
-.sxs-hl .sxs-th{position:relative;aspect-ratio:16/9;overflow:hidden;}
+.sxs-hl .sxs-th{position:relative;aspect-ratio:16/9;overflow:hidden;background:linear-gradient(135deg,#2a0a1c,#E0155F 120%);min-height:100px;}
+.sxs-hlt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:800 15px "Google Sans","Inter",sans-serif;letter-spacing:.1em;color:#fff;text-align:center;z-index:0}
+.sxs-hl .sxs-th img{position:relative;z-index:1}
 .sxs-hl .sxs-th img{width:100%;height:100%;object-fit:cover;display:block;}
 .sxs-hlp{position:absolute;right:8px;bottom:8px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);color:#fff;display:flex;align-items:center;justify-content:center;transition:transform .2s,background .2s;}
 .sxs-hl:hover .sxs-hlp{transform:scale(1.12);background:#E0155F;}
@@ -21515,7 +21601,7 @@ img.ev-f.ev-ok{opacity:1;}
       if(!sig)return;
       busy=true;
       if(ex)ex.remove();
-      var h=window.__evHL.row();if(h){var d=document.createElement('div');d.innerHTML=h;var sec=d.firstChild;sec.setAttribute('data-n',sig);var f=root.querySelector(':scope > .sxs-sec');if(f&&f.nextSibling)root.insertBefore(sec,f.nextSibling);else root.appendChild(sec);}
+      var h=window.__evHL.row();if(h){var d=document.createElement('div');d.innerHTML=h;var sec=d.firstChild;sec.setAttribute('data-n',sig);var secs=[].slice.call(root.querySelectorAll(':scope > .sxs-sec')),done=null,lastRow=null;secs.forEach(function(x){var t=x.querySelector('.sxs-t'),tx=t?t.textContent.trim():'';if(/^Completed Today/i.test(tx))done=done||x;else if(!x.querySelector('.sxs-tt'))lastRow=x;});if(done)root.insertBefore(sec,done);else if(lastRow&&lastRow.nextSibling)root.insertBefore(sec,lastRow.nextSibling);else root.appendChild(sec);}
       busy=false;
     }
     new MutationObserver(ins).observe(root,{childList:true});
