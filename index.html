@@ -42,7 +42,7 @@
   };
 })();
 </script>
-<script>(function(){try{window.__hsmEarly={};['movies','tvshows'].forEach(function(p){var u='https://vidapi.ru/'+p+'/latest/page-1.json',ac=window.AbortController?new AbortController():null,tm=ac?setTimeout(function(){ac.abort();},4500):0;window.__hsmEarly[p]=fetch(u,ac?{signal:ac.signal}:undefined).then(function(r){clearTimeout(tm);if(!r.ok)throw 0;return r.json();}).catch(function(){return null;});});}catch(e){}})();</script>
+<script>(function(){try{window.__hsmEarly={};window.__hsmKick=function(){if(window.__hsmKicked)return;window.__hsmKicked=true;['movies','tvshows'].forEach(function(p){var u='https://vidapi.ru/'+p+'/latest/page-1.json',ac=window.AbortController?new AbortController():null,tm=ac?setTimeout(function(){ac.abort();},4500):0;window.__hsmEarly[p]=fetch(u,ac?{signal:ac.signal}:undefined).then(function(r){clearTimeout(tm);if(!r.ok)throw 0;return r.json();}).catch(function(){return null;});});};window.addEventListener('sx:feeds-ready',function(){setTimeout(window.__hsmKick,500);});setTimeout(window.__hsmKick,9000);}catch(e){}})();</script>
 <script>
 /* PERF: pause 1s+ interval timers while the tab is hidden; console.log off unless ?debug */
 (function(){
@@ -4446,6 +4446,22 @@ function sxSonyCardHtml(g){
     '</div></div>';
 }
 
+function sxWlxCardHtml(g){
+  const n = (g.servers || []).length, live = g.status === 'LIVE';
+  const when = (typeof window.wlxFmt === 'function' && g.start) ? window.wlxFmt(g.start) : (g.timeText || 'TBA');
+  return '<div class="smo-card fx2-card" data-live="' + (live ? 1 : 0) + '" data-finished="0" data-start-ms="' + (g.start ? g.start.getTime() : 0) + '">' +
+    '<div class="fx2-thumb">' +
+      (g.poster ? '<img loading="lazy" decoding="async" src="' + sxsEsc(g.poster) + '" alt="' + sxsEsc(g.title) + '" class="fx2-thumb-img" onerror="this.style.display=\'none\'">' : '') +
+      (live ? '<span class="fx2-badge fx2-badge-live"><span class="fx2-live-dot"></span>LIVE</span>' : '<span class="fx2-badge">⏰ UPCOMING</span>') +
+    '</div>' +
+    '<div class="fx2-body">' +
+      '<div class="fx2-title-row"><div class="fx2-title">' + sxsEsc(g.title) + '</div><span class="fx2-free">FREE</span></div>' +
+      '<div class="fx2-meta"><span class="fx2-tag">Willow · ' + sxsEsc(g.tour || 'Cricket') + '</span><span class="fx2-date">' + sxsEsc(when) + '</span></div>' +
+      (n ? '<a class="smo-btn" href="javascript:void(0)" onclick="event.stopPropagation();return wlxOpenWatch(\'' + g.key + '\')">' + (live ? '▶ Watch Now' : '⏰ ' + sxsEsc(when)) + '</a>'
+         : '<span class="smo-btn" style="opacity:.6;pointer-events:none;">' + (live ? 'NO STREAM YET' : '⏰ ' + sxsEsc(when)) + '</span>') +
+    '</div></div>';
+}
+
 function sxRunSearch(qRaw){
   const raw = qRaw || '';
   const q = raw.toLowerCase().trim();
@@ -4462,14 +4478,15 @@ function sxRunSearch(qRaw){
         sonyAll = window._slxGroups || [], chAll = window._cmsChannels || [];
   const LIM = 40, PLIM = 36;
 
-  const R = { sheet: [], fcx: [], sony: [], ch: [], movie: [], tv: [] };
-  const N = { sheet: 0, fcx: 0, sony: 0, ch: 0, movie: 0, tv: 0 };
+  const R = { sheet: [], willow: [], fcx: [], sony: [], ch: [], movie: [], tv: [] };
+  const N = { sheet: 0, willow: 0, fcx: 0, sony: 0, ch: 0, movie: 0, tv: 0 };
   window._sxSearchStash = { movie: [], tv: [] };
 
   if (!q){
     R.sheet = sheetAll.filter(isSheetLive).map(c => sxMatchCardHtml(c));
     R.fcx   = fcxAll.filter(m => m.status === 'LIVE').map(m => sxFcxMatchCardHtml(m));
     R.sony  = sonyAll.filter(g => g.status === 'LIVE').map(g => sxSonyCardHtml(g));
+    R.willow = (window._wlxGroups || []).filter(g => g.status === 'LIVE').map(g => sxWlxCardHtml(g));
     R.ch    = chAll.filter(c => (c.status_live_off || '').toUpperCase() === 'LIVE');
     if (want('movie')) R.movie = sxCatalogPopular('movie', 18);
     if (want('tv'))    R.tv    = sxCatalogPopular('tv', 18);
@@ -4484,13 +4501,17 @@ function sxRunSearch(qRaw){
     R.sony = sonyAll
       .map(g => ({ s: sxHaystackScore(tokens, [g.title||'', g.category||'', g.tour||'', (g.teams||[]).join(' ')]), h: g }))
       .filter(x => x.s > 0).sort((a, b) => b.s - a.s).map(x => x.h);
+    R.willow = (window._wlxGroups || [])
+      .map(g => ({ s: sxHaystackScore(tokens, [g.title||'', g.tour||'', g.category||'', 'willow', (g.teams||[]).join(' ')]), h: g }))
+      .filter(x => x.s > 0).sort((a, b) => b.s - a.s).map(x => x.h);
     R.ch = chAll
       .map(c => ({ s: sxHaystackScore(tokens, [c.channel_name||'', c.group||'']), h: c }))
       .filter(x => x.s > 0).sort((a, b) => b.s - a.s).map(x => x.h);
-    N.sheet = R.sheet.length; N.fcx = R.fcx.length; N.sony = R.sony.length; N.ch = R.ch.length;
+    N.sheet = R.sheet.length; N.willow = R.willow.length; N.fcx = R.fcx.length; N.sony = R.sony.length; N.ch = R.ch.length;
     R.sheet = R.sheet.slice(0, LIM).map(c => sxMatchCardHtml(c));
     R.fcx   = R.fcx.slice(0, LIM).map(m => sxFcxMatchCardHtml(m));
     R.sony  = R.sony.slice(0, LIM).map(g => sxSonyCardHtml(g));
+    R.willow = R.willow.slice(0, LIM).map(g => sxWlxCardHtml(g));
     R.ch    = R.ch.slice(0, LIM);
     const mv = sxCatalogSearch('movie', q, PLIM), tv = sxCatalogSearch('tv', q, PLIM);
     N.movie = mv.total || 0; N.tv = tv.total || 0;
@@ -4498,7 +4519,7 @@ function sxRunSearch(qRaw){
   }
 
   // chip counts
-  const cnt = { all: N.sheet+N.fcx+N.sony+N.ch+N.movie+N.tv, matches: N.sheet, fancode: N.fcx, sony: N.sony, channels: N.ch, movie: N.movie, tv: N.tv };
+  const cnt = { all: N.sheet+N.willow+N.fcx+N.sony+N.ch+N.movie+N.tv, willow: N.willow, matches: N.sheet, fancode: N.fcx, sony: N.sony, channels: N.ch, movie: N.movie, tv: N.tv };
   document.querySelectorAll('#sx-search-chips .sx-chip').forEach(ch => {
     const b = ch.querySelector('.n'); if (!b) return;
     const v = cnt[ch.dataset.filter];
@@ -4511,6 +4532,7 @@ function sxRunSearch(qRaw){
   let html = '', shown = 0;
 
   if (want('matches') && R.sheet.length){ html += sec(q ? 'Matches' : 'Live matches', N.sheet, grid(R.sheet)); shown += R.sheet.length; }
+  if (want('willow') && R.willow.length){ html += sec(q ? 'Willow' : 'Live on Willow', N.willow, grid(R.willow)); shown += R.willow.length; }
   if (want('fancode') && R.fcx.length){ html += sec(q ? 'FanCode' : 'Live on FanCode', N.fcx, grid(R.fcx)); shown += R.fcx.length; }
   if (want('sony') && R.sony.length){ html += sec(q ? 'SonyLIV' : 'Live on SonyLIV', N.sony, grid(R.sony)); shown += R.sony.length; }
   if (want('channels') && R.ch.length){
@@ -4646,6 +4668,7 @@ window.sxRenderFavouritesOverlay = sxRenderFavouritesOverlay;
       <div class="sx-search-chips" id="sx-search-chips">
         <button type="button" class="sx-chip active" data-filter="all" onclick="sxSetSearchFilter('all')">All<b class="n"></b></button>
         <button type="button" class="sx-chip" data-filter="matches" onclick="sxSetSearchFilter('matches')">Matches<b class="n"></b></button>
+        <button type="button" class="sx-chip" data-filter="willow" onclick="sxSetSearchFilter('willow')">Willow<b class="n"></b></button>
         <button type="button" class="sx-chip" data-filter="fancode" onclick="sxSetSearchFilter('fancode')">FanCode<b class="n"></b></button>
         <button type="button" class="sx-chip" data-filter="sony" onclick="sxSetSearchFilter('sony')">SonyLIV<b class="n"></b></button>
         <button type="button" class="sx-chip" data-filter="channels" onclick="sxSetSearchFilter('channels')">Channels<b class="n"></b></button>
@@ -5279,6 +5302,15 @@ window.sxRenderFavouritesOverlay = sxRenderFavouritesOverlay;
             <div class="ott-name">FanCode</div>
             <div class="ott-desc">Sports & Cricket</div>
             <button class="ott-btn" onclick="event.stopPropagation();openFanCode();">Open</button>
+          </div>
+          <!-- Willow -->
+          <div class="ott-card-full" role="button" onclick="openWillow();">
+            <div class="ott-logo-wrap">
+              <img loading=lazy decoding=async src="https://bobgoldpr.com/wp-content/uploads/2024/05/logo-transparent-cb-1.png" alt="Willow">
+            </div>
+            <div class="ott-name">Willow</div>
+            <div class="ott-desc">Live Cricket</div>
+            <button class="ott-btn" onclick="event.stopPropagation();openWillow();">Open</button>
           </div>
         </div>
       </div>
@@ -14019,12 +14051,21 @@ function closePrime(){
   sxHeaderHome();
 }
 function openWillow(){
-  sxShowComingSoon('Willow OTT');
+  if (!document.getElementById('willow-overlay')) { sxShowComingSoon('Willow OTT'); return; }
+  sxCloseAllOverlays();
+  sxPlayPanelIntro();
+  document.getElementById('willow-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  window.scrollTo(0,0);
+  document.querySelectorAll('[data-sxtab]').forEach(el => el.classList.toggle('active', el.dataset.sxtab === 'willow'));
+  sxHeaderInto('willow-overlay', 'willow-topbar');
+  if (typeof window.wlxInit === 'function') window.wlxInit();
 }
 function closeWillow(){
   document.getElementById('willow-overlay').classList.remove('open');
   document.body.style.overflow = '';
   sxHeaderHome();
+  if (typeof window.wlxStop === 'function') window.wlxStop();
 }
 function openFifa(){
   if (!window.SX_FIFA_ENABLED) return;
@@ -16129,6 +16170,414 @@ button, a.btn, [class*="btn-"], input, select, textarea{
 </script>
 
 
+<style id="wlx-style">
+#willow-overlay{ display:none; position:fixed; inset:0; z-index:1600; background:#000; }
+#willow-overlay.open{ display:block; }
+#willow-overlay.open > header{ display:none !important; }
+#willow-topbar{ position:absolute; top:0; left:0; z-index:2; padding:14px; }
+#willow-back-btn{ display:flex; align-items:center; gap:6px; background:rgba(255,255,255,0.10); border:none; color:#fff;
+  font-family:var(--cu-font,inherit); font-weight:700; font-size:12px; padding:8px 12px; cursor:pointer; border-radius:8px; letter-spacing:0.03em; }
+#willow-back-btn:hover{ background:rgba(255,255,255,0.18); }
+#willow-back-btn svg{ width:14px; height:14px; flex-shrink:0; }
+#willow-panel-wrap{ position:absolute; inset:0; overflow-y:auto; -webkit-overflow-scrolling:touch; background:#000; }
+.wlx-sch-wrap{ overflow-x:auto; }
+.wlx-sch{ width:100%; border-collapse:collapse; font-size:13px; color:#fff; min-width:760px; }
+.wlx-sch th,.wlx-sch td{ text-align:left; padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.1); vertical-align:top; }
+.wlx-sch th{ font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:rgba(255,255,255,.55); }
+.wlx-st{ font-weight:800; font-size:11px; padding:2px 8px; border-radius:999px; background:#333; }
+.wlx-st.live{ background:#e5173f; } .wlx-st.up{ background:#1d6b3a; }
+.wlx-sch button{ font:700 12px inherit; padding:5px 10px; border-radius:6px; border:0; background:#e0155f; color:#fff; cursor:pointer; }
+#wlx-root{ max-width:1400px; margin:0 auto; padding:76px 20px 60px; }
+@media(max-width:768px){ #wlx-root{ padding:70px 16px 50px; } }
+</style>
+
+<div id="willow-overlay">
+  <div id="willow-topbar">
+    <button id="willow-back-btn" onclick="closeWillow()" aria-label="Back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      Back
+    </button>
+  </div>
+  <div id="willow-panel-wrap">
+    <div id="wlx-root">
+      <div class="fcx-search-wrap"><input type="text" id="wlxSearchInput" placeholder="Search Willow matches..."></div>
+      <div class="fcx-hero" id="wlxHero">
+        <div class="fcx-carousel-track" id="wlxTrack"><div class="fcx-carousel-slide fcx-loading-state"><p>Loading matches...</p></div></div>
+        <button class="fcx-carousel-nav fcx-prev" id="wlxPrev" aria-label="Previous">&#8249;</button>
+        <button class="fcx-carousel-nav fcx-next" id="wlxNext" aria-label="Next">&#8250;</button>
+        <div class="fcx-carousel-dots" id="wlxDots"></div>
+      </div>
+      <section>
+        <h2 class="fcx-section-title">Willow &middot; All Matches</h2>
+        <div id="wlxGrid" class="fcx-grid"><div class="fcx-loading-state">Loading matches...</div></div>
+      </section>
+      <section style="margin-top:34px">
+        <h2 class="fcx-section-title">Willow &middot; Match Schedule (IST) <button id="wlxCopy" type="button" style="margin-left:12px;font:700 12px inherit;padding:6px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.25);background:transparent;color:#fff;cursor:pointer">Copy list</button></h2>
+        <div id="wlxSchedule" class="wlx-sch-wrap"><div class="fcx-loading-state">Loading schedule...</div></div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script id="wlx-willow-bridge">
+/* ======================================================================
+   WLX BRIDGE - Willow OTT matches (sonujson-v5.pages.dev/Data/willow.json)
+   Same pattern as FCX (FanCode) + SLX (SonyLIV):
+   - own feed with CORS fallback chain (direct -> allorigins -> corsproxy)
+   - every entry becomes a "group" in window._wlxGroups
+   - LMX (unified layer) reads _wlxGroups: servers are folded into matching
+     Sheet / FanCode / SonyLIV fixtures, otherwise shown as their own card,
+     Live-Now block, sport selector and global search all pick it up
+   - Willow OTT panel (openWillow) lists every Willow match
+   - streams: any m3u8/mpd found anywhere in the entry (CnpTV etc.);
+     entries with a drm_key are flagged app-only like the other feeds
+   ====================================================================== */
+(function(){
+  'use strict';
+  var APIS    = ['https://sonujson-v5.pages.dev/Data/willow.json'];      /* add backup feed URLs here */
+  var PROXIES = ['', 'https://api.allorigins.win/raw?url=', 'https://corsproxy.io/?'];
+  var LOGO    = 'https://bobgoldpr.com/wp-content/uploads/2024/05/logo-transparent-cb-1.png';
+  var REFRESH_MS = 45000, TIMEOUT_MS = 8000, LMX_HORIZON_H = 48;
+  var IST = 330 * 60000, MONS = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+  window._wlxGroups = [];
+  var lastSig = null, slide = 0, autoTimer = null, bound = false;
+
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function escJs(s){ return String(s == null ? '' : s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+  /* "4:30 PM IST" | "Live at 9 PM IST" | "Tomorrow 5 PM IST" | "Tue, Oct 6 5 PM IST" -> Date */
+  function parseWhen(str){
+    var s = String(str || '').trim(); if (!s) return null;
+    var MR = '(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\\.?';
+    var iso = s.match(/^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2}(?::\d{2})?)(Z|[+-]\d{2}:?\d{2})?$/i);
+    if (iso){ var dd = new Date(iso[1] + 'T' + iso[2] + (iso[3] || '+05:30')); if (!isNaN(dd.getTime())) return dd; }
+    var h, mi, m = s.match(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM)/i);
+    if (m){ h = +m[1]; mi = +(m[2] || 0); var pm = /pm/i.test(m[3]); if (pm && h < 12) h += 12; if (!pm && h === 12) h = 0; }
+    else { var m24 = s.match(/\b([01]?\d|2[0-3]):([0-5]\d)\b/); if (!m24) return null; h = +m24[1]; mi = +m24[2]; }
+    var now = new Date(Date.now() + IST);
+    var y = now.getUTCFullYear(), mo = now.getUTCMonth(), d = now.getUTCDate(), fixedYear = false;
+    var i2 = s.match(/\b(\d{4})-(\d{2})-(\d{2})\b/);
+    var dm = s.match(new RegExp('\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+' + MR + '(?:,?\\s*(\\d{4}))?', 'i'));     /* 6 Oct 2026 */
+    var md = s.match(new RegExp('\\b' + MR + '\\s+(\\d{1,2})(?:st|nd|rd|th)?\\b(?:,?\\s*(\\d{4}))?', 'i'));   /* Oct 6, 2026 */
+    var found = false;
+    if (i2){ y = +i2[1]; mo = +i2[2] - 1; d = +i2[3]; fixedYear = true; found = true; }
+    else if (dm){ d = +dm[1]; mo = MONS.indexOf(dm[2].toLowerCase()); if (dm[3]){ y = +dm[3]; fixedYear = true; } found = true; }
+    else if (md){ mo = MONS.indexOf(md[1].toLowerCase()); d = +md[2]; if (md[3]){ y = +md[3]; fixedYear = true; } found = true; }
+    if (found){
+      var t = Date.UTC(y, mo, d, h, mi) - IST;
+      if (!fixedYear && t < Date.now() - 200 * 864e5) t = Date.UTC(y + 1, mo, d, h, mi) - IST;   /* year rollover */
+      return new Date(t);
+    }
+    if (/tomorrow/i.test(s)) d += 1;
+    return new Date(Date.UTC(y, mo, d, h, mi) - IST);
+  }
+  function whenText(e){ return [e.date || e.match_date || e.start_date, e.time || e.match_time].filter(Boolean).join(' '); }
+  function parseWhenEntry(e){
+    var keys = ['start_time','startTime','start','timestamp','datetime','date_time','start_ts'];
+    for (var i = 0; i < keys.length; i++){
+      var v = e[keys[i]]; if (v == null || v === '') continue;
+      if (typeof v === 'number' || /^\d{9,13}$/.test(String(v))){ var n = +v; if (n < 1e11) n *= 1000; var dd = new Date(n); if (!isNaN(dd.getTime())) return dd; }
+      var w = parseWhen(v); if (w) return w;
+    }
+    return parseWhen(whenText(e));
+  }
+  function fmtTime(d){
+    if (!d || isNaN(d.getTime())) return 'TBA';
+    var dp = d.toLocaleDateString('en-IN', { day:'2-digit', month:'short' }).toUpperCase();
+    var h = d.getHours(), mm = String(d.getMinutes()).padStart(2,'0'), ap = h >= 12 ? 'PM' : 'AM';
+    h = h % 12; if (h === 0) h = 12;
+    return dp + ', ' + h + ':' + mm + ' ' + ap;
+  }
+
+  /* "World Championship of Legends 2026 - 3rd Match - A vs B" -> { title:"A vs B", tour:"World Championship ... - 3rd Match", teams:[A,B] } */
+  function parseName(name){
+    var segs = String(name || '').split(/\s+-\s*|\s*-\s+/).map(function(x){ return x.trim(); }).filter(Boolean);
+    var vi = -1; segs.forEach(function(sg, i){ if (/\s(?:vs\.?|v)\s/i.test(sg)) vi = i; });
+    if (vi < 0) return { title: String(name || 'Match').trim(), tour: '', teams: null };
+    var title = segs[vi], tour = segs.filter(function(_, i){ return i !== vi; }).join(' - ');
+    var t = title.replace(/\s+in\s+[A-Za-z ]+\d{4}$/i, '').split(/\s+(?:vs\.?|v)\s+/i).map(function(x){ return x.trim(); });
+    /* Legends / masters league sides are NOT the national teams - keep them out of cross-merging */
+    var teams = (t.length === 2 && !/champions|legends|masters|\bxi\b|academy|select/i.test(title)) ? t : null;
+    return { title: title, tour: tour, teams: teams };
+  }
+
+  function isStream(u){
+    u = String(u || '').trim();
+    if (!/^https?:\/\//i.test(u)) return false;
+    if (typeof window.sxIsStreamUrl === 'function') return window.sxIsStreamUrl(u);
+    return /\.(m3u8|mpd)(\?|#|\/|$)/i.test(u);
+  }
+  function walk(o, out, depth){
+    if (o == null || depth > 5) return out;
+    if (typeof o === 'string'){ var u = o.trim(); if (isStream(u) && out.indexOf(u) < 0) out.push(u); return out; }
+    if (Array.isArray(o)){ o.forEach(function(x){ walk(x, out, depth + 1); }); return out; }
+    if (typeof o === 'object') Object.keys(o).forEach(function(k){ walk(o[k], out, depth + 1); });
+    return out;
+  }
+  function streamsOf(e){
+    var urls = (window.LMX && LMX.scan) ? LMX.scan(e) : [];
+    if (!urls.length) urls = walk(e, [], 0);                    /* nested CnpTV block that LMX.scan skipped */
+    return urls;
+  }
+
+  function build(json){
+    var list = (json && (json.Matches || json.matches)) || [];
+    var out = [], ended = []; window._wlxEnded = ended;
+    list.forEach(function(e, idx){
+      if (!e) return;
+      var stl = String(e.status || '').trim().toLowerCase();
+      var st = stl === 'live' ? 'LIVE' : /^(ended|completed|finished|over)$/.test(stl) ? 'ENDED' : 'UPCOMING';
+      var p = parseName(e.event_name);
+      var drm = !!(window.LMX && LMX.hasDrm && LMX.hasDrm(e, true));
+      var urls = streamsOf(e);
+      var servers = urls.map(function(u, i){
+        return { url: u, text: urls.length > 1 ? 'Willow ' + (i + 1) : 'Willow', icon: LOGO, sub: 'Willow \u00b7 tap to play', playName: p.title, appOnly: drm };
+      });
+      var grp = ({ key: 'wlx' + idx, id: e.id || '', status: st, title: p.title, tour: p.tour, category: 'Cricket', blob: '',
+        poster: e.image || '', servers: servers, teams: p.teams, date: '', start: parseWhenEntry(e), timeText: whenText(e) });
+      (st === 'ENDED' ? ended : out).push(grp);
+    });
+    return out;
+  }
+
+  /* direct first, then each CORS proxy */
+  function getJson(){
+    var attempts = [];
+    APIS.forEach(function(a){ PROXIES.forEach(function(p){ attempts.push([a, p]); }); });
+    var i = 0;
+    function next(){
+      if (i >= attempts.length) return Promise.reject(new Error('all Willow sources failed'));
+      var a = attempts[i][0], p = attempts[i][1]; i++;
+      var u = a + (a.indexOf('?') < 0 ? '?' : '&') + 't=' + Date.now();
+      if (p) u = p + encodeURIComponent(u);
+      var ac = window.AbortController ? new AbortController() : null;
+      var tm = ac ? setTimeout(function(){ ac.abort(); }, TIMEOUT_MS) : 0;
+      return fetch(u, ac ? { cache:'no-store', signal: ac.signal } : { cache:'no-store' })
+        .then(function(r){ clearTimeout(tm); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(function(j){ if (!j || !(j.Matches || j.matches)) throw new Error('bad payload'); return j; })
+        .catch(function(err){ clearTimeout(tm); return next(); });
+    }
+    return next();
+  }
+
+  /* ---------- LMX bridge: groups visible to the unified layer ---------- */
+  window.wlxForLmx = function(){
+    var lim = Date.now() + LMX_HORIZON_H * 3600000;
+    return (window._wlxGroups || []).filter(function(g){
+      return g.status === 'LIVE' || (g.start && g.start.getTime() <= lim) || g.servers.length;
+    });
+  };
+
+  /* ---------- open a match in the shared server selector ---------- */
+  window.wlxOpenWatch = function(key){
+    var g = (window._wlxGroups || []).filter(function(x){ return x.key === key; })[0];
+    if (!g || typeof openMatchWatchScreen !== 'function') return false;
+    if (g.servers.length && window.LMX && LMX.items){            /* prefer the merged LMX entry: it carries servers from every other source too */
+      var hit = LMX.items.filter(function(it){ return it.servers.some(function(s){ return s.url === g.servers[0].url; }); })[0];
+      if (hit) return LMX.open(hit.key);
+    }
+    var live = g.status === 'LIVE', n = g.servers.length;
+    openMatchWatchScreen(g.servers.map(function(s){ return { url:s.url, text:s.text, icon:s.icon, sub:s.sub, playName:s.playName, appOnly:!!s.appOnly }; }), {
+      name: g.title, team1_code:'', team1_full_name:'', team1_icon_url:'', team2_code:'', team2_full_name:'', team2_icon_url:'',
+      date_label: live ? n + (n === 1 ? ' server' : ' servers') + ' available' : fmtTime(g.start),
+      details: g.tour || g.category, countdown: (!live && g.start) ? g.start.toISOString() : '',
+      status: live ? 'live' : 'upcoming', banner: g.poster || ''
+    });
+    return false;
+  };
+
+  /* ---------- Willow OTT panel ---------- */
+  function filtered(){
+    var q = ((document.getElementById('wlxSearchInput') || {}).value || '').trim().toLowerCase();
+    var l = (window._wlxGroups || []).slice().sort(function(a, b){
+      var ra = a.status === 'LIVE' ? 0 : 1, rb = b.status === 'LIVE' ? 0 : 1;
+      return ra - rb || ((a.start ? a.start.getTime() : 9e15) - (b.start ? b.start.getTime() : 9e15));
+    });
+    return q ? l.filter(function(g){ return (g.title + ' ' + g.tour).toLowerCase().indexOf(q) >= 0; }) : l;
+  }
+  var PH = "this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22800%22 height=%22300%22%3E%3Crect fill=%22%23111%22 width=%22800%22 height=%22300%22/%3E%3C/svg%3E'";
+  function btn(g, cls){
+    var live = g.status === 'LIVE';
+    if (!g.servers.length) return '<button class="' + cls + (live ? '' : ' fcx-btn-upcoming') + '" disabled>' + (live ? 'NO STREAM YET' : '\u23f0 ' + esc(fmtTime(g.start))) + '</button>';
+    return '<button class="' + cls + (live ? '' : ' fcx-btn-upcoming') + '" onclick="return wlxOpenWatch(\'' + escJs(g.key) + '\')">' + (live ? 'WATCH NOW' : '\u23f0 ' + esc(fmtTime(g.start))) + '</button>';
+  }
+  function render(){
+    var track = document.getElementById('wlxTrack'), dots = document.getElementById('wlxDots'), grid = document.getElementById('wlxGrid');
+    if (!track || !dots || !grid) return;
+    var list = filtered();
+    if (!list.length){
+      grid.innerHTML = '<div class="fcx-empty-state">No matches found</div>';
+      track.innerHTML = '<div class="fcx-carousel-slide fcx-loading-state"><p>No matches</p></div>'; dots.innerHTML = ''; return;
+    }
+    var hero = list.slice(0, 6);
+    track.innerHTML = hero.map(function(g){
+      return '<div class="fcx-carousel-slide"><img src="' + esc(g.poster) + '" alt="' + esc(g.title) + '" class="fcx-slide-bg" onerror="' + PH + '">' +
+        '<div class="fcx-slide-content"><div class="fcx-slide-status">' + (g.status === 'LIVE' ? '\u25cf LIVE' : 'UPCOMING') + '</div>' +
+        '<div class="fcx-slide-title">' + esc(g.title) + '</div><div class="fcx-slide-meta"><span>' + esc(g.tour) + '</span></div>' +
+        '<div class="fcx-slide-time">' + esc(fmtTime(g.start)) + '</div><div class="fcx-slide-actions">' + btn(g, 'fcx-slide-btn') + '</div></div></div>';
+    }).join('');
+    dots.innerHTML = hero.map(function(_, i){ return '<div class="fcx-dot ' + (i === 0 ? 'fcx-active' : '') + '" data-i="' + i + '"></div>'; }).join('');
+    slide = 0; upd();
+    grid.innerHTML = list.map(function(g){
+      var live = g.status === 'LIVE';
+      return '<article class="fcx-card"><div class="fcx-thumb-wrap"><img src="' + esc(g.poster) + '" alt="' + esc(g.title) + '" loading="lazy" onerror="' + PH + '">' +
+        (live ? '<span class="fcx-badge">\u25cf LIVE</span>' : '<span class="fcx-badge fcx-upcoming">UPCOMING</span>') + '</div>' +
+        '<div class="fcx-meta"><div class="fcx-teams">' + esc(g.title) + '</div><div class="fcx-event">' + esc(g.tour) + '</div>' +
+        '<div class="fcx-card-time">' + esc(fmtTime(g.start)) + '</div><div class="fcx-actions">' + btn(g, 'fcx-btn') + '</div></div></article>';
+    }).join('');
+  }
+  function upd(){
+    var t = document.getElementById('wlxTrack'); if (t) t.style.transform = 'translateX(' + (-slide * 100) + '%)';
+    document.querySelectorAll('#wlxDots .fcx-dot').forEach(function(d, i){ d.classList.toggle('fcx-active', i === slide); });
+  }
+  function bind(){
+    if (bound) return; bound = true;
+    var si = document.getElementById('wlxSearchInput'); if (si) si.addEventListener('input', function(){ render(); renderSchedule(); });
+    var dt = document.getElementById('wlxDots'); if (dt) dt.addEventListener('click', function(e){ var d = e.target.closest('.fcx-dot'); if (d){ slide = +d.dataset.i; upd(); } });
+    function n(){ return document.querySelectorAll('#wlxDots .fcx-dot').length; }
+    var pv = document.getElementById('wlxPrev'), nx = document.getElementById('wlxNext');
+    if (pv) pv.addEventListener('click', function(){ if (n()){ slide = (slide - 1 + n()) % n(); upd(); } });
+    if (nx) nx.addEventListener('click', function(){ if (n()){ slide = (slide + 1) % n(); upd(); } });
+  }
+
+  /* ---------- dated schedule: every Willow match, which player runs it, what it is linked to ---------- */
+  window.wlxFmt = function(d){ return fmtTime(d); };
+  function istParts(d){
+    if (!d || isNaN(d.getTime())) return { date: 'TBA', time: '' };
+    return { date: d.toLocaleDateString('en-IN', { timeZone:'Asia/Kolkata', weekday:'short', day:'2-digit', month:'short', year:'numeric' }),
+             time: d.toLocaleTimeString('en-IN', { timeZone:'Asia/Kolkata', hour:'numeric', minute:'2-digit', hour12:true }).toUpperCase() + ' IST' };
+  }
+  function playerOf(g){
+    if (!g.servers.length) return 'No stream yet';
+    var s = g.servers[0];
+    if (s.appOnly) return 'App only (DRM)';
+    return 'SX 4K / EV StreamPulse (' + ((window.sxIsDashUrl && sxIsDashUrl(s.url)) ? 'dash.js' : 'hls.js') + ')';
+  }
+  function linkOf(g){
+    if (g.status === 'ENDED') return '-';
+    var L = window.LMX, hit = (L && L.items && g.servers.length) ? L.items.filter(function(it){ return it.servers.some(function(s){ return g.servers.some(function(x){ return x.url === s.url; }); }); })[0] : null;
+    if (!hit) return g.servers.length ? 'Willow only' : '-';
+    var tags = [];
+    if (hit.sheet) tags.push('Sheet'); if (hit.fcx) tags.push('FanCode');
+    if (hit.servers.some(function(s){ return /sonyliv/i.test(s.sub || ''); })) tags.push('SonyLIV');
+    return tags.length ? tags.join(' + ') : 'Willow only';
+  }
+  function schedRows(){
+    var q = ((document.getElementById('wlxSearchInput') || {}).value || '').trim().toLowerCase();
+    var rank = { LIVE: 0, UPCOMING: 1, ENDED: 2 };
+    var all = (window._wlxGroups || []).concat(window._wlxEnded || []).slice().sort(function(a, b){
+      return rank[a.status] - rank[b.status] || (a.status === 'ENDED' ? -1 : 1) * ((a.start ? a.start.getTime() : 9e15) - (b.start ? b.start.getTime() : 9e15));
+    });
+    return q ? all.filter(function(g){ return (g.title + ' ' + g.tour).toLowerCase().indexOf(q) >= 0; }) : all;
+  }
+  function renderSchedule(){
+    var el = document.getElementById('wlxSchedule'); if (!el) return;
+    var rows = schedRows();
+    if (!rows.length){ el.innerHTML = '<div class="fcx-empty-state">No Willow matches found</div>'; return; }
+    el.innerHTML = '<table class="wlx-sch"><thead><tr><th>#</th><th>Date</th><th>Time</th><th>Match</th><th>Status</th><th>Player</th><th>Linked with</th><th></th></tr></thead><tbody>' +
+      rows.map(function(g, i){
+        var p = istParts(g.start), cls = g.status === 'LIVE' ? 'live' : g.status === 'UPCOMING' ? 'up' : '';
+        var act = (g.servers.length && g.status !== 'ENDED') ? '<button onclick="return wlxOpenWatch(\'' + escJs(g.key) + '\')">' + (g.status === 'LIVE' ? 'Watch' : 'Open') + '</button>' : '';
+        return '<tr><td>' + (i + 1) + '</td><td>' + esc(p.date) + '</td><td>' + esc(p.time) + '</td><td><b>' + esc(g.title) + '</b><div style="opacity:.6;font-size:12px">' + esc(g.tour) + '</div></td>' +
+          '<td><span class="wlx-st ' + cls + '">' + g.status + '</span></td><td>' + esc(playerOf(g)) + '</td><td>' + esc(linkOf(g)) + '</td><td>' + act + '</td></tr>';
+      }).join('') + '</tbody></table>';
+  }
+  document.addEventListener('click', function(ev){
+    if (!ev.target || ev.target.id !== 'wlxCopy') return;
+    var txt = schedRows().map(function(g){ var p = istParts(g.start); return p.date + ' ' + p.time + ' | ' + g.title + (g.tour ? ' (' + g.tour + ')' : '') + ' | ' + g.status; }).join('\n');
+    try { navigator.clipboard.writeText(txt); ev.target.textContent = 'Copied'; setTimeout(function(){ ev.target.textContent = 'Copy list'; }, 1500); } catch(_){}
+  });
+
+  /* ---------- homepage hero slides: live / next Willow matches (like FanCode's) ---------- */
+  window.wlxAppendHeroSlides = function(){
+    var container = document.getElementById('slides-container');
+    if (!container || typeof totalSlides === 'undefined') return;
+    container.querySelectorAll('.wlx-hero-slide').forEach(function(s){ s.remove(); });
+    var L = window.LMX;
+    var picks = (window._wlxGroups || []).filter(function(g){
+      if (g.status === 'ENDED' || !g.servers.length) return false;
+      var hit = (L && L.items) ? L.items.filter(function(it){ return it.servers.some(function(s){ return s.url === g.servers[0].url; }); })[0] : null;
+      return !(hit && hit.fcx);                       /* already a FanCode hero slide: don't duplicate it */
+    }).sort(function(a, b){
+      var ra = a.status === 'LIVE' ? 0 : 1, rb = b.status === 'LIVE' ? 0 : 1;
+      return ra - rb || ((a.start ? a.start.getTime() : 9e15) - (b.start ? b.start.getTime() : 9e15));
+    }).slice(0, 3);
+    var slides = container.querySelectorAll(':scope > .slide');
+    var banner = slides.length ? slides[slides.length - 1] : null;
+    var dotsWrap = container.querySelector('.slide-dots');
+    picks.forEach(function(g){
+      var live = g.status === 'LIVE', sl = document.createElement('div');
+      sl.className = 'slide wlx-hero-slide'; sl.dataset.origTitle = '';
+      sl.innerHTML = '<div class="slide-bg" style="background-image:url(\'' + esc(g.poster) + '\')"></div><div class="slide-overlay"></div>' +
+        '<div class="slide-content"><div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;"><span class="slide-sport-badge' + (live ? ' slide-badge-live' : '') + '">' + (live ? 'LIVE NOW' : '\u23f0 ' + esc(fmtTime(g.start))) + '</span></div>' +
+        '<div class="slide-title">' + esc(g.title) + '</div><div class="slide-sub">Willow \u00b7 ' + esc(g.tour || 'Cricket') + '</div>' +
+        '<div class="slide-btns"><a href="#" class="btn-slide-watch" onclick="event.preventDefault();return wlxOpenWatch(\'' + escJs(g.key) + '\')">' + (live ? 'Watch Now' : 'Details') + '</a></div></div>';
+      if (banner) container.insertBefore(sl, banner); else if (dotsWrap) container.insertBefore(sl, dotsWrap); else container.appendChild(sl);
+    });
+    /* rebuild dots + count so every dot jumps to the right slide */
+    var all = container.querySelectorAll(':scope > .slide');
+    if (dotsWrap) {
+      dotsWrap.innerHTML = '';
+      all.forEach(function(_, i){ var d = document.createElement('div'); d.className = 'dot' + (i === currentSlide ? ' active' : ''); d.onclick = function(){ goSlide(i); startSlider(); }; dotsWrap.appendChild(d); });
+    }
+    totalSlides = all.length;
+  };
+  /* renderSlides() rebuilds the whole carousel (and wipes appended slides) - re-add Willow after every rebuild */
+  (function(){
+    var tries = 0, iv = setInterval(function(){
+      if (typeof window.renderSlides === 'function' && !window.renderSlides.__wlx){
+        var orig = window.renderSlides;
+        window.renderSlides = function(){ var r = orig.apply(this, arguments); try { if (window.fcxAppendHeroSlides) window.fcxAppendHeroSlides(); } catch(_){} try { window.wlxAppendHeroSlides(); } catch(_){} return r; };
+        window.renderSlides.__wlx = true; clearInterval(iv);
+      } else if (++tries > 50) clearInterval(iv);
+    }, 400);
+  })();
+  window.wlxInit = function(){
+    bind(); render(); renderSchedule(); clearInterval(autoTimer);
+    autoTimer = setInterval(function(){ var c = document.querySelectorAll('#wlxDots .fcx-dot').length; if (c > 1){ slide = (slide + 1) % c; upd(); } }, 8000);
+  };
+  window.wlxStop = function(){ clearInterval(autoTimer); autoTimer = null; };
+
+  /* ---------- load + refresh ---------- */
+  function load(){
+    getJson().then(function(json){
+      var groups = build(json); window._wlxLoaded = true;
+      var sig = JSON.stringify(groups.map(function(g){ return [g.id, g.status, g.title, g.timeText, g.servers.map(function(s){ return s.url; })]; }));
+      window._wlxGroups = groups;
+      if (sig === lastSig) return;
+      lastSig = sig;
+      if (window._matchCardsRawRows && typeof renderMatchCards === 'function') renderMatchCards(window._matchCardsRawRows);   /* sheet re-render -> LMX.augment + render */
+      else if (typeof window.slxAppendHomeSections === 'function') window.slxAppendHomeSections();                              /* = LMX.render */
+      if (typeof window.fcxAppendFixturesPreview === 'function') { try { window.fcxAppendFixturesPreview(); } catch(_){} }
+      try { window.wlxAppendHeroSlides(); } catch(_){}
+      var ov = document.getElementById('willow-overlay'); if (ov && ov.classList.contains('open')){ render(); renderSchedule(); }
+      var so = document.getElementById('sx-search-overlay'), si2 = document.getElementById('sx-search-input');   /* keep open search in sync */
+      if (so && so.classList.contains('open') && typeof sxRunSearch === 'function') sxRunSearch(si2 ? si2.value : '');
+    }).catch(function(err){
+      window._wlxLoaded = true;
+      console.error('WLX load error:', err);
+      var grid = document.getElementById('wlxGrid');
+      if (grid && !(window._wlxGroups || []).length) grid.innerHTML = '<div class="fcx-empty-state">Error loading Willow matches. Please refresh.</div>';
+    });
+  }
+  load();
+  setInterval(load, REFRESH_MS);
+})();
+</script>
+
+<script id="sx-feeds-ready">
+/* Sheet + API feeds load first; Movies/TV catalogues wait for this signal. */
+(function(){
+  var t0 = Date.now(), iv = setInterval(function(){
+    var sheet = window._matchCardsData && window._matchCardsData.length;
+    if ((sheet && window._wlxLoaded) || Date.now() - t0 > 7000){
+      clearInterval(iv); window.__sxFeedsReady = true;
+      try { window.dispatchEvent(new Event('sx:feeds-ready')); } catch(e){}
+    }
+  }, 400);
+})();
+</script>
+
 <style>
 #lmx-live-box{ margin-bottom:26px; }
 .lmx-live-head{ display:flex; align-items:center; gap:10px; margin-bottom:14px; font-family:var(--cu-font,var(--font-display)); font-weight:900; font-size:clamp(18px,2.6vw,24px); letter-spacing:.03em; color:#fff; text-transform:uppercase; }
@@ -16258,6 +16707,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
   }
   function sameFixture(a, b){
     if ((a.status === 'ENDED') !== (b.status === 'ENDED')) return false;   // a finished fixture never merges into a live/upcoming one
+    if (a.status !== 'LIVE' && b.status !== 'LIVE' && a.start && b.start && Math.abs(a.start - b.start) > 18 * 36e5) return false;   // same two teams, different day = different match
     var ca = catKey(a.category), cb = catKey(b.category);
     if (ca && cb && ca !== cb) return false;
     if (a.teams && b.teams && a.teams.length === 2 && b.teams.length === 2)
@@ -16273,6 +16723,11 @@ button, a.btn, [class*="btn-"], input, select, textarea{
       raw.push({ src:'slx', title:g.title, teams:(g.teams && g.teams.length === 2) ? g.teams : null, names:null,
         category:LCAT(g.category, g.title, g.blob), status:g.status || 'LIVE', start:g.start || null, tour:g.tour || '', poster:g.poster || '',
         t1:(g.teams && g.teams.length === 2 && window.sxFlagUrl) ? sxFlagUrl(g.teams[0]) : '', t2:(g.teams && g.teams.length === 2 && window.sxFlagUrl) ? sxFlagUrl(g.teams[1]) : '', servers:g.servers.map(cloneServer) });
+    });
+    (typeof window.wlxForLmx === 'function' ? window.wlxForLmx() : []).forEach(function(g){   // Willow OTT feed (WLX bridge)
+      raw.push({ src:'wlx', title:g.title, teams:(g.teams && g.teams.length === 2) ? g.teams : null, names:null,
+        category:LCAT(g.category, g.title, g.blob), status:g.status || 'UPCOMING', start:g.start || null, tour:g.tour || '', poster:g.poster || '',
+        t1:'', t2:'', servers:g.servers.map(cloneServer) });
     });
     var out = [];
     raw = raw.filter(function(it){ return it.status !== 'ENDED'; });   // never list finished matches
@@ -17073,7 +17528,11 @@ window.sxHeroCustom=function(base,all){
   /* route the site's old loaders into this one */
   window.vaLoadMoreCurrent=function(t){start(DB[t||'movie']);};
   window.vaBulkPreload=function(t){start(DB[t]);};
-  setTimeout(function(){start(DB.movie);start(DB.tv);},1500);
+  var _hsmGo=false;
+  function hsmGo(){ if(_hsmGo)return; _hsmGo=true; try{window.__hsmKick&&window.__hsmKick();}catch(e){} start(DB.movie); setTimeout(function(){start(DB.tv);},700); }
+  window.addEventListener('sx:feeds-ready',function(){setTimeout(hsmGo,500);});
+  if(window.__sxFeedsReady)setTimeout(hsmGo,500);
+  setTimeout(hsmGo,9000);   /* safety net: Movies/TV never wait longer than this */
   window.vaDeepSearch=async function(){};
   window.vaInit=function(){};
   window.vaRenderMovies=function(){DB.movie.pages.concat(DB.tv.pages).forEach(function(pg){pg.schedule();});};
