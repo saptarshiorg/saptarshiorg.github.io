@@ -3268,6 +3268,7 @@ body::before{ display:none !important; }
   };
 })();
 </script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
  
@@ -16443,6 +16444,48 @@ section.section,.section{background:transparent !important;}
 }
 @media(max-width:900px){#hs-rail,#hs-hero{display:none !important;}}
 </style>
+<script id="sx-hero-custom">
+/* Custom HERO SLIDES (sheet) -> PC + mobile heroes. A slide titled "TEAM v TEAM" (codes, either order) is linked to the
+   matching MATCH CARDS item, so its Watch/tap opens that match's server selector. Other custom slides keep their own button. */
+window.sxHeroCustom=function(base,all){
+  var c=document.getElementById('slides-container'); if(!c) return [];
+  var out=[];
+  [].slice.call(c.querySelectorAll(':scope > .slide')).forEach(function(sl){
+    if(sl.querySelector('.hfl-logo')||sl.classList.contains('fcx-hero-slide')) return;
+    var orig=''; try{ orig=decodeURIComponent(sl.dataset.origTitle||''); }catch(e){}
+    var g=function(q){ var e=sl.querySelector(q); return e?e.textContent.trim():''; };
+    var bg=sl.querySelector('.slide-bg'), u=((bg&&bg.style.backgroundImage)||'').replace(/^url\(["']?/,'').replace(/["']?\)$/,'');
+    var title=g('.slide-title')||orig; if(!u&&!title) return;
+    var it=null, m=orig.trim().match(/^(.{2,40}?)\s+v(?:s|\.)?\s+(.{2,40})$/i);
+    if(m){
+      /* team codes OR team names (full/partial, any case) from the sheet, FanCode or SonyLIV title */
+      var nz=function(x){ return String(x||'').toLowerCase().replace(/[^a-z0-9]+/g,''); };
+      var same=function(x,y){ x=nz(x); y=nz(y); if(!x||!y) return false; if(x===y) return true; return x.length>=4&&y.length>=4&&(x.indexOf(y)>-1||y.indexOf(x)>-1); };
+      var A=m[1], B=m[2];
+      var sides=function(mm){
+        var out=[];
+        if(mm.src==='s'&&mm.raw){ out.push([[mm.raw.team1_code,mm.raw.team1_full_name],[mm.raw.team2_code,mm.raw.team2_full_name]]); }
+        var t=String(mm.title||'').match(/^(.+?)\s+v(?:s|\.)?\s+(.+?)(?:\s+[-|•].*)?$/i);
+        if(t) out.push([[t[1]],[t[2]]]);
+        return out;
+      };
+      var hit=function(grp,x){ return grp.some(function(v){ return same(v,x); }); };
+      var fit=function(x){ return (x.members||[x]).concat([x]).some(function(mm){ return sides(mm).some(function(sd){
+        return (hit(sd[0],A)&&hit(sd[1],B))||(hit(sd[0],B)&&hit(sd[1],A)); }); }); };
+      it=(base||[]).filter(fit)[0]||(all||[]).filter(function(x){ return fit(x)&&!x.fin; })[0]||null;
+    }
+    var sub=g('.slide-sub'), img=u;
+    if(it){
+      var sm=(it.members||[]).filter(function(mm){ return mm.src==='s'; })[0];
+      if(sm&&sm.raw){ var t1=sm.raw.team1_full_name||sm.raw.team1_code||'', t2=sm.raw.team2_full_name||sm.raw.team2_code||''; if(t1&&t2) title=t1+' vs '+t2; }
+      if(!sub) sub=[it.tour, it.live?'Streaming live now':(it.time?'Starts '+it.time:'Today')].filter(Boolean).join(' \u2022 ');
+      if(!img) img=it.img||'';
+    }
+    out.push({el:sl,title:title,img:img,badge:g('.slide-sport-badge'),sub:sub,it:it});
+  });
+  return out;
+};
+</script>
 <script>
 (function(){
   var NS='http://www.w3.org/2000/svg';
@@ -16485,7 +16528,7 @@ section.section,.section{background:transparent !important;}
   var host=document.getElementById('hero-section'),track=document.getElementById('hero-cards-track');
   if(!host||!track)return;
   var hero=document.createElement('div');hero.id='hs-hero';
-  hero.innerHTML='<div class="bg on"></div><div class="bg"></div><div class="sh"></div><div class="txt"><div class="tag"></div><h1></h1><div class="sub"></div><div class="btns"><button class="go" type="button">&#9654;&nbsp; Watch Now</button><button class="plus" type="button" title="More matches">+</button></div></div>';
+  hero.innerHTML='<div class="bg on"></div><div class="bg"></div><div class="sh"></div><div class="txt"><div class="tag"></div><div class="lgs"></div><h1></h1><div class="sub"></div><div class="btns"><button class="go" type="button">&#9654;&nbsp; Watch Now</button><button class="plus" type="button" title="More matches">+</button></div></div><div class="thumbs"><div class="thw"></div><button class="nx" type="button" aria-label="Next">&#10095;</button></div>';
   host.insertBefore(hero,host.firstChild);
   var bgs=hero.querySelectorAll('.bg'),cur=0,slides=[],timer=null,flip=0,lastSig='';
   var FALLBACK_BG='https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/main/ChatGPT%20Image%20Jun%207,%202026,%2010_27_17%20AM.png';
@@ -16495,14 +16538,26 @@ section.section,.section{background:transparent !important;}
   function fromMatches(){
     var S=window.__sxs;if(!S)return [];
     var list=[];try{list=S.refresh()||[];}catch(e){try{list=S.all()||[];}catch(e2){}}
-    return list.filter(function(it){return !it.fin;}).slice(0,12).map(function(it){
+    var base=list.filter(function(it){return !it.fin;}), cu=window.sxHeroCustom?sxHeroCustom(base,list):[], used=cu.map(function(c){return c.it;}).filter(Boolean);
+    var mm=base.filter(function(it){return used.indexOf(it)<0;}).slice(0,12).map(function(it){
       var title=String(it.title||'Match').replace(/\s+v\s+/i,' vs ');
       var sm=(it.members||[]).filter(function(m){return m.src==='s';})[0];
       if(sm&&sm.raw){var t1=sm.raw.team1_full_name||sm.raw.team1_code||'',t2=sm.raw.team2_full_name||sm.raw.team2_code||'';if(t1&&t2)title=t1+' vs '+t2;}
       var parts=[];if(it.tour)parts.push(it.tour);
+      /* Google Sheet (MATCH CARDS) data: team logos + match details */
+      var lg=null,sr=sm&&sm.raw;
+      if(sr){ var i1=sr.team1_icon_url||'',i2=sr.team2_icon_url||''; if(i1||i2) lg={a:i1,b:i2,an:(sr.team1_code||''),bn:(sr.team2_code||'')};
+        if(sr.details&&parts.indexOf(sr.details)<0) parts.push(sr.details); }
       parts.push(it.live?'Streaming live now':(it.time?'Starts '+it.time:'Today'));
-      return {bg:'url("'+(it.img||FALLBACK_BG)+'")',title:title,live:!!it.live,sp:String(it.sport||'').trim(),sub:parts.join('  \u2022  '),go:function(){try{S.open(it);}catch(e){}}};
+      return {lg:lg,bg:'url("'+(it.img||FALLBACK_BG)+'")',title:title,live:!!it.live,sp:String(it.sport||'').trim(),sub:parts.join('  \u2022  '),go:function(){try{S.open(it);}catch(e){}}};
     });
+    var cc=cu.map(function(c){
+      var sr=c.it&&((c.it.members||[]).filter(function(m){return m.src==='s';})[0]||{}).raw, lg=null;
+      if(sr&&(sr.team1_icon_url||sr.team2_icon_url)) lg={a:sr.team1_icon_url||'',b:sr.team2_icon_url||'',an:sr.team1_code||'',bn:sr.team2_code||''};
+      return {lg:lg,bg:'url("'+(c.img||FALLBACK_BG)+'")',title:c.title,live:c.it?!!c.it.live:false,sp:c.badge||'',sub:c.sub,
+        go:function(){ if(c.it){ try{S.open(c.it);}catch(e){} } else { var b=c.el&&c.el.querySelector('.btn-slide-watch'); if(b) b.click(); } }};
+    });
+    return cc.concat(mm);
   }
   function show(i){
     if(!slides.length)return; cur=(i+slides.length)%slides.length; var c=slides[cur];
@@ -16510,19 +16565,27 @@ section.section,.section{background:transparent !important;}
     var tag=hero.querySelector('.tag');tag.innerHTML='';
     if(c.live){var b=document.createElement('b');b.className='lv';b.innerHTML='<i></i>LIVE';tag.appendChild(b);}
     if(c.sp){var sp=document.createElement('span');sp.textContent=c.sp;tag.appendChild(sp);}
+    var lgs=hero.querySelector('.lgs'); if(lgs){ lgs.innerHTML='';
+      if(c.lg){ [[c.lg.a,c.lg.an],[c.lg.b,c.lg.bn]].forEach(function(t,k){ if(k){ var v=document.createElement('b'); v.textContent='VS'; lgs.appendChild(v); }
+        var w=document.createElement('span'); w.className='tl';
+        if(t[0]){ var im=document.createElement('img'); im.alt=t[1]||''; im.src=t[0]; im.onerror=function(){ im.remove(); w.textContent=t[1]||''; }; w.appendChild(im); } else w.textContent=t[1]||'';
+        lgs.appendChild(w); }); } }
     hero.querySelector('h1').textContent=c.title||'';
     hero.querySelector('.sub').textContent=c.sub||'';
+    var tw=hero.querySelector('.thw'); if(tw){ [].forEach.call(tw.children,function(t,k){ t.classList.toggle('on',k===cur); }); var at=tw.children[cur]; if(at) tw.scrollTo({left:Math.max(0,at.offsetLeft-tw.offsetLeft),behavior:'smooth'}); }
   }
   function build(){
     var a=fromMatches();
-    var sig=a.map(function(x){return x.title+'|'+x.bg+'|'+x.live+'|'+x.sub+'|'+x.sp;}).join('~');
+    var sig=a.map(function(x){return x.title+'|'+x.bg+'|'+x.live+'|'+x.sub+'|'+x.sp+'|'+(x.lg?x.lg.a+x.lg.b:'');}).join('~');
     if(sig===lastSig)return; lastSig=sig;
     slides=a;
     hero.style.display=slides.length?'':'none';      /* nothing to show -> no empty hero */
     if(!slides.length){clearInterval(timer);return;}
+    var tw=hero.querySelector('.thw'); if(tw){ tw.innerHTML=''; slides.forEach(function(c,k){ var t=document.createElement('div'); t.className='th'; t.style.backgroundImage=c.bg||'url("'+FALLBACK_BG+'")'; t.onclick=function(){ show(k); restart(); }; tw.appendChild(t); }); }
     cur=Math.min(cur,slides.length-1);show(cur);restart();
   }
   function restart(){clearInterval(timer);timer=setInterval(function(){show(cur+1);},6500);}
+  hero.querySelector('.nx').onclick=function(){ show(cur+1); restart(); };
   hero.querySelector('.go').onclick=function(){slides[cur]&&slides[cur].go&&slides[cur].go();};
   hero.querySelector('.plus').onclick=function(){window.sxSwitchTab&&sxSwitchTab('matches');var e=document.getElementById('sxTabPanels');e&&e.scrollIntoView({behavior:'smooth'});};
   var pend=null;new MutationObserver(function(){clearTimeout(pend);pend=setTimeout(build,120);}).observe(track,{childList:true,subtree:true,characterData:true});
@@ -17664,7 +17727,7 @@ section.section,.section{background:transparent !important;}
     el.addEventListener('click',function(e){
       var b=e.target.closest('.sxs-btn'),va=e.target.closest('.sxs-va'),c=e.target.closest('.sxs-card'),ch=e.target.closest('.sxs-chip');
       if(b){var tr=b.parentNode.querySelector('.sxs-track');tr.scrollBy({left:(b.classList.contains('l')?-1:1)*tr.clientWidth*.85,behavior:'smooth'});return;}
-      if(va){var v=va.getAttribute('data-va');if(v==='m')openMatches();else if(window.hsmOpen)hsmOpen(v);return;}
+      if(va){var v=va.getAttribute('data-va');if(v==='m')openMatches();else if(v==='live'){if(window.openLiveTV)openLiveTV();}else if(window.hsmOpen)hsmOpen(v);return;}
       if(ch&&extra){extra(ch);return;}
       if(c){if(c.hasAttribute('data-k')){var it=S.all()[+c.getAttribute('data-k')];if(it)S.open(it);}else{var w=REG[+c.getAttribute('data-r')];if(w)w.play();}}
     });
@@ -17681,21 +17744,27 @@ section.section,.section{background:transparent !important;}
   var fs=document.getElementById('fixtures-section');
   if(fs){
     var hr=document.createElement('div');hr.id='sxs-home';fs.parentNode.insertBefore(hr,fs.nextSibling);bind(hr);
-    var hsig='',cache={m:[],t:[],n:-1,tn:-1,at:0};
+    var hsig='',cache={m:[],t:[],mg:[],tg:[],n:-1,tn:-1,at:0};
     var homeRender=function(){
       var A=S.refresh(),lv=A.filter(function(i){return i.live;}).slice(0,12),up=A.filter(function(i){return !i.live&&!i.fin;}).slice(0,12),ms=lv.concat(up),now=Date.now();
       if(now-cache.at>6000||cache.n<0){
-        if(cache.n!==vaPools.movie.all.length){cache.m=top(vaPools.movie.all,16);cache.n=vaPools.movie.all.length;}
-        if(cache.tn!==vaPools.tv.all.length){cache.t=top(vaPools.tv.all,16);cache.tn=vaPools.tv.all.length;}
+        if(cache.n!==vaPools.movie.all.length){cache.mg=top(vaPools.movie.all,60);cache.m=cache.mg.slice(0,16);cache.n=vaPools.movie.all.length;}
+        if(cache.tn!==vaPools.tv.all.length){cache.tg=top(vaPools.tv.all,60);cache.t=cache.tg.slice(0,16);cache.tn=vaPools.tv.all.length;}
         cache.at=now;
       }
-      var sig=ms.map(function(i){return i.title+(i.live?'L':'U')+i.time;}).join('|')+'#'+cache.m.map(function(m){return m.title;}).join(',')+'#'+cache.t.map(function(m){return m.title;}).join(',');
+      var sig=ms.map(function(i){return i.title+(i.live?'L':'U')+i.time;}).join('|')+'#'+cache.m.map(function(m){return m.title;}).join(',')+'#'+cache.t.map(function(m){return m.title;}).join(',')+'#'+cache.mg.length+'/'+cache.tg.length+'#'+(window._cmsChannels||[]).map(function(c){return (c.status_live_off||'')[0]||'-';}).join('');
       if(sig===hsig)return;hsig=sig;
       var h='';
       if(lv.length)h+=row('Live Now',lv.map(function(i){return S.card(i,A.indexOf(i));}).join(''),'m');
       if(up.length)h+=row('Upcoming Today',up.map(function(i){return S.card(i,A.indexOf(i));}).join(''),'m');
       if(cache.m.length)h+=row('Movies',cache.m.map(function(m){return rc(mvWrap(m,'movie'));}).join(''),'movie');
       if(cache.t.length)h+=row('TV Shows',cache.t.map(function(m){return rc(mvWrap(m,'tv'));}).join(''),'tv');
+      /* mobile-only vertical grids (shown by CSS in TV / Movies tabs): Live TV channels + TV Shows combined */
+      var gsec=function(title,inner,va,k){return '<section class="sxs-sec hs-gsec hs-g-'+k+'"><h2 class="sxs-t">'+esc(title)+(va?'<a class="sxs-va" data-va="'+va+'">View All \u203A</a>':'')+'</h2><div class="sxs-grid hs-mgrid">'+inner+'</div></section>';};
+      var chs=(window._cmsChannels||[]).filter(function(c){return c.channel_name;}).sort(function(a,b){return ((b.status_live_off||'').toUpperCase()==='LIVE')-((a.status_live_off||'').toUpperCase()==='LIVE');}).slice(0,120);
+      if(chs.length)h+=gsec('Live TV',chs.map(function(c){return rc(chWrap(c));}).join(''),'live','live');
+      if(cache.tg.length)h+=gsec('TV Shows',cache.tg.map(function(m){return rc(mvWrap(m,'tv'));}).join(''),'','tv');
+      if(cache.mg.length)h+=gsec('Movies',cache.mg.map(function(m){return rc(mvWrap(m,'movie'));}).join(''),'','movies');
       hr.innerHTML=h;after(hr);
     };
     homeRender();setInterval(homeRender,3000);
@@ -18508,5 +18577,905 @@ function fcLoadIntoFrame(frame, url, label){
 }
 window.fcLoadIntoFrame = fcLoadIntoFrame;
 </script>
+
+
+<style id="hs-app-mobile">
+/* ═══ MOBILE APP-STYLE UI (Hotstar-like): top bar · stacked card hero · floating pill · bottom nav ═══ */
+@media(max-width:900px){
+  :root{ --ap-bg:#0c0d13; --ap-W:min(86vw,440px); --ap-H:calc(var(--ap-W) * 1.2); }
+  html,body{ background:var(--ap-bg) !important; }
+  section.section{ background:transparent !important; }
+  body{ padding-top:56px !important; padding-bottom:calc(74px + env(safe-area-inset-bottom,0px)) !important; }
+
+  /* ── top bar ── */
+  #hsm-bar{ height:56px !important; padding:0 16px !important; gap:10px !important; background:linear-gradient(180deg,var(--ap-bg) 60%,rgba(12,13,19,0)) !important; }
+  #hsm-bar .mts-hamburger,#hsm-bar .hsm-search,#hsm-bar .hsm-logo b{ display:none !important; }
+  #hsm-bar .hsm-logo img{ height:34px !important; width:34px !important; filter:drop-shadow(0 0 8px rgba(255,255,255,.35)); }
+  #hsm-bar .hsm-up{ border:1px solid #b8923c; color:#e6bf6a; background:rgba(184,146,60,.06); font:600 11px/1 "Google Sans","Inter",sans-serif; letter-spacing:.1em; padding:7px 10px; border-radius:4px; }
+  #hsm-bar .hsm-cast{ width:34px;height:34px;border:0;background:none;color:#fff;display:flex;align-items:center;justify-content:center;padding:0; }
+  #hsm-bar .hsm-cast svg{ width:24px;height:24px; }
+
+  /* ── hero: stacked cards (16:9 banners cropped into a squarish card) ── */
+  #hero-section{ background:
+      radial-gradient(70% 45% at 105% 0%, rgba(200,40,80,.30), transparent 70%),
+      radial-gradient(60% 40% at -10% 8%, rgba(40,80,220,.22), transparent 70%) !important; }
+  #slides-container.slides-container{
+    height:calc(var(--ap-H) + 16px) !important; min-height:0 !important; max-height:none !important;
+    aspect-ratio:auto !important; padding:0 !important; margin:0 !important;
+    background:transparent !important; overflow:hidden !important;
+  }
+  #slides-container .slide{
+    inset:auto !important; top:8px; left:16px; width:var(--ap-W); height:var(--ap-H);
+    opacity:1 !important; visibility:visible !important; background:#111 !important;
+    border-radius:26px !important; overflow:hidden !important;
+    box-shadow:0 14px 34px rgba(0,0,0,.55) !important; border:1px solid rgba(255,255,255,.06);
+    transform-origin:center; will-change:transform;
+    transform:translateX(calc(var(--o,0) * 24px)) scale(calc(1 - var(--o,0) * .055));
+    filter:brightness(calc(1 - var(--o,0) * .22));
+    z-index:calc(10 - var(--o,0));
+    transition:transform .5s cubic-bezier(.22,.8,.3,1), opacity .4s ease, filter .4s ease !important;
+  }
+  #slides-container .slide[data-o="-1"]{ transform:translateX(-115%) scale(.92); opacity:0 !important; pointer-events:none; z-index:1; }
+  #slides-container .slide[data-o="3"]{ opacity:0 !important; pointer-events:none; }
+  #slides-container .slide:not([data-o="0"]){ pointer-events:none; }
+
+  #slides-container .slide-bg{ inset:0 !important; height:auto !important; border-radius:0 !important;
+    background-size:cover !important; background-position:center 35% !important; background-color:#111 !important; }
+  /* vignette: dark bottom for text + soft dark edges */
+  #slides-container .slide-overlay{ inset:0 !important; height:auto !important; border-radius:0 !important;
+    background:
+      linear-gradient(0deg,rgba(8,9,14,.97) 0%,rgba(8,9,14,.78) 24%,rgba(8,9,14,.08) 55%,rgba(8,9,14,.30) 100%),
+      radial-gradient(120% 90% at 50% 42%,transparent 52%,rgba(0,0,0,.55) 100%) !important; }
+
+  /* text info */
+  #slides-container .slide-content{ inset:0 !important; top:0 !important; bottom:0 !important; left:0 !important; right:0 !important;
+    padding:16px 18px 20px !important; display:flex; flex-direction:column; }
+  #slides-container .slide-content > :nth-child(2){ margin-top:auto; }
+  #slides-container .slide-content > div:first-child{ margin:0 0 0 !important; }
+  #slides-container .slide-sport-badge{ background:rgba(34,36,52,.72) !important; color:#fff !important;
+    -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+    font:600 12px/1 "Google Sans","Inter",sans-serif !important; letter-spacing:.01em !important; text-transform:none !important;
+    padding:7px 12px !important; border-radius:10px !important; }
+  #slides-container .slide-badge-live{ background:linear-gradient(90deg,#e5116f,#ff4d3d) !important; }
+  #slides-container .slide-title{ font:800 clamp(22px,7vw,28px)/1.1 "Google Sans","Inter",sans-serif !important; letter-spacing:-.01em !important;
+    max-width:calc(100% - 76px); margin:0 0 8px !important; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; text-shadow:0 2px 12px rgba(0,0,0,.6); }
+  #slides-container .slide-sub{ font-size:12.5px !important; line-height:1.4 !important; margin:0 !important; max-width:calc(100% - 76px);
+    color:rgba(255,255,255,.72) !important; display:-webkit-box !important; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+
+  /* round + / play buttons bottom-right */
+  #slides-container .slide-btns{ position:absolute; right:14px; bottom:18px; display:flex; flex-direction:column-reverse; align-items:center; gap:12px; flex-wrap:nowrap; }
+  #slides-container .slide .btn-slide-watch,#slides-container .slide .btn-slide-outline{
+    width:54px !important; height:54px !important; padding:0 !important; border-radius:50% !important; font-size:0 !important; line-height:0 !important;
+    display:grid !important; place-items:center; position:relative; overflow:hidden; text-indent:-999px; white-space:nowrap; letter-spacing:0 !important; }
+  #slides-container .slide .btn-slide-watch{ background:linear-gradient(145deg,#eceef3,#a9afbd) !important; border:0 !important; box-shadow:0 4px 16px rgba(0,0,0,.5) !important; }
+  #slides-container .slide .btn-slide-watch::after{ content:""; text-indent:0; border-left:15px solid #111; border-top:9px solid transparent; border-bottom:9px solid transparent; margin-left:4px; }
+  #slides-container .slide .btn-slide-outline{ background:rgba(40,42,54,.78) !important; border:1px solid rgba(255,255,255,.14) !important; }
+  #slides-container .slide .btn-slide-outline::after{ content:"+"; text-indent:0; font:300 30px/1 sans-serif; color:#fff; }
+  #slides-container .slide-dots{ display:none !important; }
+
+  /* section headings */
+  .section-title,.section h2,.sxs-t{ font:600 18px/1.25 "Google Sans","Inter",sans-serif !important; color:#fff !important; text-transform:none !important; letter-spacing:0 !important; }
+  .section h2+p{ font-size:12.5px !important; }
+
+  /* ── bottom nav: Search · Home · Profile ── */
+  body .mobile-tabbar{ height:calc(70px + env(safe-area-inset-bottom,0px)) !important; padding:0 8px env(safe-area-inset-bottom,0px) !important;
+    background:linear-gradient(180deg,#10121b,#0b0c11) !important; border-top:0 !important; align-items:center !important; justify-content:space-around !important; z-index:1000 !important; }
+  body .mobile-tabbar::before{ content:""; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,#2b7cff 30%,#2b7cff 70%,transparent); border-radius:50%/100%; opacity:.9; }
+  body .mobile-tabbar .mtab[data-sxtab="matches"],body .mobile-tabbar .mtab[data-sxtab="livetv"],body .mobile-tabbar .mtab[data-sxtab="favourites"]{ display:none !important; }
+  body .mobile-tabbar .mtab{ flex:1; height:56px !important; display:flex !important; flex-direction:column !important; align-items:center !important; justify-content:center !important; color:#9aa0b4 !important; }
+  body .mobile-tabbar .mtab::before{ display:none !important; }
+  body .mobile-tabbar .mtab[data-sxtab="search"]{ order:1; }
+  body .mobile-tabbar .mtab[data-sxtab="home"]{ order:2; flex:0 0 78px; }
+  body .mobile-tabbar .mtab-prof{ order:3; }
+  body .mobile-tabbar .mtab svg{ width:26px !important; height:26px !important; }
+  body .mobile-tabbar .mtab .mtab-l{ display:none !important; }
+  body .mobile-tabbar .mtab[data-sxtab="home"]{ background:linear-gradient(180deg,rgba(43,124,255,.22),rgba(43,124,255,.05)); border-radius:16px; box-shadow:0 0 22px rgba(43,124,255,.25); color:#fff !important; gap:3px; }
+  body .mobile-tabbar .mtab[data-sxtab="home"] .mtab-l{ display:block !important; font:600 12px/1 "Google Sans","Inter",sans-serif; }
+  body .mobile-tabbar .mtab[data-sxtab="home"] img.mtab-logo{ width:26px; height:26px; object-fit:contain; filter:drop-shadow(0 0 6px rgba(255,255,255,.5)); }
+  body .mobile-tabbar .mtab[data-sxtab="home"] svg{ display:none !important; }
+  .mtab-prof .av{ width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#2b7cff,#8a3dff 60%,#e5116f);position:relative; }
+  .mtab-prof .av::after{ content:"";position:absolute;top:-2px;right:-2px;width:11px;height:11px;border-radius:50%;background:#ee3b3b;border:2px solid #0b0c11; }
+
+  /* ── floating pill ── */
+  #hs-pill{ position:fixed; left:50%; transform:translateX(-50%); bottom:calc(84px + env(safe-area-inset-bottom,0px)); z-index:950; display:flex; align-items:center; gap:10px; font-family:"Google Sans","Inter",sans-serif; transition:opacity .25s; }
+  #hs-pill button{ border:0; color:#fff; font:600 16px/1 "Google Sans","Inter",sans-serif; cursor:pointer; background:none; -webkit-tap-highlight-color:transparent; }
+  #hs-pill .glass{ background:linear-gradient(135deg,rgba(40,44,90,.92),rgba(70,30,90,.92)); border:1px solid rgba(255,255,255,.14); border-radius:999px; box-shadow:0 8px 24px rgba(0,0,0,.55); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); }
+  #hs-pill .hp-exp,#hs-pill .hp-cmp{ display:none; align-items:center; gap:10px; }
+  #hs-pill.exp .hp-exp,#hs-pill.cmp .hp-cmp{ display:flex; }
+  #hs-pill .hp-main{ display:flex; align-items:center; height:50px; padding:0 8px; }
+  #hs-pill .hp-main button{ padding:0 16px; height:100%; }
+  #hs-pill .hp-main i{ width:1px; height:22px; background:rgba(255,255,255,.25); }
+  #hs-pill .hp-main .hp-chev{ padding:0 12px 0 8px; font-size:18px; opacity:.85; }
+  #hs-pill .hp-mic{ width:50px;height:50px;border-radius:50%; background:linear-gradient(135deg,#1c4fb8,#7a3bd6) !important; display:flex;align-items:center;justify-content:center; }
+  #hs-pill .hp-lab{ height:50px; padding:0 26px; }
+  #hs-pill .hp-x{ width:50px;height:50px;border-radius:50%; font-size:20px !important; }
+  #hs-pill .hp-ask{ height:50px; padding:0 22px; display:flex; align-items:center; gap:8px; background:linear-gradient(135deg,rgba(24,60,140,.95),rgba(20,40,100,.95)) !important; }
+  #hs-pill svg{ width:18px;height:18px; }
+}
+
+</style>
+<script id="hs-app-mobile-js">
+(function(){
+  var mq=window.matchMedia('(max-width:900px)');
+  /* 1 — stacked-card positions + swipe */
+  function updPos(){
+    var c=document.getElementById('slides-container'); if(!c) return;
+    var sl=[].slice.call(c.querySelectorAll(':scope > .slide')); if(!sl.length) return;
+    var a=sl.findIndex(function(s){return s.classList.contains('active');}); if(a<0)a=0;
+    sl.forEach(function(s,i){
+      var o=i-a, d=o<0?-1:(o>3?3:o);
+      if(s.dataset.o!==String(d)){ s.dataset.o=d; s.style.setProperty('--o',Math.max(0,d)); }
+    });
+  }
+  function initHero(){
+    var c=document.getElementById('slides-container'); if(!c||c._apInit) return; c._apInit=1;
+    new MutationObserver(updPos).observe(c,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
+    var x0=null,y0=0;
+    c.addEventListener('touchstart',function(e){x0=e.touches[0].clientX;y0=e.touches[0].clientY;},{passive:true});
+    c.addEventListener('touchend',function(e){
+      if(x0===null) return; var dx=e.changedTouches[0].clientX-x0, dy=e.changedTouches[0].clientY-y0; x0=null;
+      if(Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)){ try{ goSlide(currentSlide+(dx<0?1:-1)); startSlider(); }catch(_){} }
+    },{passive:true});
+    updPos();
+  }
+
+  function hsVoice(pill){
+    var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    function fallback(){ if(window.openSxSearch) openSxSearch(); }
+    if(!SR){ fallback(); return; }
+    if(pill._rec){ try{pill._rec.stop();}catch(_){} return; }
+    var r=new SR(), got=false; pill._rec=r;
+    r.lang='en-IN'; r.interimResults=false; r.maxAlternatives=1;
+    pill.classList.add('listening');
+    pill.querySelectorAll('.hp-ask').forEach(function(b){b.lastChild.textContent='Listening…';});
+    r.onresult=function(e){
+      got=true; var q=(e.results[0][0].transcript||'').trim();
+      if(window.openSxSearch) openSxSearch();
+      setTimeout(function(){
+        var inp=document.getElementById('sx-search-input'); if(!inp) return;
+        inp.value=q; inp.dispatchEvent(new Event('input',{bubbles:true}));
+        var bar=document.querySelector('.sx-search-bar'); if(bar&&q) bar.classList.add('has-text');
+      },120);
+    };
+    r.onerror=function(){ if(!got) fallback(); };
+    r.onend=function(){
+      pill._rec=null; pill.classList.remove('listening');
+      pill.querySelectorAll('.hp-ask').forEach(function(b){b.lastChild.textContent='Ask';});
+    };
+    try{ r.start(); }catch(_){ pill._rec=null; pill.classList.remove('listening'); fallback(); }
+  }
+  /* 2 — nav profile + logo */
+  function build(){
+    var bar=document.getElementById('hsm-bar');
+    var nav=document.getElementById('mobile-tabbar');
+    if(nav && !nav.querySelector('.mtab-prof')){
+      var pr=document.createElement('a'); pr.className='mtab mtab-prof'; pr.href='#'; pr.setAttribute('aria-label','Menu');
+      pr.setAttribute('aria-label','Community'); pr.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.6A8 8 0 1 1 21 12z"/><circle cx="9" cy="12" r=".6" fill="currentColor"/><circle cx="12.5" cy="12" r=".6" fill="currentColor"/><circle cx="16" cy="12" r=".6" fill="currentColor"/></svg>'; pr.onclick=function(e){e.preventDefault(); if(window.hsOpenCommunity) hsOpenCommunity();};
+      nav.appendChild(pr);
+      var home=nav.querySelector('.mtab[data-sxtab="home"]'), logo=document.getElementById('nav-logo-img');
+      if(home && logo && logo.src && !home.querySelector('.mtab-logo')){ var im=document.createElement('img'); im.className='mtab-logo'; im.src=logo.src; home.insertBefore(im,home.firstChild); }
+    }
+    /* 3 — floating pill */
+    if(!document.getElementById('hs-pill')){
+      var mic='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+      var pill=document.createElement('div'); pill.id='hs-pill'; pill.className='cmp';
+      pill.innerHTML=
+        '<div class="hp-exp"><div class="hp-main glass"><button data-g="tv">TV</button><i></i><button data-g="movies">Movies</button><i></i><button data-g="sports">Sports</button><i></i><button data-g="live">Live TV</button><button class="hp-chev" data-g="cmp">&#8963;</button></div><button class="hp-mic glass" data-g="ask">'+mic+'</button></div>'+
+        '<div class="hp-cmp"><button class="hp-lab glass" data-g="lab">Sports</button><button class="hp-x glass" data-g="exp">&#10005;</button><button class="hp-ask glass" data-g="ask">'+mic+'Ask</button></div>';
+      document.body.appendChild(pill);
+      pill.addEventListener('click',function(e){
+        var b=e.target.closest('button'); if(!b) return; var g=b.dataset.g;
+        if(g==='tv'||g==='movies'||g==='sports'||g==='live'){ if(window.hsSetMode) hsSetMode(g); }
+        else if(g==='lab'){ window.scrollTo({top:0,behavior:'smooth'}); }
+        else if(g==='ask') hsVoice(pill);
+        else if(g==='cmp'){ pill.className='cmp'; pill._m=1; }
+        else if(g==='exp'){ if(window.__hsMode&&window.__hsMode!=='all'){ hsSetMode('all'); } else { pill.className='exp'; pill._m=1; } }
+      });
+      var lab=pill.querySelector('.hp-lab');
+      function label(){ lab.textContent=({all:'For You',tv:'TV',movies:'Movies',sports:'Sports',live:'Live TV'})[window.__hsMode||'all']; }
+      window.__hsPillLabel=label; label();
+      window.addEventListener('scroll',function(){
+        if(window.scrollY<80){ if(!pill._m) pill.className='exp'; } else { pill._m=0; if(pill.className==='exp') pill.className='cmp'; }
+        label();
+      },{passive:true});
+      pill.className=window.scrollY<80?'exp':'cmp';
+    }
+  }
+  function boot(){ initHero(); build(); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',function(){setTimeout(boot,300);}); else setTimeout(boot,300);
+  /* hero is rendered later by renderSlides — keep retrying briefly */
+  var n=0,t=setInterval(function(){ initHero(); build(); if(++n>40) clearInterval(t); },500);
+})();
+</script>
+
+<style id="hs-app-narrow">
+/* NARROW + FLAT bars */
+@media(max-width:900px){
+  body{ padding-top:40px !important; padding-bottom:calc(44px + env(safe-area-inset-bottom,0px)) !important; }
+
+  /* top bar */
+  #hsm-bar{ height:40px !important; padding:0 12px !important; gap:8px !important; background:var(--ap-bg,#0c0d13) !important; border-bottom:0 !important; box-shadow:none !important; }
+  #hsm-bar .hsm-logo img{ height:24px !important; width:24px !important; filter:none !important; }
+  #hsm-bar .hsm-up{ font-size:10px !important; padding:5px 8px !important; border-radius:3px !important; }
+  #hsm-bar .hsm-cast{ width:28px !important; height:28px !important; }
+  #hsm-bar .hsm-cast svg{ width:20px !important; height:20px !important; }
+
+  /* bottom nav: flat, slim, icons only */
+  body .mobile-tabbar{ height:calc(44px + env(safe-area-inset-bottom,0px)) !important; padding:0 0 env(safe-area-inset-bottom,0px) !important;
+    background:#0c0d13 !important; border-top:1px solid rgba(255,255,255,.08) !important; box-shadow:none !important; align-items:flex-start !important; justify-content:space-around !important; }
+  body .mobile-tabbar::before{ display:none !important; }
+  body .mobile-tabbar .mtab{ height:44px !important; flex:1 !important; background:none !important; box-shadow:none !important; border-radius:0 !important; gap:0 !important; }
+  body .mobile-tabbar .mtab[data-sxtab="home"]{ flex:1 !important; background:none !important; box-shadow:none !important; border-radius:0 !important; }
+  body .mobile-tabbar .mtab[data-sxtab="home"] .mtab-l{ display:none !important; }
+  body .mobile-tabbar .mtab svg{ width:22px !important; height:22px !important; }
+  body .mobile-tabbar .mtab[data-sxtab="home"] img.mtab-logo{ width:22px !important; height:22px !important; filter:none !important; opacity:.6; }
+  body .mobile-tabbar .mtab[data-sxtab="home"].active img.mtab-logo{ opacity:1; }
+  body .mobile-tabbar .mtab.active::after{ content:""; position:absolute; top:0; left:38%; right:38%; height:2px; background:#fff; }
+  .mtab-prof .av{ width:24px !important; height:24px !important; }
+  .mtab-prof .av::after{ width:8px !important; height:8px !important; }
+
+  /* pill slimmer, sits right above the slim nav */
+  #hs-pill{ bottom:calc(54px + env(safe-area-inset-bottom,0px)) !important; gap:8px !important; }
+  #hs-pill .hp-main{ height:40px !important; }
+  #hs-pill .hp-main button{ font-size:14px !important; padding:0 12px !important; }
+  #hs-pill .hp-mic,#hs-pill .hp-x{ width:40px !important; height:40px !important; }
+  #hs-pill .hp-lab,#hs-pill .hp-ask{ height:40px !important; font-size:14px !important; padding:0 18px !important; }
+
+  footer{ padding-bottom:calc(20px + 44px + env(safe-area-inset-bottom,0px)) !important; }
+}
+</style>
+
+<style id="hs-app-clean">
+@media(max-width:900px){
+  #hsm-bar .hsm-up,#hsm-bar .hsm-cast{ display:none !important; }
+  #hs-pill.listening .hp-ask,#hs-pill.listening .hp-mic{ background:linear-gradient(135deg,#e5116f,#7a3bd6) !important; animation:hsListen 1.1s ease-in-out infinite; }
+  @keyframes hsListen{ 0%,100%{ box-shadow:0 0 0 0 rgba(229,17,111,.55);} 50%{ box-shadow:0 0 0 10px rgba(229,17,111,0);} }
+}
+</style>
+
+<style id="hs-app-sections">
+@media(max-width:900px){
+  :root{ --mg:linear-gradient(135deg,#d4147a,#7b2ff7); --cw:min(74vw,320px); }
+
+  /* magenta → purple theme (replaces the blue) */
+  #hero-section{ background:
+      radial-gradient(70% 45% at 105% 0%, rgba(212,20,122,.32), transparent 70%),
+      radial-gradient(60% 40% at -10% 8%, rgba(123,47,247,.28), transparent 70%) !important; }
+  #hs-pill .glass{ background:linear-gradient(135deg,rgba(60,14,70,.92),rgba(40,16,86,.92)) !important; border-color:rgba(212,20,122,.35) !important; }
+  #hs-pill .hp-mic,#hs-pill .hp-ask{ background:var(--mg) !important; }
+  #hs-pill.listening .hp-ask,#hs-pill.listening .hp-mic{ background:linear-gradient(135deg,#ff2d7a,#9b3dff) !important; }
+  body .mobile-tabbar .mtab.active::after{ background:var(--mg) !important; height:2px; left:34%; right:34%; }
+  body .mobile-tabbar{ border-top-color:rgba(212,20,122,.28) !important; }
+  #slides-container .slide-badge-live{ background:var(--mg) !important; }
+
+  /* sections */
+  section.section{ padding:14px 0 6px !important; }
+  section.section .section-inner{ padding:0 !important; max-width:none !important; }
+  section.section .section-inner > div[style*="margin-bottom"]{ margin:0 0 10px !important; padding:0 16px; }
+  section.section .section-inner > div[style*="margin-bottom"] h2{ font-size:18px !important; font-weight:600 !important; letter-spacing:0 !important; }
+  section.section .section-inner > div[style*="margin-bottom"] p{ display:none; }
+
+  .fixtures-grid{ --cw:min(74vw,320px); display:flex !important; flex-wrap:nowrap !important; gap:12px !important; overflow-x:auto !important; padding:0 16px 8px !important; margin:0 !important;
+    scroll-snap-type:x proximity; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+  .fixtures-grid::-webkit-scrollbar{ display:none; }
+  .fixtures-grid > *{ flex:0 0 var(--cw) !important; width:var(--cw) !important; scroll-snap-align:start; }
+
+  /* match / channel / OTT "watch" cards → app tiles */
+  .fixtures-grid .fx2-card,.fx2-card{ position:relative; background:transparent !important; border:0 !important; box-shadow:none !important; border-radius:0 !important; transform:none !important; overflow:visible !important; }
+  .fx2-card .fx2-thumb{ border-radius:14px !important; box-shadow:0 8px 22px rgba(0,0,0,.45); }
+  .fx2-card .fx2-thumb::after{ content:""; position:absolute; inset:0; pointer-events:none;
+    background:linear-gradient(0deg,rgba(12,13,19,.85) 0%,rgba(12,13,19,0) 45%),radial-gradient(120% 100% at 50% 45%,transparent 55%,rgba(0,0,0,.45) 100%); }
+  .fx2-card .fx2-badge{ z-index:2; top:10px !important; left:10px !important; right:auto !important; background:rgba(34,36,52,.72) !important; color:#fff !important; border-radius:9px !important;
+    padding:6px 10px !important; font:600 11px/1 "Google Sans","Inter",sans-serif !important; letter-spacing:.02em !important; -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
+  .fx2-card .fx2-badge-live{ background:var(--mg) !important; }
+  .fx2-card .fx2-live-dot{ background:#fff !important; }
+  .fx2-card .fx2-body{ padding:10px 2px 0 !important; gap:4px !important; }
+  .fx2-card .fx2-free{ display:none !important; }
+  .fx2-card .fx2-title{ font:600 14.5px/1.3 "Google Sans","Inter",sans-serif !important; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .fx2-card .fx2-tag{ background:none !important; border:0 !important; padding:0 !important; color:rgba(255,255,255,.6) !important; font-size:11.5px !important; }
+  .fx2-card .fx2-date{ font-size:11.5px !important; color:rgba(255,255,255,.5) !important; }
+  /* Watch button → round play button on the banner */
+  .fx2-card .smo-btn{ position:absolute !important; right:10px; top:calc(var(--cw) * 9 / 16 - 52px); width:42px !important; height:42px !important; min-width:0 !important; padding:0 !important; margin:0 !important;
+    border-radius:50% !important; border:0 !important; background:linear-gradient(145deg,#eceef3,#a9afbd) !important; display:grid !important; place-items:center; font-size:0 !important; line-height:0 !important; box-shadow:0 4px 14px rgba(0,0,0,.5) !important; z-index:3; }
+  .fx2-card .smo-btn > *{ display:none !important; }
+  .fx2-card .smo-btn::after{ content:""; border-left:12px solid #111; border-top:7px solid transparent; border-bottom:7px solid transparent; margin-left:3px; }
+  .fx2-viewall{ border-radius:14px !important; }
+
+  /* poster rails */
+  .sxs-th,.sxs-card img{ border-radius:12px !important; }
+  #sxs-home .sxs-t,#sxs-live .sxs-t,#sxs-root .sxs-t{ font:600 18px/1.25 "Google Sans","Inter",sans-serif !important; }
+}
+
+/* ── Community page ── */
+#hs-community{ display:none; position:fixed; left:0; right:0; top:40px; bottom:calc(44px + env(safe-area-inset-bottom,0px)); z-index:960; overflow-y:auto; background:var(--ap-bg,#0c0d13);
+  padding:18px 16px 24px; font-family:"Google Sans","Inter",sans-serif; color:#fff;
+  background-image:radial-gradient(70% 40% at 100% 0%,rgba(212,20,122,.28),transparent 70%),radial-gradient(60% 35% at 0% 5%,rgba(123,47,247,.25),transparent 70%); }
+#hs-community.open{ display:block; }
+#hs-community h1{ font:700 24px/1.2 "Google Sans","Inter",sans-serif; margin:6px 0 6px; }
+#hs-community .hc-sub{ color:rgba(255,255,255,.65); font-size:13.5px; line-height:1.5; margin:0 0 20px; }
+#hs-community .hc-card{ display:block; text-decoration:none; color:#fff; border-radius:20px; padding:22px 20px; margin-bottom:14px; position:relative; overflow:hidden;
+  background:linear-gradient(135deg,rgba(212,20,122,.30),rgba(123,47,247,.30)); border:1px solid rgba(255,255,255,.12); }
+#hs-community .hc-ic{ width:54px; height:54px; border-radius:16px; background:var(--mg,linear-gradient(135deg,#d4147a,#7b2ff7)); display:flex; align-items:center; justify-content:center; margin-bottom:14px; }
+#hs-community .hc-ic svg{ width:30px; height:30px; }
+#hs-community .hc-t{ font:700 19px/1.2 "Google Sans","Inter",sans-serif; margin-bottom:4px; }
+#hs-community .hc-d{ font-size:13px; color:rgba(255,255,255,.7); line-height:1.5; margin-bottom:16px; }
+#hs-community .hc-go{ display:inline-flex; align-items:center; justify-content:center; height:42px; padding:0 22px; border-radius:999px; background:linear-gradient(135deg,#d4147a,#7b2ff7); font-weight:600; font-size:14px; }
+#hs-community .hc-menu{ width:100%; height:44px; border-radius:12px; border:1px solid rgba(255,255,255,.16); background:none; color:#fff; font:600 14px "Google Sans","Inter",sans-serif; margin-top:6px; }
+@media(min-width:901px){ #hs-community{ display:none !important; } }
+</style>
+<script id="hs-community-js">
+(function(){
+  function build(){
+    if(document.getElementById('hs-community')) return;
+    var d=document.querySelector('.btn-discord svg'), t=document.querySelector('.btn-telegram svg');
+    var dl=(document.querySelector('.btn-discord')||{}).href||'https://discord.gg/w46C6mQgrY';
+    var tl=(document.querySelector('.btn-telegram')||{}).href||'https://t.me/rishievofficial';
+    var o=document.createElement('div'); o.id='hs-community';
+    o.innerHTML='<h1>Join our community</h1><p class="hc-sub">Get live match alerts, new channel links and support from other fans — pick your platform.</p>'+
+      '<a class="hc-card" href="'+dl+'" target="_blank" rel="noopener"><div class="hc-ic">'+(d?d.outerHTML:'')+'</div><div class="hc-t">Discord</div><div class="hc-d">Chat with the community, request channels and get quick help.</div><span class="hc-go">Join Discord</span></a>'+
+      '<a class="hc-card" href="'+tl+'" target="_blank" rel="noopener"><div class="hc-ic">'+(t?t.outerHTML:'')+'</div><div class="hc-t">Telegram</div><div class="hc-d">Instant updates, announcements and link drops on our channel.</div><span class="hc-go">Join Telegram</span></a>'+
+      '<button class="hc-menu" type="button">Open full menu</button>';
+    document.body.appendChild(o);
+    o.querySelector('.hc-menu').onclick=function(){ if(window.toggleDrawer) toggleDrawer(); };
+    var nav=document.getElementById('mobile-tabbar');
+    if(nav) nav.addEventListener('click',function(e){ var a=e.target.closest('.mtab'); if(a && !a.classList.contains('mtab-prof')) hsCloseCommunity(); },true);
+  }
+  window.hsCloseCommunity=function(){ var o=document.getElementById('hs-community'); if(o) o.classList.remove('open'); var p=document.querySelector('.mtab-prof'); if(p) p.classList.remove('active'); };
+  window.hsOpenCommunity=function(){
+    build(); var o=document.getElementById('hs-community'); if(!o) return;
+    if(o.classList.contains('open')){ hsCloseCommunity(); return; }
+    try{ if(window.sxCloseAllOverlays) sxCloseAllOverlays(); }catch(_){}
+    o.classList.add('open'); o.scrollTop=0;
+    var p=document.querySelector('.mtab-prof'); if(p) p.classList.add('active');
+    document.querySelectorAll('.mobile-tabbar .mtab[data-sxtab]').forEach(function(x){x.classList.remove('active');});
+  };
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',build); else build();
+})();
+</script>
+
+<style id="hs-modes-css">
+@media(max-width:900px){
+  /* narrower + borderless bars */
+  body{ padding-top:34px !important; padding-bottom:calc(38px + env(safe-area-inset-bottom,0px)) !important; }
+  #hsm-bar{ height:34px !important; padding:0 12px !important; border:0 !important; box-shadow:none !important; }
+  #hsm-bar .hsm-logo img{ height:22px !important; width:22px !important; }
+  body .mobile-tabbar{ height:calc(38px + env(safe-area-inset-bottom,0px)) !important; border:0 !important; box-shadow:none !important; background:#0c0d13 !important; }
+  body .mobile-tabbar::before,body .mobile-tabbar .mtab::before,body .mobile-tabbar .mtab::after,body .mobile-tabbar .mtab.active::after{ display:none !important; content:none !important; }
+  body .mobile-tabbar .mtab{ height:38px !important; border:0 !important; outline:0 !important; background:none !important; box-shadow:none !important; border-radius:0 !important; color:#7d8294 !important; -webkit-tap-highlight-color:transparent; }
+  body .mobile-tabbar .mtab.active{ color:#fff !important; }
+  body .mobile-tabbar .mtab svg{ width:21px !important; height:21px !important; }
+  body .mobile-tabbar .mtab[data-sxtab="home"] img.mtab-logo{ width:21px !important; height:21px !important; opacity:.55; }
+  #hs-pill{ bottom:calc(46px + env(safe-area-inset-bottom,0px)) !important; }
+  #hs-community{ top:34px !important; bottom:calc(38px + env(safe-area-inset-bottom,0px)) !important; }
+  footer{ padding-bottom:calc(20px + 38px + env(safe-area-inset-bottom,0px)) !important; }
+
+  /* ── HOME MODES ── (default = entertainment home, sports only when chosen) */
+  body.hs-m-all #hero-section,body.hs-m-tv #hero-section,body.hs-m-movies #hero-section,
+  body.hs-m-all #fixtures-section,body.hs-m-tv #fixtures-section,body.hs-m-movies #fixtures-section,
+  body.hs-m-all #ott-section,body.hs-m-tv #ott-section,body.hs-m-movies #ott-section,
+  body.hs-m-movies #channels-preview-section,
+  body.hs-m-sports #channels-preview-section,body.hs-m-sports #ott-section{ display:none !important; }
+  body.hs-m-tv #ott-section{ display:block !important; }
+  body.hs-m-all #sxs-home .hs-k-sports,body.hs-m-tv #sxs-home .hs-k-sports,body.hs-m-movies #sxs-home .hs-k-sports,
+  body.hs-m-sports #sxs-home .hs-k-movies,body.hs-m-sports #sxs-home .hs-k-tv,
+  body.hs-m-tv #sxs-home .hs-k-movies,body.hs-m-movies #sxs-home .hs-k-tv{ display:none !important; }
+
+  /* movie / TV hero (poster cards, stacked) */
+  #hs-mhero{ display:block; position:relative; overflow:hidden; height:calc(var(--ap-H,calc(min(86vw,440px)*1.2)) + 16px);
+    background:radial-gradient(70% 45% at 105% 0%,rgba(212,20,122,.32),transparent 70%),radial-gradient(60% 40% at -10% 8%,rgba(123,47,247,.28),transparent 70%); }
+  #hs-mhero:empty{ display:none; }
+  .mh-slide{ position:absolute; top:8px; left:16px; width:var(--ap-W,min(86vw,440px)); height:var(--ap-H,calc(min(86vw,440px)*1.2)); border-radius:26px; overflow:hidden; background:#111 center top/cover no-repeat;
+    box-shadow:0 14px 34px rgba(0,0,0,.55); cursor:pointer; transform-origin:center; will-change:transform;
+    transform:translateX(calc(var(--o,0)*24px)) scale(calc(1 - var(--o,0)*.055)); filter:brightness(calc(1 - var(--o,0)*.22)); z-index:calc(10 - var(--o,0));
+    transition:transform .5s cubic-bezier(.22,.8,.3,1),opacity .4s,filter .4s; }
+  .mh-slide[data-o="-1"]{ transform:translateX(-115%) scale(.92); opacity:0; pointer-events:none; z-index:1; }
+  .mh-slide[data-o="3"]{ opacity:0; pointer-events:none; }
+  .mh-slide:not([data-o="0"]){ pointer-events:none; }
+  .mh-slide::before{ content:""; position:absolute; inset:0; background:linear-gradient(0deg,rgba(8,9,14,.97) 0%,rgba(8,9,14,.75) 24%,rgba(8,9,14,.05) 55%,rgba(8,9,14,.28) 100%),radial-gradient(120% 90% at 50% 42%,transparent 52%,rgba(0,0,0,.55) 100%); }
+  .mh-badge{ position:absolute; top:16px; left:16px; padding:7px 12px; border-radius:10px; background:rgba(34,36,52,.72); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); font:600 12px/1 "Google Sans","Inter",sans-serif; color:#fff; }
+  .mh-info{ position:absolute; left:18px; right:84px; bottom:20px; color:#fff; font-family:"Google Sans","Inter",sans-serif; }
+  .mh-t{ font:800 clamp(22px,7vw,28px)/1.1 "Google Sans","Inter",sans-serif; margin:0 0 8px; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; text-shadow:0 2px 12px rgba(0,0,0,.6); }
+  .mh-m{ font-size:12.5px; color:rgba(255,255,255,.72); }
+  .mh-play{ position:absolute; right:14px; bottom:18px; width:54px; height:54px; border-radius:50%; border:0; background:linear-gradient(145deg,#eceef3,#a9afbd); display:grid; place-items:center; box-shadow:0 4px 16px rgba(0,0,0,.5); }
+  .mh-play::after{ content:""; border-left:15px solid #111; border-top:9px solid transparent; border-bottom:9px solid transparent; margin-left:4px; }
+
+  /* Top-10 numbers on the Movies row */
+  #sxs-home .hs-k-movies .sxs-track{ counter-reset:hsn; }
+  #sxs-home .hs-k-movies .sxs-card{ counter-increment:hsn; position:relative; }
+  #sxs-home .hs-k-movies .sxs-card:nth-child(-n+10) .sxs-th::after{ content:counter(hsn); position:absolute; left:6px; bottom:-6px; z-index:3; font:800 54px/1 "Google Sans","Inter",sans-serif; color:transparent; -webkit-text-stroke:2px rgba(255,255,255,.9); text-shadow:0 2px 10px rgba(0,0,0,.6); pointer-events:none; }
+
+  #hs-pill .hp-main button.on{ background:linear-gradient(135deg,rgba(212,20,122,.55),rgba(123,47,247,.55)); border-radius:999px; }
+}
+</style>
+<script id="hs-modes-js">
+(function(){
+  var MODES=['all','tv','movies','sports','live'], mq=window.matchMedia('(max-width:900px)');
+  window.__hsMode='all';
+  function setBody(m){ MODES.forEach(function(x){document.body.classList.remove('hs-m-'+x);}); document.body.classList.add('hs-m-'+m); }
+  window.hsSetMode=function(m){
+    if(MODES.indexOf(m)<0) m='all';
+    window.__hsMode=m; setBody(m);
+    var pill=document.getElementById('hs-pill');
+    if(pill){ pill.querySelectorAll('.hp-main button[data-g]').forEach(function(b){ b.classList.toggle('on',b.dataset.g===m); });
+      if(window.__hsPillLabel) window.__hsPillLabel(); pill._m=0; pill.className=(m==='all'&&window.scrollY<80)?'exp':'cmp'; }
+    try{ if(window.hsCloseCommunity) hsCloseCommunity(); if(window.goHome) goHome(); }catch(_){}
+    window.scrollTo({top:0,behavior:'smooth'});
+    hsBuildHero(true);
+    if(m==='live'){ setTimeout(function(){ try{ if(window.openLiveTV) openLiveTV(); }catch(_){} },60); }
+  };
+  setBody('all');
+
+  /* ── movie / TV hero ── */
+  var host=null, state={sig:'',cur:0,items:[],timer:0};
+  var own={movie:[],tv:[]},tried={};
+  function pool(t){ var a=[]; try{ a=(window.vaPools&&vaPools[t]&&vaPools[t].all)||[]; }catch(e){} return a.length?a:own[t]; }
+  function ensure(){ ['movie','tv'].forEach(function(t){ if(pool(t).length||tried[t]) return; tried[t]=1;
+    try{ vaFetchPage(t,1).then(function(d){ own[t]=(d&&d.items)||[]; if(!own[t].length) tried[t]=0; }).catch(function(){ tried[t]=0; }); }catch(e){ tried[t]=0; } }); }
+  function topN(arr,n){ return arr.filter(function(m){return m.poster_url;}).slice().sort(function(a,b){return (parseFloat(b.popularity)||0)-(parseFloat(a.popularity)||0);}).slice(0,n); }
+  function play(m,type){
+    var label=(m.title||'')+(m.year?' ('+m.year+')':'');
+    try{
+      if(type==='tv'){ vaPendingTvItem={id:m.tmdb_id||m.imdb_id,title:m.title}; vaOpenTvModal(label); }
+      else openStreamPlayer(vaBuildEmbedUrl(m.embed_url),label,'movie');
+    }catch(e){}
+  }
+  function esc(t){ return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  function pos(){
+    if(!host) return; var cs=[].slice.call(host.querySelectorAll('.mh-slide'));
+    cs.forEach(function(c,i){ var o=i-state.cur, d=o<0?-1:(o>3?3:o); c.dataset.o=d; c.style.setProperty('--o',Math.max(0,d)); });
+  }
+  function go(n){ var l=state.items.length; if(!l) return; state.cur=(n+l)%l; pos(); start(); }
+  function start(){ clearInterval(state.timer); if(state.items.length>1) state.timer=setInterval(function(){ if(!document.hidden) go(state.cur+1); },5000); }
+  var FB='https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/main/ChatGPT%20Image%20Jun%207,%202026,%2010_27_17%20AM.png';
+  function sportsItems(){
+    var S=window.__sxs, out=[];
+    if(S){
+      var list=[]; try{ list=S.refresh()||[]; }catch(e){ try{ list=S.all()||[]; }catch(e2){} }
+      var base=list.filter(function(it){return !it.fin;}), cu=window.sxHeroCustom?sxHeroCustom(base,list):[], used=cu.map(function(c){return c.it;}).filter(Boolean);
+      out=base.filter(function(it){return used.indexOf(it)<0;}).slice(0,12).map(function(it){
+        var title=String(it.title||'Match').replace(/\s+v\s+/i,' vs ');
+        var sm=(it.members||[]).filter(function(m){return m.src==='s';})[0];
+        if(sm&&sm.raw){ var t1=sm.raw.team1_full_name||sm.raw.team1_code||'',t2=sm.raw.team2_full_name||sm.raw.team2_code||''; if(t1&&t2) title=t1+' vs '+t2; }
+        var parts=[]; if(it.tour) parts.push(it.tour); parts.push(it.live?'Streaming live now':(it.time?'Starts '+it.time:'Today'));
+        var sp=String(it.sport||'').trim();
+        return {t:'sport',img:it.img||FB,title:title,badge:(it.live?'LIVE':'')+(sp?(it.live?' \u2022 ':'')+sp:'')||'Sports',sub:parts.join(' \u2022 '),src:it};
+      });
+      out=cu.map(function(c){ return {t:'sport',img:c.img||FB,title:c.title,badge:c.badge||(c.it&&c.it.live?'LIVE':'Sports'),sub:c.sub,src:c.it||null,el:c.el}; }).concat(out);
+    }
+    if(out.length) return out;
+    var c=document.getElementById('slides-container'); if(!c) return [];
+    return [].slice.call(c.querySelectorAll(':scope > .slide')).filter(function(sl){return !sl.querySelector('.hfl-logo');}).map(function(sl){
+      var bg=sl.querySelector('.slide-bg'), u=((bg&&bg.style.backgroundImage)||'').replace(/^url\(["']?/,'').replace(/["']?\)$/,'');
+      var g=function(q){ var e=sl.querySelector(q); return e?e.textContent.trim():''; };
+      return {t:'sport',img:u,title:g('.slide-title'),badge:g('.slide-sport-badge')||'Sports',sub:g('.slide-sub')};
+    }).filter(function(x){return x.img&&x.title;});
+  }
+  function playSport(it){
+    if(it.src&&window.__sxs){ try{ __sxs.open(it.src); }catch(e){} return; }
+    if(it.el){ var wb=it.el.querySelector('.btn-slide-watch'); if(wb){ wb.click(); return; } }
+    var c=document.getElementById('slides-container'); if(!c) return;
+    var sl=[].slice.call(c.querySelectorAll(':scope > .slide')).filter(function(s){var t=s.querySelector('.slide-title');return t&&t.textContent.trim()===it.title;})[0];
+    var b=sl&&sl.querySelector('.btn-slide-watch'); if(b) b.click();
+  }
+  function hsBuildHero(force){
+    if(!host){
+      host=document.getElementById('hs-mhero');
+      if(!host){ var hs=document.getElementById('hero-section'); if(!hs) return; host=document.createElement('div'); host.id='hs-mhero'; hs.parentNode.insertBefore(host,hs);
+        var x0=null,y0=0;
+        host.addEventListener('touchstart',function(e){x0=e.touches[0].clientX;y0=e.touches[0].clientY;},{passive:true});
+        host.addEventListener('touchend',function(e){ if(x0===null)return; var dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0; x0=null; if(Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)) go(state.cur+(dx<0?1:-1)); },{passive:true});
+        host.addEventListener('click',function(e){ var c=e.target.closest('.mh-slide'); if(!c) return; if(c.dataset.o!=='0'){ if(+c.dataset.o>0){ e.stopPropagation(); go(+c.dataset.i); } return; } var it=state.items[+c.dataset.i]; if(!it) return; if(it.t==='sport') playSport(it); else play(it.m,it.t); });
+      }
+    }
+    var mv=pool('movie'), tv=pool('tv'), m=window.__hsMode, items=[];
+    if(m==='sports') items=sportsItems();
+    else if(m==='movies') items=topN(mv,8).map(function(x){return {m:x,t:'movie'};});
+    else if(m==='tv') items=topN(tv,8).map(function(x){return {m:x,t:'tv'};});
+    else if(mq.matches){ var spA=sportsItems(), lvA=spA.filter(function(x){return x.src&&x.src.live;}); items=(lvA.length?lvA:spA.slice(0,4)).slice(0,10);
+      var t1=topN(tv,1)[0], m1=topN(mv,1)[0]; if(t1) items.push({m:t1,t:'tv'}); if(m1) items.push({m:m1,t:'movie'}); }
+    else { var sp=sportsItems().slice(0,3), a=topN(tv,3), b=topN(mv,3);
+      for(var i=0;i<3;i++){ if(sp[i]) items.push(sp[i]); if(a[i]) items.push({m:a[i],t:'tv'}); if(b[i]) items.push({m:b[i],t:'movie'}); } }
+    if(!items.length){ ensure(); if(state.sig!=='loading'){ host.innerHTML='<div class="mh-slide mh-sk" data-o="0"></div>'; state.sig='loading'; state.items=[]; } return; }
+    var sig=m+'#'+items.map(function(i){return (i.m||i).title;}).join('|');
+    if(sig===state.sig&&!force) return;
+    if(sig===state.sig&&host.children.length) { pos(); return; }
+    state.sig=sig; state.items=items; state.cur=0;
+    var yr=new Date().getFullYear();
+    host.innerHTML=items.map(function(it,i){
+      if(it.t==='sport') return '<div class="mh-slide" data-i="'+i+'"><div class="mh-bg mh-land" style="background-image:url(\''+esc(it.img)+'\')"></div><div class="mh-info"><span class="mh-badge">'+esc(it.badge||'Sports')+'</span><div class="mh-t">'+esc(it.title)+'</div><div class="mh-m">'+esc(it.sub||'')+'</div></div><button class="mh-play" type="button" aria-label="Play"></button></div>';
+      var x=it.m;
+      return '<div class="mh-slide" data-i="'+i+'"><div class="mh-bg" style="background-image:url(\''+esc(x.poster_url)+'\')"></div><div class="mh-info"><span class="mh-badge">'+(parseInt(x.year)>=yr?'New Release':(it.t==='tv'?'TV Show':'Movie'))+'</span><div class="mh-t">'+esc(x.title)+'</div><div class="mh-m">'+(x.year?esc(x.year)+' \u2022 ':'')+(it.t==='tv'?'TV Show':'Movie')+'</div></div><button class="mh-play" type="button" aria-label="Play"></button></div>'; }).join('');
+    pos(); start();
+  }
+  window.hsBuildHero=hsBuildHero;
+
+  /* ── tag + number the home rails ── */
+  function tag(){
+    var hr=document.getElementById('sxs-home'); if(!hr) return false;
+    hr.querySelectorAll(':scope > section.sxs-sec:not(.hs-gsec)').forEach(function(sec){
+      var h=sec.querySelector('.sxs-t'); if(!h) return; var t=(h.firstChild&&h.firstChild.nodeValue||h.textContent||'').trim();
+      if(/live now|upcoming/i.test(t)) sec.classList.add('hs-k-sports');
+      else if(/^(top 10 )?movies/i.test(t)){ sec.classList.add('hs-k-movies'); if(h.firstChild&&h.firstChild.nodeType===3) h.firstChild.nodeValue='Top 10 Movies'; }
+      else if(/tv shows/i.test(t)) sec.classList.add('hs-k-tv');
+    });
+    return true;
+  }
+  var obs=null;
+  function init(){
+    if(!document.body) return;
+    if(!document.body.className.match(/hs-m-/)) setBody(window.__hsMode);
+    var hr=document.getElementById('sxs-home');
+    if(hr&&!obs){ obs=new MutationObserver(tag); obs.observe(hr,{childList:true}); }
+    tag(); hsBuildHero(false);
+    try{ if(window.vaPools&&!pool('movie').length&&typeof vaBulkPreload==='function'&&!vaPools.movie.loading) vaBulkPreload('movie'); if(window.vaPools&&!pool('tv').length&&typeof vaBulkPreload==='function'&&!vaPools.tv.loading) vaBulkPreload('tv'); }catch(_){}
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+  setInterval(init,2000);
+})();
+</script>
+
+<style id="hs-hero-v2">
+@media(max-width:900px){
+  /* sports hero: full 16:9 banner on top → fades into blurred vignette with text underneath */
+  #slides-container .slide{ background:#0c0d13 !important; }
+  #slides-container .slide-bg{ overflow:hidden; }
+  #slides-container .slide-bg::before{ content:""; position:absolute; inset:-24px; background:inherit; background-size:cover; background-position:center; filter:blur(26px) brightness(.5) saturate(1.2); }
+  #slides-container .slide-bg::after{ content:""; position:absolute; left:0; right:0; top:0; height:calc(var(--ap-W,min(86vw,440px)) * 9 / 16 + 6px);
+    background:inherit; background-size:cover; background-position:center;
+    -webkit-mask-image:linear-gradient(180deg,#000 72%,transparent 100%); mask-image:linear-gradient(180deg,#000 72%,transparent 100%); }
+  #slides-container .slide-overlay{
+    background:
+      linear-gradient(0deg,rgba(8,9,14,.98) 0%,rgba(8,9,14,.9) 26%,rgba(8,9,14,.5) 42%,rgba(8,9,14,0) 56%),
+      linear-gradient(180deg,rgba(8,9,14,.35) 0%,rgba(8,9,14,0) 22%),
+      radial-gradient(130% 100% at 50% 40%,transparent 58%,rgba(0,0,0,.5) 100%) !important; }
+  /* badge sits above the title, like the reference */
+  #slides-container .slide-content > :first-child{ margin-top:auto !important; margin-bottom:8px !important; }
+  #slides-container .slide-content > :nth-child(2){ margin-top:0 !important; }
+  #slides-container .slide-sport-badge{ background:var(--mg,linear-gradient(135deg,#d4147a,#7b2ff7)) !important; border-radius:5px !important;
+    -webkit-backdrop-filter:none; backdrop-filter:none; padding:5px 8px !important; font-size:12px !important; font-weight:700 !important; letter-spacing:.01em !important; }
+  #slides-container .slide-title{ font-weight:600 !important; font-size:clamp(20px,6vw,24px) !important; line-height:1.15 !important; margin-bottom:6px !important; }
+  #slides-container .slide-sub{ font-size:13px !important; }
+
+  /* TV · Movies · Sports bar floats above every section/page */
+  #hs-pill{ z-index:1090 !important; }
+  body:has(#stream-player-overlay.open) #hs-pill,body:has(#sx-search-overlay.open) #hs-pill{ display:none !important; }
+}
+</style>
+
+<style id="hs-mhero-sk">
+@media(max-width:900px){
+  .mh-sk{ background:linear-gradient(110deg,#171923 30%,#232634 50%,#171923 70%) !important; background-size:200% 100% !important; animation:mhSk 1.3s linear infinite; cursor:default; }
+  .mh-sk::before{ display:none; }
+  @keyframes mhSk{ to{ background-position:-200% 0; } }
+}
+</style>
+
+<style id="hs-narrow2">
+@media(max-width:900px){
+  body.hs-m-live #hs-mhero,body.hs-m-live #hero-section,body.hs-m-live #fixtures-section,body.hs-m-live #ott-section,body.hs-m-live #sxs-home .hs-k-sports,body.hs-m-live #sxs-home .hs-k-movies,body.hs-m-live #sxs-home .hs-k-tv{ display:none !important; }
+
+  /* even narrower bars */
+  body{ padding-top:30px !important; padding-bottom:calc(34px + env(safe-area-inset-bottom,0px)) !important; }
+  #hsm-bar{ height:30px !important; padding:0 12px !important; }
+  #hsm-bar .hsm-logo img{ height:20px !important; width:20px !important; }
+  body .mobile-tabbar{ height:calc(34px + env(safe-area-inset-bottom,0px)) !important; }
+  body .mobile-tabbar .mtab{ height:34px !important; }
+  body .mobile-tabbar .mtab svg{ width:19px !important; height:19px !important; }
+  body .mobile-tabbar .mtab[data-sxtab="home"] img.mtab-logo{ width:19px !important; height:19px !important; }
+  #hs-community{ top:30px !important; bottom:calc(34px + env(safe-area-inset-bottom,0px)) !important; }
+  footer{ padding-bottom:calc(20px + 34px + env(safe-area-inset-bottom,0px)) !important; }
+
+  /* slim floating bar */
+  #hs-pill{ bottom:calc(40px + env(safe-area-inset-bottom,0px)) !important; gap:6px !important; }
+  #hs-pill .hp-main{ height:32px !important; padding:0 4px !important; }
+  #hs-pill .hp-main button{ font-size:12.5px !important; padding:0 10px !important; }
+  #hs-pill .hp-main i{ height:14px !important; }
+  #hs-pill .hp-main .hp-chev{ padding:0 8px 0 4px !important; font-size:14px !important; }
+  #hs-pill .hp-mic,#hs-pill .hp-x{ width:32px !important; height:32px !important; }
+  #hs-pill .hp-lab,#hs-pill .hp-ask{ height:32px !important; font-size:12.5px !important; padding:0 16px !important; }
+  #hs-pill svg{ width:14px !important; height:14px !important; }
+}
+</style>
+
+<style id="hs-mhero-v2">
+@media(max-width:900px){
+  .mh-slide{ background:#0c0d13 !important; }
+  .mh-slide::before{ z-index:1; }
+  .mh-bg{ position:absolute; inset:0; z-index:0; overflow:hidden; background-size:cover; background-position:center top; background-repeat:no-repeat; }
+  /* landscape banners (sports): full 16:9 on top, blurred fill + fade below */
+  .mh-bg.mh-land::before{ content:""; position:absolute; inset:-24px; background:inherit; background-size:cover; background-position:center; filter:blur(26px) brightness(.5) saturate(1.2); }
+  .mh-bg.mh-land::after{ content:""; position:absolute; left:0; right:0; top:0; height:calc(var(--ap-W,min(86vw,440px))*9/16 + 6px); background:inherit; background-size:cover; background-position:center;
+    -webkit-mask-image:linear-gradient(180deg,#000 72%,transparent 100%); mask-image:linear-gradient(180deg,#000 72%,transparent 100%); }
+  .mh-slide::before{ background:linear-gradient(0deg,rgba(8,9,14,.98) 0%,rgba(8,9,14,.9) 26%,rgba(8,9,14,.5) 42%,rgba(8,9,14,0) 58%),linear-gradient(180deg,rgba(8,9,14,.3) 0%,rgba(8,9,14,0) 20%),radial-gradient(130% 100% at 50% 40%,transparent 58%,rgba(0,0,0,.5) 100%) !important; }
+  .mh-info{ z-index:2; display:flex; flex-direction:column; align-items:flex-start; }
+  .mh-badge{ position:static !important; display:inline-block; margin:0 0 8px; padding:5px 8px !important; border-radius:5px !important; background:var(--mg,linear-gradient(135deg,#d4147a,#7b2ff7)) !important; -webkit-backdrop-filter:none !important; backdrop-filter:none !important; font:700 12px/1 "Google Sans","Inter",sans-serif; color:#fff; }
+  .mh-t{ font-weight:600 !important; font-size:clamp(20px,6vw,24px) !important; line-height:1.15 !important; margin-bottom:6px !important; }
+  .mh-m{ font-size:13px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .mh-play{ z-index:2; }
+}
+</style>
+
+<style id="hs-pc-home">
+/* ── shared home modes (all widths) ── */
+body.hs-m-all #hero-section,body.hs-m-tv #hero-section,body.hs-m-movies #hero-section,body.hs-m-live #hero-section,
+body.hs-m-all #fixtures-section,body.hs-m-tv #fixtures-section,body.hs-m-movies #fixtures-section,body.hs-m-live #fixtures-section,
+body.hs-m-all #ott-section,body.hs-m-movies #ott-section,body.hs-m-live #ott-section,
+body.hs-m-movies #channels-preview-section,body.hs-m-sports #channels-preview-section,body.hs-m-sports #ott-section,
+body.hs-m-live #hs-mhero{ display:none !important; }
+body.hs-m-all #sxs-home .hs-k-sports,body.hs-m-tv #sxs-home .hs-k-sports,body.hs-m-movies #sxs-home .hs-k-sports,body.hs-m-live #sxs-home .hs-k-sports,
+body.hs-m-sports #sxs-home .hs-k-movies,body.hs-m-sports #sxs-home .hs-k-tv,body.hs-m-tv #sxs-home .hs-k-movies,body.hs-m-movies #sxs-home .hs-k-tv,
+body.hs-m-live #sxs-home .hs-k-movies,body.hs-m-live #sxs-home .hs-k-tv{ display:none !important; }
+@media(max-width:900px){ #hero-section{ display:none !important; } }
+@media(min-width:901px){ body.hs-m-sports #hs-mhero{ display:none !important; } }
+@media(min-width:901px){
+  :root{ --mg:linear-gradient(135deg,#d4147a,#7b2ff7); --ap-bg:#0c0d13; --ap-W:420px; --ap-H:500px; }
+  #hs-mhero{ display:block; position:relative; overflow:hidden; height:calc(var(--ap-H) + 28px); max-width:100%; background:radial-gradient(60% 60% at 80% 0%,rgba(212,20,122,.30),transparent 70%),radial-gradient(50% 60% at 15% 10%,rgba(123,47,247,.26),transparent 70%); }
+  #hs-mhero:empty{ display:none; }
+  #hs-mhero .mh-slide{ left:calc(50% - var(--ap-W)/2 - 40px); top:14px; }
+  .mh-t{ font-size:26px !important; }
+  #hs-mhero{ margin-top:0; }
+  /* floating bar on PC */
+  #hs-pill{ position:fixed; left:calc(50% + 36px); transform:translateX(-50%); bottom:24px; z-index:1090; display:flex; align-items:center; gap:8px; font-family:"Google Sans","Inter",sans-serif; }
+  #hs-pill button{ border:0; color:#fff; font:600 13.5px/1 "Google Sans","Inter",sans-serif; cursor:pointer; background:none; }
+  #hs-pill .glass{ background:linear-gradient(135deg,rgba(60,14,70,.92),rgba(40,16,86,.92)); border:1px solid rgba(212,20,122,.35); border-radius:999px; box-shadow:0 8px 24px rgba(0,0,0,.55); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); }
+  #hs-pill .hp-exp,#hs-pill .hp-cmp{ display:none; align-items:center; gap:8px; }
+  #hs-pill.exp .hp-exp,#hs-pill.cmp .hp-cmp{ display:flex; }
+  #hs-pill .hp-main{ display:flex; align-items:center; height:38px; padding:0 6px; }
+  #hs-pill .hp-main button{ padding:0 14px; height:100%; }
+  #hs-pill .hp-main button.on{ background:linear-gradient(135deg,rgba(212,20,122,.55),rgba(123,47,247,.55)); border-radius:999px; }
+  #hs-pill .hp-main i{ width:1px; height:16px; background:rgba(255,255,255,.25); }
+  #hs-pill .hp-main .hp-chev{ padding:0 10px 0 6px; font-size:15px; }
+  #hs-pill .hp-mic,#hs-pill .hp-x{ width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+  #hs-pill .hp-mic,#hs-pill .hp-ask{ background:var(--mg) !important; }
+  #hs-pill .hp-lab,#hs-pill .hp-ask{ height:38px; padding:0 20px; display:flex; align-items:center; gap:8px; }
+  #hs-pill svg{ width:15px; height:15px; }
+  #hs-pill.listening .hp-ask,#hs-pill.listening .hp-mic{ background:linear-gradient(135deg,#ff2d7a,#9b3dff) !important; }
+}
+@media(min-width:901px){
+/* movie / TV hero (poster cards, stacked) */
+  #hs-mhero{ display:block; position:relative; overflow:hidden; height:calc(var(--ap-H,calc(min(86vw,440px)*1.2)) + 16px);
+    background:radial-gradient(70% 45% at 105% 0%,rgba(212,20,122,.32),transparent 70%),radial-gradient(60% 40% at -10% 8%,rgba(123,47,247,.28),transparent 70%); }
+  #hs-mhero:empty{ display:none; }
+  .mh-slide{ position:absolute; top:8px; left:16px; width:var(--ap-W,min(86vw,440px)); height:var(--ap-H,calc(min(86vw,440px)*1.2)); border-radius:26px; overflow:hidden; background:#111 center top/cover no-repeat;
+    box-shadow:0 14px 34px rgba(0,0,0,.55); cursor:pointer; transform-origin:center; will-change:transform;
+    transform:translateX(calc(var(--o,0)*24px)) scale(calc(1 - var(--o,0)*.055)); filter:brightness(calc(1 - var(--o,0)*.22)); z-index:calc(10 - var(--o,0));
+    transition:transform .5s cubic-bezier(.22,.8,.3,1),opacity .4s,filter .4s; }
+  .mh-slide[data-o="-1"]{ transform:translateX(-115%) scale(.92); opacity:0; pointer-events:none; z-index:1; }
+  .mh-slide[data-o="3"]{ opacity:0; pointer-events:none; }
+  .mh-slide:not([data-o="0"]){ pointer-events:none; }
+  .mh-slide::before{ content:""; position:absolute; inset:0; background:linear-gradient(0deg,rgba(8,9,14,.97) 0%,rgba(8,9,14,.75) 24%,rgba(8,9,14,.05) 55%,rgba(8,9,14,.28) 100%),radial-gradient(120% 90% at 50% 42%,transparent 52%,rgba(0,0,0,.55) 100%); }
+  .mh-badge{ position:absolute; top:16px; left:16px; padding:7px 12px; border-radius:10px; background:rgba(34,36,52,.72); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); font:600 12px/1 "Google Sans","Inter",sans-serif; color:#fff; }
+  .mh-info{ position:absolute; left:18px; right:84px; bottom:20px; color:#fff; font-family:"Google Sans","Inter",sans-serif; }
+  .mh-t{ font:800 clamp(22px,7vw,28px)/1.1 "Google Sans","Inter",sans-serif; margin:0 0 8px; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; text-shadow:0 2px 12px rgba(0,0,0,.6); }
+  .mh-m{ font-size:12.5px; color:rgba(255,255,255,.72); }
+  .mh-play{ position:absolute; right:14px; bottom:18px; width:54px; height:54px; border-radius:50%; border:0; background:linear-gradient(145deg,#eceef3,#a9afbd); display:grid; place-items:center; box-shadow:0 4px 16px rgba(0,0,0,.5); }
+  .mh-play::after{ content:""; border-left:15px solid #111; border-top:9px solid transparent; border-bottom:9px solid transparent; margin-left:4px; }
+
+  
+}
+
+</style>
+<style id="hs-pc-home-mh">
+@media(min-width:901px){
+  .mh-slide{ background:#0c0d13 !important; }
+  .mh-slide::before{ z-index:1; }
+  .mh-bg{ position:absolute; inset:0; z-index:0; overflow:hidden; background-size:cover; background-position:center top; background-repeat:no-repeat; }
+  /* landscape banners (sports): full 16:9 on top, blurred fill + fade below */
+  .mh-bg.mh-land::before{ content:""; position:absolute; inset:-24px; background:inherit; background-size:cover; background-position:center; filter:blur(26px) brightness(.5) saturate(1.2); }
+  .mh-bg.mh-land::after{ content:""; position:absolute; left:0; right:0; top:0; height:calc(var(--ap-W,min(86vw,440px))*9/16 + 6px); background:inherit; background-size:cover; background-position:center;
+    -webkit-mask-image:linear-gradient(180deg,#000 72%,transparent 100%); mask-image:linear-gradient(180deg,#000 72%,transparent 100%); }
+  .mh-slide::before{ background:linear-gradient(0deg,rgba(8,9,14,.98) 0%,rgba(8,9,14,.9) 26%,rgba(8,9,14,.5) 42%,rgba(8,9,14,0) 58%),linear-gradient(180deg,rgba(8,9,14,.3) 0%,rgba(8,9,14,0) 20%),radial-gradient(130% 100% at 50% 40%,transparent 58%,rgba(0,0,0,.5) 100%) !important; }
+  .mh-info{ z-index:2; display:flex; flex-direction:column; align-items:flex-start; }
+  .mh-badge{ position:static !important; display:inline-block; margin:0 0 8px; padding:5px 8px !important; border-radius:5px !important; background:var(--mg,linear-gradient(135deg,#d4147a,#7b2ff7)) !important; -webkit-backdrop-filter:none !important; backdrop-filter:none !important; font:700 12px/1 "Google Sans","Inter",sans-serif; color:#fff; }
+  .mh-t{ font-weight:600 !important; font-size:clamp(20px,6vw,24px) !important; line-height:1.15 !important; margin-bottom:6px !important; }
+  .mh-m{ font-size:13px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .mh-play{ z-index:2; }
+}
+
+@media(min-width:901px){
+  .mh-sk{ background:linear-gradient(110deg,#171923 30%,#232634 50%,#171923 70%) !important; background-size:200% 100% !important; animation:mhSk 1.3s linear infinite; cursor:default; }
+  .mh-sk::before{ display:none; }
+  @keyframes mhSk{ to{ background-position:-200% 0; } }
+}
+</style>
+<style id="hs-pc-hero-169">
+/* PC ONLY: hero slides = full-width Hotstar banner, full-height, no fixed ratio. Mobile untouched. */
+@media(min-width:901px){
+  /* sports "today's matches" hero */
+  #hs-hero{ height:calc(100vh - 150px) !important; min-height:460px !important; max-height:none !important; aspect-ratio:auto; }
+  #hs-hero .bg{ background-position:center 22%; }
+  #hs-hero .txt{ bottom:16% !important; }
+  #hs-hero .thumbs{ bottom:16% !important; }
+  /* movies / TV / all / sports poster-card hero -> one full-width banner slide at a time */
+  #hs-mhero{ height:calc(100vh - 150px) !important; min-height:460px !important; aspect-ratio:auto; max-width:100%; }
+  #hs-mhero .mh-slide{ left:0 !important; top:0 !important; width:100% !important; height:100% !important; border-radius:0 !important;
+    transform:none !important; filter:none !important; box-shadow:none !important; opacity:0; pointer-events:none; transition:opacity .5s ease; z-index:1; }
+  #hs-mhero .mh-slide[data-o="0"]{ opacity:1; pointer-events:auto; z-index:2; }
+  #hs-mhero .mh-slide.mh-sk{ opacity:1; }
+  .mh-bg{ background-position:center 22%; }
+  .mh-bg.mh-land::before{ display:none; }
+  .mh-bg.mh-land::after{ inset:0; height:auto; -webkit-mask-image:none; mask-image:none; }
+  #hs-mhero .mh-slide::before{ background:linear-gradient(90deg,rgba(0,0,0,.92) 0%,rgba(0,0,0,.6) 30%,rgba(0,0,0,.1) 60%,transparent 80%),linear-gradient(0deg,#000 0%,rgba(0,0,0,0) 38%) !important; }
+  .mh-info{ left:44px; right:auto; width:min(520px,45%); bottom:16%; }
+  .mh-t{ font-size:clamp(22px,2.6vw,38px) !important; }
+  .mh-m{ font-size:15px; }
+  .mh-play{ right:auto; left:44px; bottom:auto; display:none; }
+}
+</style>
+<style id="hs-pill-pc-off">
+/* PC: no floating TV/Movies/Sports/Live TV bar (the left rail already has these). Mobile keeps it. */
+@media(min-width:901px){ #hs-pill{ display:none !important; } }
+/* Mobile: Sports mode = sports hero slides + sports rows only, nothing from the entertainment home */
+@media(max-width:900px){
+  body.hs-m-sports #hs-mhero{ display:block !important; }
+  body.hs-m-sports #hs-mhero:empty{ display:none !important; }
+  body.hs-m-sports #channels-preview-section,
+  body.hs-m-sports #ott-section,
+  body.hs-m-sports #sxs-home .hs-k-movies,
+  body.hs-m-sports #sxs-home .hs-k-tv{ display:none !important; }
+  body.hs-m-sports #sxs-home .hs-k-sports{ display:block !important; }
+}
+</style>
+<script id="hs-sports-open">
+(function(){
+  var mq=window.matchMedia('(max-width:900px)');
+  function wrap(){
+    var f=window.hsSetMode; if(!f||f.__sp) return false;
+    var w=function(m){
+      var r=f.apply(this,arguments);
+      if(m==='sports' && mq.matches){
+        // sports data (FanCode/SonyLIV/sheet) can land after the tap: rebuild the hero a few times
+        [150,700,1800,4000].forEach(function(t){ setTimeout(function(){
+          if(window.__hsMode!=='sports') return;
+          try{ document.body.classList.remove('hs-m-all','hs-m-tv','hs-m-movies','hs-m-live'); document.body.classList.add('hs-m-sports'); }catch(_){}
+          try{ window.hsBuildHero&&hsBuildHero(true); }catch(_){}
+          if(t===150) window.scrollTo({top:0});
+        },t); });
+      }
+      return r;
+    };
+    w.__sp=1; window.hsSetMode=w; return true;
+  }
+  if(!wrap()){ var n=0,iv=setInterval(function(){ if(wrap()||++n>40) clearInterval(iv); },250); }
+})();
+</script>
+<style id="hs-home-all-rows">
+/* Home (For You) = everything: Live Now + Upcoming Today + Movies + TV Shows rows */
+body.hs-m-all #sxs-home .hs-k-sports,
+body.hs-m-all #sxs-home .hs-k-movies,
+body.hs-m-all #sxs-home .hs-k-tv{ display:block !important; }
+</style>
+<style id="hs-mobile-combined">
+@media(max-width:900px){
+  /* TV tab = Live TV channels + TV Shows, as vertical grids (many rows, scroll down). Movies tab = movie grid. */
+  #sxs-home .hs-gsec{ display:none !important; }
+  body.hs-m-tv.hs-tvsub-live #sxs-home .hs-gsec.hs-g-live,
+  body.hs-m-tv.hs-tvsub-shows #sxs-home .hs-gsec.hs-g-tv,
+  body.hs-m-movies #sxs-home .hs-gsec.hs-g-movies{ display:block !important; }
+  /* the two big switch buttons at the top of the TV section */
+  #hs-tvswitch{ display:none; }
+  body.hs-m-tv #hs-tvswitch{ display:flex; gap:12px; padding:14px 14px 6px; }
+  #hs-tvswitch button{ flex:1; height:56px; border-radius:18px; border:2px solid transparent; color:#fff; font:800 17px/1 "Google Sans","Inter",sans-serif; letter-spacing:.04em; cursor:pointer; -webkit-tap-highlight-color:transparent; opacity:.62; transition:opacity .2s,transform .2s; }
+  #hs-tvswitch button[data-s="shows"]{ background:linear-gradient(135deg,#123a9c,#6a1fa0); border-color:#2b7cff; }
+  #hs-tvswitch button[data-s="live"]{ background:linear-gradient(90deg,#f0147a,#ff3d3d 60%,#ffb300); border-color:#ff5c8a; }
+  body.hs-tvsub-shows #hs-tvswitch button[data-s="shows"],
+  body.hs-tvsub-live #hs-tvswitch button[data-s="live"]{ opacity:1; transform:scale(1.02); box-shadow:0 0 22px rgba(255,255,255,.18); }
+  body.hs-m-tv #sxs-home .hs-k-tv:not(.hs-gsec),
+  body.hs-m-movies #sxs-home .hs-k-movies:not(.hs-gsec){ display:none !important; }
+  .hs-mgrid{ grid-template-columns:repeat(3,minmax(0,1fr)) !important; gap:12px 8px !important; justify-content:stretch !important; }
+  .hs-mgrid .sxs-card{ width:auto !important; flex:none !important; min-width:0 !important; }
+  .hs-gsec{ margin-bottom:10px; }
+  /* Live TV + TV merged: no separate Live TV button in the floating bar */
+  #hs-pill .hp-main button[data-g="live"],
+  #hs-pill .hp-main button[data-g="sports"] + i{ display:none !important; }
+}
+</style>
+<script id="hs-mobile-combined-js">
+(function(){
+  var mq=window.matchMedia('(max-width:900px)');
+  /* pill: TV button also covers Live TV on mobile */
+  var n=0,iv=setInterval(function(){
+    var b=document.querySelector('#hs-pill .hp-main button[data-g="tv"]');
+    if(b){ b.textContent='TV & Live'; clearInterval(iv); } else if(++n>60) clearInterval(iv);
+  },250);
+  /* LIVE TV / TV SHOWS switch at the top of the mobile TV section */
+  document.body.classList.add('hs-tvsub-shows');
+  var k=0,iv2=setInterval(function(){
+    var hr=document.getElementById('sxs-home');
+    if(hr){ clearInterval(iv2);
+      if(!document.getElementById('hs-tvswitch')){
+        var sw=document.createElement('div'); sw.id='hs-tvswitch';
+        sw.innerHTML='<button type="button" data-s="live">LIVE TV</button><button type="button" data-s="shows">TV SHOWS</button>';
+        var tgt=document.getElementById('hs-mhero')||document.getElementById('hero-section')||hr;   /* very top, above the hero slides */
+        tgt.parentNode.insertBefore(sw,tgt);
+        sw.addEventListener('click',function(e){
+          var b=e.target.closest('button'); if(!b) return; var v=b.dataset.s;
+          document.body.classList.toggle('hs-tvsub-live',v==='live');
+          document.body.classList.toggle('hs-tvsub-shows',v==='shows');
+        });
+      }
+    } else if(++k>80) clearInterval(iv2);
+  },250);
+  /* middle EV button = real home (For You): live-match hero slides + 1 TV show + 1 movie */
+  document.addEventListener('click',function(e){
+    if(!mq.matches) return;
+    var t=e.target.closest&&e.target.closest('.mtab[data-sxtab="home"]'); if(!t) return;
+    if(window.hsSetMode&&window.__hsMode&&window.__hsMode!=='all') hsSetMode('all');
+  },true);
+})();
+</script>
+<style id="hs-pc-matches-hero">
+@media(min-width:901px){
+  /* PC hero = Hotstar slider with MATCHES ONLY (live + today). No movie / TV poster hero. */
+  #hs-mhero{ display:none !important; }
+  body.hs-m-all #hero-section{ display:block !important; }
+  #hs-hero .thumbs{ right:40px; bottom:15%; max-width:48%; gap:10px; z-index:3; }
+  #hs-hero .thw{ position:relative; max-width:520px; gap:10px; scroll-behavior:smooth; }
+  #hs-hero .th{ width:92px; height:52px; opacity:.7; }
+  #hs-hero .th.on{ opacity:1; border-color:#fff; transform:scale(1.06); }
+  #hs-hero .nx{ width:30px; height:52px; background:rgba(0,0,0,.55); }
+  #hs-hero .txt{ bottom:15% !important; z-index:3; }
+  #hs-hero .go{ min-width:300px; height:50px !important; font-size:16px !important; background:var(--hs-grad) !important; color:#fff !important; border-radius:6px !important; }
+  #hs-hero .go:hover{ filter:brightness(1.1); }
+  #hs-hero .plus{ width:50px !important; height:50px !important; }
+  #hs-hero h1{ font-size:clamp(28px,3.4vw,46px) !important; -webkit-line-clamp:3; }
+  #hs-hero .sub{ font-size:16px !important; -webkit-line-clamp:3 !important; }
+}
+</style>
+<style id="hs-no-hamburger">
+@media(max-width:900px){
+  .hamburger,#hamburger,.mts-hamburger,#mts-hamburger,#hsm-bar .mts-hamburger{ display:none !important; }
+}
+</style>
+<style id="hs-pc-hero-narrow">
+@media(min-width:901px){
+  /* PC hero: Helvetica Medium (500) + Bold (700) + team logos from the sheet */
+  #hs-hero .txt,#hs-hero h1,#hs-hero .sub,#hs-hero .tag,#hs-hero .go,#hs-hero .lgs b{ font-family:"Helvetica Neue",Helvetica,Arial,"Liberation Sans",sans-serif !important; }
+  #hs-hero h1{ font-weight:700 !important; font-size:clamp(30px,3.6vw,52px) !important; line-height:1.08 !important; letter-spacing:-.015em !important; }
+  #hs-hero .sub{ font-weight:500 !important; font-size:17px !important; line-height:1.4 !important; }
+  #hs-hero .tag{ font-weight:700 !important; font-size:13px !important; letter-spacing:.1em !important; }
+  #hs-hero .go{ font-weight:700 !important; font-size:17px !important; letter-spacing:.01em; }
+  #hs-hero .lgs{ display:flex; align-items:center; gap:14px; margin:0 0 14px; }
+  #hs-hero .lgs:empty{ display:none; }
+  #hs-hero .lgs .tl{ width:68px; height:68px; border-radius:50%; background:rgba(255,255,255,.12); display:grid; place-items:center; overflow:hidden; font:700 16px "Helvetica Neue",Helvetica,Arial,sans-serif; color:#fff; box-shadow:0 4px 14px rgba(0,0,0,.45); }
+  #hs-hero .lgs .tl img{ max-width:78%; max-height:78%; object-fit:contain; }
+  #hs-hero .lgs b{ font-weight:700; font-size:20px; color:rgba(255,255,255,.8); letter-spacing:.06em; }
+  /* LIVE TV / TV SHOWS switch is mobile-only */
+  #hs-tvswitch{ display:none !important; }
+}
+@media(max-width:900px){ #hs-hero .lgs{ display:none; } }
+</style>
+<style id="hs-mh-sidetap">
+@media(max-width:900px){
+  /* tap the peeking back card on the right edge -> it comes to the front */
+  #hs-mhero .mh-slide[data-o="1"],#hs-mhero .mh-slide[data-o="2"]{ pointer-events:auto !important; cursor:pointer; }
+}
+</style>
+<style id="hs-logo-home">
+@media(max-width:900px){ #hsm-bar .hsm-logo{ cursor:pointer; -webkit-tap-highlight-color:transparent; } }
+</style>
+<script id="hs-logo-home-js">
+(function(){
+  var mq=window.matchMedia('(max-width:900px)');
+  /* mobile top-bar logo = Home button */
+  document.addEventListener('click',function(e){
+    if(!mq.matches) return;
+    var t=e.target.closest&&e.target.closest('#hsm-bar .hsm-logo'); if(!t) return;
+    e.preventDefault();
+    try{
+      if(window.hsSetMode) hsSetMode('all'); else if(window.goHome) goHome();
+      if(window.goHome) goHome();
+    }catch(_){}
+    window.scrollTo({top:0,behavior:'smooth'});
+  },true);
+})();
+</script>
+<style id="hs-tv-live-nohero">
+@media(max-width:900px){
+  /* TV section -> LIVE TV selected: no hero slides */
+  body.hs-m-tv.hs-tvsub-live #hs-mhero,
+  body.hs-m-tv.hs-tvsub-live #hero-section{ display:none !important; }
+}
+</style>
 </body>
 </html>
