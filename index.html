@@ -5714,6 +5714,10 @@ function fcxOpenWatchById(id){
     url: fcxJsUrl(m), text: 'FanCode',
     fcxLive: isLive, fcxTime: fcxFmtMatchTime(m)
   }].concat(window.LMX ? window.LMX.serversForFcx(m) : []);
+  try {   // a Sheet row for the same fixture: its own servers join the list too
+    const row = (window._matchCardsData || []).filter(c => fcxTitleHasTeam(m.title || '', c.team1_code, c.team1_full_name) && fcxTitleHasTeam(m.title || '', c.team2_code, c.team2_full_name))[0];
+    if (row) sxGetMatchServers(row).forEach(s => { if (!servers.some(x => String(x.url).trim() === String(s.url).trim())) servers.push(s); });
+  } catch (e) {}
   openMatchWatchScreen(servers, {
     name: m.title || 'Live Stream',
     fcxId: m.id,
@@ -5772,7 +5776,21 @@ function fcxWatchBtnHtml(m, cls){
 // True if `title` mentions this team — either its short code as a whole
 // word (e.g. "IND" in "IND vs PAK, 1st T20I") or its full name as a
 // substring (e.g. "India" in "India tour of Pakistan").
+const FCX_TEAM_AL = { ind:'india', pak:'pakistan', eng:'england', aus:'australia', nz:'new zealand', nzl:'new zealand', sl:'sri lanka', sa:'south africa', rsa:'south africa', wi:'west indies',
+  ban:'bangladesh', afg:'afghanistan', zim:'zimbabwe', ire:'ireland', ned:'netherlands', sco:'scotland', nep:'nepal', uae:'united arab emirates', usa:'united states', bra:'brazil', arg:'argentina', esp:'spain', fra:'france', ger:'germany', por:'portugal' };
+function fcxTeamVariants(x){
+  x = String(x || '').trim().toLowerCase(); if (!x) return [];
+  const out = [];
+  if (FCX_TEAM_AL[x]) out.push(FCX_TEAM_AL[x]);
+  Object.keys(FCX_TEAM_AL).forEach(k => { if (FCX_TEAM_AL[k] === x) out.push(k); });
+  return out;
+}
 function fcxTitleHasTeam(title, code, fullName){
+  if (fcxTitleHasTeamExact(title, code, fullName)) return true;
+  const alts = fcxTeamVariants(code).concat(fcxTeamVariants(fullName));
+  return alts.some(a => fcxTitleHasTeamExact(title, a, a));
+}
+function fcxTitleHasTeamExact(title, code, fullName){
   // "Victoria Women" in the title must not match the men's "Victoria" row (and vice-versa), same for U19 etc.
   if (window.sxQual && sxQual(title) !== sxQual(fullName || code)) {
     // title-level tag only counts when the team name itself is what carries it — compare with the tag on the team side
@@ -15944,7 +15962,10 @@ button, a.btn, [class*="btn-"], input, select, textarea{
     PUN:'Punjabi', PA:'Punjabi', ODI:'Odia', ORI:'Odia', OD:'Odia', BHO:'Bhojpuri', URD:'Urdu', UR:'Urdu', ASM:'Assamese' };
   var ALIAS = { ind:'india', bra:'brazil', pak:'pakistan', eng:'england', aus:'australia', nz:'new zealand',
     sl:'sri lanka', sa:'south africa', wi:'west indies', ban:'bangladesh', afg:'afghanistan', jpn:'japan',
-    qat:'qatar', tha:'thailand', chn:'china', kor:'south korea', irn:'iran', usa:'united states' };
+    qat:'qatar', tha:'thailand', chn:'china', kor:'south korea', irn:'iran', usa:'united states',
+    rsa:'south africa', nzl:'new zealand', ned:'netherlands', ire:'ireland', zim:'zimbabwe', sco:'scotland', nep:'nepal', uae:'united arab emirates',
+    oma:'oman', can:'canada', png:'papua new guinea', hk:'hong kong', esp:'spain', fra:'france', ger:'germany', por:'portugal', arg:'argentina',
+    ita:'italy', bel:'belgium', cro:'croatia', mex:'mexico', uru:'uruguay', col:'colombia' };
   var GENERIC_CAT = /^(sports?|live|other|events?)?$/i;
 
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
@@ -16101,6 +16122,10 @@ button, a.btn, [class*="btn-"], input, select, textarea{
   window.slxOpenWatch = function(key){
     var g = findGroup(key);
     if (!g || typeof openMatchWatchScreen !== 'function') return false;
+    if (g.servers.length && window.LMX && LMX.items){            /* merged entry carries Sheet + FanCode + Willow servers too */
+      var hit = LMX.items.filter(function(it){ return it.servers.some(function(s){ return s.url === g.servers[0].url; }); })[0];
+      if (hit) return LMX.open(hit.key);
+    }
     openMatchWatchScreen(g.servers, {
       name: g.title,
       team1_code:'', team1_full_name:'', team1_icon_url:'',
@@ -16271,6 +16296,10 @@ button, a.btn, [class*="btn-"], input, select, textarea{
     if (/tomorrow/i.test(s)) d += 1;
     return new Date(Date.UTC(y, mo, d, h, mi) - IST);
   }
+  function hasDate(e){
+    if (['start_time','startTime','start','timestamp','datetime','date_time','start_ts'].some(function(k){ return e[k] != null && e[k] !== ''; })) return true;
+    return /\b\d{4}-\d{2}-\d{2}\b|\b\d{1,2}(?:st|nd|rd|th)?\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)|\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{1,2}\b|tomorrow/i.test(whenText(e));
+  }
   function whenText(e){ return [e.date || e.match_date || e.start_date, e.time || e.match_time].filter(Boolean).join(' '); }
   function parseWhenEntry(e){
     var keys = ['start_time','startTime','start','timestamp','datetime','date_time','start_ts'];
@@ -16297,8 +16326,9 @@ button, a.btn, [class*="btn-"], input, select, textarea{
     var title = segs[vi], tour = segs.filter(function(_, i){ return i !== vi; }).join(' - ');
     var t = title.replace(/\s+in\s+[A-Za-z ]+\d{4}$/i, '').split(/\s+(?:vs\.?|v)\s+/i).map(function(x){ return x.trim(); });
     /* Legends / masters league sides are NOT the national teams - keep them out of cross-merging */
-    var teams = (t.length === 2 && !/champions|legends|masters|\bxi\b|academy|select/i.test(title)) ? t : null;
-    return { title: title, tour: tour, teams: teams };
+    var lg = t.length === 2 && /champions|legends|masters|\bxi\b|academy|select/i.test(t.join(' '));   /* league sides: matched strictly, never by prefix */
+    var teams = t.length === 2 ? t : null;
+    return { title: title, tour: tour, teams: teams, lg: lg };
   }
 
   function isStream(u){
@@ -16334,7 +16364,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
         return { url: u, text: urls.length > 1 ? 'Willow ' + (i + 1) : 'Willow', icon: LOGO, sub: 'Willow \u00b7 tap to play', playName: p.title, appOnly: drm };
       });
       var grp = ({ key: 'wlx' + idx, id: e.id || '', status: st, title: p.title, tour: p.tour, category: 'Cricket', blob: '',
-        poster: e.image || '', servers: servers, teams: p.teams, date: '', start: parseWhenEntry(e), timeText: whenText(e) });
+        poster: e.image || '', servers: servers, teams: p.teams, lg: p.lg, dateKnown: hasDate(e), date: '', start: parseWhenEntry(e), timeText: whenText(e) });
       (st === 'ENDED' ? ended : out).push(grp);
     });
     return out;
@@ -16362,10 +16392,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
 
   /* ---------- LMX bridge: groups visible to the unified layer ---------- */
   window.wlxForLmx = function(){
-    var lim = Date.now() + LMX_HORIZON_H * 3600000;
-    return (window._wlxGroups || []).filter(function(g){
-      return g.status === 'LIVE' || (g.start && g.start.getTime() <= lim) || g.servers.length;
-    });
+    return (window._wlxGroups || []).slice();        /* every Willow match, live / upcoming / any date in the future */
   };
 
   /* ---------- open a match in the shared server selector ---------- */
@@ -16494,8 +16521,27 @@ button, a.btn, [class*="btn-"], input, select, textarea{
     if (!container || typeof totalSlides === 'undefined') return;
     container.querySelectorAll('.wlx-hero-slide').forEach(function(s){ s.remove(); });
     var L = window.LMX;
+    /* slides the HERO SLIDES sheet already provides (everything except our own FanCode/Willow additions and the trailing channels banner) */
+    var AL = { ind:'india', pak:'pakistan', eng:'england', aus:'australia', nz:'new zealand', sl:'sri lanka', sa:'south africa', wi:'west indies', ban:'bangladesh', afg:'afghanistan' };
+    function nz(s){ s = String(s || '').toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim(); return AL[s] || s; }
+    var all0 = Array.prototype.slice.call(container.querySelectorAll(':scope > .slide'));
+    var sheetTitles = all0.filter(function(s, i){
+      return !s.classList.contains('fcx-hero-slide') && !s.classList.contains('wlx-hero-slide') && i < all0.length - 1;
+    }).map(function(s){
+      var o = ''; try { o = decodeURIComponent(s.dataset.origTitle || ''); } catch(_){}
+      var el = s.querySelector('.slide-title');
+      return nz(o || (el ? el.textContent : ''));
+    }).filter(Boolean);
+    function sheetHasSlide(g){
+      var gt = nz(g.title);
+      return sheetTitles.some(function(st){
+        if (g.teams && g.teams.length === 2) return st.indexOf(nz(g.teams[0])) >= 0 && st.indexOf(nz(g.teams[1])) >= 0;
+        return gt && (st === gt || st.indexOf(gt) >= 0 || gt.indexOf(st) >= 0);
+      });
+    }
     var picks = (window._wlxGroups || []).filter(function(g){
       if (g.status === 'ENDED' || !g.servers.length) return false;
+      if (sheetHasSlide(g)) return false;             /* the sheet's own banner wins - no duplicate Willow slide */
       var hit = (L && L.items) ? L.items.filter(function(it){ return it.servers.some(function(s){ return s.url === g.servers[0].url; }); })[0] : null;
       return !(hit && hit.fcx);                       /* already a FanCode hero slide: don't duplicate it */
     }).sort(function(a, b){
@@ -16611,7 +16657,10 @@ button, a.btn, [class*="btn-"], input, select, textarea{
   'use strict';
   var ALIAS = { ind:'india', bra:'brazil', pak:'pakistan', eng:'england', aus:'australia', nz:'new zealand',
     sl:'sri lanka', sa:'south africa', wi:'west indies', ban:'bangladesh', afg:'afghanistan', jpn:'japan',
-    qat:'qatar', tha:'thailand', chn:'china', kor:'south korea', irn:'iran', usa:'united states' };
+    qat:'qatar', tha:'thailand', chn:'china', kor:'south korea', irn:'iran', usa:'united states',
+    rsa:'south africa', nzl:'new zealand', ned:'netherlands', ire:'ireland', zim:'zimbabwe', sco:'scotland', nep:'nepal', uae:'united arab emirates',
+    oma:'oman', can:'canada', png:'papua new guinea', hk:'hong kong', esp:'spain', fra:'france', ger:'germany', por:'portugal', arg:'argentina',
+    ita:'italy', bel:'belgium', cro:'croatia', mex:'mexico', uru:'uruguay', col:'colombia' };
   var CAT_SYN = { soccer:'football', 'association football':'football' };
   var items = [];
 
@@ -16705,11 +16754,66 @@ button, a.btn, [class*="btn-"], input, select, textarea{
     it.servers.forEach(function(s){ have[s.url] = 1; });
     list.forEach(function(s){ if (have[s.url]) return; have[s.url] = 1; it.servers.push(cloneServer(s)); });
   }
+  /* league / legends sides ("India Champions"): whole-name equality only - "India" must never merge with "India Champions" */
+  function sn(s){
+    var w = String(s || '').toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\b(team|cc)\b/g, ' ').replace(/\s+/g, ' ').trim().split(' ');
+    if (w[0] && ALIAS[w[0]]) w[0] = ALIAS[w[0]];
+    return w.join(' ');
+  }
+  function strictTeam(a, b){ a = sn(a); b = sn(b); return !!a && a === b; }
+  function strictInTitle(title, team){
+    var tm = sn(team); if (!tm) return false;
+    var parts = String(title || '').replace(/\[[^\]]*\]/g, ' ').split(/\s+(?:vs\.?|v\.?|versus)\s+/i);
+    if (parts.length < 2) return false;
+    return parts.some(function(p){ return (' ' + sn(p) + ' ').indexOf(' ' + tm + ' ') >= 0; });
+  }
+  function startNear(a, b, hrs){ return !(a && b) || Math.abs(a - b) <= hrs * 36e5; }
+
+  /* LOOSE LINK: "SA Champions" == "South Africa Champions" == "South Africa" (words, not prefixes).
+     Needs: every core word of each side present on the matching side of the other title, same women/U-age tag,
+     and both sides league-style or both national (so "India" never merges with "India Champions"). */
+  var NOISE = { champions:1, champion:1, legends:1, legend:1, masters:1, team:1, cc:1, xi:1, the:1, of:1, and:1 };
+  function words(s){ return String(s || '').toLowerCase().replace(/\[[^\]]*\]/g, ' ').replace(/women'?s?|woman|ladies/g, ' w ').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim().split(' ').filter(Boolean); }
+  function core(s){
+    var w = words(s), q = [], c = [];
+    w.forEach(function(x){ if (x === 'w' || /^u\d{2}$/.test(x)) q.push(x); else if (!NOISE[x]) c.push(x); });
+    if (c.length === 1 && ALIAS[c[0]]) c = ALIAS[c[0]].split(' ');
+    return { c: c, q: q.sort().join() };
+  }
+  function subset(a, b){ return a.length && a.every(function(x){ return b.indexOf(x) >= 0; }); }
+  function sideLoose(team, part){
+    var a = core(team), b = core(part), bw = b.c.concat(words(part).filter(function(x){ return NOISE[x]; }));
+    if (a.q !== b.q) return false;
+    return subset(a.c, bw);
+  }
+  function leagueText(s){ return /legends|masters|champions|\bwcl\b/i.test(String(s || '')); }
+  function looseFcx(it, m){
+    if (!it.teams) return false;
+    if (leagueText(it.tour + ' ' + it.title + ' ' + it.teams.join(' ')) !== leagueText((m.title || '') + ' ' + (m.tournament || ''))) return false;
+    var parts = String(m.title || '').split(/\s+(?:vs\.?|v\.?|versus)\s+/i);
+    if (parts.length < 2) return false;
+    var p0 = parts[0], p1 = parts[parts.length - 1];
+    return (sideLoose(it.teams[0], p0) && sideLoose(it.teams[1], p1)) || (sideLoose(it.teams[0], p1) && sideLoose(it.teams[1], p0));
+  }
+  function looseRow(it, c){
+    var s1 = [c.team1_full_name, c.team1_code], s2 = [c.team2_full_name, c.team2_code];
+    function eqc(team, arr){ var a = core(team); return arr.some(function(x){ if (!x) return false; var b = core(x); return a.q === b.q && a.c.length && a.c.join(' ') === b.c.join(' '); }); }
+    var ok = (eqc(it.teams[0], s1) && eqc(it.teams[1], s2)) || (eqc(it.teams[0], s2) && eqc(it.teams[1], s1));
+    if (!ok) return false;
+    return leagueText(it.tour + ' ' + it.title + ' ' + it.teams.join(' ')) === leagueText([c.game, c.details, c.team1_full_name, c.team2_full_name].join(' '));
+  }
+  var builtW = null, builtS = null;
+  function fresh(){ if (builtW !== window._wlxGroups || builtS !== window._slxGroups) build(); }
   function sameFixture(a, b){
     if ((a.status === 'ENDED') !== (b.status === 'ENDED')) return false;   // a finished fixture never merges into a live/upcoming one
     if (a.status !== 'LIVE' && b.status !== 'LIVE' && a.start && b.start && Math.abs(a.start - b.start) > 18 * 36e5) return false;   // same two teams, different day = different match
     var ca = catKey(a.category), cb = catKey(b.category);
     if (ca && cb && ca !== cb) return false;
+    if (a.teams && b.teams && a.lg !== b.lg && (a.lg || b.lg)){        /* strict league side vs a loose one: both must be strict-equal */
+      return (strictTeam(a.teams[0], b.teams[0]) && strictTeam(a.teams[1], b.teams[1])) || (strictTeam(a.teams[0], b.teams[1]) && strictTeam(a.teams[1], b.teams[0]));
+    }
+    if (a.teams && b.teams && (a.lg || b.lg) && a.teams.length === 2 && b.teams.length === 2)
+      return (strictTeam(a.teams[0], b.teams[0]) && strictTeam(a.teams[1], b.teams[1])) || (strictTeam(a.teams[0], b.teams[1]) && strictTeam(a.teams[1], b.teams[0]));
     if (a.teams && b.teams && a.teams.length === 2 && b.teams.length === 2)
       return (sameTeam(a.teams[0], b.teams[0]) && sameTeam(a.teams[1], b.teams[1])) ||
              (sameTeam(a.teams[0], b.teams[1]) && sameTeam(a.teams[1], b.teams[0]));
@@ -16725,8 +16829,8 @@ button, a.btn, [class*="btn-"], input, select, textarea{
         t1:(g.teams && g.teams.length === 2 && window.sxFlagUrl) ? sxFlagUrl(g.teams[0]) : '', t2:(g.teams && g.teams.length === 2 && window.sxFlagUrl) ? sxFlagUrl(g.teams[1]) : '', servers:g.servers.map(cloneServer) });
     });
     (typeof window.wlxForLmx === 'function' ? window.wlxForLmx() : []).forEach(function(g){   // Willow OTT feed (WLX bridge)
-      raw.push({ src:'wlx', title:g.title, teams:(g.teams && g.teams.length === 2) ? g.teams : null, names:null,
-        category:LCAT(g.category, g.title, g.blob), status:g.status || 'UPCOMING', start:g.start || null, tour:g.tour || '', poster:g.poster || '',
+      raw.push({ src:'wlx', lg:!!g.lg, title:g.title, teams:(g.teams && g.teams.length === 2) ? g.teams : null, names:null,
+        category:LCAT(g.category, g.title, g.blob), status:g.status || 'UPCOMING', start:(g.dateKnown || g.status === 'LIVE') ? (g.start || null) : null, tour:g.tour || '', poster:g.poster || '',
         t1:'', t2:'', servers:g.servers.map(cloneServer) });
     });
     var out = [];
@@ -16735,6 +16839,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
       var hit = out.filter(function(x){ return sameFixture(x, it); })[0];
       if (!hit){ out.push(it); return; }
       addServers(hit, it.servers);
+      hit.lg = hit.lg || it.lg;
       if (it.status === 'LIVE') hit.status = 'LIVE';
       else if (hit.status === 'ENDED' && it.status !== 'ENDED') hit.status = it.status;
       if (!hit.poster && it.poster) hit.poster = it.poster;
@@ -16747,7 +16852,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
       if (!hit.names && it.names) hit.names = swp ? [it.names[1], it.names[0]] : it.names;
     });
     out.forEach(function(it, i){ it.key = 'lmx' + i; relabel(it); });
-    items = out;
+    items = out; builtW = window._wlxGroups; builtS = window._slxGroups;
     return out;
   }
 
@@ -16767,12 +16872,23 @@ button, a.btn, [class*="btn-"], input, select, textarea{
     it.sheet = null; it.fcx = null;
     if (!it.teams || it.status === 'ENDED') return it;      // finished feed matches always get their own card
     cards = cards || window._matchCardsData || [];
+    var lg = !!it.lg, live = it.status === 'LIVE', st = it.start ? it.start.getTime() : 0;
+    function rowStrict(c){
+      var s1 = [c.team1_full_name, c.team1_code], s2 = [c.team2_full_name, c.team2_code];
+      function ea(team, arr){ return arr.some(function(x){ return x && strictTeam(team, x); }); }
+      return (ea(it.teams[0], s1) && ea(it.teams[1], s2)) || (ea(it.teams[0], s2) && ea(it.teams[1], s1));
+    }
     it.sheet = cards.filter(function(c){
       if (typeof isMatchFinished === 'function' && isMatchFinished(c)) return false;
-      return rowHas(c, it.teams[0], it.teams[1]);
+      if (!((lg ? rowStrict(c) : rowHas(c, it.teams[0], it.teams[1])) || looseRow(it, c))) return false;
+      if (!live && st){ var cs = new Date(String(c.countdown_to_iso_datetime || c.countdown_to || '').trim()).getTime(); if (!isNaN(cs) && !startNear(st, cs, 40)) return false; }
+      return true;
     })[0] || null;
     if (!it.sheet) it.fcx = (window._fcxMatchesCache || []).filter(function(m){
-      return m.status !== 'COMPLETED' && titleHas(m.title, it.teams[0]) && titleHas(m.title, it.teams[1]);
+      if (m.status === 'COMPLETED') return false;
+      if (!((lg ? (strictInTitle(m.title, it.teams[0]) && strictInTitle(m.title, it.teams[1])) : (titleHas(m.title, it.teams[0]) && titleHas(m.title, it.teams[1]))) || looseFcx(it, m))) return false;
+      if (!live && st && m.time instanceof Date && !isNaN(m.time.getTime()) && !startNear(st, m.time.getTime(), 40)) return false;
+      return true;
     })[0] || null;
     return it;
   }
@@ -16780,8 +16896,33 @@ button, a.btn, [class*="btn-"], input, select, textarea{
     return items.filter(function(it){ classify(it); return !it.sheet && !it.fcx; });
   }
 
+  /* every server of every source for one fixture: Sheet (+its FanCode) -> FanCode -> SonyLIV -> Willow, de-duplicated by URL */
+  function everyServer(it){
+    fresh(); classify(it);
+    var out = [], seen = {};
+    function add(s){ if (!s || !s.url) return; var u = String(s.url).trim(); if (!u || u === '#' || seen[u]) return; seen[u] = 1; out.push(s); }
+    if (it.sheet){ try { (sxGetMatchServers(it.sheet) || []).forEach(add); } catch(e){} }
+    else if (it.fcx && typeof fcxJsUrl === 'function'){
+      add({ url: fcxJsUrl(it.fcx), text: 'FanCode', fcxLive: it.fcx.status === 'LIVE', fcxTime: (typeof fcxFmtMatchTime === 'function') ? fcxFmtMatchTime(it.fcx) : '' });
+    }
+    it.servers.forEach(function(s){ add(cloneServer(s)); });
+    return out;
+  }
+
   /* ── Public API ── */
   var LMX = window.LMX = {
+    everyServer: everyServer,
+    debug: function(){
+      fresh();
+      var fx = window._fcxMatchesCache || [], rows = (window._wlxGroups || []).map(function(g){
+        var it = items.filter(function(x){ return x.servers.some(function(s){ return g.servers[0] && s.url === g.servers[0].url; }); })[0] || null;
+        if (it) classify(it);
+        var cand = fx.filter(function(m){ return /cricket/i.test(m.category || '') || /legends|champions|cricket/i.test((m.tournament || '') + (m.title || '')); }).map(function(m){ return m.title; }).slice(0, 6);
+        return { willow: g.title, tour: g.tour, teams: g.teams ? g.teams.join(' | ') : '(none)', strictLeague: !!g.lg, status: g.status, streams: g.servers.length,
+                 linkedSheet: it && it.sheet ? 'yes' : 'no', linkedFanCode: it && it.fcx ? it.fcx.title : 'no', fanCodeCricketTitles: it && !it.fcx ? cand.join(' ;; ') : '' };
+      });
+      if (console.table) console.table(rows); return rows;
+    },
     scan: scan, hasDrm: hasDrm,
     get items(){ return items; },
 
@@ -16809,9 +16950,12 @@ button, a.btn, [class*="btn-"], input, select, textarea{
 
     // Extra servers for a FanCode match's selector.
     serversForFcx: function(m){
-      var out = [];
+      var out = []; fresh();
       items.forEach(function(it){
-        if (!it.teams || !titleHas(m.title, it.teams[0]) || !titleHas(m.title, it.teams[1])) return;
+        if (!it.teams) return;
+        var ok = (it.lg ? (strictInTitle(m.title, it.teams[0]) && strictInTitle(m.title, it.teams[1])) : (titleHas(m.title, it.teams[0]) && titleHas(m.title, it.teams[1]))) || looseFcx(it, m);
+        if (!ok) return;
+        if (it.status !== 'LIVE' && it.start && m.time instanceof Date && !isNaN(m.time.getTime()) && !startNear(it.start.getTime(), m.time.getTime(), 40)) return;
         it.servers.forEach(function(s){ if (!out.some(function(x){ return x.url === s.url; })) out.push(cloneServer(s)); });
       });
       return out;
@@ -16835,11 +16979,11 @@ button, a.btn, [class*="btn-"], input, select, textarea{
     open: function(key){
       var it = items.filter(function(x){ return x.key === key; })[0];
       if (!it || typeof openMatchWatchScreen !== 'function') return false;
-      var live = it.status === 'LIVE', n = it.servers.length;
-      openMatchWatchScreen(it.servers.map(cloneServer), {
+      var live = it.status === 'LIVE', all = everyServer(it), n = all.length, sh = it.sheet || {};
+      openMatchWatchScreen(all, {
         name: it.title,
-        team1_code:'', team1_full_name: it.names ? it.names[0] : '', team1_icon_url: it.t1 || '',
-        team2_code:'', team2_full_name: it.names ? it.names[1] : '', team2_icon_url: it.t2 || '',
+        team1_code: sh.team1_code || '', team1_full_name: sh.team1_full_name || (it.names ? it.names[0] : ''), team1_icon_url: sh.team1_icon_url || it.t1 || '',
+        team2_code: sh.team2_code || '', team2_full_name: sh.team2_full_name || (it.names ? it.names[1] : ''), team2_icon_url: sh.team2_icon_url || it.t2 || '',
         date_label: live ? (n + (n === 1 ? ' server' : ' servers') + ' available') : fmtTime(it.start),
         details: it.category || '',
         countdown: (!live && it.start) ? it.start.toISOString() : '',
@@ -16854,6 +16998,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
     render: function(){ renderSections(); renderHome(); }
   };
   window.lmxOpenWatch = LMX.open;
+  window.lmxDebug = LMX.debug;
 
   function normGame(x){ return (typeof smoNormGameName === 'function') ? smoNormGameName(x) : String(x||'').toLowerCase().replace(/[^a-z0-9]/g,''); }
   function exactGame(list, name){
