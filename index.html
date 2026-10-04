@@ -2,6 +2,10 @@
 <html lang="en">
 <head>
 <link rel="preconnect" href="https://vidapi.ru" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://vaplayer.ru" crossorigin>
+<link rel="dns-prefetch" href="https://image.tmdb.org">
 <script id="ev-teamname">
 /* Consistent team-name style: "IND vs WI", "India vs West Indies", "Real Madrid vs FC Barcelona".
    Only touches "A vs B" titles, so channel / movie names are never altered. */
@@ -24,16 +28,21 @@
       return lo.charAt(0).toUpperCase()+lo.slice(1);
     }).join(' ');
   }
+  var _L='english|hindi|bengali|bangla|tamil|telugu|kannada|malayalam|marathi|gujarati|punjabi|odia|oriya|urdu|assamese|bhojpuri|nepali|sinhala|spanish|arabic|french|portuguese|german|italian|russian|indonesian|thai|vietnamese|turkish|multi(?:[ -]?(?:audio|language|lang))?';
+  var _G='[\\[\\(\\{]\\s*(?:'+_L+')(?:\\s*(?:[,/&+|]|and|-)\\s*(?:'+_L+'))*\\s*(?:audio|commentary|feed|dub|language)?\\s*[\\]\\)\\}]';
+  window.evLangRe=new RegExp('\\s*'+_G,'gi');
+  window.evIsLangTag=function(t){ return new RegExp('^\\s*'+_G+'\\s*$','i').test(String(t||'')); };
+  window.evStripLang=function(t){ return String(t==null?'':t).replace(window.evLangRe,'').replace(/\s{2,}/g,' ').trim(); };
   window.evTeamName=function(str){
     if(str==null) return '';
     str=String(str);
     var m=str.match(/^(.+?)\s+(?:vs\.?|v|x)\s+(.+?)(\s*[\(\[\|\-\u2013\u2014].*)?$/i);
     if(!m) return str;
-    return side(m[1])+' vs '+side(m[2])+(m[3]||'');
+    return side(m[1])+' vs '+side(m[2])+(m[3]&&!window.evIsLangTag(m[3])?m[3]:'');
   };
 })();
 </script>
-<script>(function(){try{window.__hsmEarly={};['movies','tvshows'].forEach(function(p){window.__hsmEarly[p]=fetch('https://vidapi.ru/'+p+'/latest/page-1.json').then(function(r){if(!r.ok)throw 0;return r.json();}).catch(function(){return null;});});}catch(e){}})();</script>
+<script>(function(){try{window.__hsmEarly={};['movies','tvshows'].forEach(function(p){var u='https://vidapi.ru/'+p+'/latest/page-1.json',ac=window.AbortController?new AbortController():null,tm=ac?setTimeout(function(){ac.abort();},4500):0;window.__hsmEarly[p]=fetch(u,ac?{signal:ac.signal}:undefined).then(function(r){clearTimeout(tm);if(!r.ok)throw 0;return r.json();}).catch(function(){return null;});});}catch(e){}})();</script>
 <script>
 /* PERF: pause 1s+ interval timers while the tab is hidden; console.log off unless ?debug */
 (function(){
@@ -80,8 +89,8 @@
 </script>
 <title id="page-title">EV SPORTS (Powered by Saptarshi SX Sports)</title>
 <link id="favicon" rel="icon" type="image/png" href="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/magenta.png">
-<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Rajdhani:wght@400;500;600;700&family=Chakra+Petch:wght@400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap"></noscript>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Rajdhani:wght@400;500;600;700&family=Chakra+Petch:wght@400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Rajdhani:wght@400;500;600;700&family=Chakra+Petch:wght@400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap"></noscript>
 
 <!-- ── Google Cast (Chromecast) Sender SDK — lets the stream player cast
      the current channel to a TV/Chromecast device. Only works when the
@@ -89,7 +98,7 @@
      whose watch_url is a third-party embed page (not a raw stream URL)
      cannot be handed to a Cast receiver, since the SDK can only cast an
      actual media URL, not the contents of a cross-origin iframe. ── -->
-<script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
+<script defer src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
 
 <!-- SX SPORTS -->
 
@@ -3268,7 +3277,9 @@ body::before{ display:none !important; }
   };
 })();
 </script>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&display=swap"></noscript>
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap">
 </head>
 <body>
  
@@ -4568,12 +4579,16 @@ window.sxRenderFavouritesOverlay = sxRenderFavouritesOverlay;
         <div class="sx-search-bar">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.3" y1="15.3" x2="20" y2="20"/></svg>
           <input id="sx-search-input" type="text" placeholder="Search matches, FanCode, SonyLIV, channels, movies, TV shows" autocomplete="off" spellcheck="false" enterkeyhint="search" oninput="sxSearchTyped(this.value)">
+          <button type="button" class="ev-mic" id="ev-mic" aria-label="Voice search" title="Voice search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8.5 21h7"/></svg>
+          </button>
           <button type="button" class="sx-search-clear" onclick="sxClearSearch()" aria-label="Clear">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
           </button>
         </div>
         <button type="button" class="sx-search-cancel" onclick="closeSxSearch()">Close</button>
       </div>
+      <div class="ev-voice-msg" id="ev-voice-msg" role="status" aria-live="polite"></div>
       <div class="sx-search-chips" id="sx-search-chips">
         <button type="button" class="sx-chip active" data-filter="all" onclick="sxSetSearchFilter('all')">All<b class="n"></b></button>
         <button type="button" class="sx-chip" data-filter="matches" onclick="sxSetSearchFilter('matches')">Matches<b class="n"></b></button>
@@ -17581,7 +17596,7 @@ window.sxHeroCustom=function(base,all){
     return d.replace(/\.\./g,'.');
   }
   function showPop(c){
-    var it=c.hasAttribute('data-r')?(window.__sxsReg||[])[+c.getAttribute('data-r')]:(c.hasAttribute('data-k')?all[+c.getAttribute('data-k')]:null);if(!it||it.poster||!canHover())return;
+    var it=c.hasAttribute('data-r')?(window.__sxsReg||[])[+c.getAttribute('data-r')]:(c.hasAttribute('data-k')?all[+c.getAttribute('data-k')]:null);if(!it||!canHover())return;
     popIt=it;curCard=c;
     var th=c.querySelector('.sxs-th'),r=c.getBoundingClientRect(),tr=th.getBoundingClientRect();
     var W=Math.min(340,innerWidth-16);pop.style.width=W+'px';
@@ -17590,6 +17605,12 @@ window.sxHeroCustom=function(base,all){
     var sv=[];if(it.src==='s'){try{sv=sxGetMatchServers(it.raw)||[];}catch(e){}}else if(it.src==='f'){sv=[{text:'FanCode'}];try{if(window.LMX)sv=sv.concat(window.LMX.serversForFcx(it.raw)||[]);}catch(e){}}
     sv=it._sv=[];
     var srv=sv.length?'<div class="ps-row">'+sv.map(function(x,i){return '<span class="ps" data-s="'+i+'">'+esc(x.text||('Server '+(i+1)))+'</span>';}).join('')+'</div>':'';
+    if(it.poster&&it.mraw){
+      var mm=it.mraw,gs=String(mm.genre||'').split(/[,|]/).map(function(x){return x.trim();}).filter(Boolean).slice(0,3),rt=parseFloat(mm.rating),isTv=it.mtype==='tv';
+      var pchips='<i>'+(isTv?'TV SHOW':'MOVIE')+'</i>'+(mm.year?'<i>'+esc(mm.year)+'</i>':'')+(rt?'<i>\u2605 '+rt.toFixed(1)+'</i>':'')+gs.map(function(g){return '<i>'+esc(g)+'</i>';}).join('');
+      var pdesc=(isTv?'Stream ':'Watch ')+it.title+(mm.year?' ('+mm.year+')':'')+(gs.length?' \u2014 '+gs.join(', ').toLowerCase()+(isTv?' series':' movie'):'')+(rt?'. Rated '+rt.toFixed(1)+'/10':'')+'. '+(isTv?'Pick a season and episode to start.':'Free to stream in HD.');
+      pop.innerHTML='<div class="sxs-th sxs-pth" style="--pbg:url(&quot;'+esc(it.img)+'&quot;)"><img src="'+esc(it.img)+'" alt=""></div><div class="pb"><div class="pt">'+esc(it.title)+'</div><div class="pm">'+pchips+'</div><p class="pd">'+esc(pdesc)+'</p><span class="pw">\u25B6 '+(isTv?'Watch Show':'Watch Movie')+'</span></div>';
+    } else
     pop.innerHTML='<div class="sxs-th">'+th.innerHTML+'</div><div class="pb"><div class="pt">'+esc(it.title)+'</div><div class="pm">'+chips+'</div><p class="pd">'+esc(it.desc||descOf(it))+'</p>'+srv+'<span class="pw">'+(it.fin?'\u25B6 View':'\u25B6 Watch')+'</span></div>';
     var h=pop.offsetHeight,thH=W*9/16;
     var left=r.left+r.width/2-W/2,top=tr.top-(thH-tr.height)/2;
@@ -17700,7 +17721,7 @@ window.sxHeroCustom=function(base,all){
   function wrap(raw,kind,mk){if(raw._sxw)return raw._sxw;var w=mk(raw);w.kind=kind;w.ri=REG.push(w)-1;raw._sxw=w;return w;}
   function mvWrap(m,type){return wrap(m,type,function(m){
     var label=m.title+(m.year?' ('+m.year+')':'');
-    return {title:m.title||'',img:m.poster_url||'',poster:true,play:function(){
+    return {title:m.title||'',img:m.poster_url||'',poster:true,mraw:m,mtype:type,play:function(){
       if(type==='tv'){vaPendingTvItem={id:m.tmdb_id||m.imdb_id,title:m.title};vaOpenTvModal(label);}
       else openStreamPlayer(vaBuildEmbedUrl(m.embed_url),label,'movie');}};});}
   function chWrap(c){return wrap(c,'ch',function(c){
@@ -19062,8 +19083,6 @@ window.fcLoadIntoFrame = fcLoadIntoFrame;
       host=document.getElementById('hs-mhero');
       if(!host){ var hs=document.getElementById('hero-section'); if(!hs) return; host=document.createElement('div'); host.id='hs-mhero'; hs.parentNode.insertBefore(host,hs);
         var x0=null,y0=0;
-        host.addEventListener('touchstart',function(e){x0=e.touches[0].clientX;y0=e.touches[0].clientY;},{passive:true});
-        host.addEventListener('touchend',function(e){ if(x0===null)return; var dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0; x0=null; if(Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)) go(state.cur+(dx<0?1:-1)); },{passive:true});
         host.addEventListener('click',function(e){ var c=e.target.closest('.mh-slide'); if(!c) return; if(c.dataset.o!=='0'){ if(+c.dataset.o>0){ e.stopPropagation(); go(+c.dataset.i); } return; } var it=state.items[+c.dataset.i]; if(!it) return; if(it.t==='sport') playSport(it); else play(it.m,it.t); });
       }
     }
@@ -19082,12 +19101,13 @@ window.fcLoadIntoFrame = fcLoadIntoFrame;
     state.sig=sig; state.items=items; state.cur=0;
     var yr=new Date().getFullYear();
     host.innerHTML=items.map(function(it,i){
-      if(it.t==='sport') return '<div class="mh-slide" data-i="'+i+'"><div class="mh-bg mh-land" style="background-image:url(\''+esc(it.img)+'\')"></div><div class="mh-info"><span class="mh-badge">'+esc(it.badge||'Sports')+'</span><div class="mh-t">'+esc(it.title)+'</div><div class="mh-m">'+esc(it.sub||'')+'</div></div><button class="mh-play" type="button" aria-label="Play"></button></div>';
+      if(it.t==='sport') return '<div class="mh-slide" data-i="'+i+'"><div class="mh-bg mh-land" data-bg="'+esc(it.img)+'"></div><div class="mh-info"><span class="mh-badge">'+esc(it.badge||'Sports')+'</span><div class="mh-t">'+esc(it.title)+'</div><div class="mh-m">'+esc(it.sub||'')+'</div></div><button class="mh-play" type="button" aria-label="Play"></button></div>';
       var x=it.m;
-      return '<div class="mh-slide" data-i="'+i+'"><div class="mh-bg" style="background-image:url(\''+esc(x.poster_url)+'\')"></div><div class="mh-info"><span class="mh-badge">'+(parseInt(x.year)>=yr?'New Release':(it.t==='tv'?'TV Show':'Movie'))+'</span><div class="mh-t">'+esc(x.title)+'</div><div class="mh-m">'+(x.year?esc(x.year)+' \u2022 ':'')+(it.t==='tv'?'TV Show':'Movie')+'</div></div><button class="mh-play" type="button" aria-label="Play"></button></div>'; }).join('');
+      return '<div class="mh-slide" data-i="'+i+'"><div class="mh-bg" data-bg="'+esc(x.poster_url)+'"></div><div class="mh-info"><span class="mh-badge">'+(parseInt(x.year)>=yr?'New Release':(it.t==='tv'?'TV Show':'Movie'))+'</span><div class="mh-t">'+esc(x.title)+'</div><div class="mh-m">'+(x.year?esc(x.year)+' \u2022 ':'')+(it.t==='tv'?'TV Show':'Movie')+'</div></div><button class="mh-play" type="button" aria-label="Play"></button></div>'; }).join('');
     pos(); start();
   }
   window.hsBuildHero=hsBuildHero;
+  window.__hsHero={go:go,cur:function(){return state.cur;},len:function(){return state.items.length;},stop:function(){clearInterval(state.timer);}};
 
   /* ── tag + number the home rails ── */
   function tag(){
@@ -19376,7 +19396,7 @@ body.hs-m-all #sxs-home .hs-k-tv{ display:block !important; }
   /* pill: TV button also covers Live TV on mobile */
   var n=0,iv=setInterval(function(){
     var b=document.querySelector('#hs-pill .hp-main button[data-g="tv"]');
-    if(b){ b.textContent='TV & Live'; clearInterval(iv); } else if(++n>60) clearInterval(iv);
+    if(b){ b.textContent='TV'; clearInterval(iv); } else if(++n>60) clearInterval(iv);
   },250);
   /* LIVE TV / TV SHOWS switch at the top of the mobile TV section */
   document.body.classList.add('hs-tvsub-shows');
@@ -19475,6 +19495,916 @@ body.hs-m-all #sxs-home .hs-k-tv{ display:block !important; }
   /* TV section -> LIVE TV selected: no hero slides */
   body.hs-m-tv.hs-tvsub-live #hs-mhero,
   body.hs-m-tv.hs-tvsub-live #hero-section{ display:none !important; }
+}
+</style>
+<style id="ev-v2-css">
+/* ═══════════ EV v2 — mobile fixes (hamburger, Live TV, hero swipe, ID play, image speed) ═══════════ */
+
+/* ── image fade-in (cards, posters, channel tiles) — no more pop-in / blank flashes ── */
+img.ev-f{opacity:0;transition:opacity .28s ease;}
+img.ev-f.ev-ok{opacity:1;}
+.mh-bg{opacity:0;transition:opacity .35s ease;}
+.mh-bg.ev-in{opacity:1;}
+
+@media(max-width:900px){
+  /* ── 1. NO hamburger on any section (home bar + every section's top bar) ── */
+  #sx-secbar .sxb-menu,#sx-secbar .sxb-ham,
+  .hamburger,#hamburger,.mts-hamburger,#mts-hamburger,#hsm-bar .mts-hamburger{display:none !important;}
+
+  /* ── perf: constant re-blurring of layers that sit above scrolling content = scroll jank on phones ── */
+  #hs-pill .glass{-webkit-backdrop-filter:none !important;backdrop-filter:none !important;}
+  .sx-heart-btn{-webkit-backdrop-filter:none !important;backdrop-filter:none !important;background:rgba(0,0,0,.6) !important;}
+
+  /* ── 4. Hero slides: finger-follow swipe, GPU-only animation ── */
+  #hs-mhero{touch-action:pan-y pinch-zoom;overscroll-behavior-x:contain;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+  #hs-mhero .mh-slide{
+    filter:none !important;will-change:transform,opacity;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+    transition:transform .42s cubic-bezier(.22,.8,.3,1),opacity .3s ease !important;
+  }
+  #hs-mhero .mh-slide.ev-drag{transition:none !important;}
+  #hs-mhero .mh-slide.ev-exit-r{transform:translateX(115%) scale(.92) !important;opacity:0 !important;}
+  /* depth shading without animating filter(): a dark overlay whose opacity follows the stack position */
+  #hs-mhero .mh-slide::after{content:"";position:absolute;inset:0;z-index:1;background:#000;pointer-events:none;
+    opacity:calc(var(--o,0) * .22);transition:opacity .3s ease;}
+  #hs-mhero .mh-slide.mh-sk::after{display:none;}
+  #hs-mhero .mh-bg{backface-visibility:hidden;}
+
+  /* ── 2. LIVE TV (mobile) = PC-style: search + category chips + square tiles with blurred backdrop ── */
+  #ev-lt{display:none;}
+  body.hs-m-tv.hs-tvsub-live #ev-lt{display:block;}
+  body.hs-m-tv.hs-tvsub-live #sxs-home .hs-gsec.hs-g-live{display:none !important;}
+
+  #ev-lt .evl-bar{position:sticky;top:30px;z-index:30;padding:8px 12px 6px;background:rgba(0,0,0,.9);}
+  #ev-lt .evl-s{display:flex;align-items:center;gap:8px;height:40px;padding:0 12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#fff;}
+  #ev-lt .evl-s svg{width:16px;height:16px;flex:0 0 16px;opacity:.65;}
+  #ev-lt .evl-s input{flex:1;min-width:0;background:none;border:0;outline:0;color:#fff;font:500 14px "Google Sans","Product Sans",Helvetica,Arial,sans-serif;-webkit-appearance:none;appearance:none;border:0 !important;box-shadow:none !important;padding:0 !important;margin:0 !important;height:auto !important;border-radius:0 !important;}
+  #ev-lt .evl-s input::-webkit-search-cancel-button{display:none;}
+  #ev-lt .evl-s input::placeholder{color:rgba(255,255,255,.4);}
+  #ev-lt .evl-x{display:none;border:0;background:none;color:rgba(255,255,255,.6);font-size:14px;padding:4px;cursor:pointer;}
+  #ev-lt .evl-s.has .evl-x{display:block;}
+  #ev-lt .evl-chips{display:flex;flex-wrap:nowrap;gap:8px;margin:8px -12px 0;padding:0 12px 2px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+  #ev-lt .evl-chips::-webkit-scrollbar{display:none;}
+  #ev-lt .evl-chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 13px;border:0;border-radius:999px;background:rgba(255,255,255,.09);color:rgba(255,255,255,.78);
+    font:600 12.5px/1 "Google Sans","Product Sans",Helvetica,Arial,sans-serif;white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+  #ev-lt .evl-chip em{font-style:normal;font-weight:500;opacity:.55;font-size:11px;}
+  #ev-lt .evl-chip.on{background:#fff;color:#000;}
+  #ev-lt .evl-chip.on em{opacity:.6;}
+  #ev-lt .evl-chip u{width:6px;height:6px;border-radius:50%;background:#ff3b5c;display:inline-block;text-decoration:none;}
+  #ev-lt .evl-count{font:500 11.5px "Google Sans",Helvetica,Arial,sans-serif;color:rgba(255,255,255,.5);padding:8px 2px 0;}
+
+  #ev-lt .evl-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 8px;padding:10px 12px 24px;}
+  #ev-lt .evc{min-width:0;cursor:pointer;-webkit-tap-highlight-color:transparent;outline:0;}
+  #ev-lt .evc-th{position:relative;display:block;aspect-ratio:1/1;overflow:hidden;border-radius:0;background:#14161f;contain:paint;}
+  /* blurred copy of the logo fills the square; the sharp logo sits on top */
+  #ev-lt .evc-th img.bgi{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scale(1.35);filter:blur(12px) brightness(.55) saturate(1.35);}
+  #ev-lt .evc-th img.fg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:16%;box-sizing:border-box;filter:drop-shadow(0 2px 6px rgba(0,0,0,.45));}
+  #ev-lt .evc-th.noimg::after{content:attr(data-ini);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:800 24px "Google Sans",Helvetica,Arial,sans-serif;color:rgba(255,255,255,.55);}
+  #ev-lt .evc:active .evc-th{transform:scale(.97);transition:transform .12s;}
+  #ev-lt .evc-live{position:absolute;top:5px;left:5px;z-index:2;display:flex;align-items:center;gap:4px;padding:3px 6px 3px 5px;background:rgba(0,0,0,.66);color:#fff;
+    font:800 8.5px/1 "Google Sans",Helvetica,Arial,sans-serif;letter-spacing:.08em;}
+  #ev-lt .evc-live::before{content:"";width:5px;height:5px;border-radius:50%;background:#ff3b5c;}
+  #ev-lt .evc-n{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:6px;font:600 11.5px/1.25 "Google Sans","Product Sans",Helvetica,Arial,sans-serif;color:#fff;}
+  #ev-lt .evc-g{display:block;margin-top:2px;font:500 10px/1.2 "Google Sans",Helvetica,Arial,sans-serif;color:rgba(255,255,255,.45);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  #ev-lt .evl-empty{grid-column:1/-1;padding:40px 10px;text-align:center;color:rgba(255,255,255,.5);font:500 13px "Google Sans",Helvetica,Arial,sans-serif;}
+  #ev-lt .evl-more{height:1px;}
+}
+@media(min-width:901px){ #ev-lt{display:none !important;} }
+
+/* ── 5. Search: paste IMDB (tt…) / TMDB id → play ── */
+#ev-idplay{display:none;margin-top:10px;padding:10px 12px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);}
+#ev-idplay.show{display:block;}
+#ev-idplay .t{font:500 12.5px "Google Sans",Helvetica,Arial,sans-serif;color:rgba(255,255,255,.7);margin-bottom:8px;}
+#ev-idplay .t b{color:#fff;font-weight:700;letter-spacing:.02em;}
+#ev-idplay .b{display:flex;gap:8px;}
+#ev-idplay button{flex:1;height:40px;border:0;border-radius:0 !important;cursor:pointer;font:700 13.5px "Google Sans",Helvetica,Arial,sans-serif;-webkit-tap-highlight-color:transparent;}
+#ev-idplay button.m{background:#fff;color:#000;}
+#ev-idplay button.v{background:rgba(255,255,255,.14);color:#fff;}
+#ev-idplay button:active{opacity:.8;}
+
+#sx-search-overlay:has(#ev-idplay.show) .sxs-empty{display:none !important;}
+
+/* ── PC home: the mobile-only grids (Live TV 120 / TV Shows 60 / Movies 60) were leaking onto desktop and doubling the rows.
+      Hide the duplicate TV Shows + Movies grids; keep Live TV as ONE short row (16 channels). ── */
+@media(min-width:901px){
+  #sxs-home .hs-gsec.hs-g-tv,#sxs-home .hs-gsec.hs-g-movies{display:none !important;}
+  #sxs-home .hs-gsec.hs-g-live{display:block !important;}
+  #sxs-home .hs-gsec.hs-g-live .sxs-grid{display:flex !important;flex-wrap:nowrap;gap:10px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px;}
+  #sxs-home .hs-gsec.hs-g-live .sxs-grid::-webkit-scrollbar{display:none;}
+  #sxs-home .hs-gsec.hs-g-live .sxs-card{flex:0 0 229px;width:229px;}
+  #sxs-home .hs-gsec.hs-g-live .sxs-card:nth-child(n+17){display:none;}
+}
+
+</style>
+<script id="ev-v2-js">
+(function(){
+  'use strict';
+  var mq = window.matchMedia('(max-width:900px)');
+  function $(s, r){ return (r || document).querySelector(s); }
+  function esc(t){ return String(t == null ? '' : t).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'%27'}[c]; }); }
+
+  /* ═══════════ A. FASTER DATA: dedupe + stale-while-revalidate + race direct/proxy ═══════════ */
+  (function(){
+    var orig = window.vaFetchPage;
+    if (typeof orig !== 'function') return;
+    var BASE = 'https://vidapi.ru', PROXY = 'https://api.allorigins.win/raw?url=', LS = 'ev:p1:';
+    var inflight = {}, pcDone = {};
+
+    function preconnect(u){
+      try {
+        var o = new URL(u).origin; if (pcDone[o] || o === location.origin) return; pcDone[o] = 1;
+        var l = document.createElement('link'); l.rel = 'preconnect'; l.href = o; document.head.appendChild(l);
+      } catch(e){}
+    }
+    /* smaller poster files for cards when the host is TMDB-style (…/t/p/<size>/…); other hosts untouched */
+    function upgrade(d){
+      if (!d || !d.items) return d;
+      d.items.forEach(function(m, i){
+        var u = m && m.poster_url; if (!u) return;
+        if (i === 0) preconnect(u);
+        if (/\/t\/p\/(original|w\d+)\//.test(u)) m.poster_url = u.replace(/\/t\/p\/(original|w\d+)\//, '/t/p/w342/');
+      });
+      return d;
+    }
+    /* direct request first; if it is slow (blocked / throttled .ru) or fails, the proxy joins the race */
+    function race(url){
+      return new Promise(function(res, rej){
+        var done = false, proxied = false, errs = 0, timer = 0;
+        function win(d){ if (done) return; done = true; clearTimeout(timer); res(d); }
+        function fail(e){ errs++; if (!proxied) { startProxy(); return; } if (errs >= 2 && !done) { done = true; clearTimeout(timer); rej(e); } }
+        function req(u){ fetch(u).then(function(r){ if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(win, fail); }
+        function startProxy(){ if (proxied) return; proxied = true; req(PROXY + encodeURIComponent(url)); }
+        req(url); timer = setTimeout(startProxy, 2200);
+      });
+    }
+    window.vaFetchPage = function(type, page){
+      var path = type === 'tv' ? 'tvshows' : 'movies', url = BASE + '/' + path + '/latest/page-' + page + '.json', key = path + ':' + page;
+      if (inflight[key]) return inflight[key];
+      var cached = null;
+      if (page === 1) { try { cached = JSON.parse(localStorage.getItem(LS + path)); } catch(e){} }
+      var net = race(url).then(function(d){
+        upgrade(d);
+        if (page === 1) { try { localStorage.setItem(LS + path, JSON.stringify(d)); } catch(e){} }
+        return d;
+      });
+      var p;
+      if (cached && cached.items && cached.items.length) { upgrade(cached); net.catch(function(){}); p = Promise.resolve(cached); }   /* instant on repeat visits, refreshed in background */
+      else p = net;
+      inflight[key] = p;
+      setTimeout(function(){ delete inflight[key]; }, 5000);
+      return p;
+    };
+  })();
+
+  /* ═══════════ B. IMAGES: async decode + fade-in for every card / tile ═══════════ */
+  (function(){
+    var SEL = '.sxs-th,.hsm-card,.evc-th,.sxs-hth';
+    function prep(img){
+      if (img._ev) return; img._ev = 1;
+      try { img.decoding = 'async'; if (!img.getAttribute('loading')) img.loading = 'lazy'; } catch(e){}
+      if (img.complete && img.naturalWidth) return;
+      img.classList.add('ev-f');
+      var ok = function(){ img.classList.add('ev-ok'); };
+      img.addEventListener('load', ok, { once: true });
+      img.addEventListener('error', ok, { once: true });
+      setTimeout(ok, 7000);   /* never leave an image invisible */
+    }
+    var q = [], raf = 0;
+    function flush(){
+      raf = 0; var n = q; q = [];
+      n.forEach(function(el){
+        if (el.nodeType !== 1) return;
+        if (el.tagName === 'IMG') { if (el.closest(SEL)) prep(el); return; }
+        var imgs = el.querySelectorAll ? el.querySelectorAll('img') : [];
+        for (var i = 0; i < imgs.length; i++) if (imgs[i].closest(SEL)) prep(imgs[i]);
+      });
+    }
+    new MutationObserver(function(ms){
+      for (var i = 0; i < ms.length; i++) for (var j = 0; j < ms[i].addedNodes.length; j++) q.push(ms[i].addedNodes[j]);
+      if (!raf) raf = requestAnimationFrame(flush);
+    }).observe(document.body, { childList: true, subtree: true });
+  })();
+
+  /* ═══════════ C. HERO: lazy + prioritised banner loading, finger-follow swipe ═══════════ */
+  (function(){
+    var H = function(){ return window.__hsHero; };
+
+    /* — only the visible + next slides download their banner; the first one gets top priority — */
+    function hydrate(){
+      var api = H(), host = $('#hs-mhero'); if (!host) return;
+      if (!api) { [].forEach.call(host.querySelectorAll('.mh-bg[data-bg]'), function(b){ if (b._ev) return; b._ev = 1; b.style.backgroundImage = "url('" + b.getAttribute('data-bg') + "')"; b.classList.add('ev-in'); }); return; }
+      var sl = [].slice.call(host.querySelectorAll('.mh-slide')), l = sl.length, cur = api.cur();
+      sl.forEach(function(s, i){
+        var bg = s.querySelector('.mh-bg'); if (!bg || bg._ev) return;
+        var ahead = (i - cur + l) % l, back = (cur - i + l) % l;
+        if (!(ahead <= 2 || back <= 1)) return;
+        bg._ev = 1;
+        var u = bg.getAttribute('data-bg'); if (!u) { bg.classList.add('ev-in'); return; }
+        var hi = u.replace(/\/t\/p\/(original|w\d+)\//, '/t/p/w780/'), tried = false, im = new Image();
+        im.decoding = 'async'; try { if (i === cur) im.fetchPriority = 'high'; } catch(e){}
+        var show = function(src){ bg.style.backgroundImage = "url('" + src + "')"; bg.classList.add('ev-in'); };
+        im.onload = function(){ show(im.src); };
+        im.onerror = function(){ if (!tried && hi !== u) { tried = true; im.src = u; } else { bg.classList.add('ev-in'); } };
+        im.src = hi;
+      });
+    }
+    var hraf = 0;
+    function schedule(){ if (!hraf) hraf = requestAnimationFrame(function(){ hraf = 0; hydrate(); }); }
+    function watch(){
+      var host = $('#hs-mhero'); if (!host || host._evw) return !!host;
+      host._evw = 1;
+      new MutationObserver(schedule).observe(host, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-o'] });
+      schedule(); return true;
+    }
+    var w = 0, wi = setInterval(function(){ if (watch() || ++w > 120) clearInterval(wi); }, 250);
+
+    /* — swipe: the front card follows the finger, next card scales up, release decides (distance or flick) — */
+    var drag = null, lastDrag = 0;
+    function peers(front){
+      var host = front.parentNode; return { next: host.querySelector('.mh-slide[data-o="1"]') };
+    }
+    document.addEventListener('touchstart', function(e){
+      if (!mq.matches) return;
+      var host = e.target.closest && e.target.closest('#hs-mhero'); if (!host) return;
+      var api = H(); if (!api || api.len() < 2) return;
+      var front = host.querySelector('.mh-slide[data-o="0"]'); if (!front) return;
+      var t = e.touches[0];
+      drag = { x: t.clientX, y: t.clientY, t: Date.now(), dx: 0, mode: '', front: front, next: peers(front).next, w: front.offsetWidth || 320, raf: 0 };
+      api.stop();
+    }, { passive: true });
+
+    document.addEventListener('touchmove', function(e){
+      if (!drag) return;
+      var t = e.touches[0], dx = t.clientX - drag.x, dy = t.clientY - drag.y;
+      if (!drag.mode) {
+        if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+        drag.mode = Math.abs(dx) > Math.abs(dy) * 1.1 ? 'x' : 'y';
+        if (drag.mode === 'x') { drag.front.classList.add('ev-drag'); if (drag.next) drag.next.classList.add('ev-drag'); }
+      }
+      if (drag.mode !== 'x') return;
+      drag.dx = dx;
+      if (!drag.raf) drag.raf = requestAnimationFrame(function(){
+        if (!drag) return; drag.raf = 0;
+        var d = drag.dx, p = Math.min(1, Math.abs(d) / drag.w);
+        drag.front.style.transform = 'translate3d(' + d + 'px,0,0) rotate(' + (d / drag.w * 5) + 'deg)';
+        if (drag.next && d < 0) drag.next.style.transform = 'translate3d(' + ((1 - p) * 24) + 'px,0,0) scale(' + (0.945 + 0.055 * p) + ')';
+      });
+    }, { passive: true });
+
+    function end(){
+      if (!drag) return;
+      var d = drag; drag = null; if (d.raf) cancelAnimationFrame(d.raf);
+      var api = H();
+      d.front.classList.remove('ev-drag'); d.front.style.transform = '';
+      if (d.next) { d.next.classList.remove('ev-drag'); d.next.style.transform = ''; }
+      if (!api) return;
+      var cur = api.cur();
+      if (d.mode === 'x') {
+        lastDrag = Date.now();
+        var v = Math.abs(d.dx) / Math.max(1, Date.now() - d.t);
+        var commit = Math.abs(d.dx) > d.w * 0.2 || (v > 0.45 && Math.abs(d.dx) > 24);
+        if (commit && d.dx > 0) { d.front.classList.add('ev-exit-r'); setTimeout(function(){ d.front.classList.remove('ev-exit-r'); }, 480); }
+        api.go(commit ? (d.dx < 0 ? cur + 1 : cur - 1) : cur);
+      } else api.go(cur);   /* tap / vertical scroll: just restart autoplay */
+    }
+    document.addEventListener('touchend', end, { passive: true });
+    document.addEventListener('touchcancel', end, { passive: true });
+    /* a swipe must not also count as a tap on the card */
+    document.addEventListener('click', function(e){
+      if (Date.now() - lastDrag < 350 && e.target.closest && e.target.closest('#hs-mhero')) { e.stopPropagation(); e.preventDefault(); }
+    }, true);
+  })();
+
+  /* ═══════════ D. MOBILE LIVE TV: search + categories + square tiles with blurred backdrop ═══════════ */
+  (function(){
+    var S = { g: '', q: '', limit: 60, sig: '', list: [], chipSig: '' };
+    var root, grid, chipsEl, countEl, inputEl, sBox, more, io;
+    function chans(){ return (window._cmsChannels || []).filter(function(c){ return c && c.channel_name; }); }
+    function isLive(c){ return String(c.status_live_off || '').toUpperCase() === 'LIVE'; }
+    function grp(c){ return String(c.group || 'Other').trim() || 'Other'; }
+    function visible(){ var b = document.body.classList; return mq.matches && b.contains('hs-m-tv') && b.contains('hs-tvsub-live'); }
+
+    function filtered(){
+      var q = S.q.toLowerCase().trim();
+      return chans().filter(function(c){
+        if (S.g === '__live') { if (!isLive(c)) return false; } else if (S.g && grp(c) !== S.g) return false;
+        return !q || String(c.channel_name).toLowerCase().indexOf(q) > -1 || grp(c).toLowerCase().indexOf(q) > -1;
+      }).sort(function(a, b){ return (isLive(b) ? 1 : 0) - (isLive(a) ? 1 : 0); });
+    }
+    function buildChips(){
+      var a = chans(), m = {}, live = 0;
+      a.forEach(function(c){ var g = grp(c); m[g] = (m[g] || 0) + 1; if (isLive(c)) live++; });
+      var gs = Object.keys(m).sort(function(x, y){ return m[y] - m[x]; });
+      var h = '<button type="button" class="evl-chip' + (!S.g ? ' on' : '') + '" data-g="">All<em>' + a.length + '</em></button>'
+        + (live ? '<button type="button" class="evl-chip' + (S.g === '__live' ? ' on' : '') + '" data-g="__live"><u></u>Live Now<em>' + live + '</em></button>' : '')
+        + gs.map(function(g){ return '<button type="button" class="evl-chip' + (S.g === g ? ' on' : '') + '" data-g="' + esc(g) + '">' + esc(g) + '<em>' + m[g] + '</em></button>'; }).join('');
+      if (h !== S.chipSig) { S.chipSig = h; chipsEl.innerHTML = h; }
+    }
+    function card(c, i){
+      var n = String(c.channel_name || 'Channel'), img = c.icon_url || '', ini = n.replace(/[^A-Za-z0-9]/g, '').slice(0, 2).toUpperCase() || 'TV';
+      return '<div class="evc" role="button" tabindex="0" data-k="' + i + '"><span class="evc-th' + (img ? '' : ' noimg') + '" data-ini="' + esc(ini) + '">'
+        + (img ? '<img class="bgi" loading="lazy" decoding="async" alt="" src="' + esc(img) + '"><img class="fg" loading="lazy" decoding="async" alt="" src="' + esc(img) + '">' : '')
+        + (isLive(c) ? '<b class="evc-live">LIVE</b>' : '') + '</span><span class="evc-n">' + esc(n) + '</span><span class="evc-g">' + esc(grp(c)) + '</span></div>';
+    }
+    function render(force){
+      if (!root) return;
+      buildChips();
+      var list = filtered();
+      var sig = list.length + '|' + S.g + '|' + S.q + '|' + S.limit + '|' + list.slice(0, S.limit).map(function(c){ return (c.channel_name || '') + (isLive(c) ? 1 : 0) + (c.icon_url ? 1 : 0); }).join(',');
+      if (sig === S.sig && !force) return;
+      S.sig = sig; S.list = list;
+      var live = list.filter(isLive).length;
+      countEl.textContent = list.length ? (list.length + ' channel' + (list.length === 1 ? '' : 's') + (live ? ' \u00b7 ' + live + ' live' : '')) : '';
+      grid.innerHTML = list.length ? list.slice(0, S.limit).map(card).join('')
+        : '<div class="evl-empty">' + (chans().length ? 'No channels found.' : 'Loading channels\u2026') + '</div>';
+      more.style.display = list.length > S.limit ? 'block' : 'none';
+    }
+    function openCh(c){
+      if (!c) return;
+      try {
+        var url = c.watch_url || '#';
+        sxOpenChannelPayload(sxEncPayload({ url: url, name: c.channel_name || 'Live Stream', raw: !!(window.sxIsRawStreamUrl && sxIsRawStreamUrl(url)) }));
+      } catch(e){}
+    }
+    function init(){
+      var anchor = document.getElementById('hs-tvswitch');
+      if (!anchor) return false;
+      if (document.getElementById('ev-lt')) return true;
+      root = document.createElement('div'); root.id = 'ev-lt';
+      root.innerHTML = '<div class="evl-bar"><div class="evl-s"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>'
+        + '<input type="search" placeholder="Search channels\u2026" autocomplete="off" spellcheck="false" enterkeyhint="search"><button type="button" class="evl-x" aria-label="Clear">&#10005;</button></div>'
+        + '<div class="evl-chips"></div><div class="evl-count"></div></div><div class="evl-grid"></div><div class="evl-more"></div>';
+      anchor.parentNode.insertBefore(root, anchor.nextSibling);
+      grid = $('.evl-grid', root); chipsEl = $('.evl-chips', root); countEl = $('.evl-count', root);
+      inputEl = $('input', root); sBox = $('.evl-s', root); more = $('.evl-more', root);
+      var tm = 0;
+      inputEl.addEventListener('input', function(){
+        sBox.classList.toggle('has', !!inputEl.value);
+        clearTimeout(tm); tm = setTimeout(function(){ S.q = inputEl.value; S.limit = 60; render(); }, 120);
+      });
+      $('.evl-x', root).addEventListener('click', function(){ inputEl.value = ''; sBox.classList.remove('has'); S.q = ''; S.limit = 60; render(); });
+      chipsEl.addEventListener('click', function(e){
+        var b = e.target.closest('.evl-chip'); if (!b) return;
+        S.g = b.getAttribute('data-g') || ''; S.limit = 60; render(true);
+        try { b.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' }); } catch(_){}
+      });
+      grid.addEventListener('click', function(e){ var el = e.target.closest('.evc'); if (el) openCh(S.list[+el.getAttribute('data-k')]); });
+      grid.addEventListener('keydown', function(e){ if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('evc')) { e.preventDefault(); e.target.click(); } });
+      /* logo failed to load → show the channel's initials instead of a broken image */
+      grid.addEventListener('error', function(e){
+        var im = e.target; if (!im || im.tagName !== 'IMG') return;
+        var th = im.closest('.evc-th'); if (!th) return; th.classList.add('noimg');
+        [].forEach.call(th.querySelectorAll('img'), function(x){ x.remove(); });
+      }, true);
+      if ('IntersectionObserver' in window) {
+        io = new IntersectionObserver(function(es){ if (es[0].isIntersecting && S.list.length > S.limit) { S.limit += 60; render(true); } }, { rootMargin: '600px 0px' });
+        io.observe(more);
+      }
+      return true;
+    }
+    var tries = 0, ti = setInterval(function(){ if (init() || ++tries > 160) clearInterval(ti); }, 250);
+    /* refresh while the Live TV view is on screen (channel LIVE/OFF flags change) and whenever the tab/mode flips */
+    setInterval(function(){ if (root && visible()) render(); }, 2000);
+    new MutationObserver(function(){ if (root && visible()) render(); }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  })();
+
+  /* ═══════════ E. SEARCH: paste/type an IMDB (tt…) or TMDB id → opens the player ═══════════ */
+  (function(){
+    var bar, cur = null;
+    function detect(raw){
+      raw = String(raw || '').trim();
+      var m = raw.match(/tt\d{5,}/i); if (m) return { id: m[0].toLowerCase(), kind: 'IMDB' };
+      if (/^\d{2,8}$/.test(raw)) return { id: raw, kind: 'TMDB' };
+      return null;
+    }
+    function playMovie(id){
+      var base = (typeof VIDAPI_EMBED_BASE !== 'undefined') ? VIDAPI_EMBED_BASE : 'https://vaplayer.ru';
+      try { openStreamPlayer(vaBuildEmbedUrl(base + '/embed/movie/' + id), id, 'movie'); } catch(e){ console.warn(e); }
+    }
+    function playTv(id){
+      try { vaPendingTvItem = { id: id, title: id }; vaOpenTvModal(id); } catch(e){ console.warn(e); }
+    }
+    function ensure(){
+      if (bar) return bar;
+      var top = $('#sx-search-overlay .sxs2-top'); if (!top) return null;
+      bar = document.createElement('div'); bar.id = 'ev-idplay';
+      bar.innerHTML = '<div class="t">ID detected: <b></b></div><div class="b"><button type="button" class="m">\u25B6 Play Movie</button><button type="button" class="v">\u25B6 TV Show</button></div>';
+      top.appendChild(bar);
+      $('.m', bar).addEventListener('click', function(){ if (cur) playMovie(cur.id); });
+      $('.v', bar).addEventListener('click', function(){ if (cur) playTv(cur.id); });
+      return bar;
+    }
+    function update(){
+      var inp = document.getElementById('sx-search-input'); if (!inp) return;
+      cur = detect(inp.value);
+      var b = ensure(); if (!b) return;
+      b.classList.toggle('show', !!cur);
+      if (cur) $('.t b', b).textContent = cur.kind + ' ' + cur.id;
+    }
+    function wire(){
+      var inp = document.getElementById('sx-search-input'); if (!inp) return false;
+      if (inp._ev) return true; inp._ev = 1;
+      inp.placeholder = 'Search, or paste IMDB (tt\u2026) / TMDB id';
+      inp.addEventListener('input', update);
+      inp.addEventListener('keydown', function(e){ if (e.key === 'Enter') { var d = detect(inp.value); if (d) { e.preventDefault(); inp.blur(); playMovie(d.id); } } });
+      /* pasting a complete tt id opens it straight away */
+      inp.addEventListener('paste', function(){ setTimeout(function(){
+        var v = inp.value.trim(); update();
+        if (/^tt\d{5,}$/i.test(v)) { inp.blur(); playMovie(v.toLowerCase()); }
+      }, 0); });
+      var ov = document.getElementById('sx-search-overlay');
+      if (ov) new MutationObserver(update).observe(ov, { attributes: true, attributeFilter: ['class'] });
+      var clr = $('#sx-search-overlay .sx-search-clear'); if (clr) clr.addEventListener('click', function(){ setTimeout(update, 0); });
+      return true;
+    }
+    var n = 0, iv = setInterval(function(){ if (wire() || ++n > 80) clearInterval(iv); }, 250);
+  })();
+})();
+
+</script>
+
+<style id="ev-pc-hero-blurfill">
+/* PC hero: no zoom-to-fill. Blurred copy fills the slide, sharp full image sits on the LEFT, text on the right. */
+@media(min-width:901px){
+  .slide-bg{ overflow:hidden; background-color:#0c0d13 !important; }
+  .slide-bg::before{ content:""; position:absolute; inset:-30px; background:inherit; background-size:cover; background-position:center;
+    filter:blur(28px) brightness(.5) saturate(1.2); }
+  .slide-bg::after{ content:""; position:absolute; inset:0; background:inherit; background-repeat:no-repeat !important;
+    background-size:contain !important; background-position:left center !important; }
+  .slide-overlay{
+    background:
+      linear-gradient(270deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,.25) 40%, transparent 65%),
+      linear-gradient(0deg, rgba(0,0,0,.55) 0%, transparent 28%) !important;
+  }
+  .slide-content{
+    left:auto !important; right:0 !important; top:0 !important; bottom:0 !important;
+    width:36%; max-width:none !important; margin:0 !important;
+    padding:0 56px 0 24px !important;
+    display:flex; flex-direction:column; justify-content:center; align-items:flex-start;
+  }
+  .slide-title{ max-width:100% !important; }
+  .slide-sub{ max-width:100% !important; }
+}
+</style>
+
+<style id="ev-mobile-pop-slider">
+#ev-pop-slider{ display:none; }
+@media(max-width:900px){
+  #ev-pop-slider{ display:block; padding:10px 0 2px; }
+  #ev-pop-slider .evp-h{ font-family:var(--font-display,inherit); font-weight:800; font-size:12px; letter-spacing:1.4px;
+    text-transform:uppercase; color:var(--text-muted,#aaa); padding:0 14px 8px; }
+  #ev-pop-slider .evp-track{ display:flex; gap:10px; overflow-x:auto; padding:0 14px 6px; scroll-snap-type:x proximity;
+    -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  #ev-pop-slider .evp-track::-webkit-scrollbar{ display:none; }
+  #ev-pop-slider .evp-chip{ flex:0 0 auto; scroll-snap-align:start; min-width:112px; max-width:190px; padding:12px 14px;
+    border-radius:12px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.05); color:#fff;
+    font-weight:700; font-size:13px; line-height:1.2; text-align:left; cursor:pointer; white-space:normal; }
+  #ev-pop-slider .evp-chip small{ display:block; margin-top:4px; font-weight:600; font-size:10px; color:rgba(255,255,255,.55); }
+  #ev-pop-slider .evp-chip.active{ background:linear-gradient(135deg,#d4147a,#7b2ff7); border-color:transparent; }
+  #ev-pop-slider .evp-chip.live small{ color:#ff6b8b; }
+}
+</style>
+
+<script id="ev-pop-slider-js">
+(function(){
+  function build(){
+    var sel=document.getElementById('smo-game-select'), tb=document.getElementById('smo-toolbar');
+    if(!sel||!tb) return;
+    var box=document.getElementById('ev-pop-slider');
+    if(!box){
+      box=document.createElement('div'); box.id='ev-pop-slider';
+      box.innerHTML='<div class="evp-h">Popular Tournaments</div><div class="evp-track"></div>';
+      tb.parentNode.insertBefore(box,tb);
+      box.addEventListener('click',function(e){
+        var c=e.target.closest('.evp-chip'); if(!c) return;
+        if(typeof smoSelectGame==='function') smoSelectGame(c.dataset.game);
+      });
+    }
+    var opts=[].slice.call(sel.options);
+    var sig=opts.map(function(o){return o.value;}).join('|');
+    var track=box.querySelector('.evp-track');
+    if(box.dataset.sig!==sig){
+      box.dataset.sig=sig;
+      track.innerHTML=opts.map(function(o){
+        var live=o.value==='LIVE_NOW';
+        var label=o.value==='ALL'?'All':(live?'Live Now':o.textContent);
+        return '<button type="button" class="evp-chip'+(live?' live':'')+'" data-game="'+
+          o.value.replace(/"/g,'&quot;')+'">'+label.replace(/</g,'&lt;')+'</button>';
+      }).join('');
+    }
+    box.style.display=(tb.style.display==='none'||opts.length<2)?'none':'';
+    [].forEach.call(track.children,function(c){ c.classList.toggle('active',c.dataset.game===sel.value); });
+  }
+  function init(){
+    build();
+    var sel=document.getElementById('smo-game-select');
+    if(sel){ new MutationObserver(build).observe(sel,{childList:true}); sel.addEventListener('change',build); }
+    var tb=document.getElementById('smo-toolbar');
+    if(tb) new MutationObserver(build).observe(tb,{attributes:true,attributeFilter:['style']});
+    document.addEventListener('click',function(){ setTimeout(build,50); });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+})();
+</script>
+
+<style id="ev-search-rows">
+/* ── MOBILE search: one result per row, small square thumb, blur-to-fill ── */
+@media(max-width:900px){
+  #sx-search-results .sxs-grid,
+  #sx-search-results .sxs-posters,
+  #sx-search-results .epg-list{ display:flex !important; flex-direction:column; gap:8px; grid-template-columns:none; }
+
+  /* shared blur-fill square thumbs */
+  #sx-search-results .fx2-thumb,
+  #sx-search-results .sxs-poster .pi,
+  #sx-search-results .epg-thumb{
+    position:relative; overflow:hidden; border-radius:10px !important;
+    width:64px !important; height:64px !important; flex:0 0 64px !important; aspect-ratio:1 !important; background:#0c0d13;
+  }
+  #sx-search-results .fx2-thumb::before,
+  #sx-search-results .sxs-poster .pi::before,
+  #sx-search-results .epg-thumb::before{
+    content:""; position:absolute; inset:-8px; z-index:0;
+    background:var(--evbg,none) center/cover no-repeat; filter:blur(9px) brightness(.55) saturate(1.2);
+  }
+  #sx-search-results .fx2-thumb::after{ display:none !important; }
+  #sx-search-results .fx2-thumb-img,
+  #sx-search-results .sxs-poster .pi img,
+  #sx-search-results .epg-logo-box img{
+    position:absolute !important; inset:0; width:100% !important; height:100% !important;
+    object-fit:contain !important; z-index:1;
+  }
+  #sx-search-results .fx2-thumb-teams{ position:absolute; inset:0; z-index:1; gap:2px; transform:scale(.55); }
+  #sx-search-results .epg-logo-box{ z-index:1; }
+  #sx-search-results .sxs-poster .pf{ z-index:1; font-size:9px; padding:4px; }
+
+  /* match / FanCode / SonyLIV rows */
+  #sx-search-results .fx2-card{
+    display:flex !important; flex-direction:row !important; align-items:center; gap:12px;
+    width:100% !important; padding:8px !important; position:relative;
+    background:rgba(255,255,255,.04) !important; border-radius:12px !important; transform:none !important;
+  }
+  #sx-search-results .fx2-card .fx2-body{ flex:1; min-width:0; padding:0 !important; gap:3px !important; }
+  #sx-search-results .fx2-card .fx2-title{ font-size:13.5px !important; -webkit-line-clamp:1 !important; }
+  #sx-search-results .fx2-card .fx2-meta{ flex-wrap:nowrap; overflow:hidden; white-space:nowrap; }
+  #sx-search-results .fx2-card .fx2-badge{
+    top:3px !important; left:3px !important; right:auto !important; bottom:auto !important;
+    font-size:7px !important; padding:2px 4px !important; border-radius:5px !important; z-index:3; letter-spacing:.3px;
+  }
+  #sx-search-results .fx2-card .smo-timer{ display:none !important; }
+  /* watch button: small round play at right, centered vertically */
+  #sx-search-results .fx2-card .smo-btn{
+    position:static !important; flex:0 0 36px; width:36px !important; height:36px !important; min-width:0 !important;
+    padding:0 !important; margin:0 !important; border-radius:50% !important; display:flex !important; align-items:center; justify-content:center;
+  }
+  #sx-search-results .fx2-card .smo-btn > *{ display:none !important; }
+  #sx-search-results .fx2-card .smo-btn{ font-size:0 !important; }
+  #sx-search-results .fx2-card .smo-btn::after{ content:""; border-left:11px solid #111; border-top:6.5px solid transparent; border-bottom:6.5px solid transparent; margin-left:3px; }
+  #sx-search-results .fx2-card .fx2-body{ position:relative; }
+  #sx-search-results .fx2-card .smo-btn{ order:3; }
+  #sx-search-results .fx2-card{ flex-wrap:nowrap; }
+  #sx-search-results .fx2-card .fx2-body{ order:2; }
+
+  /* movie / TV rows */
+  #sx-search-results .sxs-poster{
+    display:grid !important; grid-template-columns:64px 1fr; grid-template-rows:1fr 1fr; column-gap:12px; align-items:center;
+    width:100%; padding:8px; border-radius:12px; background:rgba(255,255,255,.04);
+  }
+  #sx-search-results .sxs-poster .pi{ grid-row:1 / span 2; }
+  #sx-search-results .sxs-poster .pt{ margin:0; align-self:end; -webkit-line-clamp:1; font-size:13.5px; }
+  #sx-search-results .sxs-poster .ps{ margin:0; align-self:start; }
+  #sx-search-results .sxs-poster .tg{ font-size:7px; padding:2px 4px; z-index:3; }
+  #sx-search-results .sxs-poster:hover .pi{ transform:none; box-shadow:none; }
+
+  /* channel rows */
+  #sx-search-results .epg-list .epg-row{ padding:8px !important; }
+  #sx-search-results .epg-list .epg-thumb{ flex:0 0 64px !important; width:64px !important; }
+}
+
+/* ── PC: movies & TV shows hover like match cards (lift + glow) ── */
+@media(min-width:901px) and (hover:hover){
+  #sx-search-results .sxs-poster .pi,
+  .va-movie-card, .sxs-card .sxs-th{ transition:transform .22s ease, box-shadow .22s ease, border-color .22s ease; }
+  #sx-search-results .sxs-poster:hover .pi,
+  #sx-search-results .sxs-poster:focus-visible .pi{
+    transform:translateY(-4px) !important; border-color:rgba(255,255,255,.35) !important;
+    box-shadow:0 12px 30px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.18) !important;
+  }
+  #sx-search-results .sxs-poster:hover .pt{ color:#fff; }
+  .va-movie-card:hover{ transform:translateY(-4px); border-color:rgba(255,255,255,.35); box-shadow:0 12px 30px rgba(0,0,0,.6); }
+}
+</style>
+
+<script id="ev-search-rows-js">
+(function(){
+  function tag(){
+    var r=document.getElementById('sx-search-results'); if(!r) return;
+    r.querySelectorAll('.fx2-thumb,.sxs-poster .pi,.epg-thumb').forEach(function(box){
+      if(box.dataset.evbg) return;
+      var im=box.querySelector('img'); var u=im&&(im.currentSrc||im.getAttribute('src'));
+      if(!u) return;
+      box.dataset.evbg='1';
+      box.style.setProperty('--evbg','url("'+u.replace(/"/g,'%22')+'")');
+    });
+  }
+  function init(){
+    var r=document.getElementById('sx-search-results'); if(!r) return;
+    new MutationObserver(tag).observe(r,{childList:true,subtree:true});
+    tag();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+})();
+</script>
+
+<style id="ev-voice-css">
+.sx-search-bar .ev-mic{ display:flex !important; align-items:center; justify-content:center; flex:0 0 34px; width:34px; height:34px;
+  border:0; background:transparent; color:#fff; border-radius:50%; cursor:pointer; padding:0; position:relative; -webkit-tap-highlight-color:transparent; }
+.sx-search-bar .ev-mic svg{ width:20px !important; height:20px !important; opacity:.9 !important; }
+.sx-search-bar .ev-mic:hover{ background:rgba(255,255,255,.12); }
+.sx-search-bar .ev-mic.listening{ background:#e5116f; color:#fff; }
+.sx-search-bar .ev-mic.listening::after{ content:""; position:absolute; inset:-4px; border-radius:50%; border:2px solid rgba(229,17,111,.7); animation:evMicPulse 1.2s ease-out infinite; }
+@keyframes evMicPulse{ from{ transform:scale(.85); opacity:1; } to{ transform:scale(1.35); opacity:0; } }
+.ev-voice-msg{ display:none; margin:8px 2px 0; font:600 12.5px var(--pm-font,inherit); color:rgba(255,255,255,.75); }
+.ev-voice-msg.show{ display:block; }
+.ev-voice-msg.err{ color:#ff8aa8; }
+.sx-search-bar.ev-listening input::placeholder{ color:#ff6b9d !important; }
+</style>
+<script id="ev-voice-js">
+(function(){
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition, rec=null, active=false, msgT=null, finalTxt='';
+  function $(id){return document.getElementById(id);}
+  function say(t,err,keep){
+    var m=$('ev-voice-msg'); if(!m) return;
+    clearTimeout(msgT); m.textContent=t||''; m.classList.toggle('show',!!t); m.classList.toggle('err',!!err);
+    if(t&&!keep) msgT=setTimeout(function(){ m.classList.remove('show'); },3800);
+  }
+  function setUI(on){
+    active=on;
+    var b=$('ev-mic'), bar=document.querySelector('.sx-search-bar'), inp=$('sx-search-input');
+    if(b){ b.classList.toggle('listening',on); b.setAttribute('aria-pressed',on?'true':'false'); }
+    if(bar) bar.classList.toggle('ev-listening',on);
+    if(inp){ if(on){ inp.dataset.ph=inp.placeholder; inp.placeholder='Listening\u2026 speak now'; } else if(inp.dataset.ph){ inp.placeholder=inp.dataset.ph; } }
+  }
+  function apply(text){
+    var inp=$('sx-search-input'); if(!inp) return;
+    inp.value=text;
+    var bar=document.querySelector('.sx-search-bar'); if(bar) bar.classList.toggle('has-text',!!text);
+    if(typeof sxSearchTyped==='function') sxSearchTyped(text); else if(typeof sxRunSearch==='function') sxRunSearch(text);
+  }
+  function stop(){ try{ rec&&rec.abort(); }catch(e){} setUI(false); say(''); }
+  function start(){
+    if(!SR){ say('Voice search isn\u2019t supported in this browser. Try Chrome or Safari.',true); return; }
+    if(!window.isSecureContext){ say('Voice search needs a secure (https) page.',true); return; }
+    if(active){ try{ rec.stop(); }catch(e){} return; }
+    rec=new SR();
+    rec.lang=(document.documentElement.lang&&document.documentElement.lang.length>2)?document.documentElement.lang:'en-IN';
+    rec.interimResults=true; rec.continuous=false; rec.maxAlternatives=1;
+    finalTxt='';
+    rec.onstart=function(){ setUI(true); say('Listening\u2026',false,true); };
+    rec.onresult=function(e){
+      var interim='';
+      for(var i=e.resultIndex;i<e.results.length;i++){
+        var r=e.results[i]; if(r.isFinal) finalTxt+=r[0].transcript; else interim+=r[0].transcript;
+      }
+      apply((finalTxt+interim).trim());
+    };
+    rec.onerror=function(e){
+      var c=e.error;
+      if(c==='not-allowed'||c==='service-not-allowed') say('Microphone blocked. Allow mic access in your browser settings and try again.',true);
+      else if(c==='no-speech') say('Didn\u2019t catch that. Tap the mic and try again.',true);
+      else if(c==='audio-capture') say('No microphone found.',true);
+      else if(c==='network') say('Voice search needs an internet connection.',true);
+      else if(c!=='aborted') say('Voice search error: '+c,true);
+    };
+    rec.onend=function(){
+      setUI(false);
+      var m=$('ev-voice-msg'); if(m&&!m.classList.contains('err')) say('');
+      var inp=$('sx-search-input'); if(inp&&finalTxt.trim()){ apply(finalTxt.trim()); }
+    };
+    try{ rec.start(); }catch(err){ setUI(false); say('Couldn\u2019t start the microphone.',true); }
+  }
+  function init(){
+    var b=$('ev-mic'); if(!b) return;
+    b.addEventListener('click',function(e){ e.preventDefault(); e.stopPropagation(); start(); });
+    var ov=$('sx-search-overlay');
+    if(ov) new MutationObserver(function(){ if(!ov.classList.contains('open')&&active) stop(); }).observe(ov,{attributes:true,attributeFilter:['class']});
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+})();
+</script>
+
+<style id="ev-pc-hs-hero-blur">
+/* PC hero (#hs-hero): sharp image CENTRED at its real aspect ratio over a heavy blur of itself.
+   Image edges are dissolved twice: (1) eased alpha fade on every edge, (2) a blur layer laid OVER the
+   image edges (backdrop blur, strongest at the border) — so no border can be seen. Dark vignette on both sides. */
+@media(min-width:901px){
+  #hs-hero{ --evH:max(400px,min(66vh,580px)); --evW:min(100%,calc(var(--evH) * 16 / 9)); }
+  #hs-hero .bg{ overflow:hidden; background-color:#07080c; background-size:cover !important; }
+  #hs-hero .bg::before{ content:""; position:absolute; inset:-60px; background:inherit; background-size:cover; background-position:center;
+    filter:blur(46px) brightness(1) saturate(1.05); }
+  #hs-hero .bg::after{ content:""; position:absolute; left:0; right:0; margin:0 auto; top:0; bottom:0; width:var(--evW);
+    background:inherit; background-repeat:no-repeat; background-size:contain !important; background-position:center center !important;
+    -webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.04) 3%,rgba(0,0,0,.15) 7%,rgba(0,0,0,.4) 13%,rgba(0,0,0,.72) 19%,rgba(0,0,0,.92) 25%,#000 31%,#000 69%,rgba(0,0,0,.92) 75%,rgba(0,0,0,.72) 81%,rgba(0,0,0,.4) 87%,rgba(0,0,0,.15) 93%,rgba(0,0,0,.04) 97%,transparent 100%),linear-gradient(180deg,transparent 0%,rgba(0,0,0,.15) 5%,rgba(0,0,0,.5) 10%,rgba(0,0,0,.85) 16%,#000 22%,#000 76%,rgba(0,0,0,.8) 84%,rgba(0,0,0,.4) 92%,transparent 100%); -webkit-mask-composite:source-in;
+    mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.04) 3%,rgba(0,0,0,.15) 7%,rgba(0,0,0,.4) 13%,rgba(0,0,0,.72) 19%,rgba(0,0,0,.92) 25%,#000 31%,#000 69%,rgba(0,0,0,.92) 75%,rgba(0,0,0,.72) 81%,rgba(0,0,0,.4) 87%,rgba(0,0,0,.15) 93%,rgba(0,0,0,.04) 97%,transparent 100%),linear-gradient(180deg,transparent 0%,rgba(0,0,0,.15) 5%,rgba(0,0,0,.5) 10%,rgba(0,0,0,.85) 16%,#000 22%,#000 76%,rgba(0,0,0,.8) 84%,rgba(0,0,0,.4) 92%,transparent 100%); mask-composite:intersect; }
+  /* blur laid OVER the image edges */
+  #hs-hero::after{ content:""; position:absolute; z-index:1; top:0; bottom:0; left:0; right:0; margin:0 auto; pointer-events:none;
+    width:calc(var(--evW) + 80px); max-width:100%;
+    -webkit-backdrop-filter:blur(22px); backdrop-filter:blur(22px);
+    -webkit-mask-image:linear-gradient(90deg,#000 0%,rgba(0,0,0,.85) 6%,rgba(0,0,0,.55) 12%,rgba(0,0,0,.25) 19%,rgba(0,0,0,.06) 26%,transparent 32%,transparent 68%,rgba(0,0,0,.06) 74%,rgba(0,0,0,.25) 81%,rgba(0,0,0,.55) 88%,rgba(0,0,0,.85) 94%,#000 100%),linear-gradient(180deg,#000 0%,rgba(0,0,0,.7) 6%,rgba(0,0,0,.3) 13%,rgba(0,0,0,.06) 20%,transparent 26%,transparent 74%,rgba(0,0,0,.08) 82%,rgba(0,0,0,.35) 90%,#000 100%); -webkit-mask-composite:source-over;
+    mask-image:linear-gradient(90deg,#000 0%,rgba(0,0,0,.85) 6%,rgba(0,0,0,.55) 12%,rgba(0,0,0,.25) 19%,rgba(0,0,0,.06) 26%,transparent 32%,transparent 68%,rgba(0,0,0,.06) 74%,rgba(0,0,0,.25) 81%,rgba(0,0,0,.55) 88%,rgba(0,0,0,.85) 94%,#000 100%),linear-gradient(180deg,#000 0%,rgba(0,0,0,.7) 6%,rgba(0,0,0,.3) 13%,rgba(0,0,0,.06) 20%,transparent 26%,transparent 74%,rgba(0,0,0,.08) 82%,rgba(0,0,0,.35) 90%,#000 100%); mask-composite:add; }
+  #hs-hero .sh{ z-index:2; background:
+      linear-gradient(90deg,#000 0%,rgba(0,0,0,.88) 12%,rgba(0,0,0,.5) 26%,rgba(0,0,0,.1) 38%,transparent 46%,transparent 54%,rgba(0,0,0,.1) 62%,rgba(0,0,0,.5) 74%,rgba(0,0,0,.88) 88%,#000 100%),
+      linear-gradient(0deg,rgba(0,0,0,.9) 0%,rgba(0,0,0,.35) 24%,transparent 48%) !important; }
+  #hs-hero .txt,#hs-hero .thumbs{ z-index:3; }
+  #hs-hero .th{ background-size:cover; }
+}
+</style>
+
+<style id="ev-pop-poster-css">
+#sxs-pop .sxs-pth{position:relative;aspect-ratio:16/9;overflow:hidden;background:#0c0d13;}
+#sxs-pop .sxs-pth::before{content:"";position:absolute;inset:-20px;background:var(--pbg) center/cover no-repeat;filter:blur(18px) brightness(.55) saturate(1.2);}
+#sxs-pop .sxs-pth>img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:1;}
+</style>
+
+<style id="ev-hero-fonts">
+/* Smaller, cleaner hero typography */
+@media(min-width:901px){
+  #hs-hero .txt{ width:min(420px,38%) !important; }
+  #hs-hero .tag{ font-size:9.5px !important; letter-spacing:.16em !important; margin:0 0 10px !important; gap:8px !important; }
+  #hs-hero .tag .lv{ padding:3px 8px 3px 7px !important; font-size:9.5px !important; border-radius:3px !important; }
+  #hs-hero .lgs{ gap:10px !important; margin:0 0 10px !important; }
+  #hs-hero .lgs .tl{ width:44px !important; height:44px !important; font-size:12px !important; }
+  #hs-hero .lgs b{ font-size:13px !important; }
+  #hs-hero h1{ font-size:clamp(17px,1.6vw,23px) !important; font-weight:700 !important; line-height:1.2 !important; letter-spacing:-.01em !important; margin:0 0 8px !important; }
+  #hs-hero .sub{ font-size:12px !important; line-height:1.5 !important; font-weight:500 !important; color:rgba(255,255,255,.68) !important; margin:0 0 16px !important; }
+  #hs-hero .go{ height:36px !important; min-width:150px !important; padding:0 18px !important; font-size:12.5px !important; font-weight:600 !important; border-radius:6px !important; gap:7px !important; }
+  #hs-hero .plus{ width:36px !important; height:36px !important; font-size:19px !important; border-radius:6px !important; }
+  #hs-hero .btns{ gap:8px !important; }
+}
+@media(max-width:900px){
+  .mh-t{ font-size:clamp(16px,4.8vw,20px) !important; font-weight:700 !important; line-height:1.18 !important; letter-spacing:-.005em !important; margin-bottom:5px !important; }
+  .mh-m{ font-size:11.5px !important; line-height:1.4 !important; }
+  .mh-badge{ font-size:10.5px !important; padding:4px 7px !important; }
+}
+</style>
+
+<style id="ev-pc-top10">
+/* Top-10 numbering on the home Movies row — PC too (same as mobile) */
+@media(min-width:901px){
+  #sxs-home .hs-k-movies .sxs-track{ counter-reset:hsn; }
+  #sxs-home .hs-k-movies .sxs-card{ counter-increment:hsn; position:relative; }
+  #sxs-home .hs-k-movies .sxs-card:nth-child(-n+10) .sxs-th::before{
+    content:""; position:absolute; left:0; bottom:0; width:70%; height:70%; z-index:2; pointer-events:none;
+    background:linear-gradient(45deg,rgba(0,0,0,.75) 0%,rgba(0,0,0,.3) 45%,transparent 75%);
+  }
+  #sxs-home .hs-k-movies .sxs-card:nth-child(-n+10) .sxs-th::after{
+    content:counter(hsn); position:absolute; left:8px; bottom:-4px; z-index:3; pointer-events:none;
+    font:800 64px/1 "Google Sans","Inter",sans-serif; letter-spacing:-.03em;
+    color:rgba(0,0,0,.25); -webkit-text-stroke:2px rgba(255,255,255,.92); text-shadow:0 2px 12px rgba(0,0,0,.7);
+  }
+}
+</style>
+
+<style id="ev-hero-satoshi">
+/* Satoshi across every hero slide; category = white pill with black text */
+:root{ --ev-sat:"Satoshi","Inter","Helvetica Neue",Helvetica,Arial,sans-serif; }
+#hs-hero .txt,#hs-hero .tag,#hs-hero .tag span,#hs-hero .tag b,#hs-hero h1,#hs-hero .sub,#hs-hero .go,#hs-hero .plus,#hs-hero .lgs b,#hs-hero .lgs .tl,
+.mh-slide,.mh-badge,.mh-t,.mh-m,
+.slide-sport-badge,.slide-title,.slide-sub,.btn-slide-watch,.btn-slide-outline,.slide-badge-live,.slide-live-badge,
+#slides-container .slide-title,#slides-container .slide-sub,#slides-container .slide-sport-badge{
+  font-family:var(--ev-sat) !important; -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+}
+/* titles */
+#hs-hero h1,.mh-t,.slide-title{ font-weight:700 !important; letter-spacing:-.015em !important; }
+#hs-hero .sub,.mh-m,.slide-sub{ font-weight:500 !important; letter-spacing:.005em !important; }
+#hs-hero .go,.btn-slide-watch{ font-weight:700 !important; letter-spacing:.01em !important; }
+
+/* category pill: white background, black text */
+#hs-hero .tag > span{
+  display:inline-flex; align-items:center; background:#fff !important; color:#000 !important;
+  font-weight:800 !important; font-size:9.5px !important; letter-spacing:.12em !important; text-transform:uppercase;
+  padding:4px 9px !important; border-radius:4px !important; line-height:1;
+}
+.mh-badge,
+.slide-sport-badge,
+#slides-container .slide-sport-badge{
+  background:#fff !important; color:#000 !important; -webkit-backdrop-filter:none !important; backdrop-filter:none !important;
+  font-weight:800 !important; letter-spacing:.1em !important; text-transform:uppercase !important; border-radius:4px !important;
+}
+.mh-badge{ font-size:10px !important; padding:5px 9px !important; }
+</style>
+
+<script id="ev-strip-lang">
+(function(){
+  var SEL=['#hs-hero h1','#hs-hero .sub','.mh-t','.mh-m','.slide-title','.slide-sub','.hsc-title',
+    '.sxs-card[data-k] .sxs-bar','.fx2-title','.smo-name','.smo-vs','.sxv-t','#sxs-pop .pt','.sp-rail-name','.mws-more-title','.mws-right-title'].join(',');
+  var QUICK=/[\[\(\{]/;
+  function clean(el){
+    var w=document.createTreeWalker(el,NodeFilter.SHOW_TEXT),n,list=[];
+    while((n=w.nextNode())) list.push(n);
+    list.forEach(function(t){
+      var v=t.nodeValue; if(!v||!QUICK.test(v)) return;
+      var nv=window.evStripLang(v); if(nv!==v.trim()&&nv!==v){ t.nodeValue=nv; }
+    });
+    if(el.title&&QUICK.test(el.title)) el.title=window.evStripLang(el.title);
+  }
+  var pend=false, queue=new Set();
+  function flush(){
+    pend=false; var arr=Array.from(queue); queue.clear();
+    arr.forEach(function(r){
+      if(!r||!r.isConnected) return;
+      if(r.nodeType===1){ if(r.matches&&r.matches(SEL)) clean(r); r.querySelectorAll&&r.querySelectorAll(SEL).forEach(clean); }
+      if(r.nodeType===3&&r.parentElement){ var p=r.parentElement.closest(SEL); if(p) clean(p); }
+    });
+  }
+  function enq(x){ queue.add(x); if(!pend){ pend=true; requestAnimationFrame(flush); } }
+  function init(){
+    if(!window.evStripLang) return;
+    new MutationObserver(function(ms){
+      ms.forEach(function(m){
+        if(m.type==='characterData'){ enq(m.target); }
+        else m.addedNodes.forEach(function(n){ if(n.nodeType===1||n.nodeType===3) enq(n); });
+      });
+    }).observe(document.body,{childList:true,subtree:true,characterData:true});
+    enq(document.body);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+})();
+</script>
+
+<style id="ev-search-play-fix">
+@media(max-width:900px){
+  /* round action button: reliable 40px tap target, icon drawn in CSS (label text hidden) */
+  #sx-search-results .fx2-card .smo-btn{
+    flex:0 0 40px !important; width:40px !important; height:40px !important; min-width:40px !important;
+    border-radius:50% !important; padding:0 !important; margin:0 0 0 auto !important;
+    display:flex !important; align-items:center; justify-content:center; position:relative !important; right:auto !important; top:auto !important;
+    font-size:0 !important; line-height:0 !important; color:transparent !important; overflow:hidden; text-indent:-9999px;
+    background:#fff !important; border:0 !important; box-shadow:0 2px 10px rgba(0,0,0,.45) !important; transform:none !important;
+    -webkit-tap-highlight-color:transparent; touch-action:manipulation;
+  }
+  #sx-search-results .fx2-card .smo-btn:active{ transform:scale(.92) !important; }
+  #sx-search-results .fx2-card .smo-btn::after{
+    content:""; border:0 !important; margin:0 !important; width:100%; height:100%; text-indent:0;
+    background:no-repeat center/18px 18px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z' fill='%23000'/%3E%3C/svg%3E");
+  }
+  /* upcoming → clock icon (not a play triangle) */
+  #sx-search-results .fx2-card[data-evs="upcoming"] .smo-btn{ background:rgba(255,255,255,.14) !important; }
+  #sx-search-results .fx2-card[data-evs="upcoming"] .smo-btn::after{
+    background:no-repeat center/18px 18px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E");
+  }
+  /* finished → dimmed check */
+  #sx-search-results .fx2-card[data-evs="finished"] .smo-btn{ background:rgba(255,255,255,.1) !important; opacity:.7; }
+  #sx-search-results .fx2-card[data-evs="finished"] .smo-btn::after{
+    background:no-repeat center/18px 18px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E");
+  }
+  #sx-search-results .fx2-card{ cursor:pointer; }
+}
+</style>
+<script id="ev-search-play-fix-js">
+(function(){
+  function state(card){
+    var b=card.querySelector('.fx2-badge'); var t=(b&&b.textContent||'').toUpperCase();
+    return /LIVE/.test(t)?'live':/FINISH|OVER|ENDED/.test(t)?'finished':'upcoming';
+  }
+  function tag(){
+    var r=document.getElementById('sx-search-results'); if(!r) return;
+    r.querySelectorAll('.fx2-card').forEach(function(c){ var st=state(c); if(c.dataset.evs!==st) c.dataset.evs=st; });
+  }
+  function init(){
+    var r=document.getElementById('sx-search-results'); if(!r) return;
+    new MutationObserver(tag).observe(r,{childList:true,subtree:true}); tag();
+    /* tap anywhere on a result row = tap its action button */
+    r.addEventListener('click',function(e){
+      if(!window.matchMedia('(max-width:900px)').matches) return;
+      var card=e.target.closest('.fx2-card'); if(!card||e.target.closest('a,button')) return;
+      var btn=card.querySelector('.smo-btn'); if(btn) btn.click();
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+})();
+</script>
+
+<style id="ev-search-play-nobg">
+@media(max-width:900px){
+  /* no background at all — just a clean white icon */
+  #sx-search-results .fx2-card .smo-btn,
+  #sx-search-results .fx2-card[data-evs="upcoming"] .smo-btn,
+  #sx-search-results .fx2-card[data-evs="finished"] .smo-btn{
+    background:transparent !important; background-image:none !important; border:0 !important; box-shadow:none !important; outline:0 !important;
+  }
+  #sx-search-results .fx2-card .smo-btn:hover,
+  #sx-search-results .fx2-card .smo-btn:active,
+  #sx-search-results .fx2-card .smo-btn:focus{ background:transparent !important; box-shadow:none !important; filter:none !important; }
+  #sx-search-results .fx2-card .smo-btn::after{
+    background:no-repeat center/26px 26px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z' fill='%23fff'/%3E%3C/svg%3E") !important;
+  }
+  #sx-search-results .fx2-card[data-evs="upcoming"] .smo-btn::after{
+    background:no-repeat center/24px 24px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E") !important;
+  }
+  #sx-search-results .fx2-card[data-evs="finished"] .smo-btn::after{
+    background:no-repeat center/24px 24px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") !important;
+  }
+  #sx-search-results .fx2-card .smo-btn:active{ transform:scale(.88) !important; opacity:.7; }
 }
 </style>
 </body>
