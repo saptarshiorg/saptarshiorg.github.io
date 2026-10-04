@@ -17050,7 +17050,6 @@ window.sxHeroCustom=function(base,all){
         if(a<10){db.failQ.push(p);db.inflight--;await sleep(Math.min(4000,300*a));continue;}
       }
       db.inflight--;
-      if(MOBL)await sleep(70);
     }
   }
   async function start(db){
@@ -17059,7 +17058,7 @@ window.sxHeroCustom=function(base,all){
     while(!db.pool.totalPages){
       try{await fetchInto(db,1);}catch(e){db.fail++;notify(db);await sleep(Math.min(5000,500*db.fail));}
     }
-    var ws=[];for(var i=0;i<(MOBL?5:14);i++)ws.push(worker(db));
+    var ws=[];for(var i=0;i<14;i++)ws.push(worker(db));
     await Promise.all(ws);
     db.done=true;db.running=false;saveCache(db);db.sc=null;notify(db);
   }
@@ -17068,6 +17067,7 @@ window.sxHeroCustom=function(base,all){
   /* route the site's old loaders into this one */
   window.vaLoadMoreCurrent=function(t){start(DB[t||'movie']);};
   window.vaBulkPreload=function(t){start(DB[t]);};
+  setTimeout(function(){start(DB.movie);start(DB.tv);},1500);
   window.vaDeepSearch=async function(){};
   window.vaInit=function(){};
   window.vaRenderMovies=function(){DB.movie.pages.concat(DB.tv.pages).forEach(function(pg){pg.schedule();});};
@@ -17991,10 +17991,7 @@ window.sxHeroCustom=function(base,all){
     el.addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&&e.target.classList&&e.target.classList.contains('sxs-card')){e.preventDefault();e.target.click();}});
   }
   function top(arr,n){
-    var out=[],lo=-1;
-    for(var i=0;i<arr.length;i++){var v=parseFloat(arr[i].popularity)||0;
-      if(out.length<n||v>lo){var k=out.length;out.push([v,arr[i]]);out.sort(function(a,b){return b[0]-a[0];});if(out.length>n)out.pop();lo=out[out.length-1][0];}}
-    return out.map(function(x){return x[1];});
+    return arr.map(function(m){return [parseFloat(m.popularity)||0,m];}).sort(function(a,b){return b[0]-a[0];}).slice(0,n).map(function(x){return x[1];});
   }
 
   /* ═════ HOME ═════ */
@@ -18005,8 +18002,8 @@ window.sxHeroCustom=function(base,all){
     var homeRender=function(){
       var A=S.refresh(),lv=A.filter(function(i){return i.live;}).slice(0,12),up=A.filter(function(i){return !i.live&&!i.fin;}).slice(0,12),ms=lv.concat(up),now=Date.now();
       if(now-cache.at>6000||cache.n<0){
-        if(cache.n!==vaPools.movie.all.length){cache.mg=top(vaPools.movie.all,60);cache.m=cache.mg.slice(0,16);cache.n=vaPools.movie.all.length;}
-        if(cache.tn!==vaPools.tv.all.length){cache.tg=top(vaPools.tv.all,60);cache.t=cache.tg.slice(0,16);cache.tn=vaPools.tv.all.length;}
+        if(cache.n!==vaPools.movie.all.length){cache.mg=top(vaPools.movie.all,window.__hsN||60);cache.m=cache.mg.slice(0,16);cache.n=vaPools.movie.all.length;}
+        if(cache.tn!==vaPools.tv.all.length){cache.tg=top(vaPools.tv.all,window.__hsN||60);cache.t=cache.tg.slice(0,16);cache.tn=vaPools.tv.all.length;}
         cache.at=now;
       }
       var sig=S.tiles(A).map(function(t){return t.name+t.live;}).join('|')+'@'+ms.map(function(i){return i.title+(i.live?'L':'U')+i.time;}).join('|')+'#'+cache.m.map(function(m){return m.title;}).join(',')+'#'+cache.t.map(function(m){return m.title;}).join(',')+'#'+cache.mg.length+'/'+cache.tg.length+'#'+(window._cmsChannels||[]).map(function(c){return (c.status_live_off||'')[0]||'-';}).join('');
@@ -18025,8 +18022,18 @@ window.sxHeroCustom=function(base,all){
       if(chs.length)h+=gsec('Live TV',chs.map(function(c){return rc(chWrap(c));}).join(''),'live','live');
       if(cache.tg.length)h+=gsec('TV Shows',cache.tg.map(function(m){return rc(mvWrap(m,'tv'));}).join(''),'','tv');
       if(cache.mg.length)h+=gsec('Movies',cache.mg.map(function(m){return rc(mvWrap(m,'movie'));}).join(''),'','movies');
+      h+='<div id="hs-more" style="height:80px"></div>';
       hr.innerHTML=h;after(hr);
+      try{var mo=document.getElementById('hs-more');if(mo&&window.__hsIO){window.__hsIO.disconnect();window.__hsIO.observe(mo);}}catch(e){}
     };
+    window.__hsN=60;
+    window.__hsIO=window.IntersectionObserver?new IntersectionObserver(function(es){
+      if(!es.some(function(e){return e.isIntersecting;}))return;
+      var tot=Math.max(vaPools.movie.all.length,vaPools.tv.all.length);
+      if(window.__hsN>=tot)return;
+      window.__hsN+=90;cache.n=-1;cache.tn=-1;
+      homeRender();
+    },{rootMargin:'1200px 0px'}):null;
     homeRender();setInterval(homeRender,3000);
   }
 
@@ -21368,6 +21375,57 @@ img.ev-f.ev-ok{opacity:1;}
   pop.addEventListener('click',function(){var el=cur;hide();if(el)el.click();});
   document.addEventListener('scroll',hide,{capture:true,passive:true});
   window.addEventListener('blur',hide);window.addEventListener('resize',hide);
+})();
+</script>
+<style id="ev-mobile-search-premium">
+/* ── Mobile Movies / TV Shows: sticky pill search ── */
+@media(max-width:900px){
+  .hsm-page .hsm-head{position:sticky;top:0;z-index:20;margin:0 -14px 6px;padding:8px 14px 10px;background:linear-gradient(180deg,#000 82%,rgba(0,0,0,0));gap:8px;}
+  .hsm-page .hsm-sec-title{flex:1 1 100%;}
+  .hsm-page .hsm-search{width:100%;padding:11px 16px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);color:#fff;}
+  .hsm-page .hsm-search input{border:0 !important;background:none !important;box-shadow:none !important;padding:0 !important;font-size:15px;height:auto;}
+  .hsm-page .hsm-search input::placeholder{color:rgba(255,255,255,.55);}
+}
+/* ── Premium "View All Matches / Channels" ── */
+.sp-rail-viewall{position:relative;overflow:hidden;display:flex !important;align-items:center;justify-content:center;gap:8px;
+  background:linear-gradient(135deg,#F5A623 0%,#E0155F 55%,#9B1FE8 100%) !important;color:#fff !important;border:1px solid rgba(255,255,255,.28) !important;border-radius:999px !important;
+  padding:13px 22px !important;font-weight:800;font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+  box-shadow:0 8px 22px rgba(224,21,95,.38),inset 0 1px 0 rgba(255,255,255,.35);transition:transform .2s ease,box-shadow .2s ease;}
+.sp-rail-viewall::after{content:"\203A";font-size:18px;line-height:1;transition:transform .2s ease;}
+.sp-rail-viewall::before{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.4),transparent);transform:skewX(-20deg);animation:evVaShine 3.6s ease-in-out infinite;}
+@keyframes evVaShine{0%,60%{left:-60%}100%{left:130%}}
+.sp-rail-viewall:hover{background:linear-gradient(135deg,#FFB93D 0%,#FF3D96 55%,#B04BFF 100%) !important;transform:translateY(-1px);box-shadow:0 10px 26px rgba(224,21,95,.5),inset 0 1px 0 rgba(255,255,255,.4);}
+.sp-rail-viewall:hover::after{transform:translateX(3px);}
+.sp-rail-viewall:active{transform:scale(.98);}
+@media(max-width:900px){
+  #stream-player-overlay.open:not(.sp-fs) .sp-rail-viewall{width:calc(100% - 32px) !important;margin:14px 16px 6px !important;}
+  /* gap so the server list / info bar has room to load before the related section */
+  #stream-player-overlay.open:not(.sp-fs) #stream-player-infobar{padding-bottom:22px !important;min-height:96px;}
+  #stream-player-overlay.open:not(.sp-fs) #stream-player-rail{margin-top:18px !important;padding-top:6px;}
+  #stream-player-overlay.open:not(.sp-fs) #sp-rail-header{padding-top:12px;}
+}
+#sp-servers-menu .sp-sv-loading{display:flex;flex-direction:column;gap:8px;padding:10px 12px;}
+#sp-servers-menu .sp-sv-loading i{display:block;height:34px;border-radius:10px;background:linear-gradient(90deg,rgba(255,255,255,.06),rgba(255,255,255,.16),rgba(255,255,255,.06));background-size:200% 100%;animation:evSvShim 1.1s linear infinite;}
+@keyframes evSvShim{to{background-position:-200% 0}}
+/* mobile grid: cheap off-screen cards */
+.hs-mgrid .sxs-card{content-visibility:auto;contain-intrinsic-size:auto 190px;}
+</style>
+<script>
+/* show a brief skeleton while the server list loads, then render it */
+(function(){
+  var t=setInterval(function(){
+    if(typeof window.spToggleServers!=='function'||typeof window.spServersRender!=='function')return;
+    clearInterval(t);
+    var orig=window.spToggleServers;
+    window.spToggleServers=function(e){
+      var ov=document.getElementById('stream-player-overlay'),opening=ov&&!ov.classList.contains('sv-open');
+      orig.apply(this,arguments);
+      if(!opening)return;
+      var m=document.getElementById('sp-servers-menu');if(!m)return;
+      m.innerHTML='<div class="sp-sv-loading"><i></i><i></i><i></i></div>';
+      setTimeout(function(){try{if(ov.classList.contains('sv-open'))window.spServersRender();}catch(_){}},650);
+    };
+  },300);
 })();
 </script>
 </body>
