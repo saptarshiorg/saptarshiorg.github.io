@@ -5578,6 +5578,7 @@ window.sxRenderFavouritesOverlay = sxRenderFavouritesOverlay;
       })).sort((a,b) => (a.time?.getTime() || Infinity) - (b.time?.getTime() || Infinity));
 
       const q = (document.getElementById('fcxSearchInput')?.value || '').trim().toLowerCase();
+      try { window._fcxMatchesCache = fcxMatches; if (window.LMX && LMX.applyBanners) LMX.applyBanners(); } catch (e) {}   // Willow banner beats FanCode's before anything renders
       fcxRender(q ? fcxMatches.filter(m => m.title.toLowerCase().includes(q) || m.tournament.toLowerCase().includes(q)) : fcxMatches);
 
       // Push every refresh out to the home Matches tab + hero slides bridge
@@ -16595,6 +16596,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
       if (window._matchCardsRawRows && typeof renderMatchCards === 'function') renderMatchCards(window._matchCardsRawRows);   /* sheet re-render -> LMX.augment + render */
       else if (typeof window.slxAppendHomeSections === 'function') window.slxAppendHomeSections();                              /* = LMX.render */
       if (typeof window.fcxAppendFixturesPreview === 'function') { try { window.fcxAppendFixturesPreview(); } catch(_){} }
+      try { if (window.LMX && LMX.applyBanners) LMX.applyBanners(); } catch(_){}
       try { window.wlxAppendHeroSlides(); } catch(_){}
       var ov = document.getElementById('willow-overlay'); if (ov && ov.classList.contains('open')){ render(); renderSchedule(); }
       var so = document.getElementById('sx-search-overlay'), si2 = document.getElementById('sx-search-input');   /* keep open search in sync */
@@ -16802,8 +16804,37 @@ button, a.btn, [class*="btn-"], input, select, textarea{
     if (!ok) return false;
     return leagueText(it.tour + ' ' + it.title + ' ' + it.teams.join(' ')) === leagueText([c.game, c.details, c.team1_full_name, c.team2_full_name].join(' '));
   }
+  function fcxLinked(it, m){
+    if (!it.teams) return false;
+    var ok = (it.lg ? (strictInTitle(m.title, it.teams[0]) && strictInTitle(m.title, it.teams[1])) : (titleHas(m.title, it.teams[0]) && titleHas(m.title, it.teams[1]))) || looseFcx(it, m);
+    if (!ok) return false;
+    return !(it.status !== 'LIVE' && it.start && m.time instanceof Date && !isNaN(m.time.getTime()) && !startNear(it.start.getTime(), m.time.getTime(), 40));
+  }
+  function swapDom(oldU, newU){
+    if (!oldU || !newU || oldU === newU) return;
+    try {
+      document.querySelectorAll('img').forEach(function(im){ if (im.getAttribute('src') === oldU) im.setAttribute('src', newU); });
+      document.querySelectorAll('[style*="background-image"]').forEach(function(el){ var s = el.getAttribute('style') || ''; if (s.indexOf(oldU) >= 0) el.setAttribute('style', s.split(oldU).join(newU)); });
+    } catch(e){}
+  }
+  /* WILLOW BANNER PRIORITY: when a match exists on Willow too, Willow's poster replaces FanCode's (sheet's own banner_url column still wins on sheet cards) */
+  function applyBanners(){
+    fresh();
+    var fx = window._fcxMatchesCache || [], cards = window._matchCardsData || [];
+    items.forEach(function(it){
+      if (!it.wposter) return;
+      fx.forEach(function(m){
+        if (!m || m.image === it.wposter || !fcxLinked(it, m)) return;
+        var old = m.image; if (m._img0 == null) m._img0 = old; m.image = it.wposter;
+        cards.forEach(function(c){ if (c._fcxBanner && c._fcxBanner === old) c._fcxBanner = it.wposter; });
+        swapDom(old, it.wposter);
+      });
+      classify(it);
+      if (it.sheet && it.sheet._fcxBanner !== it.wposter){ var o2 = it.sheet._fcxBanner; it.sheet._fcxBanner = it.wposter; swapDom(o2, it.wposter); }
+    });
+  }
   var builtW = null, builtS = null;
-  function fresh(){ if (builtW !== window._wlxGroups || builtS !== window._slxGroups) build(); }
+  function fresh(){ if (builtW !== window._wlxGroups || builtS !== window._slxGroups){ build(); } }
   function sameFixture(a, b){
     if ((a.status === 'ENDED') !== (b.status === 'ENDED')) return false;   // a finished fixture never merges into a live/upcoming one
     if (a.status !== 'LIVE' && b.status !== 'LIVE' && a.start && b.start && Math.abs(a.start - b.start) > 18 * 36e5) return false;   // same two teams, different day = different match
@@ -16830,7 +16861,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
     });
     (typeof window.wlxForLmx === 'function' ? window.wlxForLmx() : []).forEach(function(g){   // Willow OTT feed (WLX bridge)
       raw.push({ src:'wlx', lg:!!g.lg, title:g.title, teams:(g.teams && g.teams.length === 2) ? g.teams : null, names:null,
-        category:LCAT(g.category, g.title, g.blob), status:g.status || 'UPCOMING', start:(g.dateKnown || g.status === 'LIVE') ? (g.start || null) : null, tour:g.tour || '', poster:g.poster || '',
+        category:LCAT(g.category, g.title, g.blob), status:g.status || 'UPCOMING', start:(g.dateKnown || g.status === 'LIVE') ? (g.start || null) : null, tour:g.tour || '', poster:g.poster || '', wposter:g.poster || '',
         t1:'', t2:'', servers:g.servers.map(cloneServer) });
     });
     var out = [];
@@ -16840,6 +16871,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
       if (!hit){ out.push(it); return; }
       addServers(hit, it.servers);
       hit.lg = hit.lg || it.lg;
+      if (it.wposter && !hit.wposter) hit.wposter = it.wposter;
       if (it.status === 'LIVE') hit.status = 'LIVE';
       else if (hit.status === 'ENDED' && it.status !== 'ENDED') hit.status = it.status;
       if (!hit.poster && it.poster) hit.poster = it.poster;
@@ -16851,7 +16883,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
       if (!hit.t2) hit.t2 = n2;
       if (!hit.names && it.names) hit.names = swp ? [it.names[1], it.names[0]] : it.names;
     });
-    out.forEach(function(it, i){ it.key = 'lmx' + i; relabel(it); });
+    out.forEach(function(it, i){ it.key = 'lmx' + i; relabel(it); if (it.wposter) it.poster = it.wposter; });   /* Willow banner beats SonyLIV's too */
     items = out; builtW = window._wlxGroups; builtS = window._slxGroups;
     return out;
   }
@@ -16912,6 +16944,7 @@ button, a.btn, [class*="btn-"], input, select, textarea{
   /* ── Public API ── */
   var LMX = window.LMX = {
     everyServer: everyServer,
+    applyBanners: applyBanners,
     debug: function(){
       fresh();
       var fx = window._fcxMatchesCache || [], rows = (window._wlxGroups || []).map(function(g){
@@ -18321,6 +18354,7 @@ window.sxHeroCustom=function(base,all){
       it.at=exact?exact.at:Infinity;it.approx=!!(exact&&exact.approx);
       var pick=function(f){for(var i=0;i<ms.length;i++){var v=f(ms[i]);if(v)return v;}return '';};
       it.img=pick(function(m){return m.img;});
+      (function(){ var mn=ms.filter(function(m){return m.src==='s'&&m.raw&&(m.raw.banner_url||m.raw.banner_image_url);})[0], wx=ms.filter(function(m){return m.src==='x'&&m.raw&&m.raw.wposter;})[0]; if(mn)it.img=mn.raw.banner_url||mn.raw.banner_image_url; else if(wx)it.img=wx.raw.wposter; })();
       var _o={s:0,f:1,x:2},_by=ms.slice().sort(function(a,b){return _o[a.src]-_o[b.src];});
       var _real=_by.filter(function(m){return m.tour;})[0],_gs=_by.filter(function(m){return m.tourG;})[0];
       it.tourSrc=_real?_real.src:'';
