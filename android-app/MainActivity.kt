@@ -80,6 +80,7 @@ class MainActivity : AppCompatActivity() {
 
     /** Hosts whose images failed a direct load → proxied from now on. Persisted across launches. */
     private val proxyImageHosts: MutableSet<String> = java.util.concurrent.ConcurrentHashMap.newKeySet()
+    private val proxyFrameHosts: MutableSet<String> = java.util.concurrent.ConcurrentHashMap.newKeySet()
     private val prefs by lazy { getSharedPreferences("ev_main", MODE_PRIVATE) }
 
     private fun looksLikeStream(url: String): Boolean {
@@ -141,18 +142,26 @@ class MainActivity : AppCompatActivity() {
             return IMAGE_EXT.any { path.endsWith(it) } || accept.startsWith("image/")
         }
 
-        private fun call(url: String, headers: Map<String, String>, method: String): Response =
-            client.newCall(Request.Builder().url(url).headers(headers.toHeaders()).method(method, null).build()).execute()
+        private fun call(url: String, headers: Map<String, String>, method: String, img: Boolean): Response {
+            val b = Request.Builder().url(url).headers(headers.toHeaders()).method(method, null)
+            if (!img) b.cacheControl(okhttp3.CacheControl.FORCE_NETWORK) // live m3u8/mpd/segments/iframes: always fresh
+            return client.newCall(b.build()).execute()
+        }
 
         fun fetch(request: WebResourceRequest): WebResourceResponse? {
             val method = request.method.uppercase()
             if (method != "GET" && method != "HEAD") return null
             return try {
                 val url = request.url.toString()
+                val cm = CookieManager.getInstance()
+                val img = isImage(request)
                 val base = request.requestHeaders.filterKeys {
                     val k = it.lowercase(); k !in DROP_REQUEST_HEADERS && k !in DROP_CONDITIONAL
+                }.toMutableMap().also { h ->
+                    // WebView doesn't pass its cookies to shouldInterceptRequest — add them so sessions/tokens survive.
+                    if (h.keys.none { it.equals("cookie", true) }) cm.getCookie(url)?.takeIf { it.isNotEmpty() }?.let { h["Cookie"] = it }
                 }
-                var response: Response = call(url, base, method)
+                var response: Response = call(url, base, method, img)
 
                 // Hotlink protection: hosts that reject our page's Referer/Origin. Retry the way a
                 // plain <img> from the host's own site would — Referer = the image's own origin, no Origin.
@@ -161,16 +170,18 @@ class MainActivity : AppCompatActivity() {
                     val u = request.url
                     val selfOrigin = "${u.scheme}://${u.host}/"
                     val retry = base.filterKeys { it.lowercase() != "origin" && it.lowercase() != "referer" } + ("Referer" to selfOrigin)
-                    response = call(url, retry, method)
+                    response = call(url, retry, method, img)
                     if (response.code in listOf(400, 401, 403, 429)) { // last try: no referer at all
                         response.close()
-                        response = call(url, retry - "Referer", method)
+                        response = call(url, retry - "Referer", method, img)
                     }
                 }
 
+                // …and hand Set-Cookie back to WebView so the next request carries it.
+                response.headers("Set-Cookie").forEach { cm.setCookie(url, it) }
                 val body = response.body ?: return null
                 val code = response.code
-                if (code < 100 || code in 300..399) { response.close(); return null } // let WebView handle it
+                if (code < 100 || code in 300..399 || (code >= 400 && !img)) { response.close(); return null } // fail open // let WebView handle it
                 val ct = response.header("Content-Type")
                 val mimeType = (ct ?: guessMime(url))?.substringBefore(";")?.trim()
                 val encoding = ct?.substringAfter("charset=", "utf-8")?.trim() ?: "utf-8"
@@ -232,49 +243,27 @@ class MainActivity : AppCompatActivity() {
         webView = findViewById(R.id.webview)
         fullscreenContainer = findViewById(R.id.fullscreen_container)
         NativeProxy.init(applicationContext)
+        proxyFrameHosts.addAll(prefs.getStringSet("frame_proxy_hosts", emptySet()) ?: emptySet())
         proxyImageHosts.addAll(prefs.getStringSet("img_proxy_hosts", emptySet()) ?: emptySet())
         configureWebView()
         webView.loadUrl(SITE_URL)
     }
 
-    /** Injected into every frame at document start: neuter popup / redirect tricks. */
+    /** Our own pages only (never iframes): retry a failed image through the proxy. No link/popup/iframe blocking. */
     private val GUARD_JS = """
         (function(){
           try {
-            if (window.top === window.self) {
-              // Main page: leave links/windows native. Speed + resilience for images only:
-              // a failed direct load tells the app to proxy that host, then retries once.
-              document.addEventListener('error', function(e){
-                var im = e.target;
-                if (!im || im.tagName !== 'IMG' || im.dataset.evr || !/^https?:/i.test(im.currentSrc || im.src)) return;
-                im.dataset.evr = '1';
-                try {
-                  var u = new URL(im.currentSrc || im.src);
-                  if (window.EVStreamsNative && window.EVStreamsNative.imageFailed) window.EVStreamsNative.imageFailed(u.hostname);
-                  setTimeout(function(){ im.src = u.href + (u.hash ? '' : '#r'); }, 60);
-                } catch(x){}
-              }, true);
-              document.addEventListener('DOMContentLoaded', function(){
-                var apply = function(r){ (r.querySelectorAll ? r.querySelectorAll('img:not([decoding])') : []).forEach(function(i){ i.decoding = 'async'; }); };
-                apply(document);
-                new MutationObserver(function(ms){ ms.forEach(function(m){ m.addedNodes.forEach(function(n){
-                  if (n.tagName === 'IMG' && !n.hasAttribute('decoding')) n.decoding = 'async'; else if (n.querySelectorAll) apply(n); }); }); })
-                  .observe(document.documentElement, {childList:true, subtree:true});
-              });
-              return;
-            }
-            var stub = { closed:true, close:function(){}, focus:function(){}, blur:function(){}, postMessage:function(){}, location:{} };
-            window.open = function(){ return stub; };
-            document.addEventListener('click', function(e){
-              var a = e.target && e.target.closest ? e.target.closest('a[target]') : null;
-              if (a && a.target && a.target !== '_self' && a.target !== '_top' && a.target !== '_parent') {
-                e.preventDefault(); e.stopPropagation();
-              }
+            if (window.top !== window.self) return;
+            document.addEventListener('error', function(e){
+              var im = e.target;
+              if (!im || im.tagName !== 'IMG' || im.dataset.evr || !/^https?:/i.test(im.currentSrc || im.src)) return;
+              im.dataset.evr = '1';
+              try {
+                var u = new URL(im.currentSrc || im.src);
+                if (window.EVStreamsNative && window.EVStreamsNative.imageFailed) window.EVStreamsNative.imageFailed(u.hostname);
+                setTimeout(function(){ im.src = u.href + (u.hash ? '' : '#r'); }, 60);
+              } catch(x){}
             }, true);
-            var mo = new MutationObserver(function(ms){ ms.forEach(function(m){ m.addedNodes && m.addedNodes.forEach(function(n){
-              if (n.tagName === 'A' && n.target && n.target !== '_self' && !n.textContent.trim()) n.remove();
-            }); }); });
-            mo.observe(document.documentElement, {childList:true, subtree:true});
           } catch(e){}
         })();
     """.trimIndent()
@@ -292,17 +281,25 @@ class MainActivity : AppCompatActivity() {
         s.loadsImagesAutomatically = true
         s.blockNetworkImage = false
         s.allowContentAccess = true
-        s.allowFileAccess = false
+        s.allowFileAccess = true
+        s.allowUniversalAccessFromFileURLs = true
+        s.allowFileAccessFromFileURLs = true
         s.cacheMode = WebSettings.LOAD_DEFAULT
+
+        // Embeds live in cross-origin iframes: they need third-party cookies, and many players refuse
+        // a UA that says "; wv" (Android WebView).
+        CookieManager.getInstance().setAcceptCookie(true)
+        CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true)
+        s.userAgentString = s.userAgentString.replace("; wv", "").replace("Version/4.0 ", "")
 
         // No popups, ever.
         s.setSupportMultipleWindows(true)
         s.javaScriptCanOpenWindowsAutomatically = false
 
-        WebView.setWebContentsDebuggingEnabled(false)
+        WebView.setWebContentsDebuggingEnabled(true)
 
         if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
-            WebViewCompat.addDocumentStartJavaScript(webView, GUARD_JS, setOf("*"))
+            WebViewCompat.addDocumentStartJavaScript(webView, GUARD_JS, setOf("https://evstreams.pages.dev", "https://saptarshiorg.github.io"))
         }
 
         webView.webViewClient = object : WebViewClient() {
@@ -326,8 +323,21 @@ class MainActivity : AppCompatActivity() {
                 if (url.scheme != "http" && url.scheme != "https") return null
                 // Images: load directly (fastest, no extra hop). Only hosts that already refused a direct
                 // load (hotlink protection) are fetched through the native proxy.
+                // Iframe pages (text/html sub-frames): load exactly like Chrome would — no proxy — unless that
+                // host previously refused to be framed (X-Frame-Options / frame-ancestors), then proxy it.
+                val wantsHtml = request.requestHeaders.entries.any { it.key.equals("accept", true) && it.value.contains("text/html") }
+                if (wantsHtml && !isStream && host?.lowercase() !in proxyFrameHosts) return null
                 if (!isStream && NativeProxy.isImage(request) && host?.lowercase() !in proxyImageHosts) return null
                 return NativeProxy.fetch(request)
+            }
+
+            override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
+                if (!request.isForMainFrame && request.url.host != null && android.os.Build.VERSION.SDK_INT >= 23) {
+                    val h = request.url.host
+                    // Only surface frame-level failures (embeds/players), not every missing asset.
+                    val accept = request.requestHeaders.entries.any { it.key.equals("accept", true) && it.value.contains("text/html") }
+                    if (accept) Toast.makeText(this@MainActivity, "Embed failed: $h — ${error.description}", Toast.LENGTH_LONG).show()
+                }
             }
 
             override fun onReceivedSslError(view: WebView?, handler: SslErrorHandler, error: SslError?) {
@@ -341,26 +351,23 @@ class MainActivity : AppCompatActivity() {
                 val url = uri.toString()
                 val scheme = uri.scheme?.lowercase() ?: ""
 
-                // Direct playable links → native player
-                if (scheme in PLAYABLE_SCHEMES || (scheme.startsWith("http") && looksLikeStream(url) && !isAllowedPageHost(uri.host))) {
+                // Raw stream links tapped on the page → native player. Nothing else is ever blocked.
+                if (scheme in PLAYABLE_SCHEMES ||
+                    (request.isForMainFrame && scheme.startsWith("http") && looksLikeStream(url) && !isAllowedPageHost(uri.host))) {
                     playNative(url, uri.lastPathSegment ?: "Stream", null)
                     return true
                 }
+                // iframes / embeds / players: always load, untouched.
+                if (!request.isForMainFrame) return false
 
-                // Sub-frames (embeds) may navigate over http(s) — but never to ad networks or app-jump schemes.
-                if (!request.isForMainFrame) {
-                    return !(scheme == "http" || scheme == "https" || scheme == "about" || scheme == "blob" || scheme == "data") 
+                // Main page: our site stays in-app; a link the user taps to another site opens in
+                // their browser / the real app (Instagram etc.). Anything else just loads.
+                if (scheme == "http" || scheme == "https") {
+                    if (isAllowedPageHost(uri.host)) return false
+                    val tapped = if (android.os.Build.VERSION.SDK_INT >= 24) request.hasGesture() else false
+                    if (tapped) { openExternal(uri); return true }
                 }
-
-                // Top-level: our own hosts stay inside the app.
-                if ((scheme == "http" || scheme == "https") && isAllowedPageHost(uri.host)) return false
-
-                // Anything else: only if the USER tapped it → hand to their browser / the real app
-                // (Instagram, YouTube, Telegram…). Scripted redirects, popunders and ad hosts are dropped.
-                val userTapped = if (android.os.Build.VERSION.SDK_INT >= 24) request.hasGesture() else true
-                if (userTapped) openExternal(uri)
-                else Log.i("EVStreams", "blocked auto-navigation → $url")
-                return true
+                return false
             }
         }
 
@@ -398,13 +405,29 @@ class MainActivity : AppCompatActivity() {
                 return true
             }
 
-            override fun onJsAlert(view: WebView, url: String?, message: String?, result: JsResult): Boolean { result.cancel(); return true }
-            override fun onJsBeforeUnload(view: WebView, url: String?, message: String?, result: JsResult): Boolean { result.cancel(); return true }
+
+            private var shownToasts = 0
+            override fun onConsoleMessage(m: ConsoleMessage): Boolean {
+                val msg = m.message() ?: return false
+                // "Refused to display 'https://host/..' in a frame because it set 'X-Frame-Options'…"
+                if (msg.contains("X-Frame-Options", true) || msg.contains("frame-ancestors", true)) {
+                    val h = Regex("'(https?://[^']+)'").find(msg)?.groupValues?.get(1)?.let { Uri.parse(it).host?.lowercase() }
+                    if (h != null && proxyFrameHosts.add(h)) {
+                        prefs.edit().putStringSet("frame_proxy_hosts", HashSet(proxyFrameHosts)).apply()
+                        runOnUiThread { webView.reload() } // retry: that host's iframe now goes through the proxy
+                        return true
+                    }
+                }
+                if (m.messageLevel() == ConsoleMessage.MessageLevel.ERROR && shownToasts < 4 &&
+                    Regex("refused|blocked|cors|mixed content|net::|failed to load|not allowed", RegexOption.IGNORE_CASE).containsMatchIn(msg)) {
+                    shownToasts++
+                    runOnUiThread { Toast.makeText(this@MainActivity, msg.take(160), Toast.LENGTH_LONG).show() }
+                }
+                return false
+            }
 
             override fun onPermissionRequest(request: PermissionRequest) {
-                // Allow only what players need (protected media for licensed DRM); never camera/mic.
-                val ok = request.resources.filter { it == PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID }
-                runOnUiThread { if (ok.isEmpty()) request.deny() else request.grant(ok.toTypedArray()) }
+                runOnUiThread { request.grant(request.resources) }
             }
         }
 
@@ -481,5 +504,6 @@ class MainActivity : AppCompatActivity() {
         return super.onKeyDown(keyCode, event)
     }
 
+    override fun onPause() { super.onPause(); CookieManager.getInstance().flush() }
     override fun onDestroy() { webView.destroy(); super.onDestroy() }
 }

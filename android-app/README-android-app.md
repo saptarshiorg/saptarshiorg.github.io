@@ -16,14 +16,19 @@ arbitrary request headers/cookies, secure surface for protected content, typed e
 (DRM_UNSUPPORTED, DRM_LICENSE_ERROR, AUTH_REQUIRED…) and backup fallback.
 Routing is automatic: DRM or custom headers → Media3, everything else → libVLC.
 
-**3. Popup policy (iframe popups only)**
-- Everything loads: images (png/jpg/svg/webp/gif/avif), fonts, scripts, API calls, embeds, stream segments. No ad-host blocking of assets.
-- Popups / popunders / `target=_blank` opened **from inside an iframe** are blocked. Script popups with no user tap are refused by WebView.
-- Links and `window.open` on the main page that you tap open in your browser or the real app (Instagram, YouTube, Telegram…).
-- `intent://` / `market://` jumps from iframes are refused; scripted main-page redirects with no tap are refused.
-- Raw stream links (`.m3u8`, `.mpd`, `.mp4`, `rtsp://`, `udp://`, `srt://`…) open in the native player.
-- Faster images: images load **directly** (no proxy hop). If a host refuses a direct load (hotlink protection) the page retries once and that host is proxied from then on (remembered). Proxy path: 24 parallel connections per host, HTTP/2, 200 MB disk cache, 24 h cache when the host sends none.
+**3. No link or iframe blocking**
+- Nothing is blocked: all iframes, embeds, players, scripts, images, APIs and redirects load normally.
+- Only convenience behaviour: a link you tap on the page to another site (Instagram, YouTube…) opens in your browser/the real app, and raw stream links (`.m3u8`, `.mpd`, `.mp4`, `rtsp://`…) tapped on the page open in the native player.
+- Images load directly; if a host refuses (hotlink protection) that host is proxied and remembered.
+- Proxy fails open: if the native proxy gets an error for a non-image, WebView loads it itself.
 - The JS bridge only answers while your own site is the top-level page.
+
+## Embed playback notes
+- Iframe pages load natively (like Chrome), no proxy. If a host refuses to be framed (X-Frame-Options / frame-ancestors) the app notices from the console, proxies that host only, remembers it and reloads once.
+- Frame failures and key console errors (refused / CORS / blocked / net::) pop up as short toasts so the real cause is visible. Remote debugging is on (`chrome://inspect`).
+- Third-party cookies are enabled and the UA no longer says `; wv`, so JW Player / Video.js / other iframe players load like in Chrome.
+- The proxy forwards WebView cookies and stores Set-Cookie back, and never caches playlists/segments/iframe pages (only images use the disk cache).
+- Known limit: Android only exposes GET/HEAD to the proxy, so a player that POSTs to a server without CORS headers can't be rescued — use `EVNative.play()` for those.
 
 ## From your site
 ```html
