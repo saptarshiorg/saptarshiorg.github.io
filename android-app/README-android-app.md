@@ -22,7 +22,7 @@ Routing is automatic: DRM or custom headers → Media3, everything else → libV
 - Links and `window.open` on the main page that you tap open in your browser or the real app (Instagram, YouTube, Telegram…).
 - `intent://` / `market://` jumps from iframes are refused; scripted main-page redirects with no tap are refused.
 - Raw stream links (`.m3u8`, `.mpd`, `.mp4`, `rtsp://`, `udp://`, `srt://`…) open in the native player.
-- Faster images: 24 parallel connections per host, HTTP/2, 200 MB disk cache, images cached 24 h when the host sends no cache header.
+- Faster images: images load **directly** (no proxy hop). If a host refuses a direct load (hotlink protection) the page retries once and that host is proxied from then on (remembered). Proxy path: 24 parallel connections per host, HTTP/2, 200 MB disk cache, 24 h cache when the host sends none.
 - The JS bridge only answers while your own site is the top-level page.
 
 ## From your site

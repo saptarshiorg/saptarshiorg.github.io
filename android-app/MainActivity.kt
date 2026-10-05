@@ -78,6 +78,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /** Hosts whose images failed a direct load → proxied from now on. Persisted across launches. */
+    private val proxyImageHosts: MutableSet<String> = java.util.concurrent.ConcurrentHashMap.newKeySet()
+    private val prefs by lazy { getSharedPreferences("ev_main", MODE_PRIVATE) }
+
     private fun looksLikeStream(url: String): Boolean {
         val path = url.substringBefore('?').substringBefore('#').lowercase()
         return STREAM_EXTENSIONS.any { path.endsWith(it) } || path.contains(".m3u8") || path.contains(".mpd")
@@ -131,7 +135,7 @@ class MainActivity : AppCompatActivity() {
         // Conditional headers can make the server answer 304, which WebResourceResponse can't represent.
         private val DROP_CONDITIONAL = setOf("if-none-match", "if-modified-since", "if-range")
 
-        private fun isImage(request: WebResourceRequest): Boolean {
+        fun isImage(request: WebResourceRequest): Boolean {
             val path = request.url.path?.lowercase() ?: ""
             val accept = request.requestHeaders.entries.firstOrNull { it.key.equals("accept", true) }?.value ?: ""
             return IMAGE_EXT.any { path.endsWith(it) } || accept.startsWith("image/")
@@ -228,6 +232,7 @@ class MainActivity : AppCompatActivity() {
         webView = findViewById(R.id.webview)
         fullscreenContainer = findViewById(R.id.fullscreen_container)
         NativeProxy.init(applicationContext)
+        proxyImageHosts.addAll(prefs.getStringSet("img_proxy_hosts", emptySet()) ?: emptySet())
         configureWebView()
         webView.loadUrl(SITE_URL)
     }
@@ -236,8 +241,28 @@ class MainActivity : AppCompatActivity() {
     private val GUARD_JS = """
         (function(){
           try {
-            // Main page: leave everything native. Only iframes (where ad popups come from) are policed.
-            if (window.top === window.self) return;
+            if (window.top === window.self) {
+              // Main page: leave links/windows native. Speed + resilience for images only:
+              // a failed direct load tells the app to proxy that host, then retries once.
+              document.addEventListener('error', function(e){
+                var im = e.target;
+                if (!im || im.tagName !== 'IMG' || im.dataset.evr || !/^https?:/i.test(im.currentSrc || im.src)) return;
+                im.dataset.evr = '1';
+                try {
+                  var u = new URL(im.currentSrc || im.src);
+                  if (window.EVStreamsNative && window.EVStreamsNative.imageFailed) window.EVStreamsNative.imageFailed(u.hostname);
+                  setTimeout(function(){ im.src = u.href + (u.hash ? '' : '#r'); }, 60);
+                } catch(x){}
+              }, true);
+              document.addEventListener('DOMContentLoaded', function(){
+                var apply = function(r){ (r.querySelectorAll ? r.querySelectorAll('img:not([decoding])') : []).forEach(function(i){ i.decoding = 'async'; }); };
+                apply(document);
+                new MutationObserver(function(ms){ ms.forEach(function(m){ m.addedNodes.forEach(function(n){
+                  if (n.tagName === 'IMG' && !n.hasAttribute('decoding')) n.decoding = 'async'; else if (n.querySelectorAll) apply(n); }); }); })
+                  .observe(document.documentElement, {childList:true, subtree:true});
+              });
+              return;
+            }
             var stub = { closed:true, close:function(){}, focus:function(){}, blur:function(){}, postMessage:function(){}, location:{} };
             window.open = function(){ return stub; };
             document.addEventListener('click', function(e){
@@ -299,6 +324,9 @@ class MainActivity : AppCompatActivity() {
                 // Images, scripts, fonts, JSON/API, segments from other origins → native fetch (no CORS wall).
                 if (!isStream && sameSite) return null
                 if (url.scheme != "http" && url.scheme != "https") return null
+                // Images: load directly (fastest, no extra hop). Only hosts that already refused a direct
+                // load (hotlink protection) are fetched through the native proxy.
+                if (!isStream && NativeProxy.isImage(request) && host?.lowercase() !in proxyImageHosts) return null
                 return NativeProxy.fetch(request)
             }
 
@@ -411,6 +439,13 @@ class MainActivity : AppCompatActivity() {
 
         @JavascriptInterface
         fun isNativeApp(): Boolean = true
+
+        /** Called by the page guard when an <img> fails to load directly: proxy that host from now on. */
+        @JavascriptInterface
+        fun imageFailed(host: String?) {
+            val h = host?.lowercase()?.takeIf { it.isNotBlank() && !isAllowedPageHost(it) } ?: return
+            if (proxyImageHosts.add(h)) prefs.edit().putStringSet("img_proxy_hosts", HashSet(proxyImageHosts)).apply()
+        }
     }
 
     /** Open a tapped link in the user's browser or the owning app. http(s)/mailto/tel only — never intent:// or market://. */
