@@ -42,6 +42,24 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".PlayerActivity"
+            android:exported="false"
+            android:theme="@style/Theme.EVStreams"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|layoutDirection"
+            android:supportsPictureInPicture="true"
+            android:resizeableActivity="true"
+            android:hardwareAccelerated="true" />
+
+        <activity
+            android:name=".DrmPlayerActivity"
+            android:exported="false"
+            android:theme="@style/Theme.EVStreams"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|layoutDirection"
+            android:supportsPictureInPicture="true"
+            android:resizeableActivity="true"
+            android:hardwareAccelerated="true" />
+
     </application>
 
 </manifest>

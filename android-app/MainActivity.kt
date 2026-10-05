@@ -13,38 +13,30 @@ import android.webkit.*
 import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import java.io.BufferedReader
 import java.io.ByteArrayInputStream
 import java.io.IOException
-import java.io.InputStreamReader
 import java.util.concurrent.TimeUnit
 
 /**
- * EV Streams — WebView shell for saptarshiorg.github.io
+ * EV Streams — WebView shell + native VLC-style players.
  *
- * What this activity does that a stock WebView won't:
- *  1. Real CORS bypass for every non-document request (see NativeProxy below):
- *     sub-resource requests — stream segments, iframe embeds, JW Player/
- *     Video.js API calls — are re-fetched natively via OkHttp, which has no
- *     Origin/CORS/CSP concept at all, and handed back to the WebView with
- *     permissive headers already attached. This is the same trust model VLC
- *     uses: the request never actually happens inside a browser context.
- *  2. Allows mixed content (http streams on an https page) and universal
- *     file/URL access so third-party embed players can load in the first
- *     place.
- *  3. Detects raw stream links (.m3u8, .mp4, .mkv, .ts) and offers a native
- *     "Open in VLC" hand-off via ACTION_VIEW for streams the in-app proxy
- *     still can't get through.
- *  4. Supports fullscreen playback for HTML5 <video> and embedded players.
- *  5. Brave-level ad/popup blocking (see AdBlocker below): a ~76k-domain
- *     block list (StevenBlack hosts + curated streaming popunder networks)
- *     kills ad requests at the network layer, new-window/popup creation is
- *     rate-limited and gesture-checked to stop popunder chains, and forced
- *     full-page ad redirects are blocked the same way.
+ *  1. Navigation lock: the top-level page can only ever be saptarshiorg.github.io or
+ *     evstreams.pages.dev. Any other link, redirect, popup, popunder, intent:// or
+ *     market:// jump is swallowed — no ad blocker needed on the device.
+ *  2. Embeds still work: iframes/sub-resources (images, scripts, fonts, API/JSON, HLS/DASH
+ *     segments) load normally. Cross-origin ones are fetched natively through OkHttp
+ *     (NativeProxy) so CORS / X-Frame-Options never stop a legitimate embed or asset.
+ *  3. Native players: window.EVStreamsNative.play(url, title, optionsJson)
+ *       → libVLC (PlayerActivity)       for everything without DRM
+ *       → Media3 (DrmPlayerActivity)    for licensed DRM (Widevine/PlayReady/ClearKey)
+ *                                       or streams needing custom headers
+ *  4. Fullscreen for HTML5 <video> and iframe players.
  */
 class MainActivity : AppCompatActivity() {
 
@@ -54,26 +46,71 @@ class MainActivity : AppCompatActivity() {
     private var fullscreenContainer: FrameLayout? = null
 
     companion object {
-        private const val SITE_URL = "https://saptarshiorg.github.io/"
-        private val SITE_HOST = Uri.parse(SITE_URL).host
+        private const val SITE_URL = "https://evstreams.pages.dev/"
+
+        /** The ONLY hosts allowed as the top-level page. Add yours here. */
+        private val ALLOWED_PAGE_HOSTS = listOf("saptarshiorg.github.io", "evstreams.pages.dev")
+
         private val STREAM_EXTENSIONS = listOf(
-            ".m3u8", ".mpd", ".ts", ".mkv", ".mp4", ".flv", ".key", ".m4s", ".vtt"
+            ".m3u8", ".mpd", ".ts", ".mkv", ".mp4", ".flv", ".key", ".m4s", ".vtt", ".webm", ".avi", ".mov"
         )
+
+        /** Links that are playable media, not pages — open in the native player. */
+        private val PLAYABLE_SCHEMES = listOf("rtsp", "rtmp", "udp", "srt", "rtp", "mms")
+
+        /** Popup / popunder / redirect networks that should never load at all. Extend freely. */
+        private val BLOCKED_HOSTS = listOf(
+            "popads.net", "popcash.net", "propellerads.com", "propu.sh", "onclickads.net",
+            "adsterra.com", "highperformanceformat.com", "exoclick.com", "exosrv.com",
+            "juicyads.com", "trafficjunky.net", "clickadu.com", "hilltopads.net", "adcash.com",
+            "popunderjs.com", "ad-maven.com", "admaven.com", "richpush.co", "pushame.com",
+            "syndication.realsrv.com", "a-ads.com", "monetag.com", "tsyndicate.com"
+        )
+
+        fun isAllowedPageHost(host: String?): Boolean {
+            val h = host?.lowercase() ?: return false
+            return ALLOWED_PAGE_HOSTS.any { h == it }
+        }
+
+        fun isBlockedHost(host: String?): Boolean {
+            val h = host?.lowercase() ?: return false
+            return BLOCKED_HOSTS.any { h == it || h.endsWith(".$it") }
+        }
     }
 
-    /**
-     * The actual "VLC-style bypass" for in-page playback. VLC bypasses CORS
-     * simply by not being a browser — it has no Origin header policy, no CSP,
-     * no X-Frame-Options enforcement, it just opens the URL and reads bytes.
-     * This object gives the WebView the same behaviour for any request that
-     * isn't the top-level page load: fetch it natively (no origin policy),
-     * then hand it back with Access-Control-Allow-Origin: * and no framing
-     * restrictions, so hls.js/JW Player/Video.js/iframes see a response that
-     * looks like it always had permissive headers.
-     */
+    private fun looksLikeStream(url: String): Boolean {
+        val path = url.substringBefore('?').substringBefore('#').lowercase()
+        return STREAM_EXTENSIONS.any { path.endsWith(it) } || path.contains(".m3u8") || path.contains(".mpd")
+    }
+
+    // ─────────────────────────── native proxy ───────────────────────────
+
     private object NativeProxy {
-        val client: OkHttpClient = OkHttpClient.Builder()
-            .connectTimeout(15, TimeUnit.SECONDS)
+        private var cache: okhttp3.Cache? = null
+        fun init(ctx: android.content.Context) {
+            if (cache == null) cache = okhttp3.Cache(java.io.File(ctx.cacheDir, "ev_http"), 200L * 1024 * 1024)
+            client = client.newBuilder().cache(cache).build()
+        }
+
+        // Many parallel connections + HTTP/2 → image grids load together instead of 5 at a time.
+        private val dispatcher = okhttp3.Dispatcher().apply { maxRequests = 96; maxRequestsPerHost = 24 }
+
+        // Images with no cache headers would be re-downloaded every time; keep them for a day.
+        private val imageCacheInterceptor = okhttp3.Interceptor { chain ->
+            val r = chain.proceed(chain.request())
+            val type = r.header("Content-Type") ?: ""
+            val cc = r.header("Cache-Control") ?: ""
+            if (r.isSuccessful && type.startsWith("image/") && !cc.contains("max-age") && !cc.contains("no-store"))
+                r.newBuilder().removeHeader("Pragma").header("Cache-Control", "public, max-age=86400").build()
+            else r
+        }
+
+        @Volatile var client: OkHttpClient = OkHttpClient.Builder()
+            .dispatcher(dispatcher)
+            .connectionPool(okhttp3.ConnectionPool(32, 5, TimeUnit.MINUTES))
+            .protocols(listOf(okhttp3.Protocol.HTTP_2, okhttp3.Protocol.HTTP_1_1))
+            .addNetworkInterceptor(imageCacheInterceptor)
+            .connectTimeout(10, TimeUnit.SECONDS)
             .readTimeout(20, TimeUnit.SECONDS)
             .writeTimeout(20, TimeUnit.SECONDS)
             .followRedirects(true)
@@ -81,317 +118,231 @@ class MainActivity : AppCompatActivity() {
             .retryOnConnectionFailure(true)
             .build()
 
-        // Headers that only make sense between the WebView and this process,
-        // or that would break a fresh native fetch if forwarded verbatim.
-        private val DROP_REQUEST_HEADERS = setOf(
-            "host", "connection", "accept-encoding", "cookie2"
-        )
+        private val DROP_REQUEST_HEADERS = setOf("host", "connection", "accept-encoding", "cookie2")
 
-        // Headers whose *origin-restricting* values we always override —
-        // everything else from the real response passes through untouched
-        // (Content-Type, Content-Length, Content-Range, Accept-Ranges, ETag…)
-        // so range-seeking on large .mp4/.ts files keeps working.
         private val STRIP_RESPONSE_HEADERS = setOf(
-            "x-frame-options", "content-security-policy",
-            "content-security-policy-report-only",
+            "x-frame-options", "content-security-policy", "content-security-policy-report-only",
             "access-control-allow-origin", "access-control-allow-credentials",
             "access-control-allow-methods", "access-control-allow-headers",
-            "cross-origin-resource-policy", "cross-origin-embedder-policy",
-            "cross-origin-opener-policy"
+            "cross-origin-resource-policy", "cross-origin-embedder-policy", "cross-origin-opener-policy"
         )
 
+        private val IMAGE_EXT = listOf(".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".avif", ".ico", ".bmp")
+        // Conditional headers can make the server answer 304, which WebResourceResponse can't represent.
+        private val DROP_CONDITIONAL = setOf("if-none-match", "if-modified-since", "if-range")
+
+        private fun isImage(request: WebResourceRequest): Boolean {
+            val path = request.url.path?.lowercase() ?: ""
+            val accept = request.requestHeaders.entries.firstOrNull { it.key.equals("accept", true) }?.value ?: ""
+            return IMAGE_EXT.any { path.endsWith(it) } || accept.startsWith("image/")
+        }
+
+        private fun call(url: String, headers: Map<String, String>, method: String): Response =
+            client.newCall(Request.Builder().url(url).headers(headers.toHeaders()).method(method, null).build()).execute()
+
         fun fetch(request: WebResourceRequest): WebResourceResponse? {
-            // POST/PUT bodies aren't exposed by WebResourceRequest, so only
-            // GET/HEAD can be transparently proxied. Everything else falls
-            // back to default WebView handling.
             val method = request.method.uppercase()
             if (method != "GET" && method != "HEAD") return null
-
             return try {
-                val reqHeaders = request.requestHeaders
-                    .filterKeys { it.lowercase() !in DROP_REQUEST_HEADERS }
+                val url = request.url.toString()
+                val base = request.requestHeaders.filterKeys {
+                    val k = it.lowercase(); k !in DROP_REQUEST_HEADERS && k !in DROP_CONDITIONAL
+                }
+                var response: Response = call(url, base, method)
 
-                val okRequest = Request.Builder()
-                    .url(request.url.toString())
-                    .headers(reqHeaders.toHeaders())
-                    .method(method, null)
-                    .build()
-
-                val response: Response = client.newCall(okRequest).execute()
-                val body = response.body ?: return null
-
-                val mimeType = (response.header("Content-Type") ?: guessMime(request.url.toString()))
-                    ?.substringBefore(";")?.trim()
-                val encoding = response.header("Content-Type")
-                    ?.substringAfter("charset=", "utf-8")?.trim() ?: "utf-8"
-
-                val responseHeaders = LinkedHashMap<String, String>()
-                for (name in response.headers.names()) {
-                    if (name.lowercase() !in STRIP_RESPONSE_HEADERS) {
-                        responseHeaders[name] = response.header(name) ?: continue
+                // Hotlink protection: hosts that reject our page's Referer/Origin. Retry the way a
+                // plain <img> from the host's own site would — Referer = the image's own origin, no Origin.
+                if (isImage(request) && response.code in listOf(400, 401, 403, 429)) {
+                    response.close()
+                    val u = request.url
+                    val selfOrigin = "${u.scheme}://${u.host}/"
+                    val retry = base.filterKeys { it.lowercase() != "origin" && it.lowercase() != "referer" } + ("Referer" to selfOrigin)
+                    response = call(url, retry, method)
+                    if (response.code in listOf(400, 401, 403, 429)) { // last try: no referer at all
+                        response.close()
+                        response = call(url, retry - "Referer", method)
                     }
                 }
-                // Now add back fully permissive versions — this is the bypass.
-                responseHeaders["Access-Control-Allow-Origin"] = "*"
-                responseHeaders["Access-Control-Allow-Methods"] = "GET, HEAD, OPTIONS"
-                responseHeaders["Access-Control-Allow-Headers"] = "*"
-                responseHeaders["Access-Control-Allow-Credentials"] = "true"
 
-                val statusCode = response.code
-                val reason = if (response.message.isNotBlank()) response.message else "OK"
+                val body = response.body ?: return null
+                val code = response.code
+                if (code < 100 || code in 300..399) { response.close(); return null } // let WebView handle it
+                val ct = response.header("Content-Type")
+                val mimeType = (ct ?: guessMime(url))?.substringBefore(";")?.trim()
+                val encoding = ct?.substringAfter("charset=", "utf-8")?.trim() ?: "utf-8"
+
+                val headers = LinkedHashMap<String, String>()
+                for (name in response.headers.names()) {
+                    if (name.lowercase() !in STRIP_RESPONSE_HEADERS) headers[name] = response.header(name) ?: continue
+                }
+                headers["Access-Control-Allow-Origin"] = "*"
+                headers["Access-Control-Allow-Methods"] = "GET, HEAD, OPTIONS"
+                headers["Access-Control-Allow-Headers"] = "*"
+                headers["Cross-Origin-Resource-Policy"] = "cross-origin"
 
                 WebResourceResponse(
-                    mimeType ?: "application/octet-stream",
-                    encoding,
-                    statusCode,
-                    reason,
-                    responseHeaders,
-                    body.byteStream()
+                    mimeType ?: "application/octet-stream", encoding, code,
+                    response.message.ifBlank { "OK" }, headers, body.byteStream()
                 )
             } catch (e: IOException) {
-                Log.w("EVStreams", "NativeProxy fetch failed for ${request.url}: ${e.message}")
-                null // let WebView fall back to its own (restricted) fetch
+                Log.w("EVStreams", "proxy fetch failed ${request.url}: ${e.message}"); null
             } catch (e: Exception) {
-                Log.w("EVStreams", "NativeProxy unexpected error for ${request.url}: ${e.message}")
-                null
+                Log.w("EVStreams", "proxy error ${request.url}: ${e.message}"); null
             }
         }
 
         private fun guessMime(url: String): String? {
-            val lower = url.lowercase()
+            val l = url.substringBefore('?').lowercase()
             return when {
-                lower.contains(".m3u8") -> "application/vnd.apple.mpegurl"
-                lower.contains(".mpd") -> "application/dash+xml"
-                lower.contains(".ts") -> "video/mp2t"
-                lower.contains(".m4s") -> "video/iso.segment"
-                lower.contains(".mp4") -> "video/mp4"
-                lower.contains(".mkv") -> "video/x-matroska"
-                lower.contains(".vtt") -> "text/vtt"
-                lower.contains(".key") -> "application/octet-stream"
+                l.contains(".m3u8") -> "application/vnd.apple.mpegurl"
+                l.contains(".mpd") -> "application/dash+xml"
+                l.endsWith(".ts") -> "video/mp2t"
+                l.endsWith(".m4s") -> "video/iso.segment"
+                l.endsWith(".mp4") -> "video/mp4"
+                l.endsWith(".webm") -> "video/webm"
+                l.endsWith(".mkv") -> "video/x-matroska"
+                l.endsWith(".vtt") -> "text/vtt"
+                l.endsWith(".png") -> "image/png"
+                l.endsWith(".jpg") || l.endsWith(".jpeg") -> "image/jpeg"
+                l.endsWith(".gif") -> "image/gif"
+                l.endsWith(".webp") -> "image/webp"
+                l.endsWith(".svg") -> "image/svg+xml"
+                l.endsWith(".avif") -> "image/avif"
+                l.endsWith(".ico") -> "image/x-icon"
+                l.endsWith(".json") -> "application/json"
+                l.endsWith(".css") -> "text/css"
+                l.endsWith(".js") -> "application/javascript"
+                l.endsWith(".woff2") -> "font/woff2"
+                l.endsWith(".woff") -> "font/woff"
                 else -> null
             }
         }
     }
 
-    /**
-     * Brave-style network-layer ad/tracker blocking. Loaded once from
-     * assets/adblock_hosts.txt (~76k domains: StevenBlack's combined hosts
-     * list plus a curated set of streaming-site popunder/redirect ad
-     * networks — popads, propellerads, exoclick, juicyads, etc.). Matching
-     * requests are killed with an empty 200 response instead of returning
-     * null, so the page layout doesn't break waiting on a failed request —
-     * this mirrors how Brave's adblock engine responds to blocked requests.
-     */
-    private object AdBlocker {
-        private var domains: HashSet<String> = HashSet()
-        @Volatile private var loaded = false
+    // ─────────────────────────── lifecycle ───────────────────────────
 
-        fun init(context: android.content.Context) {
-            if (loaded) return
-            synchronized(this) {
-                if (loaded) return
-                try {
-                    val set = HashSet<String>(80000)
-                    context.assets.open("adblock_hosts.txt").use { stream ->
-                        BufferedReader(InputStreamReader(stream)).forEachLine { line ->
-                            val d = line.trim()
-                            if (d.isNotEmpty() && !d.startsWith("#")) set.add(d.lowercase())
-                        }
-                    }
-                    domains = set
-                    loaded = true
-                    Log.i("EVStreams", "AdBlocker loaded ${set.size} domains")
-                } catch (e: Exception) {
-                    Log.w("EVStreams", "AdBlocker failed to load blocklist: ${e.message}")
-                }
-            }
-        }
-
-        fun isBlocked(host: String?): Boolean {
-            if (host.isNullOrEmpty()) return false
-            val h = host.lowercase()
-            if (h in domains) return true
-            // also match parent-domain blocks, e.g. "ads.example.com" blocked
-            // because "example.com" is listed
-            var idx = h.indexOf('.')
-            while (idx != -1) {
-                val parent = h.substring(idx + 1)
-                if (parent in domains) return true
-                idx = h.indexOf('.', idx + 1)
-            }
-            return false
-        }
-
-        fun blockedResponse(): WebResourceResponse {
-            return WebResourceResponse(
-                "text/plain", "utf-8", 200, "OK",
-                mapOf("Access-Control-Allow-Origin" to "*"),
-                ByteArrayInputStream(ByteArray(0))
-            )
-        }
-    }
-
-    /**
-     * Stops popunder/popup ad chains without relying on the (unreliable)
-     * isUserGesture flag alone: many ad scripts spawn window.open() calls
-     * synthetically right inside a real click handler, so gesture-checking
-     * by itself isn't enough. This adds a cooldown — only one new-window
-     * request is honoured per short window, and even then it's redirected
-     * into the current tab rather than an actual separate popup window,
-     * since streaming embeds never legitimately need a second window.
-     */
-    private object PopupGuard {
-        private var lastAllowedAt = 0L
-        private const val COOLDOWN_MS = 1500L
-
-        fun allow(isUserGesture: Boolean): Boolean {
-            if (!isUserGesture) return false
-            val now = System.currentTimeMillis()
-            if (now - lastAllowedAt < COOLDOWN_MS) return false
-            lastAllowedAt = now
-            return true
-        }
-    }
-
-    private fun isAdRedirect(url: android.net.Uri): Boolean {
-        if (url.host == SITE_HOST) return false
-        return AdBlocker.isBlocked(url.host)
-    }
-
-    @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         setContentView(R.layout.activity_main)
-
-        AdBlocker.init(applicationContext)
-
         webView = findViewById(R.id.webview)
         fullscreenContainer = findViewById(R.id.fullscreen_container)
-
+        NativeProxy.init(applicationContext)
         configureWebView()
         webView.loadUrl(SITE_URL)
     }
 
+    /** Injected into every frame at document start: neuter popup / redirect tricks. */
+    private val GUARD_JS = """
+        (function(){
+          try {
+            // Main page: leave everything native. Only iframes (where ad popups come from) are policed.
+            if (window.top === window.self) return;
+            var stub = { closed:true, close:function(){}, focus:function(){}, blur:function(){}, postMessage:function(){}, location:{} };
+            window.open = function(){ return stub; };
+            document.addEventListener('click', function(e){
+              var a = e.target && e.target.closest ? e.target.closest('a[target]') : null;
+              if (a && a.target && a.target !== '_self' && a.target !== '_top' && a.target !== '_parent') {
+                e.preventDefault(); e.stopPropagation();
+              }
+            }, true);
+            var mo = new MutationObserver(function(ms){ ms.forEach(function(m){ m.addedNodes && m.addedNodes.forEach(function(n){
+              if (n.tagName === 'A' && n.target && n.target !== '_self' && !n.textContent.trim()) n.remove();
+            }); }); });
+            mo.observe(document.documentElement, {childList:true, subtree:true});
+          } catch(e){}
+        })();
+    """.trimIndent()
+
     @SuppressLint("SetJavaScriptEnabled")
     private fun configureWebView() {
-        val settings: WebSettings = webView.settings
-        settings.javaScriptEnabled = true
-        settings.domStorageEnabled = true
-        settings.databaseEnabled = true
-        settings.loadWithOverviewMode = true
-        settings.useWideViewPort = true
-        settings.mediaPlaybackRequiresUserGesture = false
+        val s: WebSettings = webView.settings
+        s.javaScriptEnabled = true
+        s.domStorageEnabled = true
+        s.databaseEnabled = true
+        s.loadWithOverviewMode = true
+        s.useWideViewPort = true
+        s.mediaPlaybackRequiresUserGesture = false
+        s.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+        s.loadsImagesAutomatically = true
+        s.blockNetworkImage = false
+        s.allowContentAccess = true
+        s.allowFileAccess = false
+        s.cacheMode = WebSettings.LOAD_DEFAULT
 
-        // Allow mixed http/https content — many stream hosts are still http-only
-        settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+        // No popups, ever.
+        s.setSupportMultipleWindows(true)
+        s.javaScriptCanOpenWindowsAutomatically = false
 
-        // Universal + file access from file URLs — needed for some embed
-        // players that bootstrap via local blob/file contexts
-        settings.allowUniversalAccessFromFileURLs = true
-        settings.allowFileAccessFromFileURLs = true
-        settings.allowContentAccess = true
-        settings.allowFileAccess = true
+        WebView.setWebContentsDebuggingEnabled(false)
 
-        settings.cacheMode = WebSettings.LOAD_DEFAULT
-        settings.setSupportMultipleWindows(true)
-        // False on purpose: forces window.open() to require a real user
-        // gesture before onCreateWindow is even invoked, which is the first
-        // line of defense against JS-spawned popup/popunder ads. PopupGuard
-        // below adds the cooldown on top of this.
-        settings.javaScriptCanOpenWindowsAutomatically = false
-
-        WebView.setWebContentsDebuggingEnabled(true)
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+            WebViewCompat.addDocumentStartJavaScript(webView, GUARD_JS, setOf("*"))
+        }
 
         webView.webViewClient = object : WebViewClient() {
 
-            // This is where the real bypass happens. The top-level page load
-            // (isForMainFrame) is left to the WebView itself, so navigation,
-            // JS execution and history behave normally. Everything else —
-            // stream segments, iframe embeds, cross-origin API/config calls —
-            // gets re-fetched natively via NativeProxy, which has no CORS/
-            // CSP/X-Frame-Options concept, and handed back with permissive
-            // headers. Same-origin page assets (site's own CSS/JS/images)
-            // are skipped for speed since they were never blocked anyway.
-            override fun shouldInterceptRequest(
-                view: WebView,
-                request: WebResourceRequest
-            ): WebResourceResponse? {
-                // Ad/tracker network block — checked first, before anything
-                // else, for every request including main-frame navigations
-                // (this is what stops a forced full-page ad redirect, not
-                // just in-page ad iframes/scripts).
-                if (AdBlocker.isBlocked(request.url.host)) {
-                    return AdBlocker.blockedResponse()
-                }
+            override fun onPageStarted(view: WebView, url: String?, favicon: android.graphics.Bitmap?) {
+                if (!WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT))
+                    view.evaluateJavascript(GUARD_JS, null)
+            }
 
+            override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
+                val url = request.url
+                val host = url.host
+
+                // The top-level document is left to WebView so navigation/history behave normally.
                 if (request.isForMainFrame) return null
 
-                val url = request.url
-                val isStream = STREAM_EXTENSIONS.any {
-                    url.toString().contains(it, ignoreCase = true)
-                }
-                val isCrossOrigin = url.host != null && url.host != SITE_HOST
-
-                if (!isStream && !isCrossOrigin) return null
-
+                val sameSite = isAllowedPageHost(host)
+                val isStream = looksLikeStream(url.toString())
+                // Images, scripts, fonts, JSON/API, segments from other origins → native fetch (no CORS wall).
+                if (!isStream && sameSite) return null
+                if (url.scheme != "http" && url.scheme != "https") return null
                 return NativeProxy.fetch(request)
             }
 
-            override fun onReceivedSslError(
-                view: WebView?,
-                handler: SslErrorHandler,
-                error: SslError?
-            ) {
-                // Many stream/embed hosts use self-signed or misconfigured certs.
-                // Proceed anyway — same trust model VLC/native players use.
-                handler.proceed()
+            override fun onReceivedSslError(view: WebView?, handler: SslErrorHandler, error: SslError?) {
+                // Never accept bad certs for the site itself; tolerate them for third-party stream/asset hosts.
+                val host = Uri.parse(error?.url ?: "").host
+                if (isAllowedPageHost(host)) handler.cancel() else handler.proceed()
             }
 
-            override fun shouldOverrideUrlLoading(
-                view: WebView,
-                request: WebResourceRequest
-            ): Boolean {
-                val urlObj = request.url
-                val url = urlObj.toString()
+            override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+                val uri = request.url
+                val url = uri.toString()
+                val scheme = uri.scheme?.lowercase() ?: ""
 
-                // Forced navigation to a known ad/redirect network — block
-                // outright rather than letting the page leave your site.
-                if (isAdRedirect(urlObj)) {
-                    Log.i("EVStreams", "Blocked ad redirect: $url")
+                // Direct playable links → native player
+                if (scheme in PLAYABLE_SCHEMES || (scheme.startsWith("http") && looksLikeStream(url) && !isAllowedPageHost(uri.host))) {
+                    playNative(url, uri.lastPathSegment ?: "Stream", null)
                     return true
                 }
 
-                // If it's a direct stream link (not opened inside an iframe
-                // player), give the option to hand it straight to VLC.
-                if (STREAM_EXTENSIONS.any { url.contains(it, ignoreCase = true) } &&
-                    !url.contains("play.html") &&
-                    !url.contains(SITE_URL)
-                ) {
-                    openInVlcOrChooser(url)
-                    return true
+                // Sub-frames (embeds) may navigate over http(s) — but never to ad networks or app-jump schemes.
+                if (!request.isForMainFrame) {
+                    return !(scheme == "http" || scheme == "https" || scheme == "about" || scheme == "blob" || scheme == "data") 
                 }
-                return false
+
+                // Top-level: our own hosts stay inside the app.
+                if ((scheme == "http" || scheme == "https") && isAllowedPageHost(uri.host)) return false
+
+                // Anything else: only if the USER tapped it → hand to their browser / the real app
+                // (Instagram, YouTube, Telegram…). Scripted redirects, popunders and ad hosts are dropped.
+                val userTapped = if (android.os.Build.VERSION.SDK_INT >= 24) request.hasGesture() else true
+                if (userTapped) openExternal(uri)
+                else Log.i("EVStreams", "blocked auto-navigation → $url")
+                return true
             }
         }
 
         webView.webChromeClient = object : WebChromeClient() {
-            // Fullscreen support for <video> elements and iframe-embedded players
             override fun onShowCustomView(view: View, callback: CustomViewCallback) {
-                if (customView != null) {
-                    callback.onCustomViewHidden()
-                    return
-                }
-                customView = view
-                customViewCallback = callback
+                if (customView != null) { callback.onCustomViewHidden(); return }
+                customView = view; customViewCallback = callback
                 fullscreenContainer?.visibility = View.VISIBLE
-                fullscreenContainer?.addView(
-                    view,
-                    FrameLayout.LayoutParams(
-                        FrameLayout.LayoutParams.MATCH_PARENT,
-                        FrameLayout.LayoutParams.MATCH_PARENT
-                    )
-                )
+                fullscreenContainer?.addView(view, FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
                 webView.visibility = View.GONE
             }
 
@@ -403,93 +354,97 @@ class MainActivity : AppCompatActivity() {
                 webView.visibility = View.VISIBLE
             }
 
-            // Popup/popunder suppression: only a genuine, rate-limited user
-            // gesture is allowed to open a "new window" at all, and even
-            // then it's redirected into the current tab rather than an
-            // actual separate window — streaming embeds never legitimately
-            // need a real popup, so this kills popunder ad chains entirely
-            // while still letting a real click-through work once.
-            override fun onCreateWindow(
-                view: WebView,
-                isDialog: Boolean,
-                isUserGesture: Boolean,
-                resultMsg: android.os.Message
-            ): Boolean {
-                if (!PopupGuard.allow(isUserGesture)) {
-                    Log.i("EVStreams", "Blocked popup/popunder (gesture=$isUserGesture)")
-                    return false
+            // Main-page link/window.open that the user tapped → their browser / the real app.
+            // (Iframe popups never get here: GUARD_JS stubs window.open inside frames, and
+            // WebView refuses window.open without a user gesture.)
+            override fun onCreateWindow(view: WebView, isDialog: Boolean, isUserGesture: Boolean, resultMsg: android.os.Message): Boolean {
+                if (!isUserGesture) return false
+                val tmp = WebView(this@MainActivity)
+                tmp.webViewClient = object : WebViewClient() {
+                    private fun hand(u: Uri?) { if (u != null && u.toString() != "about:blank") { openExternal(u); tmp.post { tmp.destroy() } } }
+                    override fun shouldOverrideUrlLoading(v: WebView, r: WebResourceRequest): Boolean { hand(r.url); return true }
+                    override fun onPageStarted(v: WebView, url: String?, f: android.graphics.Bitmap?) { v.stopLoading(); hand(url?.let { Uri.parse(it) }) }
                 }
-
-                val newWebView = WebView(this@MainActivity)
-                newWebView.settings.javaScriptEnabled = true
-                newWebView.webViewClient = object : WebViewClient() {
-                    override fun shouldOverrideUrlLoading(
-                        v: WebView,
-                        request: WebResourceRequest
-                    ): Boolean {
-                        if (isAdRedirect(request.url)) return true
-                        webView.loadUrl(request.url.toString())
-                        return true
-                    }
-                }
-                val transport = resultMsg.obj as WebView.WebViewTransport
-                transport.webView = newWebView
+                (resultMsg.obj as WebView.WebViewTransport).webView = tmp
                 resultMsg.sendToTarget()
                 return true
             }
 
+            override fun onJsAlert(view: WebView, url: String?, message: String?, result: JsResult): Boolean { result.cancel(); return true }
+            override fun onJsBeforeUnload(view: WebView, url: String?, message: String?, result: JsResult): Boolean { result.cancel(); return true }
+
             override fun onPermissionRequest(request: PermissionRequest) {
-                runOnUiThread { request.grant(request.resources) }
+                // Allow only what players need (protected media for licensed DRM); never camera/mic.
+                val ok = request.resources.filter { it == PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID }
+                runOnUiThread { if (ok.isEmpty()) request.deny() else request.grant(ok.toTypedArray()) }
             }
         }
 
-        // Add a JS bridge so any page button can trigger the native VLC hand-off:
-        // window.EVStreamsNative.openInVlc('https://host/stream.m3u8')
-        webView.addJavascriptInterface(VlcBridge(), "EVStreamsNative")
+        webView.addJavascriptInterface(NativeBridge(), "EVStreamsNative")
     }
 
-    inner class VlcBridge {
+    // ─────────────────────────── native player routing ───────────────────────────
+
+    private fun playNative(url: String, title: String, optionsJson: String?) {
+        val spec = PlayerSpec.parse(url, title, optionsJson)
+        val engine = if (spec.hasDrm || spec.needsCustomHeaders) DrmPlayerActivity::class.java else PlayerActivity::class.java
+        startActivity(spec.toIntent(this, engine))
+    }
+
+    /** Only trust calls coming while our own site is the top-level page. */
+    private fun callerTrusted(): Boolean = isAllowedPageHost(Uri.parse(webView.url ?: "").host)
+
+    inner class NativeBridge {
+        /** window.EVStreamsNative.play(url, title, optionsJson) — see PlayerSpec for the JSON shape. */
+        @JavascriptInterface
+        fun play(url: String, title: String?, optionsJson: String?) {
+            if (!callerTrusted()) return
+            runOnUiThread { playNative(url, title ?: "", optionsJson) }
+        }
+
+        /** Hand a stream to the real VLC app, if installed. */
         @JavascriptInterface
         fun openInVlc(url: String) {
+            if (!callerTrusted()) return
             runOnUiThread { openInVlcOrChooser(url) }
+        }
+
+        @JavascriptInterface
+        fun isNativeApp(): Boolean = true
+    }
+
+    /** Open a tapped link in the user's browser or the owning app. http(s)/mailto/tel only — never intent:// or market://. */
+    private fun openExternal(uri: Uri) {
+        val scheme = uri.scheme?.lowercase()
+        if (scheme !in listOf("http", "https", "mailto", "tel")) return
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, uri).addCategory(Intent.CATEGORY_BROWSABLE)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        } catch (e: Exception) {
+            Toast.makeText(this, "No app found to open this link.", Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun openInVlcOrChooser(url: String) {
         try {
-            val intent = Intent(Intent.ACTION_VIEW)
-            intent.setDataAndType(Uri.parse(url), "video/*")
-            intent.setPackage("org.videolan.vlc")
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            startActivity(intent)
+            startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(Uri.parse(url), "video/*")
+                .setPackage("org.videolan.vlc").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         } catch (e: Exception) {
-            // VLC not installed — fall back to a generic chooser so the user
-            // can pick any installed player, or stay in-app.
             try {
-                val fallback = Intent(Intent.ACTION_VIEW)
-                fallback.setDataAndType(Uri.parse(url), "video/*")
-                fallback.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                startActivity(Intent.createChooser(fallback, "Open stream with"))
+                startActivity(Intent.createChooser(Intent(Intent.ACTION_VIEW).setDataAndType(Uri.parse(url), "video/*")
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), "Open stream with"))
             } catch (e2: Exception) {
-                Toast.makeText(
-                    this,
-                    "No video player found — install VLC to play this stream externally.",
-                    Toast.LENGTH_LONG
-                ).show()
+                Toast.makeText(this, "No video player found.", Toast.LENGTH_LONG).show()
             }
         }
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         if (keyCode == KeyEvent.KEYCODE_BACK && webView.canGoBack() && customView == null) {
-            webView.goBack()
-            return true
+            webView.goBack(); return true
         }
         return super.onKeyDown(keyCode, event)
     }
 
-    override fun onDestroy() {
-        webView.destroy()
-        super.onDestroy()
-    }
+    override fun onDestroy() { webView.destroy(); super.onDestroy() }
 }

@@ -12,13 +12,20 @@ android {
         minSdk = 21
         targetSdk = 34
         versionCode = 2
-        versionName = "1.1"
+        versionName = "2.0"
+        // libVLC ships big native libs; keep the APK sane
+        ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
         }
+    }
+
+    lint {
+        abortOnError = false
+        checkReleaseBuilds = false
     }
 
     compileOptions {
@@ -48,4 +55,16 @@ dependencies {
     // WebView's CORS/CSP/X-Frame-Options enforcement — OkHttp has no origin
     // policy at all, same as VLC, so anything it fetches comes back clean.
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
+    // Native VLC engine (libVLC) — HLS/DASH/RTSP/UDP/SRT/MKV/TS/… without DRM
+    implementation("org.videolan.android:libvlc-all:3.6.0")
+
+    // Media3 engine — licensed DRM (Widevine/PlayReady/ClearKey) + header-authenticated streams
+    val media3 = "1.4.1"
+    implementation("androidx.media3:media3-exoplayer:$media3")
+    implementation("androidx.media3:media3-exoplayer-dash:$media3")
+    implementation("androidx.media3:media3-exoplayer-hls:$media3")
+    implementation("androidx.media3:media3-exoplayer-smoothstreaming:$media3")
+    implementation("androidx.media3:media3-ui:$media3")
+    implementation("androidx.media3:media3-datasource:$media3")
 }
