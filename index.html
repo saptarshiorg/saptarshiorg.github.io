@@ -1,6 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script id="ev-webview-compat">
+/* EV WebView compatibility (evstreams.pages.dev)
+   - remembers the real UA, then hides the "; wv" / "Version/x" markers from this page's own scripts
+   - makes sure every iframe (embed, StreamPulse, FanCode, Multiview) is allowed autoplay / fullscreen / DRM
+   - in a WebView shows a "Not playing? Reload / Open in browser" chip on third-party embeds
+   NOTE: the HTTP User-Agent and X-Requested-With header that embed hosts see are set by the app itself
+   (see WebViewSetup.kt) - a web page cannot change them. */
+(function(){
+  try{
+    var ua=navigator.userAgent||''; window.__evRealUA=ua;
+    window.EV_WV=/; wv\)/i.test(ua)||(/Android/i.test(ua)&&/Version\/[\d.]+/i.test(ua)&&/Chrome\/[\d.]+/i.test(ua))||/(iPhone|iPod|iPad)/i.test(ua)&&!/Safari\//i.test(ua)&&!navigator.standalone||!!(window.ReactNativeWebView||window.flutter_inappwebview||window.AndroidBridge);
+    if(window.EV_WV){
+      var clean=ua.replace('; wv)',')').replace(/\sVersion\/[\d.]+/,'');
+      try{ Object.defineProperty(Navigator.prototype,'userAgent',{get:function(){return clean;},configurable:true}); }catch(e){}
+      try{ Object.defineProperty(navigator,'userAgent',{get:function(){return clean;},configurable:true}); }catch(e){}
+    }
+  }catch(e){}
+  var ALLOW='autoplay; fullscreen; encrypted-media; picture-in-picture; clipboard-write; accelerometer; gyroscope; web-share';
+  function fix(f){
+    try{
+      if(f.getAttribute('allow')!==ALLOW) f.setAttribute('allow',ALLOW);
+      f.setAttribute('allowfullscreen',''); f.setAttribute('webkitallowfullscreen',''); f.setAttribute('mozallowfullscreen','');
+    }catch(e){}
+  }
+  function scan(root){ try{ (root.querySelectorAll?root.querySelectorAll('iframe'):[]).forEach(fix); if(root.tagName==='IFRAME') fix(root); }catch(e){} }
+  try{
+    new MutationObserver(function(ms){ ms.forEach(function(m){ m.addedNodes&&m.addedNodes.forEach(function(n){ if(n.nodeType===1) scan(n); }); }); })
+      .observe(document.documentElement,{childList:true,subtree:true});
+  }catch(e){}
+  document.addEventListener('DOMContentLoaded',function(){ scan(document); });
+
+  var t1=0,t2=0;
+  function chip(){ var c=document.getElementById('ev-embed-help'); if(c) return c;
+    var wrap=document.getElementById('stream-player-frame-wrap')||document.getElementById('stream-player-overlay'); if(!wrap) return null;
+    c=document.createElement('div'); c.id='ev-embed-help';
+    c.style.cssText='position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:9;display:none;gap:8px;align-items:center;background:rgba(12,13,19,.92);color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:6px 8px 6px 14px;font:600 12px/1 "Google Sans",system-ui,sans-serif;box-shadow:0 4px 18px rgba(0,0,0,.5)';
+    c.innerHTML='<span>Not playing?</span><button type="button" data-a="r" style="all:unset;cursor:pointer;background:#e0155f;padding:6px 10px;border-radius:999px">Reload</button><button type="button" data-a="o" style="all:unset;cursor:pointer;background:rgba(255,255,255,.16);padding:6px 10px;border-radius:999px">Open in browser</button><button type="button" data-a="x" aria-label="Hide" style="all:unset;cursor:pointer;padding:6px 8px;opacity:.7">\u2715</button>';
+    c.addEventListener('click',function(e){
+      var b=e.target.closest('button'); if(!b) return; var a=b.getAttribute('data-a'), u=c.getAttribute('data-src')||'';
+      if(a==='x') c.style.display='none';
+      else if(a==='r'){ var f=document.getElementById('stream-player-frame'); if(f&&u){ f.removeAttribute('srcdoc'); f.src='about:blank'; setTimeout(function(){ f.src=u; },150); } c.style.display='none'; evEmbedWatch(u); }
+      else if(a==='o'&&u){
+        window.__sxAllowPopup=true;
+        try{ var m=/^https?:\/\/(.+)$/i.exec(u); if(/Android/i.test(window.__evRealUA||'')&&m){ location.href='intent://'+m[1]+'#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url='+encodeURIComponent(u)+';end'; return; } }catch(_){}
+        try{ var w=window.open(u,'_blank'); if(!w) location.href=u; }catch(_){}
+      }
+    });
+    wrap.appendChild(c); return c; }
+  window.evEmbedWatch=function(u){
+    clearTimeout(t1); clearTimeout(t2);
+    var c=document.getElementById('ev-embed-help'); if(c) c.style.display='none';
+    if(!window.EV_WV) return;
+    t1=setTimeout(function(){
+      var ov=document.getElementById('stream-player-overlay'); if(!ov||!ov.classList.contains('open')) return;
+      var f=document.getElementById('stream-player-frame'); if(!f||f.hasAttribute('srcdoc')) return;
+      var c=chip(); if(!c) return; c.setAttribute('data-src',u); c.style.display='flex';
+      t2=setTimeout(function(){ c.style.display='none'; },15000);
+    },9000);
+  };
+})();
+</script>
+
 <link rel="preconnect" href="https://vidapi.ru" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -61,7 +123,7 @@
 <meta property="og:image:height" content="675">
 
   <!-- Tells Google this is the primary, master version of the URL -->
-<link rel="canonical" href="saptarshiorg.github.io" />
+<link rel="canonical" href="https://evstreams.pages.dev/" />
 
 <!-- Explicitly commands Google to index the page and pass ranking power -->
 <meta name="robots" content="index, follow" />
@@ -72,7 +134,7 @@
 <meta property="og:site_name" content="EV SPORTS (Powered by Saptarshi SX Sports)" />
 
 <!-- Optimizes the summary snippet under your link (Keep under 155 characters) -->
-<meta name="description" content="SPORTS Live",  ALL SPORTS Teams, Cricket, Football, Soccer, FIFA World Cup & More — Watch Sports Anytime on SX SPORTS — Saptarshi XTRA Grand Television Telecom." />
+<meta name="description" content="SPORTS Live, ALL SPORTS Teams, Cricket, Football, Soccer, FIFA World Cup & More — Watch Sports Anytime on SX SPORTS — Saptarshi XTRA Grand Television Telecom." />
 
 <meta name="referrer" content="no-referrer-when-downgrade">
 <meta charset="UTF-8">
@@ -10858,7 +10920,7 @@ function closeAdminChatDiscordPopup(){
     </div>
     <div id="stream-player-body">
       <div id="stream-player-frame-wrap">
-        <iframe id="stream-player-frame" src="" title="Live Stream" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
+        <iframe id="stream-player-frame" src="" title="Live Stream" allow="autoplay; fullscreen; encrypted-media; picture-in-picture; clipboard-write; accelerometer; gyroscope; web-share" webkitallowfullscreen mozallowfullscreen allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
         <div id="stream-player-loading">
           <div id="sp-loading-spinner"></div>
           <div id="sp-loading-status">
@@ -11423,11 +11485,13 @@ body.m .mi{padding:13px 12px;font-size:14px}
 var DEFAULT_SRC = 'https://hugh.cdn.rumble.cloud/live/r8wvl35k/slot-5/iwj7-mxym/chunklist.m3u8';
 var HLS_CDNS = [
   'https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js',
-  'https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js'
+  'https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js',
+  'https://unpkg.com/hls.js@1.5.13/dist/hls.min.js'
 ];
 var DASH_CDNS = [
   'https://cdnjs.cloudflare.com/ajax/libs/dashjs/4.7.4/dash.all.min.js',
-  'https://cdn.jsdelivr.net/npm/dashjs@4.7.4/dist/dash.all.min.js'
+  'https://cdn.jsdelivr.net/npm/dashjs@4.7.4/dist/dash.all.min.js',
+  'https://unpkg.com/dashjs@4.7.4/dist/dash.all.min.js'
 ];
 var LOAD_TIMEOUT_MS = 25000;
 
@@ -11685,7 +11749,7 @@ function startNative(url){
 
 function startHls(url){
   var hls = new Hls({
-    enableWorker:true, lowLatencyMode:false,
+    enableWorker:!isWebView(), lowLatencyMode:false,
     maxBufferLength:120, maxMaxBufferLength:300, backBufferLength:90,
     liveSyncDurationCount:3, liveMaxLatencyDurationCount:10,
     capLevelToPlayerSize:false,
@@ -12405,7 +12469,7 @@ window.sxIsHlsUrl = sxIsHlsUrl; window.sxIsDashUrl = sxIsDashUrl; window.sxIsStr
 // WebView detection (Android WebView / iOS WKWebView / in-app browsers) — passed into the
 // player so stream errors read "Stream unavailable" there, but stay specific in a browser.
 function sxIsWebView(){
-  var ua = navigator.userAgent || '';
+  var ua = window.__evRealUA || navigator.userAgent || '';
   if (/; wv\)/i.test(ua)) return true;
   if (/Android/i.test(ua) && /Version\/[\d.]+/i.test(ua) && /Chrome\/[\d.]+/i.test(ua)) return true;
   if (/(iPhone|iPod|iPad)/i.test(ua) && !/Safari\//i.test(ua) && !navigator.standalone) return true;
@@ -12701,6 +12765,7 @@ function openStreamPlayer(url, name, type){
     // The /play.html?id=..._eng&s=0 page is itself the player/embed page.
     spFrame.removeAttribute('srcdoc');
     spFrame.src = src;
+    try{ window.evEmbedWatch && evEmbedWatch(src); }catch(e){}
   }
   document.getElementById('stream-player-overlay').classList.remove('rail-open','sv-open');
   document.getElementById('stream-player-overlay').classList.add('open');
@@ -13060,8 +13125,8 @@ function spIndiaPlayerDoc(m3u8){
     + '<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js"><\/script>'
     + '<script>(function(){var u=' + u + ',v=document.getElementById("v"),e=document.getElementById("e");'
     + 'function bad(){e.style.display="flex";}'
-    + 'if(window.Hls&&Hls.isSupported()){var h=new Hls({lowLatencyMode:true});h.loadSource(u);h.attachMedia(v);'
-    + 'h.on(Hls.Events.MANIFEST_PARSED,function(){var p=v.play();if(p&&p.catch)p.catch(function(){});});'
+    + 'if(window.Hls&&Hls.isSupported()){var h=new Hls({lowLatencyMode:true,enableWorker:false});h.loadSource(u);h.attachMedia(v);'
+    + 'h.on(Hls.Events.MANIFEST_PARSED,function(){var p=v.play();if(p&&p.catch)p.catch(function(){v.muted=true;v.play().catch(function(){});});});'
     + 'h.on(Hls.Events.ERROR,function(_,d){if(d&&d.fatal){if(d.type===Hls.ErrorTypes.NETWORK_ERROR){try{h.startLoad();}catch(x){}setTimeout(function(){if(v.readyState<2)bad();},6000);}else if(d.type===Hls.ErrorTypes.MEDIA_ERROR){try{h.recoverMediaError();}catch(x){bad();}}else{bad();}}});}'
     + 'else if(v.canPlayType("application/vnd.apple.mpegurl")){v.src=u;v.addEventListener("error",bad);}else{bad();}'
     + '})();<\/script></body></html>';
@@ -13212,7 +13277,7 @@ function mvSlotHtml(i){
   }
   const media = s.isHls
     ? `<iframe id="mv-media-${i}" srcdoc="${mvEscAttr(mvHlsDoc(s.url, s.muted))}" allow="autoplay" title="${mvEscAttr(s.name)}"></iframe>`
-    : `<iframe id="mv-media-${i}" src="${mvEscAttr(s.url)}" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer-when-downgrade" title="${mvEscAttr(s.name)}"></iframe>`;
+    : `<iframe id="mv-media-${i}" src="${mvEscAttr(s.url)}" allow="autoplay; fullscreen; encrypted-media; picture-in-picture; clipboard-write; accelerometer; gyroscope; web-share" webkitallowfullscreen mozallowfullscreen allowfullscreen referrerpolicy="no-referrer-when-downgrade" title="${mvEscAttr(s.name)}"></iframe>`;
   const muteBtn = s.isHls
     ? `<button type="button" class="mv-slot-btn${s.muted?' mv-muted':''}" onclick="mvToggleMute(${i})" title="${s.muted?'Unmute':'Mute'}">${s.muted ? MV_ICON_MUTED : MV_ICON_SOUND}</button>`
     : '';
@@ -13247,8 +13312,8 @@ function mvHlsDoc(m3u8, muted){
     + '<video id="v" autoplay playsinline' + (muted ? ' muted' : '') + '></video>'
     + '<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js"><\/script>'
     + '<script>(function(){var u=' + u + ',v=document.getElementById("v");v.muted=' + m + ';'
-    + 'if(window.Hls&&Hls.isSupported()){var h=new Hls({lowLatencyMode:true});h.loadSource(u);h.attachMedia(v);'
-    + 'h.on(Hls.Events.MANIFEST_PARSED,function(){var p=v.play();if(p&&p.catch)p.catch(function(){});});}'
+    + 'if(window.Hls&&Hls.isSupported()){var h=new Hls({lowLatencyMode:true,enableWorker:false});h.loadSource(u);h.attachMedia(v);'
+    + 'h.on(Hls.Events.MANIFEST_PARSED,function(){var p=v.play();if(p&&p.catch)p.catch(function(){v.muted=true;v.play().catch(function(){});});});}'
     + 'else if(v.canPlayType("application/vnd.apple.mpegurl")){v.src=u;v.addEventListener("loadedmetadata",function(){v.play().catch(function(){});});}'
     + '})();<\/script></body></html>';
 }
