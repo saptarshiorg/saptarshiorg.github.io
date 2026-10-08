@@ -3292,6 +3292,30 @@ body::before{ display:none !important; }
   }
   window.sxDetectSport = detect;
   // Women's / under-age tag of a team or title: "India Women" and "India" are DIFFERENT teams.
+  // League / legends tag of a team or title: "West Indies" and "West Indies Champions" are DIFFERENT teams
+  // (so India v West Indies never merges with India Champions v West Indies Champions).
+  window.sxLeagueTag = function(t){
+    t = String(t == null ? '' : t).toLowerCase().replace(/champions\s+(league|trophy|cup)/g, ' ');
+    var m = t.match(/\b(champions?|legends?|masters?)\b/g);
+    return m ? m.map(function(x){ return x.replace(/s$/, ''); }).sort().join() : '';
+  };
+  // Generic "different squad / side" test for ANY two team names: India vs India A, Sri Lanka vs Sri Lanka A,
+  // Brazil vs Brazil U20, Ireland vs Northern Ireland, Club vs Club II / Reserves / Academy ... are NOT the same team.
+  window.sxTeamVariant = function(a, b){
+    var tok = function(x){ return String(x == null ? '' : x).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter(Boolean); };
+    var Q = /^(a|b|c|d|ii|iii|iv|2|3|xi|u\d{2}|reserves?|academy|youth|juniors?|shaheens?|emerging|development)$/;
+    var D = /^(north|northern|south|southern|east|eastern|west|western)$/;
+    var ta = tok(a), tb = tok(b);
+    if (!ta.length || !tb.length) return false;
+    var qa = ta.filter(function(w){ return Q.test(w); }).sort().join(), qb = tb.filter(function(w){ return Q.test(w); }).sort().join();
+    if (qa !== qb) return true;
+    var sh = ta.length <= tb.length ? ta : tb, lo = ta.length <= tb.length ? tb : ta;
+    if (sh.length < lo.length && sh.every(function(w){ return lo.indexOf(w) >= 0; })) {
+      var extra = lo.filter(function(w){ return sh.indexOf(w) < 0; });
+      if (extra.some(function(w){ return D.test(w); })) return true;
+    }
+    return false;
+  };
   window.sxQual = function(t){
     t = String(t == null ? '' : t).toLowerCase(); var q = [];
     if (/\b(women'?s?|woman|ladies|girls)\b|\(w\)/.test(t)) q.push('w');
@@ -5862,13 +5886,35 @@ function fcxTitleHasTeamExact(title, code, fullName){
   }
   const t = (title || '').toLowerCase();
   const c = (code || '').trim().toLowerCase();
-  if (c && c.length >= 2) {
-    const re = new RegExp('\\b' + c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i');
-    if (re.test(title || '')) return true;
-  }
   const f = (fullName || '').trim().toLowerCase();
-  if (f && f.length >= 3 && t.includes(f)) return true;
-  return false;
+  const hit = s => {
+    const ls = String(s || '').toLowerCase();
+    const esc = x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // whole-word only: "ind" / "india" must NOT match inside "Indies", "wi" not inside "Wiltshire", etc.
+    // The words right next to the team must not turn it into a different side: "India A", "Brazil U20", "Club II",
+    // "Northern Ireland" are not "India", "Brazil", "Club", "Ireland".
+    return [c, f].some(n => {
+      if (!n || n.length < 2) return false;
+      const m = new RegExp('(^|[^a-z0-9])(?:([a-z0-9]+)\\s+)?' + esc(n) + '(?:\\s+([a-z0-9]+))?($|[^a-z0-9])', 'i').exec(ls);
+      if (!m) return false;
+      if (m[3] && /^(a|b|c|ii|iii|iv|xi|u\d{2}|reserves?|academy|youth|juniors?|shaheens?|emerging|development)$/.test(m[3]) && !new RegExp('\\b' + m[3] + '\\b').test(n)) return false;
+      if (m[2] && /^(north|northern|south|southern|east|eastern|west|western)$/.test(m[2]) && !new RegExp('\\b' + m[2] + '\\b').test(n)) return false;
+      return true;
+    });
+  };
+  // "TEAM 1 v TEAM 2" title: the team must sit in ONE side and carry the SAME Champions/Legends/Masters tag as that side,
+  // so "West Indies" never matches "West Indies Champions" (and "India" never matches "India Champions").
+  const sides = String(title || '').replace(/\[[^\]]*\]/g, ' ').split(/\s+(?:vs\.?|v\.?|versus)\s+/i);
+  if (sides.length >= 2 && window.sxLeagueTag) {
+    const want = sxLeagueTag(fullName || code), sep = /\s*[,|\-\u2013\u2014(:]\s*/;
+    return sides.some((s, i) => {
+      if (!hit(s)) return false;
+      if (i > 0 && i < sides.length - 1) return true;
+      const p = s.split(sep);
+      return sxLeagueTag(i === 0 ? p[p.length - 1] : p[0]) === want;
+    });
+  }
+  return hit(title);
 }
 
 // Finds the best FanCode match for a sheet MATCH CARDS row, by checking
@@ -14053,8 +14099,7 @@ async function vaBulkPreload(type){
       window.vaInit();
       window.vaInit = null;
     }
-    vaBulkPreload('movie');
-    setTimeout(() => vaBulkPreload('tv'), 3000); // stagger so movies get first crack at bandwidth
+    // (old idle bulk preload of the whole catalogue removed: Movies / TV Shows now load fully only when opened)
   }
   if ('requestIdleCallback' in window) {
     requestIdleCallback(kickoff, { timeout: 300 });
@@ -16113,6 +16158,8 @@ button, a.btn, [class*="btn-"], input, select, textarea{
   function sameTeam(a, b){
     if (a === b) return true;
     if (!a || !b) return false;
+    if (window.sxLeagueTag && sxLeagueTag(a) !== sxLeagueTag(b)) return false;   // West Indies != West Indies Champions
+    if (window.sxTeamVariant && sxTeamVariant(a, b)) return false;   // India != India A, Brazil != Brazil U20
     if (Math.min(a.length, b.length) >= 3 && (a.indexOf(b) === 0 || b.indexOf(a) === 0)) return true;
     return 1 - lev(a, b) / Math.max(a.length, b.length) >= 0.78;
   }
@@ -16744,6 +16791,8 @@ button, a.btn, [class*="btn-"], input, select, textarea{
   }
   function sameTeam(a, b){
     if (window.sxQual && sxQual(a) !== sxQual(b)) return false;   // India ≠ India Women ≠ India U19
+    if (window.sxLeagueTag && sxLeagueTag(a) !== sxLeagueTag(b)) return false;   // West Indies ≠ West Indies Champions
+    if (window.sxTeamVariant && sxTeamVariant(a, b)) return false;   // India != India A, Brazil != Brazil U20
     a = norm(a); b = norm(b);
     if (!a || !b) return false;
     if (a === b) return true;
@@ -17756,9 +17805,32 @@ window.sxHeroCustom=function(base,all){
       db.inflight--;
     }
   }
+  /* LITE LOAD (home, startup, hero, search box opening): only the first few pages - enough for the home rows - then STOP.
+     The full catalogue is only pulled when the person actually opens Movies / TV Shows (hsmLoadAll) or starts typing in search. */
+  var LITE_PAGES=3;
+  function startLite(db){
+    if(db.running||db.done||db.litePromise)return db.litePromise;
+    seedCache(db);notify(db);
+    async function one(p){for(var a=0;a<4;a++){try{await fetchInto(db,p);return true;}catch(e){await sleep(500*(a+1));}}return false;}
+    db.litePromise=(async function(){
+      var ok=await one(1);
+      if(ok){
+        var tp=Math.min(LITE_PAGES,db.pool.totalPages||1),ps=[];
+        for(var p=2;p<=tp;p++)ps.push(one(p));
+        var r=await Promise.all(ps);
+        db.liteOk=r.every(Boolean);
+      }
+      db.litePromise=ok?db.litePromise:null;   /* page 1 failed -> allow a later retry */
+      return ok;
+    })();
+    return db.litePromise;
+  }
   async function start(db){
     if(db.running||db.done)return;
-    db.running=true;seedCache(db);notify(db);
+    db.running=true;
+    if(db.litePromise){try{await db.litePromise;}catch(e){}}
+    if(db.liteOk&&db.next<LITE_PAGES+1)db.next=LITE_PAGES+1;   /* pages 1..LITE_PAGES are already in memory */
+    seedCache(db);notify(db);
     while(!db.pool.totalPages){
       try{await fetchInto(db,1);}catch(e){db.fail++;notify(db);await sleep(Math.min(5000,500*db.fail));}
     }
@@ -17769,10 +17841,12 @@ window.sxHeroCustom=function(base,all){
   setTimeout(function(){saveCache(DB.movie);saveCache(DB.tv);},12000);
 
   /* route the site's old loaders into this one */
-  window.vaLoadMoreCurrent=function(t){start(DB[t||'movie']);};
-  window.vaBulkPreload=function(t){start(DB[t]);};
+  /* old callers (home hero, search box, old pages) only ever get the light load; the full load is on demand */
+  window.vaLoadMoreCurrent=function(t){startLite(DB[t||'movie']);};
+  window.vaBulkPreload=function(t){startLite(DB[t]);};
+  window.hsmLoadAll=function(t){ if(DB[t])start(DB[t]); };
   var _hsmGo=false;
-  function hsmGo(){ if(_hsmGo)return; _hsmGo=true; try{window.__hsmKick&&window.__hsmKick();}catch(e){} start(DB.movie); setTimeout(function(){start(DB.tv);},700); }
+  function hsmGo(){ if(_hsmGo)return; _hsmGo=true; try{window.__hsmKick&&window.__hsmKick();}catch(e){} startLite(DB.movie); setTimeout(function(){startLite(DB.tv);},700); }
   window.addEventListener('sx:feeds-ready',function(){setTimeout(hsmGo,500);});
   if(window.__sxFeedsReady)setTimeout(hsmGo,500);
   setTimeout(hsmGo,9000);   /* safety net: Movies/TV never wait longer than this */
@@ -18030,11 +18104,11 @@ window.sxHeroCustom=function(base,all){
     var rail=document.getElementById('hs-rail');if(!rail)return;
     rail.querySelectorAll('a').forEach(function(a){var sp=a.querySelector('span');a.classList.toggle('on',!!sp&&sp.textContent===name);});
   }
-  new MutationObserver(function(){if(mEl.classList.contains('open')){railSync('Movies');moviesPage.schedule();}}).observe(mEl,{attributes:true,attributeFilter:['class']});
-  new MutationObserver(function(){if(tvEl.classList.contains('open'))railSync('TV Shows');}).observe(tvEl,{attributes:true,attributeFilter:['class']});
+  new MutationObserver(function(){if(mEl.classList.contains('open')){railSync('Movies');moviesPage.schedule();start(DB.movie);}}).observe(mEl,{attributes:true,attributeFilter:['class']});
+  new MutationObserver(function(){if(tvEl.classList.contains('open')){railSync('TV Shows');start(DB.tv);}}).observe(tvEl,{attributes:true,attributeFilter:['class']});
 
   var om=window.openMoviesOverlay;
-  window.openMoviesOverlay=function(){om.apply(this,arguments);railSync('Movies');moviesPage.show();mEl.scrollTop=0;};
+  window.openMoviesOverlay=function(){om.apply(this,arguments);railSync('Movies');moviesPage.show();mEl.scrollTop=0;start(DB.movie);};
   window.openTvOverlay=function(){
     sxCloseAllOverlays();
     tvEl.classList.add('open');
@@ -18043,11 +18117,12 @@ window.sxHeroCustom=function(base,all){
     document.querySelectorAll('[data-sxtab]').forEach(function(el){el.classList.remove('active');});
     try{sxHeaderInto('tv-overlay',null);}catch(e){}
     railSync('TV Shows');tvPage.show();tvEl.scrollTop=0;
+    start(DB.tv);   /* full TV catalogue loads only now */
   };
   window.hsmOpen=function(type){if(type==='tv')openTvOverlay();else openMoviesOverlay();};
 
-  /* nothing to click: both whole libraries start loading right now */
-  start(DB.movie);start(DB.tv);
+  /* home only needs a few titles: light load now, the full libraries wait until Movies / TV Shows is opened */
+  startLite(DB.movie);startLite(DB.tv);
   moviesPage.render();
 })();
 </script>
@@ -18313,6 +18388,8 @@ window.sxHeroCustom=function(base,all){
     for(i=1;i<=m;i++)for(j=1;j<=n;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[m][n];}
   function sameTeam(a,b){
     if(window.sxQual&&sxQual(a)!==sxQual(b))return false;            /* India != India Women != India U19 */
+    if(window.sxLeagueTag&&sxLeagueTag(a)!==sxLeagueTag(b))return false;   /* West Indies != West Indies Champions */
+    if(window.sxTeamVariant&&sxTeamVariant(a,b))return false;   /* India != India A, Brazil != Brazil U20 */
     a=nk(nm(a));b=nk(nm(b));if(!a||!b)return false;if(a===b)return true;
     if(Math.min(a.length,b.length)>=3&&(a.indexOf(b)===0||b.indexOf(a)===0))return true;
     var ta=a.split(' '),tb=b.split(' '),sh=ta.length<=tb.length?ta:tb,lo=ta.length<=tb.length?tb:ta;
@@ -22175,6 +22252,9 @@ img.ev-f.ev-ok{opacity:1;}
   },1500);
   var o=window.openSxSearch;
   if(typeof o==='function')window.openSxSearch=function(){try{vaBulkPreload('movie');vaBulkPreload('tv');}catch(e){}return o.apply(this,arguments);};
+  /* opening search is light; typing a real query pulls the full catalogue once so results are complete */
+  var _st=window.sxSearchTyped;
+  if(typeof _st==='function')window.sxSearchTyped=function(v){try{if(String(v||'').trim().length>=2&&window.hsmLoadAll){hsmLoadAll('movie');hsmLoadAll('tv');}}catch(e){}return _st.apply(this,arguments);};
   document.addEventListener('input',function(e){if(e.target&&e.target.id==='sx-search-input')window.__sxTypedAt=Date.now();},true);
 })();
 </script>
