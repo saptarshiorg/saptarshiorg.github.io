@@ -53,7 +53,8 @@ nav a.on{color:var(--accent);background:var(--panel);font-weight:600}
 .hero{text-align:center;padding:clamp(44px,8vw,92px) 0 48px}
 .big{width:clamp(96px,22vw,132px);height:clamp(96px,22vw,132px);border-radius:28px;margin:0 auto 28px;font-size:34px;box-shadow:0 24px 60px -24px var(--accent)}
 h1{font:800 clamp(34px,8vw,72px)/1 var(--disp);letter-spacing:-.035em;margin:0}
-h1 em{font-style:normal;color:var(--accent)}
+h1 em{font-style:normal;color:var(--accent);white-space:nowrap}
+h1 .tm{font-size:.28em;font-weight:600;letter-spacing:0;vertical-align:super;margin-left:.1em}
 .lede{max-width:520px;margin:20px auto 0;color:var(--mute);font-size:19px}
 .stats{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;list-style:none;margin:30px 0 0;padding:0}
 .stats li{border:1px solid var(--line);background:var(--panel);border-radius:16px;padding:12px 22px;min-width:150px}
@@ -103,6 +104,31 @@ h3.t{font:800 clamp(22px,4vw,32px)/1.1 var(--disp);letter-spacing:-.025em;margin
 .feat p{margin:0;color:var(--mute);font-size:15px}
 .tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;padding:0;list-style:none}
 .tags li{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:3px 12px;font-size:13px;color:var(--fg)}
+
+
+.gsub{margin:-12px 0 28px;color:var(--mute)}
+.slider{position:relative}
+.track{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;scrollbar-width:none;padding:8px 2px 12px;-webkit-overflow-scrolling:touch}
+.track::-webkit-scrollbar{display:none}
+.slide{flex:0 0 min(320px,82%);scroll-snap-align:start;border:1px solid var(--line);background:var(--panel);border-radius:22px;padding:26px;min-height:210px;display:flex;flex-direction:column;transform:scale(.94);opacity:.6;transition:transform .45s ease,opacity .45s ease,border-color .3s,box-shadow .45s}
+.slide.on{transform:scale(1);opacity:1;border-color:var(--accent);box-shadow:0 22px 50px -28px var(--accent)}
+.slide .num{font:800 13px var(--disp);color:var(--accent);letter-spacing:.05em;margin-bottom:14px}
+.slide h4{font:800 18px/1.2 var(--disp);letter-spacing:-.02em;margin:0 0 10px}
+.slide p{margin:0;color:var(--mute);font-size:15px}
+.sbtn{position:absolute;top:50%;transform:translateY(-50%);width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--bg);color:var(--fg);font-size:24px;line-height:1;cursor:pointer;display:grid;place-items:center;box-shadow:0 8px 20px -10px #0006}
+.sbtn:hover{border-color:var(--accent);color:var(--accent)}
+.sbtn.prev{left:-6px}.sbtn.next{right:-6px}
+.dots{display:flex;justify-content:center;gap:6px;margin-top:14px;flex-wrap:wrap}
+.dots i{width:7px;height:7px;border-radius:50%;background:var(--line);transition:width .3s,background .3s}
+.dots i.on{width:22px;border-radius:999px;background:var(--accent)}
+.gtag{margin:32px 0 0;text-align:center;font:800 clamp(13px,2.6vw,18px)/1.4 var(--disp);letter-spacing:-.01em;color:var(--accent)}
+@media (prefers-reduced-motion:reduce){.track{scroll-behavior:auto}.slide{transition:none}}
+.legal{max-width:640px;margin:14px auto 0;font-size:12.5px;line-height:1.5;opacity:.85}
+.scan{margin:14px 0 0;font-size:13px;line-height:1.5;color:var(--mute);text-align:center}.scan b{color:var(--fg)}
+.ticks{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+.ticks li{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:3px 12px 3px 6px;font-size:13px;color:var(--fg)}
+.ticks li::before{content:"\2713";display:grid;place-items:center;width:18px;height:18px;border-radius:50%;background:#22a45d;color:#fff;font-size:12px;font-weight:700;line-height:1}
+.legal{max-width:640px;margin:14px auto 0;font-size:12.5px;line-height:1.6}
 footer{padding:40px 0 64px;color:var(--mute);font-size:14px;text-align:center;border-top:1px solid var(--line)}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn,.card{transition:none}}
 </style>
@@ -129,7 +155,7 @@ footer{padding:40px 0 64px;color:var(--mute);font-size:14px;text-align:center;bo
 <main>
 <div class="wrap hero">
   <span class="logo big"><img src="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/magenta.png" alt="EV STREAMS logo"><span class="fb">EV</span></span>
-  <h1>Download <em>EV STREAMS</em></h1>
+  <h1>Download<br><em>EV STREAMS<sup class="tm">™</sup></em></h1>
   <p class="lede">130,000+ global TV channels, plus OTT, sports and IPTV. Free. Get the app for Android or Windows.</p>
   <ul class="stats"><li><b>130,000+</b><span>Global TV channels</span></li><li><b>56</b><span>OTT platforms</span></li><li><b>Every</b><span>Sport, worldwide</span></li></ul>
   <p class="detect" id="detect">Choose your device below.</p>
@@ -141,19 +167,25 @@ footer{padding:40px 0 64px;color:var(--mute);font-size:14px;text-align:center;bo
     <h2>Android</h2>
     <p>APK for phones and tablets.</p>
     <ul class="meta"><li>Android 8+ supported</li><li>APK</li></ul>
-    <a class="btn" href="https://github.com/saptarshiorg/evstreamsfinalboss/actions/runs/37934379727/artifacts/11618060638" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 20h16"/></svg>Download APK</a>
+    <a class="btn" href="https://download943.mediafire.com/obsr20emmfagUK8LxRkE8C_-GWqlLeOFIPCzVaoCzgEHmKfinBvm38pZLh9138RCu5Kx5VhGx7_ajrbQAom7fZUm54wT7S1zEkslM6fvKP-EeDgOfFh1c3VD-9PtgdDT0te11e7X92T0_26AtWxCBZwXS34CZtZ6AKU-WphtbV2u_w/1z39dkfbu5k4nbo/androidEVSTREAMS.apk" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 20h16"/></svg>Download APK</a>
+    <div class="scan"><b>Scanned with</b>
+      <ul class="ticks"><li>Bitdefender Mobile Security</li><li>Norton 360</li><li>Avast Mobile Security</li><li>Samsung built-in security</li><li>Xiaomi built-in security</li></ul></div>
   </div>
   <div class="card" id="c-win11">
     <span class="badge two"><svg viewBox="0 0 24 24" fill="#0078D4"><path d="M2 4.6l8.9-1.2v7.7H2zM12.1 3.2L22 1.8v9.3h-9.9zM2 12.3h8.9v7.7L2 18.8zM12.1 12.3H22v9.9l-9.9-1.4z"/></svg><svg viewBox="0 0 24 24" fill="#0078D4"><rect x="2.5" y="2.5" width="9" height="9"/><rect x="12.5" y="2.5" width="9" height="9"/><rect x="2.5" y="12.5" width="9" height="9"/><rect x="12.5" y="12.5" width="9" height="9"/></svg></span>
     <h2>Windows 10 / 11<small>Latest PCs and laptops</small></h2>
     <ul class="meta"><li>Windows 10</li><li>Windows 11</li><li>v1.0.0</li></ul>
     <a class="btn" href="https://github.com/saptarshiorg/saptarshiorg.github.io/releases/download/evstreamsforpc/EV.Streams.Setup.1.0.0.exe" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 20h16"/></svg>Download App</a>
+    <div class="scan"><b>Scanned with</b>
+      <ul class="ticks"><li>Bitdefender Antivirus Plus</li><li>Norton 360</li><li>Kaspersky Standard</li><li>Microsoft Defender</li><li>Avast One Essential</li><li>AVG AntiVirus Free</li><li>Malwarebytes</li><li>Sophos Home</li></ul></div>
   </div>
   <div class="card" id="c-old">
     <span class="badge two"><svg viewBox="0 0 24 24" stroke="#222" stroke-width="1" stroke-linejoin="round"><path fill="#F25022" d="M3 5l8-1.5 .6 7L3.6 11.6z"/><path fill="#7FBA00" d="M12.8 3.3L21 2l-.4 8.8-7.6.6z"/><path fill="#00A4EF" d="M3.8 12.8l7.8-.4.6 7.4-8 -1.4z"/><path fill="#FFB900" d="M13.4 12.4l7.2-.2-.5 9-6.7-1.2z"/></svg><svg viewBox="0 0 24 24"><path fill="#F25022" d="M3 6.5Q6.5 3.5 11 5.5l.4 6Q7 9.5 3.4 12.5z"/><path fill="#7FBA00" d="M12.6 5.8Q16.8 7.5 21 4.5l-.5 6.2Q16.4 13.4 12.9 11.9z"/><path fill="#00A4EF" d="M3.6 13.5Q7.2 10.6 11.5 12.8l.4 6.2Q7.8 17.2 4 20z"/><path fill="#FFB900" d="M13 13.2Q16.6 14.7 20.4 12l-.5 6.4Q16.4 21 13.4 19.4z"/></svg><svg viewBox="0 0 24 24"><path fill="#F25022" d="M3 5.4l7.6-1.4.5 7.2-7.7.3z"/><path fill="#7FBA00" d="M12.4 3.8L21 2.2l-.4 8.9-8.3.3z"/><path fill="#00A4EF" d="M3.4 12.7l7.7.3.5 7.2-8.2-1.5z"/><path fill="#FFB900" d="M12.4 13.1l8.2.2-.4 9-7.8-1.6z"/></svg><svg viewBox="0 0 24 24" fill="#00ADEF"><path d="M2 6.2l8.9-1.3v6.2H2zM12.1 4.7L22 3.2v7.9h-9.9zM2 12.3h8.9v6.2L2 17.8zM12.1 12.3H22v8.5l-9.9-1.4z"/></svg></span>
     <h2>Windows 98 / XP / 7 / 8<small>Older PCs and laptops</small></h2>
     <ul class="meta"><li>Windows 98</li><li>Windows XP</li><li>Windows 7</li><li>Windows 8 / 8.1</li><li>v1.0.0</li></ul>
     <a class="btn" href="https://github.com/saptarshiorg/saptarshiorg.github.io/releases/download/evstreamsforpc/EV.Streams.Setup.1.0.0.exe" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 20h16"/></svg>Download App</a>
+    <div class="scan"><b>Scanned with</b>
+      <ul class="ticks"><li>Bitdefender Antivirus Plus</li><li>Norton 360</li><li>Kaspersky Standard</li><li>Microsoft Defender</li><li>Avast One Essential</li><li>AVG AntiVirus Free</li><li>Malwarebytes</li><li>Sophos Home</li></ul></div>
   </div>
   <div class="card soon" id="c-apple">
     <span class="badge" style="color:var(--fg)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.37 12.6c-.03-2.7 2.2-4 2.3-4.06-1.25-1.83-3.2-2.08-3.9-2.1-1.65-.17-3.23.98-4.07.98-.84 0-2.14-.96-3.52-.93-1.8.03-3.48 1.06-4.4 2.68-1.9 3.3-.49 8.17 1.35 10.84.9 1.3 1.97 2.76 3.37 2.7 1.35-.05 1.86-.87 3.5-.87 1.63 0 2.1.87 3.53.84 1.46-.02 2.38-1.32 3.27-2.63 1.03-1.5 1.45-2.97 1.48-3.04-.03-.01-2.84-1.09-2.87-4.31zM13.7 4.6c.74-.9 1.24-2.15 1.1-3.4-1.07.04-2.37.71-3.14 1.61-.69.8-1.29 2.07-1.13 3.29 1.2.09 2.43-.61 3.17-1.5z"/></svg></span>
@@ -165,17 +197,47 @@ footer{padding:40px 0 64px;color:var(--mute);font-size:14px;text-align:center;bo
 
 <section id="features">
   <div class="wrap">
-    <h3 class="t">App features</h3>
-    <div class="feat">
-      <div><h4>Built-in player engine</h4><p>HLS and DASH streams play inside the app with its own engine, powered by VLC libraries.</p><ul class="tags"><li>HLS</li><li>DASH</li><li>VLC libs</li></ul></div>
-      <div><h4>Restricted browser</h4><p>Streams open in a locked in-app browser, so you stay inside EV STREAMS.</p></div>
-      <div><h4>Hotstar-style UI</h4><p>Banner carousel, Live Now, Trending and Upcoming rows, sport tabs and search.</p></div>
-      <div><h4>130,000+ TV channels</h4><p>Live TV and IPTV channels from every country, searchable by country, language and category.</p><ul class="tags"><li>News</li><li>Sports</li><li>Movies</li><li>Kids</li><li>Music</li></ul></div>
-      <div><h4>Movies and TV shows</h4><p>Movies, web series, TV serials, anime and live TV channels from across the world.</p><ul class="tags"><li>Movies</li><li>TV shows</li><li>Web series</li><li>Anime</li></ul></div>
-      <div><h4>Every sport</h4><p>Every sport, worldwide: leagues, tournaments, teams and one-off events, from football and cricket to niche sports.</p></div>
-      <div><h4>50+ platforms</h4><p>FanCode, Jio, SonyLIV, Netflix, Prime Video and many more in one hub.</p></div>
-      <div><h4>Every screen</h4><p>Android 8+, Windows and any browser. macOS, iPadOS and iOS are in progress.</p></div>
+    <h3 class="t">App <em style="font-style:normal;color:var(--accent)">features</em></h3>
+    <p class="gsub">One platform. Unlimited entertainment. All sports. All in one place.</p>
+    <div class="slider" id="slider" aria-roledescription="carousel" aria-label="App features">
+      <div class="track" id="track" tabindex="0">
+        <article class="slide"><span class="num">01</span><h4>56+ OTT Platforms Combined</h4><p>A unified entertainment hub bringing multiple streaming services and content sources together.</p></article>
+        <article class="slide"><span class="num">02</span><h4>Live Cricket</h4><p>International matches, T20 leagues, ODIs, Test cricket, domestic tournaments and live score updates.</p></article>
+        <article class="slide"><span class="num">03</span><h4>Live Football</h4><p>International football, club competitions, domestic leagues, cups and major tournaments.</p></article>
+        <article class="slide"><span class="num">04</span><h4>All Other Live Sports</h4><p>Basketball, tennis, badminton, hockey, volleyball, kabaddi, motorsports, athletics, wrestling, boxing, golf, esports and more.</p></article>
+        <article class="slide"><span class="num">05</span><h4>Live TV Channels</h4><p>Sports, entertainment, movies, music, news, kids, lifestyle and regional television.</p></article>
+        <article class="slide"><span class="num">06</span><h4>Movies Library</h4><p>Bollywood, Hollywood, regional cinema, Bengali movies, South Indian films, dubbed movies and international cinema.</p></article>
+        <article class="slide"><span class="num">07</span><h4>TV Shows &amp; Series</h4><p>Popular television shows, web series, dramas, reality shows, comedy series and exclusive productions.</p></article>
+        <article class="slide"><span class="num">08</span><h4>Short Films</h4><p>Independent cinema, short movies, student films, regional short films and original creations.</p></article>
+        <article class="slide"><span class="num">09</span><h4>Web Series &amp; Originals</h4><p>Action, thriller, romance, comedy, crime, sci-fi, documentaries and more.</p></article>
+        <article class="slide"><span class="num">10</span><h4>Regional Entertainment</h4><p>Bengali, Hindi, Tamil, Telugu, Malayalam, Kannada, Marathi, Punjabi and other language content.</p></article>
+        <article class="slide"><span class="num">11</span><h4>Kids &amp; Family Entertainment</h4><p>Cartoons, animated movies, educational programmes and family-friendly shows.</p></article>
+        <article class="slide"><span class="num">12</span><h4>News &amp; Information</h4><p>National and international news, business, technology, sports updates and current affairs.</p></article>
+        <article class="slide"><span class="num">13</span><h4>Music &amp; Concerts</h4><p>Music videos, live concerts, performances, interviews and entertainment specials.</p></article>
+        <article class="slide"><span class="num">14</span><h4>On-Demand Streaming</h4><p>Watch available movies and shows whenever you want.</p></article>
+        <article class="slide"><span class="num">15</span><h4>Unified Search</h4><p>Find available movies, TV shows, channels, sports events and other content from one search interface.</p></article>
+        <article class="slide"><span class="num">16</span><h4>Smart Categories</h4><p>Explore content through sports, movies, series, live TV, short films, languages and genres.</p></article>
+        <article class="slide"><span class="num">17</span><h4>Live Match Centre</h4><p>Match schedules, fixtures, live scores, results and upcoming-event information.</p></article>
+        <article class="slide"><span class="num">18</span><h4>Watchlist &amp; Favourites</h4><p>Save content for easy access, where supported.</p></article>
+        <article class="slide"><span class="num">19</span><h4>Continue Watching</h4><p>Resume supported content from where you left off.</p></article>
+        <article class="slide"><span class="num">20</span><h4>Personalised Discovery</h4><p>Discover recommendations based on your preferences, where supported.</p></article>
+        <article class="slide"><span class="num">21</span><h4>Multi-Device Experience</h4><p>Access the platform on supported mobile devices, tablets, desktops and compatible Android applications.</p></article>
+        <article class="slide"><span class="num">22</span><h4>Up to 4K Ultra HD Streaming</h4><p>Enjoy supported content in SD, HD, Full HD (1080p) and up to 4K Ultra HD (2160p), depending on stream availability, internet speed, device capabilities and provider restrictions.</p></article>
+        <article class="slide"><span class="num">23</span><h4>Modern Streaming Player</h4><p>Playback controls, fullscreen, quality selection, subtitles and audio-track selection where supported.</p></article>
+        <article class="slide"><span class="num">24</span><h4>HLS &amp; MPEG-DASH Support</h4><p>Playback of compatible HLS and MPEG-DASH streams, subject to codec, DRM and platform restrictions.</p></article>
+        <article class="slide"><span class="num">25</span><h4>Adaptive Streaming</h4><p>Automatically adjust playback quality when supported by the stream and player.</p></article>
+        <article class="slide"><span class="num">26</span><h4>Low-Data Experience</h4><p>Lightweight interface, lazy-loaded content, efficient caching and responsive layouts for mobile networks.</p></article>
+        <article class="slide"><span class="num">27</span><h4>Fast Navigation</h4><p>Simple menus, organised content sections and quick access to live events.</p></article>
+        <article class="slide"><span class="num">28</span><h4>Regular Content Updates</h4><p>Keep listings, schedules and catalogues updated through authorised data sources.</p></article>
+        <article class="slide"><span class="num">29</span><h4>Regional Language Support</h4><p>Discover content by language, region and available subtitle options.</p></article>
+        <article class="slide"><span class="num">30</span><h4>Premium-Style Interface</h4><p>A clean, modern OTT experience with attractive content cards, banners and dedicated player screens.</p></article>
+        <article class="slide"><span class="num">31</span><h4>One Unified Entertainment Destination</h4><p>Sports, movies, television, web series, short films and more in one organised platform.</p></article>
+      </div>
+      <button class="sbtn prev" id="sprev" type="button" aria-label="Previous feature">&#8249;</button>
+      <button class="sbtn next" id="snext" type="button" aria-label="Next feature">&#8250;</button>
     </div>
+    <div class="dots" id="dots" aria-hidden="true"></div>
+    <p class="gtag">EVSTREAMS — SPORTS. MOVIES. SERIES. LIVE TV. UP TO 4K. ALL IN ONE PLACE.</p>
   </div>
 </section>
 
@@ -209,7 +271,9 @@ footer{padding:40px 0 64px;color:var(--mute);font-size:14px;text-align:center;bo
 </section>
 </main>
 
-<footer>© <span id="yr"></span> EV STREAMS · Saptarshi Samanta</footer>
+<footer>© <span id="yr"></span> EV STREAMS · Saptarshi Samanta
+  <p class="legal"></p>
+</footer>
 
 <script>
 document.getElementById('yr').textContent = new Date().getFullYear();
@@ -239,6 +303,26 @@ mb.addEventListener('click',function(){var o=nav.classList.toggle('open');mb.set
 nav.querySelectorAll('a').forEach(function(a){a.addEventListener('click',function(){nav.classList.remove('open');mb.setAttribute('aria-expanded','false')})});
 if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){nav.querySelectorAll('a').forEach(function(a){a.classList.toggle('on',a.getAttribute('href')==='#'+e.target.id)})}})},{rootMargin:'-40% 0px -55% 0px'});
 ['download','features','platforms','install','web'].forEach(function(id){var el=document.getElementById(id);el&&io.observe(el)})}
+
+/* features slider */
+(function(){
+  var track=document.getElementById('track'),slides=[].slice.call(track.children),dots=document.getElementById('dots'),
+      i=0,timer,reduce=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  slides.forEach(function(){dots.appendChild(document.createElement('i'))});
+  function mark(n){i=n;slides.forEach(function(s,k){s.classList.toggle('on',k===n)});[].forEach.call(dots.children,function(d,k){d.classList.toggle('on',k===n)})}
+  function go(n){n=(n+slides.length)%slides.length;track.scrollTo({left:slides[n].offsetLeft-track.offsetLeft,behavior:reduce?'auto':'smooth'});mark(n)}
+  var st;track.addEventListener('scroll',function(){clearTimeout(st);st=setTimeout(function(){
+    var best=0,bd=1e9;slides.forEach(function(s,k){var d=Math.abs(s.offsetLeft-track.offsetLeft-track.scrollLeft);if(d<bd){bd=d;best=k}});mark(best)},80)});
+  function play(){if(reduce)return;stop();timer=setInterval(function(){go(i+1)},3000)}
+  function stop(){clearInterval(timer)}
+  document.getElementById('sprev').onclick=function(){go(i-1);play()};
+  document.getElementById('snext').onclick=function(){go(i+1);play()};
+  var sl=document.getElementById('slider');
+  ['mouseenter','focusin','touchstart'].forEach(function(e){sl.addEventListener(e,stop,{passive:true})});
+  ['mouseleave','focusout','touchend'].forEach(function(e){sl.addEventListener(e,play,{passive:true})});
+  track.addEventListener('keydown',function(e){if(e.key==='ArrowRight'){go(i+1);e.preventDefault()}if(e.key==='ArrowLeft'){go(i-1);e.preventDefault()}});
+  mark(0);play();
+})();
 </script>
 </body>
 </html>
