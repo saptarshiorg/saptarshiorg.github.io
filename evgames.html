@@ -1,0 +1,2002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a0a10">
+<title>EV GAMES — Home</title>
+<meta name="description" content="EV GAMES: UNLIMITED CRAFT and Tic Tac Toe. Developed by RISHI FORGE.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%236d28ff'/%3E%3Ctext x='32' y='45' font-size='38' font-weight='800' text-anchor='middle' fill='white' font-family='Arial Black,sans-serif'%3EEV%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a10;--panel:#12121b;--line:#24232f;--text:#f2f2f8;--mut:#9a9aae;--acc:#9d6bff;--disp:"Unbounded","Arial Black",system-ui,sans-serif}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:400 16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden}
+b{color:var(--acc)}
+#home{position:fixed;inset:0;overflow:auto;padding:calc(28px + env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom));background:radial-gradient(ellipse 70% 40% at 50% 0,rgba(157,107,255,.16),transparent 70%),var(--bg);transition:opacity .35s,visibility .35s}
+body.play #home{opacity:0;visibility:hidden}
+.wrap{max-width:860px;margin:0 auto;min-height:100%;display:flex;flex-direction:column}
+.brand{font:800 clamp(34px,9vw,64px)/1 var(--disp);letter-spacing:-.03em;margin:clamp(20px,6vh,60px) 0 10px;animation:up .7s cubic-bezier(.2,.8,.2,1) both}
+.dev{font:600 10px var(--disp);letter-spacing:.16em;color:var(--mut);margin:0 0 36px;animation:up .7s .08s cubic-bezier(.2,.8,.2,1) both}
+@keyframes up{from{opacity:0;transform:translateY(16px)}}
+h2.sec{font-size:13px;font-weight:600;color:var(--mut);letter-spacing:.08em;text-transform:uppercase;margin:0 0 12px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.card{position:relative;display:flex;flex-direction:column;gap:6px;padding:22px;border-radius:18px;border:1px solid var(--line);background:var(--panel);color:inherit;text-decoration:none;overflow:hidden;transition:transform .2s cubic-bezier(.2,.8,.2,1),border-color .2s,box-shadow .2s;animation:up .7s .16s cubic-bezier(.2,.8,.2,1) both}
+.card:nth-child(2){animation-delay:.24s}
+.card:hover{transform:translateY(-4px)}.card:active{transform:scale(.98)}
+.card::before{content:"";position:absolute;inset:0;opacity:.14;background:radial-gradient(circle at 85% 0,var(--c),transparent 60%);pointer-events:none}
+.card.craft{--c:#9d6bff}.card.craft:hover{border-color:#9d6bff;box-shadow:0 12px 40px rgba(157,107,255,.22)}
+.card.ttt{--c:#2ee6a6}.card.ttt:hover{border-color:#2ee6a6;box-shadow:0 12px 40px rgba(46,230,166,.2)}
+.ico{font-size:34px;letter-spacing:6px;height:48px}
+.card h3{margin:6px 0 0;font:800 18px var(--disp);letter-spacing:.01em}
+.card p{margin:0;color:var(--mut);font-size:14px}
+.card small{margin-top:auto;padding-top:14px;color:var(--c);font-weight:700;font-size:13px}
+.foot{margin-top:auto;padding-top:36px;text-align:center;font-size:12px;color:var(--mut)}
+.foot b{font-family:var(--disp);font-weight:800}
+#bar{position:fixed;top:0;left:0;right:0;z-index:5;display:none;align-items:center;gap:10px;padding:calc(6px + env(safe-area-inset-top)) 10px 6px;background:var(--panel);border-bottom:1px solid var(--line)}
+body.play #bar{display:flex}
+#back{border:1px solid var(--line);background:none;color:var(--text);padding:6px 12px;border-radius:9px;font:inherit;font-size:13px;cursor:pointer;transition:border-color .15s}
+#back:hover{border-color:var(--acc)}
+#gname{font:800 12px var(--disp);letter-spacing:.02em}
+#bar em{margin-left:auto;font:600 9px var(--disp);letter-spacing:.12em;font-style:normal;color:var(--mut)}
+#stage{position:fixed;left:0;right:0;bottom:0;top:calc(44px + env(safe-area-inset-top));display:none}
+body.play #stage{display:block}
+iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:none;background:#000}
+iframe.on{display:block}
+</style>
+</head>
+<body>
+<div id="home"><div class="wrap">
+  <div class="brand">EV<b>GAMES</b></div>
+  <p class="dev">DEVELOPED BY RISHI<b>FORGE</b></p>
+  <h2 class="sec">Choose a game</h2>
+  <div class="cards">
+    <a class="card craft" href="#craft"><div class="ico">🔥💧🌍💨</div><h3>UNLIMITED<b>CRAFT</b></h3><p>Start with four elements and combine your way to everything.</p><small id="saved">Play →</small></a>
+    <a class="card ttt" href="#ttt"><div class="ico"><span style="color:#9d6bff">✕</span> <span style="color:#2ee6a6">○</span></div><h3>TIC TAC TOE</h3><p>Classic duel by SN ENTERTAINMENT.</p><small>Play →</small></a>
+  </div>
+  <div class="foot"><b>EV<span style="color:var(--acc)">GAMES</span></b> · Developed by <b>RISHI<span style="color:var(--acc)">FORGE</span></b> · Saptarshi Samanta</div>
+</div></div>
+<div id="bar"><button id="back">← Home</button><span id="gname"></span><em>EV GAMES</em></div>
+<div id="stage"></div>
+<script type="text/plain" id="g-craft">&lt;!DOCTYPE html>
+&lt;html lang="en">
+&lt;head>
+&lt;meta charset="UTF-8">
+&lt;meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+&lt;title>UNLIMITED CRAFT — EV GAMES&lt;/title>
+&lt;meta name="description" content="UNLIMITED CRAFT, a combine-anything crafting game by EV GAMES. Developed by RISHI FORGE (Saptarshi Samanta).">
+&lt;meta name="theme-color" content="#6d28ff">
+&lt;link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%236d28ff'/%3E%3Ctext x='32' y='45' font-size='38' font-weight='800' text-anchor='middle' fill='white' font-family='Arial Black,sans-serif'%3EEV%3C/text%3E%3C/svg%3E">
+&lt;link rel="preconnect" href="https://fonts.googleapis.com">&lt;link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+&lt;link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&amp;display=swap" rel="stylesheet">
+&lt;style>
+:root{--bg:#0e0f13;--panel:#14161c;--line:#262a34;--text:#e8e9ee;--mut:#8a8f9e;--acc:#9d6bff;--chip:#1b1e27;--dot:#222631;--red:#d6455d}
+@media(prefers-color-scheme:light){:root{--bg:#f6f6f3;--panel:#fff;--line:#e4e4df;--text:#1c1d21;--mut:#7a7d88;--acc:#6d28ff;--chip:#fff;--dot:#dcdcd5}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font:14px/1.3 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;overscroll-behavior:none}
+.app{display:flex;flex-direction:column;height:100%;height:100dvh}
+.top{display:flex;align-items:center;gap:2px;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--panel)}
+.logo{margin-right:auto;display:flex;flex-direction:column;line-height:1.1;font:800 13px/1.1 "Unbounded","Arial Black",system-ui,sans-serif;letter-spacing:.02em}
+.logo b{color:var(--acc)}
+.logo small{font:600 8.5px/1 "Unbounded","Arial Black",system-ui,sans-serif;letter-spacing:.14em;color:var(--mut);margin-top:4px}
+.credit{padding:8px 12px 10px;border-top:1px solid var(--line);font-size:11px;color:var(--mut);text-align:center}
+.credit b{font-family:"Unbounded","Arial Black",system-ui,sans-serif;font-weight:800;letter-spacing:.02em;color:var(--text)}.credit b i{font-style:normal;color:var(--acc)}
+.dbtn{display:block;width:100%;margin:8px 0;padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:var(--chip);color:var(--text);font:inherit;cursor:pointer;transition:.15s}
+.dbtn:hover{border-color:var(--acc)}.dbtn.danger{color:var(--red);border-color:color-mix(in srgb,var(--red) 50%,var(--line))}.dbtn.danger:hover{background:var(--red);color:#fff;border-color:var(--red)}
+#loader{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:var(--bg);transition:opacity .5s ease,visibility .5s}
+#loader.hide{opacity:0;visibility:hidden}
+.ld{text-align:center;font-family:"Unbounded","Arial Black",system-ui,sans-serif}
+.ldi{display:flex;gap:14px;justify-content:center;font-size:30px;margin-bottom:22px}
+.ldi span{animation:ldb 1.2s ease-in-out infinite;opacity:.35}
+.ldi span:nth-child(2){animation-delay:.15s}.ldi span:nth-child(3){animation-delay:.3s}.ldi span:nth-child(4){animation-delay:.45s}
+@keyframes ldb{0%,100%{transform:translateY(0) scale(1);opacity:.35}40%{transform:translateY(-12px) scale(1.2);opacity:1}}
+.ldt{font-weight:800;font-size:22px;letter-spacing:.02em}.ldt b,.ld small b{color:var(--acc)}
+.ldb{width:180px;height:3px;border-radius:3px;background:var(--line);margin:18px auto 14px;overflow:hidden}
+.ldb i{display:block;height:100%;width:40%;border-radius:3px;background:var(--acc);animation:ldr 1.1s ease-in-out infinite}
+@keyframes ldr{from{transform:translateX(-100%)}to{transform:translateX(250%)}}
+.ld small{display:block}.ld small.ev{margin:0 0 6px;font-size:12px;color:var(--text)}
+.ld small{font-size:9px;letter-spacing:.16em;color:var(--mut);font-weight:600}
+.card .brand{margin:14px 0 0;font-size:11px;color:var(--mut);text-align:center}
+.count{color:var(--mut);font-size:12px;margin-right:8px;font-variant-numeric:tabular-nums}
+.gb{background:none;border:0;color:var(--mut);padding:6px 9px;border-radius:8px;font:inherit;font-size:13px;cursor:pointer;transition:color .15s,background .15s}
+.gb:hover{color:var(--text);background:var(--chip)}
+.gb.on{color:#fff;background:var(--red)}
+.main{flex:1;display:flex;min-height:0}
+.workspace{flex:1;position:relative;overflow:hidden;touch-action:none;cursor:grab;background-image:radial-gradient(var(--dot) 1.3px,transparent 1.3px);background-size:28px 28px}
+.canvas{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+.node{position:absolute;left:0;top:0;touch-action:none;user-select:none;-webkit-user-select:none;will-change:transform}
+.chip{display:flex;align-items:center;gap:7px;padding:7px 12px;border-radius:10px;background:var(--chip);border:1px solid var(--line);box-shadow:0 1px 3px rgba(0,0,0,.18);white-space:nowrap;font-weight:550;cursor:grab;transition:transform .16s cubic-bezier(.2,.8,.2,1),box-shadow .16s,border-color .16s,opacity .16s;animation:pop .3s cubic-bezier(.2,.9,.3,1.3)}
+.chip i{font-style:normal;font-size:17px}
+.chip.drag{transform:scale(1.06);box-shadow:0 12px 30px rgba(0,0,0,.35);cursor:grabbing;animation:none}
+.chip.hot{border-color:var(--acc);box-shadow:0 0 0 4px color-mix(in srgb,var(--acc) 28%,transparent)}
+.chip.fresh{animation:pop .3s cubic-bezier(.2,.9,.3,1.3),glow 1.3s ease-out}
+.chip.out{transform:scale(.6);opacity:0}
+.chip.shake{animation:shake .3s}
+body.del .chip{border-color:var(--red);cursor:pointer}
+@keyframes pop{from{transform:scale(.6);opacity:0}}
+@keyframes glow{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--acc) 60%,transparent)}100%{box-shadow:0 0 0 18px transparent}}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.p{position:absolute;left:0;top:0;pointer-events:none;font-size:14px;animation:fly .6s ease-out forwards}
+@keyframes fly{to{transform:translate(var(--x),var(--y)) scale(.3);opacity:0}}
+.empty{position:absolute;inset:0;display:grid;place-items:center;color:var(--mut);pointer-events:none;transition:opacity .2s}
+.side{width:280px;border-left:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;transition:background .15s}
+.side.trash{background:color-mix(in srgb,var(--red) 14%,var(--panel))}
+.side input{margin:10px;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font:inherit;outline:0;transition:border-color .15s}
+.side input:focus{border-color:var(--acc)}
+.elements{flex:1;overflow:auto;display:flex;flex-wrap:wrap;align-content:flex-start;gap:6px;padding:0 10px 10px;-webkit-overflow-scrolling:touch}
+.el{display:flex;gap:6px;align-items:center;padding:6px 10px;border:1px solid var(--line);border-radius:9px;background:var(--chip);cursor:pointer;user-select:none;-webkit-user-select:none;white-space:nowrap;transition:transform .12s,border-color .12s}
+.el:hover{border-color:var(--acc)}.el:active{transform:scale(.96)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);padding:8px 14px;border-radius:999px;background:var(--text);color:var(--bg);font-size:13px;opacity:0;pointer-events:none;transition:.22s;z-index:30}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;place-items:center;z-index:40;padding:16px}
+.modal.show{display:grid}
+.card{position:relative;width:min(460px,100%);max-height:80vh;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;animation:pop .22s ease-out}
+.card h2{margin:0 0 12px;font-size:16px}
+.close{position:absolute;top:10px;right:10px;background:none;border:0;color:var(--mut);font-size:22px;cursor:pointer}
+.recipe{padding:7px 0;border-bottom:1px solid var(--line);color:var(--mut)}.recipe b{color:var(--text);font-weight:550}
+@media(max-width:700px){.main{flex-direction:column}.side{width:auto;height:38%;border-left:0;border-top:1px solid var(--line)}.toast{bottom:40%}}
+&lt;/style>
+&lt;/head>
+&lt;body>
+&lt;div id="loader">&lt;div class="ld">&lt;div class="ldi">&lt;span>🔥&lt;/span>&lt;span>💧&lt;/span>&lt;span>🌍&lt;/span>&lt;span>💨&lt;/span>&lt;/div>&lt;div class="ldt">UNLIMITED&lt;b>CRAFT&lt;/b>&lt;/div>&lt;div class="ldb">&lt;i>&lt;/i>&lt;/div>&lt;small class="ev">EV&lt;b>GAMES&lt;/b>&lt;/small>&lt;small>DEVELOPED BY RISHI&lt;b>FORGE&lt;/b>&lt;/small>&lt;/div>&lt;/div>
+&lt;div class="app">
+&lt;header class="top">
+  &lt;div class="logo">&lt;span>∞ UNLIMITED&lt;b>CRAFT&lt;/b>&lt;/span>&lt;small>EV&lt;b>GAMES&lt;/b>&lt;/small>&lt;/div>
+  &lt;span class="count" id="count">&lt;/span>
+  &lt;button class="gb" id="deleteBtn">Delete&lt;/button>&lt;button class="gb" id="recipesBtn">Recipes&lt;/button>&lt;button class="gb" id="clearBtn">Clear&lt;/button>&lt;button class="gb" id="newBtn">Data&lt;/button>
+&lt;/header>
+&lt;main class="main">
+  &lt;section class="workspace" id="workspace">&lt;div class="canvas" id="canvas">&lt;/div>&lt;div class="empty" id="empty">Tap or drag an element to begin&lt;/div>&lt;/section>
+  &lt;aside class="side" id="side">&lt;input id="search" placeholder="Search elements" autocomplete="off">&lt;div class="elements" id="elements">&lt;/div>&lt;div class="credit">&lt;b>EV&lt;i>GAMES&lt;/i>&lt;/b>&lt;br>Developed by &lt;b>RISHI&lt;i>FORGE&lt;/i>&lt;/b> · Saptarshi Samanta&lt;/div>&lt;/aside>
+&lt;/main>
+&lt;/div>
+&lt;div class="toast" id="toast">&lt;/div>
+&lt;div class="modal" id="dataModal">&lt;div class="card">&lt;button class="close" id="dataClose">×&lt;/button>&lt;h2>Saved data&lt;/h2>
+&lt;p class="recipe" id="dataInfo" style="border:0">&lt;/p>
+&lt;button class="dbtn" id="clearBoardBtn">Clear board only&lt;/button>
+&lt;button class="dbtn danger" id="wipeBtn">Delete all saved data&lt;/button>
+&lt;p class="brand" style="text-align:left">Progress is stored only in this browser. Deleting removes discoveries, the board and view position, then restarts the game.&lt;/p>&lt;/div>&lt;/div>
+&lt;div class="modal" id="modal">&lt;div class="card">&lt;button class="close" id="close">×&lt;/button>&lt;h2>Recipes&lt;/h2>&lt;div id="recipeList">&lt;/div>&lt;div class="brand">UNLIMITED CRAFT by EV GAMES · Developed by RISHI FORGE&lt;/div>&lt;/div>&lt;/div>
+&lt;script>
+const BASE={
+ "fire":{e:"🔥",t:"basic"},"water":{e:"💧",t:"basic"},"earth":{e:"🌍",t:"basic"},"wind":{e:"💨",t:"basic"},
+ "steam":{e:"♨️",t:"nature"},"mud":{e:"🟤",t:"nature"},"dust":{e:"🌫️",t:"nature"},"energy":{e:"⚡",t:"power"},
+ "lava":{e:"🌋",t:"nature"},"stone":{e:"🪨",t:"material"},"plant":{e:"🌱",t:"life"},"rain":{e:"🌧️",t:"nature"},
+ "cloud":{e:"☁️",t:"nature"},"storm":{e:"⛈️",t:"nature"},"ocean":{e:"🌊",t:"nature"},"island":{e:"🏝️",t:"place"},
+ "life":{e:"🧬",t:"life"},"human":{e:"🧑",t:"life"},"animal":{e:"🐾",t:"life"},"tree":{e:"🌳",t:"life"},
+ "forest":{e:"🌲",t:"place"},"metal":{e:"⚙️",t:"material"},"tool":{e:"🔧",t:"object"},"time":{e:"⏳",t:"concept"},
+ "clock":{e:"🕐",t:"object"},"space":{e:"🌌",t:"cosmos"},"star":{e:"⭐",t:"cosmos"},"planet":{e:"🪐",t:"cosmos"},
+ "moon":{e:"🌙",t:"cosmos"},"sun":{e:"☀️",t:"cosmos"},"light":{e:"💡",t:"energy"},"electricity":{e:"🔌",t:"power"},
+ "robot":{e:"🤖",t:"tech"},"computer":{e:"💻",t:"tech"},"internet":{e:"🌐",t:"tech"},"game":{e:"🎮",t:"tech"},
+ "magic":{e:"✨",t:"rare"},"dragon":{e:"🐉",t:"legendary"},"wizard":{e:"🧙",t:"rare"},"universe":{e:"🌠",t:"cosmos"},
+ "galaxy":{e:"🌌",t:"cosmos"},"black hole":{e:"🕳️",t:"cosmos"},"diamond":{e:"💎",t:"rare"},"gold":{e:"🥇",t:"rare"},
+ "lifeform":{e:"🧫",t:"life"},"city":{e:"🏙️",t:"place"},"factory":{e:"🏭",t:"place"},"rocket":{e:"🚀",t:"tech"},
+ "ai":{e:"🧠",t:"tech"},"portal":{e:"🌀",t:"rare"},"infinity":{e:"♾️",t:"legendary"}
+};
+const R={
+ "fire+water":"steam","earth+water":"mud","earth+wind":"dust","fire+wind":"energy","fire+earth":"lava",
+ "water+wind":"rain","rain+wind":"cloud","cloud+energy":"storm","water+water":"ocean","earth+earth":"stone",
+ "earth+plant":"tree","plant+plant":"forest","fire+stone":"metal","metal+tool":"machine","stone+fire":"metal",
+ "energy+metal":"electricity","electricity+computer":"internet","earth+life":"human","life+water":"animal",
+ "tree+forest":"nature","human+tool":"technology","technology+electricity":"computer","human+metal":"tool",
+ "time+time":"clock","fire+fire":"energy","water+cloud":"rain","ocean+earth":"island","island+life":"lifeform",
+ "sun+moon":"eclipse","fire+star":"sun","space+star":"galaxy","galaxy+galaxy":"universe","universe+space":"black hole",
+ "stone+pressure":"diamond","metal+earth":"gold","human+computer":"ai","ai+game":"game","space+rocket":"portal",
+ "magic+dragon":"wizard","wizard+portal":"infinity","lifeform+magic":"dragon","light+space":"star",
+ "electricity+metal":"robot","robot+internet":"ai","fire+light":"sun","cloud+water":"rain","sun+water":"rain",
+ "earth+sun":"plant","wind+energy":"electricity","human+city":"factory","tool+factory":"machine",
+ "rocket+fire":"space","time+space":"portal"
+};
+BASE.machine={e:"⚙️",t:"tech"}; BASE.nature={e:"🌿",t:"life"}; BASE.technology={e:"📱",t:"tech"}; BASE.eclipse={e:"🌑",t:"cosmos"}; BASE.pressure={e:"🫨",t:"concept"};
+
+Object.assign(R,{
+ "fire+lava":"volcano","water+ocean":"wave","wind+ocean":"wave","wave+energy":"electricity",
+ "plant+rain":"flower","flower+plant":"garden","tree+tree":"forest","forest+animal":"wildlife",
+ "human+human":"family","human+life":"person","person+city":"civilization","city+city":"metropolis",
+ "metal+electricity":"machine","machine+internet":"robot","robot+game":"gamer","gamer+internet":"streamer",
+ "computer+computer":"server","server+internet":"cloud","cloud+server":"data","data+ai":"intelligence",
+ "sun+star":"light","moon+star":"night","sun+moon":"eclipse","night+time":"dream",
+ "space+time":"wormhole","wormhole+portal":"dimension","dimension+universe":"multiverse",
+ "earth+fire":"lava","lava+water":"stone","stone+water":"sand","sand+fire":"glass",
+ "glass+electricity":"screen","screen+computer":"smartphone","smartphone+internet":"social media",
+ "gold+diamond":"treasure","treasure+dragon":"hoard","dragon+fire":"phoenix","phoenix+magic":"legend",
+ "wizard+magic":"spell","spell+fire":"enchantment","enchantment+weapon":"artifact",
+ "human+magic":"wizard","human+technology":"engineer","engineer+computer":"programmer",
+ "programmer+ai":"developer","developer+internet":"website","website+game":"web game",
+ "rocket+space":"spaceship","spaceship+planet":"explorer","explorer+planet":"discovery",
+ "black hole+star":"singularity","singularity+universe":"infinity","infinity+infinity":"eternity"
+});
+Object.assign(BASE,{
+ volcano:{e:"🌋",t:"nature"},wave:{e:"🌊",t:"nature"},flower:{e:"🌸",t:"life"},garden:{e:"🌷",t:"place"},
+ wildlife:{e:"🦁",t:"life"},family:{e:"👨‍👩‍👧",t:"life"},person:{e:"🧍",t:"life"},civilization:{e:"🏛️",t:"place"},
+ metropolis:{e:"🌆",t:"place"},machine:{e:"⚙️",t:"tech"},gamer:{e:"🕹️",t:"tech"},streamer:{e:"🎥",t:"tech"},
+ server:{e:"🗄️",t:"tech"},data:{e:"📊",t:"tech"},intelligence:{e:"🧠",t:"concept"},night:{e:"🌙",t:"nature"},
+ dream:{e:"💭",t:"concept"},wormhole:{e:"🌀",t:"cosmos"},dimension:{e:"🔮",t:"cosmos"},multiverse:{e:"🌌",t:"legendary"},
+ sand:{e:"🏖️",t:"nature"},glass:{e:"🪟",t:"material"},screen:{e:"📺",t:"tech"},smartphone:{e:"📱",t:"tech"},
+ "social media":{e:"📲",t:"tech"},treasure:{e:"💰",t:"rare"},hoard:{e:"🏆",t:"rare"},phoenix:{e:"🔥",t:"legendary"},
+ legend:{e:"📜",t:"legendary"},spell:{e:"🔯",t:"rare"},enchantment:{e:"✨",t:"rare"},artifact:{e:"🗿",t:"legendary"},
+ engineer:{e:"👷",t:"tech"},programmer:{e:"👨‍💻",t:"tech"},developer:{e:"🧑‍💻",t:"tech"},website:{e:"🌐",t:"tech"},
+ "web game":{e:"🎮",t:"tech"},spaceship:{e:"🛸",t:"tech"},explorer:{e:"🧭",t:"life"},discovery:{e:"🔭",t:"concept"},
+ singularity:{e:"🕳️",t:"legendary"},eternity:{e:"♾️",t:"legendary"}
+});
+
+
+/* HUGE ELEMENT EXPANSION — hundreds of additional discoveries */
+Object.assign(BASE,{
+  'ash':{e:'✨',t:'mystery'},
+  'smoke':{e:'✨',t:'mystery'},
+  'steam':{e:'✨',t:'mystery'},
+  'mist':{e:'✨',t:'mystery'},
+  'cloud':{e:'🌊',t:'nature'},
+  'rain':{e:'🌊',t:'nature'},
+  'snow':{e:'🌊',t:'nature'},
+  'ice':{e:'🌊',t:'nature'},
+  'frost':{e:'🌊',t:'nature'},
+  'storm':{e:'🌊',t:'nature'},
+  'thunder':{e:'🔥',t:'nature'},
+  'lightning':{e:'🔥',t:'nature'},
+  'rainbow':{e:'✨',t:'mystery'},
+  'puddle':{e:'✨',t:'mystery'},
+  'mud':{e:'🌿',t:'nature'},
+  'clay':{e:'✨',t:'mystery'},
+  'brick':{e:'✨',t:'mystery'},
+  'wall':{e:'✨',t:'mystery'},
+  'house':{e:'✨',t:'mystery'},
+  'village':{e:'✨',t:'mystery'},
+  'town':{e:'✨',t:'mystery'},
+  'city':{e:'✨',t:'mystery'},
+  'country':{e:'✨',t:'mystery'},
+  'continent':{e:'✨',t:'mystery'},
+  'planet':{e:'✨',t:'mystery'},
+  'solar system':{e:'✨',t:'mystery'},
+  'galaxy':{e:'🌌',t:'cosmos'},
+  'universe':{e:'🌌',t:'cosmos'},
+  'space':{e:'🌌',t:'cosmos'},
+  'star':{e:'🌌',t:'cosmos'},
+  'moon':{e:'🌌',t:'cosmos'},
+  'sun':{e:'🔥',t:'nature'},
+  'comet':{e:'✨',t:'mystery'},
+  'asteroid':{e:'✨',t:'mystery'},
+  'meteor':{e:'✨',t:'mystery'},
+  'crater':{e:'✨',t:'mystery'},
+  'gravity':{e:'✨',t:'mystery'},
+  'energy':{e:'🔥',t:'nature'},
+  'power':{e:'🔥',t:'nature'},
+  'heat':{e:'🔥',t:'nature'},
+  'cold':{e:'✨',t:'mystery'},
+  'sound':{e:'✨',t:'mystery'},
+  'music':{e:'✨',t:'mystery'},
+  'song':{e:'✨',t:'mystery'},
+  'rhythm':{e:'✨',t:'mystery'},
+  'art':{e:'✨',t:'mystery'},
+  'painting':{e:'✨',t:'mystery'},
+  'book':{e:'📚',t:'knowledge'},
+  'story':{e:'📚',t:'knowledge'},
+  'knowledge':{e:'📚',t:'knowledge'},
+  'school':{e:'📚',t:'knowledge'},
+  'teacher':{e:'🧑',t:'life'},
+  'student':{e:'🧑',t:'life'},
+  'science':{e:'📚',t:'knowledge'},
+  'math':{e:'📚',t:'knowledge'},
+  'computer':{e:'💻',t:'tech'},
+  'internet':{e:'💻',t:'tech'},
+  'code':{e:'💻',t:'tech'},
+  'program':{e:'💻',t:'tech'},
+  'app':{e:'💻',t:'tech'},
+  'website':{e:'💻',t:'tech'},
+  'game':{e:'✨',t:'mystery'},
+  'console':{e:'✨',t:'mystery'},
+  'controller':{e:'✨',t:'mystery'},
+  'keyboard':{e:'✨',t:'mystery'},
+  'mouse':{e:'✨',t:'mystery'},
+  'phone':{e:'💻',t:'tech'},
+  'tablet':{e:'✨',t:'mystery'},
+  'camera':{e:'✨',t:'mystery'},
+  'video':{e:'✨',t:'mystery'},
+  'movie':{e:'✨',t:'mystery'},
+  'television':{e:'✨',t:'mystery'},
+  'radio':{e:'✨',t:'mystery'},
+  'robot':{e:'💻',t:'tech'},
+  'machine':{e:'💻',t:'tech'},
+  'engine':{e:'✨',t:'mystery'},
+  'car':{e:'🚀',t:'transport'},
+  'bus':{e:'🚀',t:'transport'},
+  'train':{e:'🚀',t:'transport'},
+  'airplane':{e:'🚀',t:'transport'},
+  'ship':{e:'🚀',t:'transport'},
+  'boat':{e:'🚀',t:'transport'},
+  'submarine':{e:'✨',t:'mystery'},
+  'rocket':{e:'🚀',t:'transport'},
+  'satellite':{e:'✨',t:'mystery'},
+  'astronaut':{e:'✨',t:'mystery'},
+  'alien':{e:'✨',t:'mystery'},
+  'planetarium':{e:'✨',t:'mystery'},
+  'laboratory':{e:'✨',t:'mystery'},
+  'experiment':{e:'✨',t:'mystery'},
+  'atom':{e:'✨',t:'mystery'},
+  'molecule':{e:'✨',t:'mystery'},
+  'cell':{e:'✨',t:'mystery'},
+  'bacteria':{e:'✨',t:'mystery'},
+  'virus':{e:'✨',t:'mystery'},
+  'dna':{e:'✨',t:'mystery'},
+  'life':{e:'✨',t:'mystery'},
+  'animal':{e:'✨',t:'mystery'},
+  'bird':{e:'✨',t:'mystery'},
+  'fish':{e:'✨',t:'mystery'},
+  'insect':{e:'✨',t:'mystery'},
+  'butterfly':{e:'✨',t:'mystery'},
+  'bee':{e:'✨',t:'mystery'},
+  'ant':{e:'✨',t:'mystery'},
+  'spider':{e:'✨',t:'mystery'},
+  'wolf':{e:'✨',t:'mystery'},
+  'fox':{e:'✨',t:'mystery'},
+  'bear':{e:'✨',t:'mystery'},
+  'lion':{e:'✨',t:'mystery'},
+  'tiger':{e:'✨',t:'mystery'},
+  'elephant':{e:'✨',t:'mystery'},
+  'horse':{e:'✨',t:'mystery'},
+  'cow':{e:'✨',t:'mystery'},
+  'pig':{e:'✨',t:'mystery'},
+  'sheep':{e:'✨',t:'mystery'},
+  'goat':{e:'✨',t:'mystery'},
+  'chicken':{e:'✨',t:'mystery'},
+  'egg':{e:'✨',t:'mystery'},
+  'feather':{e:'✨',t:'mystery'},
+  'fur':{e:'✨',t:'mystery'},
+  'forest':{e:'🌿',t:'nature'},
+  'tree':{e:'🌿',t:'nature'},
+  'wood':{e:'✨',t:'mystery'},
+  'leaf':{e:'✨',t:'mystery'},
+  'flower':{e:'🌿',t:'nature'},
+  'seed':{e:'🌿',t:'nature'},
+  'fruit':{e:'✨',t:'mystery'},
+  'apple':{e:'🍎',t:'food'},
+  'banana':{e:'🍎',t:'food'},
+  'orange':{e:'🍎',t:'food'},
+  'grape':{e:'🍎',t:'food'},
+  'lemon':{e:'🍎',t:'food'},
+  'watermelon':{e:'🍎',t:'food'},
+  'food':{e:'🍎',t:'food'},
+  'bread':{e:'🍎',t:'food'},
+  'cake':{e:'🍎',t:'food'},
+  'cookie':{e:'✨',t:'mystery'},
+  'sugar':{e:'✨',t:'mystery'},
+  'salt':{e:'✨',t:'mystery'},
+  'coffee':{e:'✨',t:'mystery'},
+  'tea':{e:'✨',t:'mystery'},
+  'milk':{e:'✨',t:'mystery'},
+  'cheese':{e:'✨',t:'mystery'},
+  'pizza':{e:'🍎',t:'food'},
+  'burger':{e:'🍎',t:'food'},
+  'sandwich':{e:'🍎',t:'food'},
+  'fire':{e:'🔥',t:'nature'},
+  'water':{e:'🌊',t:'nature'},
+  'earth':{e:'🌿',t:'nature'},
+  'wind':{e:'✨',t:'mystery'},
+  'stone':{e:'🌿',t:'nature'},
+  'metal':{e:'💎',t:'material'},
+  'gold':{e:'💎',t:'material'},
+  'silver':{e:'💎',t:'material'},
+  'copper':{e:'💎',t:'material'},
+  'iron':{e:'💎',t:'material'},
+  'diamond':{e:'💎',t:'material'},
+  'crystal':{e:'💎',t:'material'},
+  'glass':{e:'💎',t:'material'},
+  'sand':{e:'🌿',t:'nature'},
+  'desert':{e:'🌿',t:'nature'},
+  'oasis':{e:'✨',t:'mystery'},
+  'river':{e:'🌊',t:'nature'},
+  'lake':{e:'🌊',t:'nature'},
+  'ocean':{e:'🌊',t:'nature'},
+  'sea':{e:'🌊',t:'nature'},
+  'island':{e:'✨',t:'mystery'},
+  'beach':{e:'✨',t:'mystery'},
+  'mountain':{e:'🌿',t:'nature'},
+  'volcano':{e:'🔥',t:'nature'},
+  'valley':{e:'✨',t:'mystery'},
+  'canyon':{e:'✨',t:'mystery'},
+  'cave':{e:'✨',t:'mystery'},
+  'rainforest':{e:'✨',t:'mystery'},
+  'jungle':{e:'✨',t:'mystery'},
+  'garden':{e:'✨',t:'mystery'},
+  'park':{e:'✨',t:'mystery'},
+  'road':{e:'✨',t:'mystery'},
+  'bridge':{e:'✨',t:'mystery'},
+  'railway':{e:'✨',t:'mystery'},
+  'airport':{e:'✨',t:'mystery'},
+  'harbor':{e:'✨',t:'mystery'},
+  'castle':{e:'✨',t:'mystery'},
+  'king':{e:'✨',t:'mystery'},
+  'queen':{e:'✨',t:'mystery'},
+  'knight':{e:'✨',t:'mystery'},
+  'sword':{e:'✨',t:'mystery'},
+  'shield':{e:'✨',t:'mystery'},
+  'wizard':{e:'🐉',t:'magic'},
+  'magic':{e:'🐉',t:'magic'},
+  'dragon':{e:'🐉',t:'magic'},
+  'fairy':{e:'🐉',t:'magic'},
+  'unicorn':{e:'🐉',t:'magic'},
+  'monster':{e:'🐉',t:'magic'},
+  'ghost':{e:'🐉',t:'magic'},
+  'vampire':{e:'🐉',t:'magic'},
+  'zombie':{e:'🐉',t:'magic'},
+  'hero':{e:'✨',t:'mystery'},
+  'villain':{e:'✨',t:'mystery'},
+  'battle':{e:'✨',t:'mystery'},
+  'war':{e:'✨',t:'mystery'},
+  'peace':{e:'✨',t:'mystery'},
+  'kingdom':{e:'✨',t:'mystery'},
+  'empire':{e:'✨',t:'mystery'},
+  'history':{e:'✨',t:'mystery'},
+  'future':{e:'✨',t:'mystery'},
+  'time':{e:'✨',t:'mystery'},
+  'clock':{e:'✨',t:'mystery'},
+  'day':{e:'✨',t:'mystery'},
+  'night':{e:'✨',t:'mystery'},
+  'morning':{e:'✨',t:'mystery'},
+  'evening':{e:'✨',t:'mystery'},
+  'week':{e:'✨',t:'mystery'},
+  'month':{e:'✨',t:'mystery'},
+  'year':{e:'✨',t:'mystery'},
+  'century':{e:'✨',t:'mystery'},
+  'dream':{e:'✨',t:'mystery'},
+  'sleep':{e:'✨',t:'mystery'},
+  'memory':{e:'✨',t:'mystery'},
+  'idea':{e:'✨',t:'mystery'},
+  'thought':{e:'✨',t:'mystery'},
+  'mind':{e:'✨',t:'mystery'},
+  'brain':{e:'✨',t:'mystery'},
+  'emotion':{e:'✨',t:'mystery'},
+  'love':{e:'✨',t:'mystery'},
+  'friend':{e:'✨',t:'mystery'},
+  'family':{e:'🧑',t:'life'},
+  'people':{e:'🧑',t:'life'},
+  'human':{e:'🧑',t:'life'},
+  'child':{e:'🧑',t:'life'},
+  'baby':{e:'🧑',t:'life'},
+  'doctor':{e:'🧑',t:'life'},
+  'nurse':{e:'✨',t:'mystery'},
+  'police':{e:'✨',t:'mystery'},
+  'firefighter':{e:'✨',t:'mystery'},
+  'chef':{e:'✨',t:'mystery'},
+  'artist':{e:'✨',t:'mystery'},
+  'musician':{e:'✨',t:'mystery'},
+  'writer':{e:'✨',t:'mystery'},
+  'engineer':{e:'🧑',t:'life'},
+  'scientist':{e:'✨',t:'mystery'},
+  'developer':{e:'✨',t:'mystery'},
+  'creator':{e:'✨',t:'mystery'},
+  'company':{e:'✨',t:'mystery'},
+  'business':{e:'✨',t:'mystery'},
+  'money':{e:'✨',t:'mystery'},
+  'coin':{e:'✨',t:'mystery'},
+  'bank':{e:'✨',t:'mystery'},
+  'market':{e:'✨',t:'mystery'},
+  'trade':{e:'✨',t:'mystery'},
+  'treasure':{e:'✨',t:'mystery'},
+  'golden':{e:'🔥',t:'nature'},
+  'rich':{e:'✨',t:'mystery'},
+  'poor':{e:'✨',t:'mystery'},
+  'government':{e:'✨',t:'mystery'},
+  'law':{e:'✨',t:'mystery'},
+  'justice':{e:'✨',t:'mystery'},
+  'freedom':{e:'✨',t:'mystery'},
+  'democracy':{e:'✨',t:'mystery'},
+  'flag':{e:'✨',t:'mystery'},
+  'language':{e:'✨',t:'mystery'},
+  'word':{e:'✨',t:'mystery'},
+  'letter':{e:'✨',t:'mystery'},
+  'number':{e:'✨',t:'mystery'},
+  'zero':{e:'✨',t:'mystery'},
+  'one':{e:'✨',t:'mystery'},
+  'two':{e:'✨',t:'mystery'},
+  'three':{e:'✨',t:'mystery'},
+  'four':{e:'✨',t:'mystery'},
+  'five':{e:'✨',t:'mystery'},
+  'six':{e:'✨',t:'mystery'},
+  'seven':{e:'✨',t:'mystery'},
+  'eight':{e:'✨',t:'mystery'},
+  'nine':{e:'✨',t:'mystery'},
+  'ten':{e:'✨',t:'mystery'},
+  'infinity':{e:'✨',t:'mystery'},
+  'eternity':{e:'✨',t:'mystery'},
+  'dimension':{e:'🌌',t:'cosmos'},
+  'portal':{e:'✨',t:'mystery'},
+  'multiverse':{e:'🌌',t:'cosmos'},
+  'black hole':{e:'🌌',t:'cosmos'},
+  'wormhole':{e:'🌌',t:'cosmos'},
+  'quantum':{e:'✨',t:'mystery'},
+  'space-time':{e:'✨',t:'mystery'},
+  'gravity wave':{e:'✨',t:'mystery'},
+  'supernova':{e:'✨',t:'mystery'},
+  'neutron star':{e:'✨',t:'mystery'},
+  'black star':{e:'✨',t:'mystery'},
+  'cosmos':{e:'✨',t:'mystery'},
+  'galaxy cluster':{e:'✨',t:'mystery'},
+  'nebula':{e:'✨',t:'mystery'},
+  'sunlight':{e:'✨',t:'mystery'},
+  'moonlight':{e:'✨',t:'mystery'},
+  'starlight':{e:'✨',t:'mystery'},
+  'daylight':{e:'✨',t:'mystery'},
+  'shadow':{e:'✨',t:'mystery'},
+  'darkness':{e:'✨',t:'mystery'},
+  'color':{e:'✨',t:'mystery'},
+  'red':{e:'✨',t:'mystery'},
+  'blue':{e:'✨',t:'mystery'},
+  'green':{e:'✨',t:'mystery'},
+  'yellow':{e:'✨',t:'mystery'},
+  'purple':{e:'✨',t:'mystery'},
+  'pink':{e:'✨',t:'mystery'},
+  'orange color':{e:'✨',t:'mystery'},
+  'music note':{e:'✨',t:'mystery'},
+  'melody':{e:'✨',t:'mystery'},
+  'harmony':{e:'✨',t:'mystery'},
+  'instrument':{e:'✨',t:'mystery'},
+  'guitar':{e:'✨',t:'mystery'},
+  'piano':{e:'✨',t:'mystery'},
+  'drum':{e:'✨',t:'mystery'},
+  'violin':{e:'✨',t:'mystery'},
+  'concert':{e:'✨',t:'mystery'},
+  'festival':{e:'✨',t:'mystery'},
+  'party':{e:'✨',t:'mystery'},
+  'celebration':{e:'✨',t:'mystery'},
+  'sport':{e:'✨',t:'mystery'},
+  'football':{e:'🏆',t:'sport'},
+  'basketball':{e:'🏆',t:'sport'},
+  'cricket':{e:'🏆',t:'sport'},
+  'tennis':{e:'🏆',t:'sport'},
+  'race':{e:'✨',t:'mystery'},
+  'champion':{e:'✨',t:'mystery'},
+  'trophy':{e:'🏆',t:'sport'},
+  'medal':{e:'✨',t:'mystery'},
+  'team':{e:'✨',t:'mystery'},
+  'league':{e:'✨',t:'mystery'},
+  'school league':{e:'✨',t:'mystery'},
+  'video creator':{e:'✨',t:'mystery'},
+  'streamer':{e:'✨',t:'mystery'},
+  'youtuber':{e:'✨',t:'mystery'},
+  'social media':{e:'✨',t:'mystery'},
+  'channel':{e:'✨',t:'mystery'},
+  'subscriber':{e:'✨',t:'mystery'},
+  'viral':{e:'✨',t:'mystery'},
+  'internet meme':{e:'✨',t:'mystery'},
+  'emoji':{e:'✨',t:'mystery'},
+  'avatar':{e:'✨',t:'mystery'},
+  'pixel':{e:'✨',t:'mystery'},
+  'screen':{e:'✨',t:'mystery'},
+  'display':{e:'✨',t:'mystery'},
+  'software':{e:'💻',t:'tech'},
+  'hardware':{e:'💻',t:'tech'},
+  'database':{e:'💻',t:'tech'},
+  'server':{e:'💻',t:'tech'},
+  'cloud computing':{e:'✨',t:'mystery'},
+  'artificial intelligence':{e:'✨',t:'mystery'},
+  'machine learning':{e:'✨',t:'mystery'},
+  'algorithm':{e:'✨',t:'mystery'},
+  'data':{e:'✨',t:'mystery'},
+  'information':{e:'✨',t:'mystery'},
+  'knowledge base':{e:'✨',t:'mystery'},
+  'search engine':{e:'✨',t:'mystery'},
+  'browser':{e:'✨',t:'mystery'},
+  'web':{e:'✨',t:'mystery'},
+  'link':{e:'✨',t:'mystery'},
+  'domain':{e:'✨',t:'mystery'},
+  'network':{e:'✨',t:'mystery'},
+  'wifi':{e:'✨',t:'mystery'},
+  'signal':{e:'✨',t:'mystery'},
+  'electricity':{e:'✨',t:'mystery'},
+  'battery':{e:'✨',t:'mystery'},
+  'solar panel':{e:'✨',t:'mystery'},
+  'wind turbine':{e:'✨',t:'mystery'},
+  'power plant':{e:'✨',t:'mystery'},
+  'factory':{e:'✨',t:'mystery'},
+  'tool':{e:'✨',t:'mystery'},
+  'hammer':{e:'✨',t:'mystery'},
+  'axe':{e:'✨',t:'mystery'},
+  'pickaxe':{e:'✨',t:'mystery'},
+  'saw':{e:'✨',t:'mystery'},
+  'wheel':{e:'✨',t:'mystery'},
+  'motor':{e:'✨',t:'mystery'},
+  'fuel':{e:'✨',t:'mystery'},
+  'gas':{e:'✨',t:'mystery'},
+  'oil':{e:'✨',t:'mystery'},
+  'petrol':{e:'✨',t:'mystery'},
+  'diesel':{e:'✨',t:'mystery'},
+  'energy drink':{e:'✨',t:'mystery'},
+  'medicine':{e:'✨',t:'mystery'},
+  'hospital':{e:'✨',t:'mystery'},
+  'city park':{e:'✨',t:'mystery'},
+  'library':{e:'✨',t:'mystery'},
+  'museum':{e:'✨',t:'mystery'},
+  'university':{e:'✨',t:'mystery'},
+  'office':{e:'✨',t:'mystery'},
+  'home':{e:'✨',t:'mystery'},
+  'room':{e:'✨',t:'mystery'},
+  'door':{e:'✨',t:'mystery'},
+  'window':{e:'✨',t:'mystery'},
+  'roof':{e:'✨',t:'mystery'},
+  'floor':{e:'✨',t:'mystery'},
+  'chair':{e:'✨',t:'mystery'},
+  'table':{e:'✨',t:'mystery'},
+  'bed':{e:'✨',t:'mystery'},
+  'lamp':{e:'✨',t:'mystery'},
+  'light':{e:'✨',t:'mystery'},
+  'mirror':{e:'✨',t:'mystery'},
+  'key':{e:'✨',t:'mystery'},
+  'lock':{e:'✨',t:'mystery'},
+  'box':{e:'✨',t:'mystery'},
+  'bag':{e:'✨',t:'mystery'},
+  'clothes':{e:'✨',t:'mystery'},
+  'shirt':{e:'✨',t:'mystery'},
+  'shoe':{e:'✨',t:'mystery'},
+  'hat':{e:'✨',t:'mystery'},
+  'ring':{e:'✨',t:'mystery'},
+  'crown':{e:'✨',t:'mystery'},
+  'diamond ring':{e:'✨',t:'mystery'},
+  'jewelry':{e:'✨',t:'mystery'},
+  'gold ring':{e:'✨',t:'mystery'},
+  'magic wand':{e:'✨',t:'mystery'},
+  'spell':{e:'✨',t:'mystery'},
+  'potion':{e:'✨',t:'mystery'},
+  'elixir':{e:'✨',t:'mystery'},
+  'artifact':{e:'✨',t:'mystery'},
+  'legend':{e:'✨',t:'mystery'},
+  'myth':{e:'✨',t:'mystery'},
+  'god':{e:'✨',t:'mystery'},
+  'goddess':{e:'✨',t:'mystery'},
+  'sun god':{e:'✨',t:'mystery'},
+  'moon goddess':{e:'✨',t:'mystery'},
+  'time machine':{e:'✨',t:'mystery'},
+  'spaceship':{e:'🚀',t:'transport'},
+  'robot army':{e:'✨',t:'mystery'},
+  'cyborg':{e:'✨',t:'mystery'},
+  'android':{e:'✨',t:'mystery'},
+  'ai assistant':{e:'✨',t:'mystery'},
+  'virtual reality':{e:'✨',t:'mystery'},
+  'metaverse':{e:'✨',t:'mystery'},
+  'cyber city':{e:'✨',t:'mystery'},
+  'future city':{e:'✨',t:'mystery'},
+  'smart city':{e:'✨',t:'mystery'},
+  'technology':{e:'✨',t:'mystery'},
+  'innovation':{e:'✨',t:'mystery'},
+  'invention':{e:'✨',t:'mystery'},
+  'discovery':{e:'✨',t:'mystery'},
+  'explorer':{e:'✨',t:'mystery'},
+  'adventure':{e:'✨',t:'mystery'},
+  'journey':{e:'✨',t:'mystery'},
+  'map':{e:'✨',t:'mystery'},
+  'compass':{e:'✨',t:'mystery'},
+  'treasure map':{e:'✨',t:'mystery'},
+  'pirate':{e:'✨',t:'mystery'},
+  'shipwreck':{e:'✨',t:'mystery'},
+  'island treasure':{e:'✨',t:'mystery'},
+  'mermaid':{e:'✨',t:'mystery'},
+  'kraken':{e:'✨',t:'mystery'},
+  'sea monster':{e:'✨',t:'mystery'},
+  'ocean king':{e:'✨',t:'mystery'},
+  'underwater city':{e:'✨',t:'mystery'},
+  'coral':{e:'✨',t:'mystery'},
+  'shell':{e:'✨',t:'mystery'},
+  'pearl':{e:'✨',t:'mystery'},
+  'oyster':{e:'✨',t:'mystery'},
+  'wave':{e:'🌊',t:'nature'},
+  'tide':{e:'✨',t:'mystery'},
+  'current':{e:'✨',t:'mystery'},
+  'hurricane':{e:'✨',t:'mystery'},
+  'tornado':{e:'✨',t:'mystery'},
+  'typhoon':{e:'✨',t:'mystery'},
+  'flood':{e:'✨',t:'mystery'},
+  'drought':{e:'✨',t:'mystery'},
+  'earthquake':{e:'✨',t:'mystery'},
+  'tsunami':{e:'✨',t:'mystery'},
+  'disaster':{e:'✨',t:'mystery'},
+  'rescue':{e:'✨',t:'mystery'},
+  'shelter':{e:'✨',t:'mystery'},
+  'camp':{e:'✨',t:'mystery'},
+  'tent':{e:'✨',t:'mystery'},
+  'fireplace':{e:'✨',t:'mystery'},
+  'campfire':{e:'✨',t:'mystery'},
+  'bonfire':{e:'✨',t:'mystery'},
+  'torch':{e:'✨',t:'mystery'},
+  'candle':{e:'✨',t:'mystery'},
+  'lantern':{e:'✨',t:'mystery'},
+  'sunrise':{e:'✨',t:'mystery'},
+  'sunset':{e:'✨',t:'mystery'},
+  'eclipse':{e:'🌌',t:'cosmos'},
+  'aurora':{e:'🌌',t:'cosmos'},
+  'rain cloud':{e:'✨',t:'mystery'},
+  'snowman':{e:'✨',t:'mystery'},
+  'snowball':{e:'✨',t:'mystery'},
+  'iceberg':{e:'✨',t:'mystery'},
+  'glacier':{e:'✨',t:'mystery'},
+  'arctic':{e:'✨',t:'mystery'},
+  'antarctica':{e:'✨',t:'mystery'},
+  'north pole':{e:'✨',t:'mystery'},
+  'south pole':{e:'✨',t:'mystery'},
+  'compass rose':{e:'✨',t:'mystery'},
+  'weather':{e:'✨',t:'mystery'},
+  'climate':{e:'✨',t:'mystery'},
+  'season':{e:'✨',t:'mystery'},
+  'spring':{e:'✨',t:'mystery'},
+  'summer':{e:'✨',t:'mystery'},
+  'autumn':{e:'✨',t:'mystery'},
+  'winter':{e:'✨',t:'mystery'},
+  'nature':{e:'✨',t:'mystery'},
+  'ecosystem':{e:'✨',t:'mystery'},
+  'environment':{e:'✨',t:'mystery'},
+  'recycling':{e:'✨',t:'mystery'},
+  'plastic':{e:'✨',t:'mystery'},
+  'paper':{e:'✨',t:'mystery'},
+  'bookstore':{e:'✨',t:'mystery'},
+  'marketplace':{e:'✨',t:'mystery'},
+  'restaurant':{e:'✨',t:'mystery'},
+  'bakery':{e:'✨',t:'mystery'},
+  'farm':{e:'✨',t:'mystery'},
+  'farmer':{e:'✨',t:'mystery'},
+  'crop':{e:'✨',t:'mystery'},
+  'wheat':{e:'✨',t:'mystery'},
+  'rice':{e:'✨',t:'mystery'},
+  'corn':{e:'✨',t:'mystery'},
+  'vegetable':{e:'✨',t:'mystery'},
+  'carrot':{e:'✨',t:'mystery'},
+  'potato':{e:'✨',t:'mystery'},
+  'tomato':{e:'✨',t:'mystery'},
+  'onion':{e:'✨',t:'mystery'},
+  'garlic':{e:'✨',t:'mystery'},
+  'pepper':{e:'✨',t:'mystery'},
+  'spice':{e:'✨',t:'mystery'},
+  'honey':{e:'✨',t:'mystery'},
+  'bee farm':{e:'✨',t:'mystery'},
+  'forest fire':{e:'✨',t:'mystery'},
+  'firewood':{e:'✨',t:'mystery'},
+  'lumber':{e:'✨',t:'mystery'},
+  'newspaper':{e:'✨',t:'mystery'},
+  'magazine':{e:'✨',t:'mystery'},
+  'comic':{e:'✨',t:'mystery'},
+  'novel':{e:'✨',t:'mystery'},
+  'poem':{e:'✨',t:'mystery'},
+  'poetry':{e:'✨',t:'mystery'},
+  'film':{e:'✨',t:'mystery'},
+  'actor':{e:'✨',t:'mystery'},
+  'actress':{e:'✨',t:'mystery'},
+  'director':{e:'✨',t:'mystery'},
+  'camera lens':{e:'✨',t:'mystery'},
+  'photograph':{e:'✨',t:'mystery'},
+  'portrait':{e:'✨',t:'mystery'},
+  'selfie':{e:'✨',t:'mystery'},
+  'microphone':{e:'✨',t:'mystery'},
+  'speaker':{e:'✨',t:'mystery'},
+  'headphones':{e:'✨',t:'mystery'},
+  'podcast':{e:'✨',t:'mystery'},
+  'news':{e:'✨',t:'mystery'},
+  'reporter':{e:'✨',t:'mystery'},
+  'journalist':{e:'✨',t:'mystery'},
+  'studio':{e:'✨',t:'mystery'},
+  'broadcast':{e:'✨',t:'mystery'},
+  'streaming':{e:'✨',t:'mystery'},
+  'live stream':{e:'✨',t:'mystery'},
+  'online game':{e:'✨',t:'mystery'},
+  'multiplayer':{e:'✨',t:'mystery'},
+  'player':{e:'✨',t:'mystery'},
+  'gamer':{e:'✨',t:'mystery'},
+  'pro gamer':{e:'✨',t:'mystery'},
+  'esports':{e:'🏆',t:'sport'},
+  'tournament':{e:'🏆',t:'sport'},
+  'championship':{e:'🏆',t:'sport'},
+  'world champion':{e:'✨',t:'mystery'},
+  'record':{e:'✨',t:'mystery'},
+  'score':{e:'✨',t:'mystery'},
+  'win':{e:'✨',t:'mystery'},
+  'loss':{e:'✨',t:'mystery'},
+  'draw':{e:'✨',t:'mystery'},
+  'goal':{e:'✨',t:'mystery'},
+  'ball':{e:'✨',t:'mystery'},
+  'bat':{e:'✨',t:'mystery'},
+  'wicket':{e:'✨',t:'mystery'},
+  'pitch':{e:'✨',t:'mystery'},
+  'stadium':{e:'✨',t:'mystery'},
+  'crowd':{e:'✨',t:'mystery'},
+  'fan':{e:'✨',t:'mystery'},
+  'coach':{e:'✨',t:'mystery'},
+  'training':{e:'✨',t:'mystery'},
+  'classroom':{e:'✨',t:'mystery'},
+  'exam':{e:'📚',t:'knowledge'},
+  'homework':{e:'✨',t:'mystery'},
+  'lesson':{e:'📚',t:'knowledge'},
+  'question':{e:'✨',t:'mystery'},
+  'answer':{e:'✨',t:'mystery'},
+  'quiz':{e:'📚',t:'knowledge'},
+  'test':{e:'✨',t:'mystery'},
+  'result':{e:'✨',t:'mystery'},
+  'certificate':{e:'✨',t:'mystery'},
+  'wisdom':{e:'📚',t:'knowledge'},
+  'bookworm':{e:'✨',t:'mystery'},
+  'library card':{e:'✨',t:'mystery'},
+  'student card':{e:'✨',t:'mystery'},
+  'computer lab':{e:'✨',t:'mystery'},
+  'robotics':{e:'✨',t:'mystery'},
+  'coding':{e:'✨',t:'mystery'},
+  'programming':{e:'✨',t:'mystery'},
+  'javascript':{e:'✨',t:'mystery'},
+  'html':{e:'✨',t:'mystery'},
+  'css':{e:'✨',t:'mystery'},
+  'python':{e:'✨',t:'mystery'},
+  'website builder':{e:'✨',t:'mystery'},
+  'game developer':{e:'✨',t:'mystery'},
+  'app developer':{e:'✨',t:'mystery'},
+  'web developer':{e:'✨',t:'mystery'},
+  'software engineer':{e:'✨',t:'mystery'},
+  'startup':{e:'✨',t:'mystery'},
+  'founder':{e:'✨',t:'mystery'},
+  'brand':{e:'✨',t:'mystery'},
+  'logo':{e:'✨',t:'mystery'},
+  'design':{e:'✨',t:'mystery'},
+  'graphic':{e:'✨',t:'mystery'},
+  'poster':{e:'✨',t:'mystery'},
+  'banner':{e:'✨',t:'mystery'},
+  'editing':{e:'✨',t:'mystery'},
+  'animation':{e:'✨',t:'mystery'},
+  '3d':{e:'✨',t:'mystery'},
+  'model':{e:'✨',t:'mystery'},
+  'render':{e:'✨',t:'mystery'},
+  'virtual world':{e:'✨',t:'mystery'},
+  'sandbox':{e:'✨',t:'mystery'},
+  'craft':{e:'✨',t:'mystery'},
+  'infinite craft':{e:'✨',t:'mystery'},
+  'element':{e:'✨',t:'mystery'},
+  'alchemy':{e:'✨',t:'mystery'},
+  'creation':{e:'✨',t:'mystery'},
+  'world':{e:'✨',t:'mystery'},
+  'universe creator':{e:'✨',t:'mystery'}
+});
+Object.assign(R,{
+  'fire+water':'steam',
+  'earth+water':'mud',
+  'earth+fire':'lava',
+  'air+fire':'smoke',
+  'wind+water':'wave',
+  'steam+air':'cloud',
+  'cloud+water':'rain',
+  'rain+cold':'snow',
+  'snow+cold':'ice',
+  'ice+wind':'frost',
+  'cloud+wind':'storm',
+  'storm+fire':'lightning',
+  'lightning+storm':'thunder',
+  'mud+fire':'brick',
+  'brick+brick':'wall',
+  'wall+wall':'house',
+  'house+house':'village',
+  'village+village':'town',
+  'town+town':'city',
+  'city+city':'country',
+  'country+country':'continent',
+  'continent+continent':'planet',
+  'planet+planet':'solar system',
+  'solar system+solar system':'galaxy',
+  'galaxy+galaxy':'universe',
+  'fire+fire':'energy',
+  'energy+energy':'power',
+  'power+metal':'machine',
+  'machine+machine':'computer',
+  'computer+computer':'internet',
+  'internet+computer':'code',
+  'code+code':'program',
+  'program+computer':'app',
+  'app+internet':'website',
+  'website+game':'online game',
+  'earth+earth':'mountain',
+  'mountain+water':'river',
+  'river+water':'lake',
+  'lake+water':'ocean',
+  'ocean+earth':'island',
+  'island+water':'beach',
+  'mountain+fire':'volcano',
+  'life+earth':'animal',
+  'animal+animal':'wildlife',
+  'animal+wind':'bird',
+  'animal+water':'fish',
+  'animal+earth':'insect',
+  'insect+flower':'bee',
+  'bee+flower':'honey',
+  'tree+tree':'forest',
+  'forest+forest':'rainforest',
+  'tree+earth':'seed',
+  'seed+earth':'plant',
+  'plant+water':'flower',
+  'human+human':'family',
+  'human+earth':'people',
+  'people+city':'civilization',
+  'human+technology':'engineer',
+  'engineer+computer':'programmer',
+  'programmer+internet':'developer',
+  'developer+website':'web developer',
+  'sun+fire':'sunlight',
+  'sun+moon':'eclipse',
+  'moon+star':'night',
+  'night+time':'dream',
+  'star+star':'galaxy',
+  'star+gravity':'black hole',
+  'black hole+space':'wormhole',
+  'wormhole+portal':'dimension',
+  'dimension+universe':'multiverse',
+  'infinity+infinity':'eternity',
+  'ash+water':'smoke',
+  'earth+smoke':'steam',
+  'steam+wind':'mist',
+  'energy+mist':'cloud',
+  'cloud+life':'rain',
+  'human+rain':'snow',
+  'metal+snow':'ice',
+  'ice+stone':'frost',
+  'frost+sun':'storm',
+  'moon+storm':'thunder',
+  'star+thunder':'lightning',
+  'lightning+time':'rainbow',
+  'rainbow+space':'puddle',
+  'fire+puddle':'mud',
+  'mud+water':'clay',
+  'clay+earth':'brick',
+  'brick+wind':'wall',
+  'energy+wall':'house',
+  'house+life':'village',
+  'human+village':'town',
+  'metal+town':'city',
+  'city+stone':'country',
+  'country+sun':'continent',
+  'continent+moon':'planet',
+  'planet+star':'solar system',
+  'solar system+time':'galaxy',
+  'energy+sun':'comet',
+  'comet+life':'asteroid',
+  'asteroid+human':'meteor',
+  'metal+meteor':'crater',
+  'crater+stone':'gravity',
+  'energy+moon':'power',
+  'power+star':'heat',
+  'heat+time':'cold',
+  'cold+space':'sound',
+  'fire+sound':'music',
+  'music+water':'song',
+  'earth+song':'rhythm',
+  'rhythm+wind':'art',
+  'art+energy':'painting',
+  'life+painting':'book',
+  'book+human':'story',
+  'metal+story':'knowledge',
+  'knowledge+stone':'school',
+  'school+sun':'teacher',
+  'moon+teacher':'student',
+  'star+student':'science',
+  'science+time':'math',
+  'math+space':'computer',
+  'computer+fire':'internet',
+  'internet+water':'code',
+  'code+earth':'program',
+  'program+wind':'app',
+  'app+energy':'website',
+  'life+website':'game',
+  'game+human':'console',
+  'console+metal':'controller',
+  'controller+stone':'keyboard',
+  'keyboard+sun':'mouse',
+  'moon+mouse':'phone',
+  'phone+star':'tablet',
+  'tablet+time':'camera',
+  'camera+space':'video',
+  'fire+video':'movie',
+  'movie+water':'television',
+  'earth+television':'radio',
+  'radio+wind':'robot',
+  'energy+robot':'machine',
+  'life+machine':'engine',
+  'engine+human':'car',
+  'car+metal':'bus',
+  'bus+stone':'train',
+  'sun+train':'airplane',
+  'airplane+moon':'ship',
+  'ship+star':'boat',
+  'boat+time':'submarine',
+  'space+submarine':'rocket',
+  'fire+rocket':'satellite',
+  'satellite+water':'astronaut',
+  'astronaut+earth':'alien',
+  'alien+wind':'planetarium',
+  'energy+planetarium':'laboratory',
+  'laboratory+life':'experiment',
+  'experiment+human':'atom',
+  'atom+metal':'molecule',
+  'molecule+stone':'cell',
+  'cell+sun':'bacteria',
+  'bacteria+moon':'virus',
+  'star+virus':'dna',
+  'life+space':'animal',
+  'animal+fire':'bird',
+  'bird+water':'fish',
+  'earth+fish':'insect',
+  'insect+wind':'butterfly',
+  'butterfly+energy':'bee',
+  'bee+life':'ant',
+  'ant+human':'spider',
+  'metal+spider':'wolf',
+  'stone+wolf':'fox',
+  'fox+sun':'bear',
+  'bear+moon':'lion',
+  'lion+star':'tiger',
+  'tiger+time':'elephant',
+  'elephant+space':'horse',
+  'fire+horse':'cow',
+  'cow+water':'pig',
+  'earth+pig':'sheep',
+  'sheep+wind':'goat',
+  'energy+goat':'chicken',
+  'chicken+life':'egg',
+  'egg+human':'feather',
+  'feather+metal':'fur',
+  'fur+stone':'forest',
+  'forest+sun':'tree',
+  'moon+tree':'wood',
+  'star+wood':'leaf',
+  'leaf+time':'flower',
+  'flower+space':'seed',
+  'fire+seed':'fruit',
+  'fruit+water':'apple',
+  'apple+earth':'banana',
+  'banana+wind':'orange',
+  'energy+orange':'grape',
+  'grape+life':'lemon',
+  'human+lemon':'watermelon',
+  'metal+watermelon':'food',
+  'food+stone':'bread',
+  'bread+sun':'cake',
+  'cake+moon':'cookie',
+  'cookie+star':'sugar',
+  'sugar+time':'salt',
+  'salt+space':'coffee',
+  'coffee+fire':'tea',
+  'tea+water':'milk',
+  'earth+milk':'cheese',
+  'cheese+wind':'pizza',
+  'energy+pizza':'burger',
+  'burger+life':'sandwich',
+  'metal+time':'gold',
+  'gold+space':'silver',
+  'fire+silver':'copper',
+  'copper+water':'iron',
+  'earth+iron':'diamond',
+  'diamond+wind':'crystal',
+  'crystal+energy':'glass',
+  'glass+life':'sand',
+  'human+sand':'desert',
+  'desert+metal':'oasis',
+  'oasis+stone':'river',
+  'river+sun':'lake',
+  'lake+moon':'ocean',
+  'ocean+star':'sea',
+  'sea+time':'island',
+  'island+space':'beach',
+  'beach+fire':'mountain',
+  'earth+volcano':'valley',
+  'valley+wind':'canyon',
+  'canyon+energy':'cave',
+  'cave+life':'rainforest',
+  'human+rainforest':'jungle',
+  'jungle+metal':'garden',
+  'garden+stone':'park',
+  'park+sun':'road',
+  'moon+road':'bridge',
+  'bridge+star':'railway',
+  'railway+time':'airport',
+  'airport+space':'harbor',
+  'fire+harbor':'castle',
+  'castle+water':'king',
+  'earth+king':'queen',
+  'queen+wind':'knight',
+  'energy+knight':'sword',
+  'life+sword':'shield',
+  'human+shield':'wizard',
+  'metal+wizard':'magic',
+  'magic+stone':'dragon',
+  'dragon+sun':'fairy',
+  'fairy+moon':'unicorn',
+  'star+unicorn':'monster',
+  'monster+time':'ghost',
+  'ghost+space':'vampire',
+  'fire+vampire':'zombie',
+  'water+zombie':'hero',
+  'earth+hero':'villain',
+  'villain+wind':'battle',
+  'battle+energy':'war',
+  'life+war':'peace',
+  'human+peace':'kingdom',
+  'kingdom+metal':'empire',
+  'empire+stone':'history',
+  'history+sun':'future',
+  'star+time':'clock',
+  'clock+time':'day',
+  'day+space':'night',
+  'fire+night':'morning',
+  'morning+water':'evening',
+  'earth+evening':'week',
+  'week+wind':'month',
+  'energy+month':'year',
+  'life+year':'century',
+  'century+human':'dream',
+  'dream+metal':'sleep',
+  'sleep+stone':'memory',
+  'memory+sun':'idea',
+  'idea+moon':'thought',
+  'star+thought':'mind',
+  'mind+time':'brain',
+  'brain+space':'emotion',
+  'emotion+fire':'love',
+  'love+water':'friend',
+  'earth+friend':'family',
+  'family+wind':'people',
+  'human+life':'child',
+  'child+human':'baby',
+  'baby+metal':'doctor',
+  'doctor+stone':'nurse',
+  'nurse+sun':'police',
+  'moon+police':'firefighter',
+  'firefighter+star':'chef',
+  'chef+time':'artist',
+  'artist+space':'musician',
+  'fire+musician':'writer',
+  'water+writer':'engineer',
+  'earth+engineer':'scientist',
+  'scientist+wind':'developer',
+  'developer+energy':'creator',
+  'creator+life':'company',
+  'company+human':'business',
+  'business+metal':'money',
+  'money+stone':'coin',
+  'coin+sun':'bank',
+  'bank+moon':'market',
+  'market+star':'trade',
+  'time+trade':'treasure',
+  'space+treasure':'golden',
+  'fire+golden':'rich',
+  'rich+water':'poor',
+  'earth+poor':'government',
+  'government+wind':'law',
+  'energy+law':'justice',
+  'justice+life':'freedom',
+  'freedom+human':'democracy',
+  'democracy+metal':'flag',
+  'flag+stone':'language',
+  'language+sun':'word',
+  'moon+word':'letter',
+  'letter+star':'number',
+  'number+time':'zero',
+  'space+zero':'one',
+  'fire+one':'two',
+  'two+water':'three',
+  'earth+three':'four',
+  'four+wind':'five',
+  'energy+five':'six',
+  'life+six':'seven',
+  'human+seven':'eight',
+  'eight+metal':'nine',
+  'nine+stone':'ten',
+  'infinity+moon':'eternity',
+  'eternity+star':'dimension',
+  'portal+space':'multiverse',
+  'fire+multiverse':'black hole',
+  'black hole+water':'wormhole',
+  'earth+wormhole':'quantum',
+  'quantum+wind':'space-time',
+  'energy+space-time':'gravity wave',
+  'gravity wave+life':'supernova',
+  'human+supernova':'neutron star',
+  'metal+neutron star':'black star',
+  'black star+stone':'cosmos',
+  'cosmos+sun':'galaxy cluster',
+  'galaxy cluster+moon':'nebula',
+  'nebula+star':'sunlight',
+  'sunlight+time':'moonlight',
+  'moonlight+space':'starlight',
+  'fire+starlight':'daylight',
+  'daylight+water':'shadow',
+  'earth+shadow':'darkness',
+  'darkness+wind':'color',
+  'color+energy':'red',
+  'life+red':'blue',
+  'blue+human':'green',
+  'green+metal':'yellow',
+  'stone+yellow':'purple',
+  'purple+sun':'pink',
+  'moon+pink':'orange color',
+  'orange color+star':'music note',
+  'music note+time':'melody',
+  'melody+space':'harmony',
+  'fire+harmony':'instrument',
+  'instrument+water':'guitar',
+  'earth+guitar':'piano',
+  'piano+wind':'drum',
+  'drum+energy':'violin',
+  'life+violin':'concert',
+  'concert+human':'festival',
+  'festival+metal':'party',
+  'party+stone':'celebration',
+  'celebration+sun':'sport',
+  'moon+sport':'football',
+  'football+star':'basketball',
+  'basketball+time':'cricket',
+  'cricket+space':'tennis',
+  'fire+tennis':'race',
+  'race+water':'champion',
+  'champion+earth':'trophy',
+  'trophy+wind':'medal',
+  'energy+medal':'team',
+  'life+team':'league',
+  'human+league':'school league',
+  'metal+school league':'video creator',
+  'stone+video creator':'streamer',
+  'streamer+sun':'youtuber',
+  'moon+youtuber':'social media',
+  'social media+star':'channel',
+  'channel+time':'subscriber',
+  'space+subscriber':'viral',
+  'fire+viral':'internet meme',
+  'internet meme+water':'emoji',
+  'earth+emoji':'avatar',
+  'avatar+wind':'pixel',
+  'energy+pixel':'screen',
+  'life+screen':'display',
+  'display+human':'software',
+  'metal+software':'hardware',
+  'hardware+stone':'database',
+  'database+sun':'server',
+  'moon+server':'cloud computing',
+  'cloud computing+star':'artificial intelligence',
+  'artificial intelligence+time':'machine learning',
+  'machine learning+space':'algorithm',
+  'algorithm+fire':'data',
+  'data+water':'information',
+  'earth+information':'knowledge base',
+  'knowledge base+wind':'search engine',
+  'energy+search engine':'browser',
+  'browser+life':'web',
+  'human+web':'link',
+  'link+metal':'domain',
+  'domain+stone':'network',
+  'network+sun':'wifi',
+  'moon+wifi':'signal',
+  'signal+star':'electricity',
+  'electricity+time':'battery',
+  'battery+space':'solar panel',
+  'fire+solar panel':'wind turbine',
+  'water+wind turbine':'power plant',
+  'earth+power plant':'factory',
+  'factory+wind':'tool',
+  'energy+tool':'hammer',
+  'hammer+life':'axe',
+  'axe+human':'pickaxe',
+  'metal+pickaxe':'saw',
+  'saw+stone':'wheel',
+  'sun+wheel':'motor',
+  'moon+motor':'fuel',
+  'fuel+star':'gas',
+  'gas+time':'oil',
+  'oil+space':'petrol',
+  'fire+petrol':'diesel',
+  'diesel+water':'energy drink',
+  'earth+energy drink':'medicine',
+  'medicine+wind':'hospital',
+  'energy+hospital':'city park',
+  'city park+life':'library',
+  'human+library':'museum',
+  'metal+museum':'university',
+  'stone+university':'office',
+  'office+sun':'home',
+  'home+moon':'room',
+  'room+star':'door',
+  'door+time':'window',
+  'space+window':'roof',
+  'fire+roof':'floor',
+  'floor+water':'chair',
+  'chair+earth':'table',
+  'table+wind':'bed',
+  'bed+energy':'lamp',
+  'lamp+life':'light',
+  'human+light':'mirror',
+  'metal+mirror':'key',
+  'key+stone':'lock',
+  'lock+sun':'box',
+  'box+moon':'bag',
+  'bag+star':'clothes',
+  'clothes+time':'shirt',
+  'shirt+space':'shoe',
+  'fire+shoe':'hat',
+  'hat+water':'ring',
+  'earth+ring':'crown',
+  'crown+wind':'diamond ring',
+  'diamond ring+energy':'jewelry',
+  'jewelry+life':'gold ring',
+  'gold ring+human':'magic wand',
+  'magic wand+metal':'spell',
+  'spell+stone':'potion',
+  'potion+sun':'elixir',
+  'elixir+moon':'artifact',
+  'artifact+star':'legend',
+  'legend+time':'myth',
+  'myth+space':'god',
+  'fire+god':'goddess',
+  'goddess+water':'sun god',
+  'earth+sun god':'moon goddess',
+  'moon goddess+wind':'time machine',
+  'energy+time machine':'spaceship',
+  'life+spaceship':'robot army',
+  'human+robot army':'cyborg',
+  'cyborg+metal':'android',
+  'android+stone':'ai assistant',
+  'ai assistant+sun':'virtual reality',
+  'moon+virtual reality':'metaverse',
+  'metaverse+star':'cyber city',
+  'cyber city+time':'future city',
+  'future city+space':'smart city',
+  'fire+smart city':'technology',
+  'technology+water':'innovation',
+  'earth+innovation':'invention',
+  'invention+wind':'discovery',
+  'discovery+energy':'explorer',
+  'explorer+life':'adventure',
+  'adventure+human':'journey',
+  'journey+metal':'map',
+  'map+stone':'compass',
+  'compass+sun':'treasure map',
+  'moon+treasure map':'pirate',
+  'pirate+star':'shipwreck',
+  'shipwreck+time':'island treasure',
+  'island treasure+space':'mermaid',
+  'fire+mermaid':'kraken',
+  'kraken+water':'sea monster',
+  'earth+sea monster':'ocean king',
+  'ocean king+wind':'underwater city',
+  'energy+underwater city':'coral',
+  'coral+life':'shell',
+  'human+shell':'pearl',
+  'metal+pearl':'oyster',
+  'oyster+stone':'wave',
+  'sun+wave':'tide',
+  'moon+tide':'current',
+  'current+star':'hurricane',
+  'hurricane+time':'tornado',
+  'space+tornado':'typhoon',
+  'fire+typhoon':'flood',
+  'flood+water':'drought',
+  'drought+earth':'earthquake',
+  'earthquake+wind':'tsunami',
+  'energy+tsunami':'disaster',
+  'disaster+life':'rescue',
+  'human+rescue':'shelter',
+  'metal+shelter':'camp',
+  'camp+stone':'tent',
+  'sun+tent':'fireplace',
+  'fireplace+moon':'campfire',
+  'campfire+star':'bonfire',
+  'bonfire+time':'torch',
+  'space+torch':'candle',
+  'candle+fire':'lantern',
+  'lantern+water':'sunrise',
+  'earth+sunrise':'sunset',
+  'sunset+wind':'eclipse',
+  'eclipse+energy':'aurora',
+  'aurora+life':'rain cloud',
+  'human+rain cloud':'snowman',
+  'metal+snowman':'snowball',
+  'snowball+stone':'iceberg',
+  'iceberg+sun':'glacier',
+  'glacier+moon':'arctic',
+  'arctic+star':'antarctica',
+  'antarctica+time':'north pole',
+  'north pole+space':'south pole',
+  'fire+south pole':'compass rose',
+  'compass rose+water':'weather',
+  'earth+weather':'climate',
+  'climate+wind':'season',
+  'energy+season':'spring',
+  'life+spring':'summer',
+  'human+summer':'autumn',
+  'autumn+metal':'winter',
+  'stone+winter':'nature',
+  'nature+sun':'ecosystem',
+  'ecosystem+moon':'environment',
+  'environment+star':'recycling',
+  'recycling+time':'plastic',
+  'plastic+space':'paper',
+  'fire+paper':'bookstore',
+  'bookstore+water':'marketplace',
+  'earth+marketplace':'restaurant',
+  'restaurant+wind':'bakery',
+  'bakery+energy':'farm',
+  'farm+life':'farmer',
+  'farmer+human':'crop',
+  'crop+metal':'wheat',
+  'stone+wheat':'rice',
+  'rice+sun':'corn',
+  'corn+moon':'vegetable',
+  'star+vegetable':'carrot',
+  'carrot+time':'potato',
+  'potato+space':'tomato',
+  'fire+tomato':'onion',
+  'onion+water':'garlic',
+  'earth+garlic':'pepper',
+  'pepper+wind':'spice',
+  'energy+spice':'honey',
+  'honey+life':'bee farm',
+  'bee farm+human':'forest fire',
+  'forest fire+metal':'firewood',
+  'firewood+stone':'lumber',
+  'lumber+sun':'newspaper',
+  'moon+newspaper':'magazine',
+  'magazine+star':'comic',
+  'comic+time':'novel',
+  'novel+space':'poem',
+  'fire+poem':'poetry',
+  'poetry+water':'film',
+  'earth+film':'actor',
+  'actor+wind':'actress',
+  'actress+energy':'director',
+  'director+life':'camera lens',
+  'camera lens+human':'photograph',
+  'metal+photograph':'portrait',
+  'portrait+stone':'selfie',
+  'selfie+sun':'microphone',
+  'microphone+moon':'speaker',
+  'speaker+star':'headphones',
+  'headphones+time':'podcast',
+  'podcast+space':'news',
+  'fire+news':'reporter',
+  'reporter+water':'journalist',
+  'earth+journalist':'studio',
+  'studio+wind':'broadcast',
+  'broadcast+energy':'streaming',
+  'life+streaming':'live stream',
+  'human+live stream':'online game',
+  'metal+online game':'multiplayer',
+  'multiplayer+stone':'player',
+  'player+sun':'gamer',
+  'gamer+moon':'pro gamer',
+  'pro gamer+star':'esports',
+  'esports+time':'tournament',
+  'space+tournament':'championship',
+  'championship+fire':'world champion',
+  'water+world champion':'record',
+  'earth+record':'score',
+  'score+wind':'win',
+  'energy+win':'loss',
+  'life+loss':'draw',
+  'draw+human':'goal',
+  'goal+metal':'ball',
+  'ball+stone':'bat',
+  'bat+sun':'wicket',
+  'moon+wicket':'pitch',
+  'pitch+star':'stadium',
+  'stadium+time':'crowd',
+  'crowd+space':'fan',
+  'fan+fire':'coach',
+  'coach+water':'training',
+  'earth+training':'classroom',
+  'classroom+wind':'exam',
+  'energy+exam':'homework',
+  'homework+life':'lesson',
+  'human+lesson':'question',
+  'metal+question':'answer',
+  'answer+stone':'quiz',
+  'quiz+sun':'test',
+  'moon+test':'result',
+  'result+star':'certificate',
+  'certificate+time':'wisdom',
+  'space+wisdom':'bookworm',
+  'bookworm+fire':'library card',
+  'library card+water':'student card',
+  'earth+student card':'computer lab',
+  'computer lab+wind':'robotics',
+  'energy+robotics':'coding',
+  'coding+life':'programming',
+  'human+programming':'javascript',
+  'javascript+metal':'html',
+  'html+stone':'css',
+  'css+sun':'python',
+  'moon+python':'website builder',
+  'star+website builder':'game developer',
+  'game developer+time':'app developer',
+  'app developer+space':'web developer',
+  'fire+web developer':'software engineer',
+  'software engineer+water':'startup',
+  'earth+startup':'founder',
+  'founder+wind':'brand',
+  'brand+energy':'logo',
+  'life+logo':'design',
+  'design+human':'graphic',
+  'graphic+metal':'poster',
+  'poster+stone':'banner',
+  'banner+sun':'editing',
+  'editing+moon':'animation',
+  'animation+star':'3d',
+  '3d+time':'model',
+  'model+space':'render',
+  'fire+render':'virtual world',
+  'virtual world+water':'sandbox',
+  'earth+sandbox':'craft',
+  'craft+wind':'infinite craft',
+  'energy+infinite craft':'element',
+  'element+life':'alchemy',
+  'alchemy+human':'creation',
+  'creation+metal':'world',
+  'stone+world':'universe creator'
+});
+
+/* INFINITE CRAFT 2 — LARGE ELEMENT DATABASE */
+const EXTRA_ELEMENTS = [{"n": "proton", "t": "science", "e": "⚛️"}, {"n": "neutron", "t": "science", "e": "⚛️"}, {"n": "electron", "t": "science", "e": "⚛️"}, {"n": "quark", "t": "science", "e": "⚛️"}, {"n": "photon", "t": "science", "e": "⚛️"}, {"n": "plasma", "t": "science", "e": "⚛️"}, {"n": "isotope", "t": "science", "e": "⚛️"}, {"n": "acid", "t": "science", "e": "⚛️"}, {"n": "base", "t": "science", "e": "⚛️"}, {"n": "mineral", "t": "science", "e": "⚛️"}, {"n": "rna", "t": "science", "e": "⚛️"}, {"n": "gene", "t": "science", "e": "⚛️"}, {"n": "enzyme", "t": "science", "e": "⚛️"}, {"n": "protein", "t": "science", "e": "⚛️"}, {"n": "vaccine", "t": "science", "e": "⚛️"}, {"n": "magnet", "t": "science", "e": "⚛️"}, {"n": "force", "t": "science", "e": "⚛️"}, {"n": "motion", "t": "science", "e": "⚛️"}, {"n": "speed", "t": "science", "e": "⚛️"}, {"n": "mass", "t": "science", "e": "⚛️"}, {"n": "matter", "t": "science", "e": "⚛️"}, {"n": "vacuum", "t": "science", "e": "⚛️"}, {"n": "radiation", "t": "science", "e": "⚛️"}, {"n": "laser", "t": "science", "e": "⚛️"}, {"n": "spectrum", "t": "science", "e": "⚛️"}, {"n": "frequency", "t": "science", "e": "⚛️"}, {"n": "circuit", "t": "science", "e": "⚛️"}, {"n": "voltage", "t": "science", "e": "⚛️"}, {"n": "resistor", "t": "science", "e": "⚛️"}, {"n": "transistor", "t": "science", "e": "⚛️"}, {"n": "reactor", "t": "science", "e": "⚛️"}, {"n": "fusion", "t": "science", "e": "⚛️"}, {"n": "fission", "t": "science", "e": "⚛️"}, {"n": "telescope", "t": "science", "e": "⚛️"}, {"n": "microscope", "t": "science", "e": "⚛️"}, {"n": "formula", "t": "science", "e": "⚛️"}, {"n": "theory", "t": "science", "e": "⚛️"}, {"n": "relativity", "t": "science", "e": "⚛️"}, {"n": "chemistry", "t": "science", "e": "⚛️"}, {"n": "physics", "t": "science", "e": "⚛️"}, {"n": "biology", "t": "science", "e": "⚛️"}, {"n": "geology", "t": "science", "e": "⚛️"}, {"n": "astronomy", "t": "science", "e": "⚛️"}, {"n": "waterfall", "t": "nature", "e": "🌿"}, {"n": "reef", "t": "nature", "e": "🌿"}, {"n": "fog", "t": "nature", "e": "🌿"}, {"n": "breeze", "t": "nature", "e": "🌿"}, {"n": "soil", "t": "nature", "e": "🌿"}, {"n": "rock", "t": "nature", "e": "🌿"}, {"n": "berry", "t": "nature", "e": "🌿"}, {"n": "mango", "t": "nature", "e": "🌿"}, {"n": "coconut", "t": "nature", "e": "🌿"}, {"n": "herb", "t": "nature", "e": "🌿"}, {"n": "mushroom", "t": "nature", "e": "🌿"}, {"n": "pine", "t": "nature", "e": "🌿"}, {"n": "oak", "t": "nature", "e": "🌿"}, {"n": "palm", "t": "nature", "e": "🌿"}, {"n": "bamboo", "t": "nature", "e": "🌿"}, {"n": "cactus", "t": "nature", "e": "🌿"}, {"n": "grass", "t": "nature", "e": "🌿"}, {"n": "moss", "t": "nature", "e": "🌿"}, {"n": "fern", "t": "nature", "e": "🌿"}, {"n": "vine", "t": "nature", "e": "🌿"}, {"n": "root", "t": "nature", "e": "🌿"}, {"n": "branch", "t": "nature", "e": "🌿"}, {"n": "log", "t": "nature", "e": "🌿"}, {"n": "seedling", "t": "nature", "e": "🌿"}, {"n": "pollen", "t": "nature", "e": "🌿"}, {"n": "nectar", "t": "nature", "e": "🌿"}, {"n": "dog", "t": "animals", "e": "🐾"}, {"n": "cat", "t": "animals", "e": "🐾"}, {"n": "leopard", "t": "animals", "e": "🐾"}, {"n": "cheetah", "t": "animals", "e": "🐾"}, {"n": "panda", "t": "animals", "e": "🐾"}, {"n": "giraffe", "t": "animals", "e": "🐾"}, {"n": "zebra", "t": "animals", "e": "🐾"}, {"n": "donkey", "t": "animals", "e": "🐾"}, {"n": "buffalo", "t": "animals", "e": "🐾"}, {"n": "rabbit", "t": "animals", "e": "🐾"}, {"n": "rat", "t": "animals", "e": "🐾"}, {"n": "squirrel", "t": "animals", "e": "🐾"}, {"n": "monkey", "t": "animals", "e": "🐾"}, {"n": "gorilla", "t": "animals", "e": "🐾"}, {"n": "chimpanzee", "t": "animals", "e": "🐾"}, {"n": "deer", "t": "animals", "e": "🐾"}, {"n": "moose", "t": "animals", "e": "🐾"}, {"n": "elk", "t": "animals", "e": "🐾"}, {"n": "camel", "t": "animals", "e": "🐾"}, {"n": "llama", "t": "animals", "e": "🐾"}, {"n": "alpaca", "t": "animals", "e": "🐾"}, {"n": "kangaroo", "t": "animals", "e": "🐾"}, {"n": "koala", "t": "animals", "e": "🐾"}, {"n": "otter", "t": "animals", "e": "🐾"}, {"n": "beaver", "t": "animals", "e": "🐾"}, {"n": "dolphin", "t": "animals", "e": "🐾"}, {"n": "whale", "t": "animals", "e": "🐾"}, {"n": "shark", "t": "animals", "e": "🐾"}, {"n": "octopus", "t": "animals", "e": "🐾"}, {"n": "squid", "t": "animals", "e": "🐾"}, {"n": "crab", "t": "animals", "e": "🐾"}, {"n": "lobster", "t": "animals", "e": "🐾"}, {"n": "turtle", "t": "animals", "e": "🐾"}, {"n": "crocodile", "t": "animals", "e": "🐾"}, {"n": "alligator", "t": "animals", "e": "🐾"}, {"n": "snake", "t": "animals", "e": "🐾"}, {"n": "lizard", "t": "animals", "e": "🐾"}, {"n": "frog", "t": "animals", "e": "🐾"}, {"n": "eagle", "t": "animals", "e": "🐾"}, {"n": "hawk", "t": "animals", "e": "🐾"}, {"n": "owl", "t": "animals", "e": "🐾"}, {"n": "parrot", "t": "animals", "e": "🐾"}, {"n": "penguin", "t": "animals", "e": "🐾"}, {"n": "flamingo", "t": "animals", "e": "🐾"}, {"n": "swan", "t": "animals", "e": "🐾"}, {"n": "duck", "t": "animals", "e": "🐾"}, {"n": "goose", "t": "animals", "e": "🐾"}, {"n": "rooster", "t": "animals", "e": "🐾"}, {"n": "beetle", "t": "animals", "e": "🐾"}, {"n": "laptop", "t": "technology", "e": "💻"}, {"n": "smartphone", "t": "technology", "e": "💻"}, {"n": "smartwatch", "t": "technology", "e": "💻"}, {"n": "headphone", "t": "technology", "e": "💻"}, {"n": "printer", "t": "technology", "e": "💻"}, {"n": "scanner", "t": "technology", "e": "💻"}, {"n": "router", "t": "technology", "e": "💻"}, {"n": "modem", "t": "technology", "e": "💻"}, {"n": "drone", "t": "technology", "e": "💻"}, {"n": "operating", "t": "technology", "e": "💻"}, {"n": "system", "t": "technology", "e": "💻"}, {"n": "processor", "t": "technology", "e": "💻"}, {"n": "storage", "t": "technology", "e": "💻"}, {"n": "chip", "t": "technology", "e": "💻"}, {"n": "sensor", "t": "technology", "e": "💻"}, {"n": "charger", "t": "technology", "e": "💻"}, {"n": "generator", "t": "technology", "e": "💻"}, {"n": "quantum engine", "t": "advanced", "e": "🔮"}, {"n": "quantum core", "t": "advanced", "e": "🔮"}, {"n": "quantum network", "t": "advanced", "e": "🔮"}, {"n": "quantum lab", "t": "advanced", "e": "🔮"}, {"n": "quantum station", "t": "advanced", "e": "🔮"}, {"n": "quantum city", "t": "advanced", "e": "🔮"}, {"n": "quantum world", "t": "advanced", "e": "🔮"}, {"n": "quantum beast", "t": "advanced", "e": "🔮"}, {"n": "quantum forest", "t": "advanced", "e": "🔮"}, {"n": "quantum ocean", "t": "advanced", "e": "🔮"}, {"n": "quantum crystal", "t": "advanced", "e": "🔮"}, {"n": "quantum machine", "t": "advanced", "e": "🔮"}, {"n": "quantum robot", "t": "advanced", "e": "🔮"}, {"n": "quantum computer", "t": "advanced", "e": "🔮"}, {"n": "quantum portal", "t": "advanced", "e": "🔮"}, {"n": "quantum reactor", "t": "advanced", "e": "🔮"}, {"n": "quantum battery", "t": "advanced", "e": "🔮"}, {"n": "quantum planet", "t": "advanced", "e": "🔮"}, {"n": "quantum star", "t": "advanced", "e": "🔮"}, {"n": "quantum system", "t": "advanced", "e": "🔮"}, {"n": "quantum device", "t": "advanced", "e": "🔮"}, {"n": "quantum academy", "t": "advanced", "e": "🔮"}, {"n": "quantum library", "t": "advanced", "e": "🔮"}, {"n": "quantum factory", "t": "advanced", "e": "🔮"}, {"n": "quantum market", "t": "advanced", "e": "🔮"}, {"n": "solar engine", "t": "advanced", "e": "🔮"}, {"n": "solar core", "t": "advanced", "e": "🔮"}, {"n": "solar network", "t": "advanced", "e": "🔮"}, {"n": "solar lab", "t": "advanced", "e": "🔮"}, {"n": "solar station", "t": "advanced", "e": "🔮"}, {"n": "solar city", "t": "advanced", "e": "🔮"}, {"n": "solar world", "t": "advanced", "e": "🔮"}, {"n": "solar beast", "t": "advanced", "e": "🔮"}, {"n": "solar forest", "t": "advanced", "e": "🔮"}, {"n": "solar ocean", "t": "advanced", "e": "🔮"}, {"n": "solar crystal", "t": "advanced", "e": "🔮"}, {"n": "solar machine", "t": "advanced", "e": "🔮"}, {"n": "solar robot", "t": "advanced", "e": "🔮"}, {"n": "solar computer", "t": "advanced", "e": "🔮"}, {"n": "solar portal", "t": "advanced", "e": "🔮"}, {"n": "solar reactor", "t": "advanced", "e": "🔮"}, {"n": "solar battery", "t": "advanced", "e": "🔮"}, {"n": "solar planet", "t": "advanced", "e": "🔮"}, {"n": "solar star", "t": "advanced", "e": "🔮"}, {"n": "solar device", "t": "advanced", "e": "🔮"}, {"n": "solar academy", "t": "advanced", "e": "🔮"}, {"n": "solar library", "t": "advanced", "e": "🔮"}, {"n": "solar factory", "t": "advanced", "e": "🔮"}, {"n": "solar market", "t": "advanced", "e": "🔮"}, {"n": "lunar engine", "t": "advanced", "e": "🔮"}, {"n": "lunar core", "t": "advanced", "e": "🔮"}, {"n": "lunar network", "t": "advanced", "e": "🔮"}, {"n": "lunar lab", "t": "advanced", "e": "🔮"}, {"n": "lunar station", "t": "advanced", "e": "🔮"}, {"n": "lunar city", "t": "advanced", "e": "🔮"}, {"n": "lunar world", "t": "advanced", "e": "🔮"}, {"n": "lunar beast", "t": "advanced", "e": "🔮"}, {"n": "lunar forest", "t": "advanced", "e": "🔮"}, {"n": "lunar ocean", "t": "advanced", "e": "🔮"}, {"n": "lunar crystal", "t": "advanced", "e": "🔮"}, {"n": "lunar machine", "t": "advanced", "e": "🔮"}, {"n": "lunar robot", "t": "advanced", "e": "🔮"}, {"n": "lunar computer", "t": "advanced", "e": "🔮"}, {"n": "lunar portal", "t": "advanced", "e": "🔮"}, {"n": "lunar reactor", "t": "advanced", "e": "🔮"}, {"n": "lunar battery", "t": "advanced", "e": "🔮"}, {"n": "lunar planet", "t": "advanced", "e": "🔮"}, {"n": "lunar star", "t": "advanced", "e": "🔮"}, {"n": "lunar system", "t": "advanced", "e": "🔮"}, {"n": "lunar device", "t": "advanced", "e": "🔮"}, {"n": "lunar academy", "t": "advanced", "e": "🔮"}, {"n": "lunar library", "t": "advanced", "e": "🔮"}, {"n": "lunar factory", "t": "advanced", "e": "🔮"}, {"n": "lunar market", "t": "advanced", "e": "🔮"}, {"n": "stellar engine", "t": "advanced", "e": "🔮"}, {"n": "stellar core", "t": "advanced", "e": "🔮"}, {"n": "stellar network", "t": "advanced", "e": "🔮"}, {"n": "stellar lab", "t": "advanced", "e": "🔮"}, {"n": "stellar station", "t": "advanced", "e": "🔮"}, {"n": "stellar city", "t": "advanced", "e": "🔮"}, {"n": "stellar world", "t": "advanced", "e": "🔮"}, {"n": "stellar beast", "t": "advanced", "e": "🔮"}, {"n": "stellar forest", "t": "advanced", "e": "🔮"}, {"n": "stellar ocean", "t": "advanced", "e": "🔮"}, {"n": "stellar crystal", "t": "advanced", "e": "🔮"}, {"n": "stellar machine", "t": "advanced", "e": "🔮"}, {"n": "stellar robot", "t": "advanced", "e": "🔮"}, {"n": "stellar computer", "t": "advanced", "e": "🔮"}, {"n": "stellar portal", "t": "advanced", "e": "🔮"}, {"n": "stellar reactor", "t": "advanced", "e": "🔮"}, {"n": "stellar battery", "t": "advanced", "e": "🔮"}, {"n": "stellar planet", "t": "advanced", "e": "🔮"}, {"n": "stellar star", "t": "advanced", "e": "🔮"}, {"n": "stellar system", "t": "advanced", "e": "🔮"}, {"n": "stellar device", "t": "advanced", "e": "🔮"}, {"n": "stellar academy", "t": "advanced", "e": "🔮"}, {"n": "stellar library", "t": "advanced", "e": "🔮"}, {"n": "stellar factory", "t": "advanced", "e": "🔮"}, {"n": "stellar market", "t": "advanced", "e": "🔮"}, {"n": "cosmic engine", "t": "advanced", "e": "🔮"}, {"n": "cosmic core", "t": "advanced", "e": "🔮"}, {"n": "cosmic network", "t": "advanced", "e": "🔮"}, {"n": "cosmic lab", "t": "advanced", "e": "🔮"}, {"n": "cosmic station", "t": "advanced", "e": "🔮"}, {"n": "cosmic city", "t": "advanced", "e": "🔮"}, {"n": "cosmic world", "t": "advanced", "e": "🔮"}, {"n": "cosmic beast", "t": "advanced", "e": "🔮"}, {"n": "cosmic forest", "t": "advanced", "e": "🔮"}, {"n": "cosmic ocean", "t": "advanced", "e": "🔮"}, {"n": "cosmic crystal", "t": "advanced", "e": "🔮"}, {"n": "cosmic machine", "t": "advanced", "e": "🔮"}, {"n": "cosmic robot", "t": "advanced", "e": "🔮"}, {"n": "cosmic computer", "t": "advanced", "e": "🔮"}, {"n": "cosmic portal", "t": "advanced", "e": "🔮"}, {"n": "cosmic reactor", "t": "advanced", "e": "🔮"}, {"n": "cosmic battery", "t": "advanced", "e": "🔮"}, {"n": "cosmic planet", "t": "advanced", "e": "🔮"}, {"n": "cosmic star", "t": "advanced", "e": "🔮"}, {"n": "cosmic system", "t": "advanced", "e": "🔮"}, {"n": "cosmic device", "t": "advanced", "e": "🔮"}, {"n": "cosmic academy", "t": "advanced", "e": "🔮"}, {"n": "cosmic library", "t": "advanced", "e": "🔮"}, {"n": "cosmic factory", "t": "advanced", "e": "🔮"}, {"n": "cosmic market", "t": "advanced", "e": "🔮"}, {"n": "digital engine", "t": "advanced", "e": "🔮"}, {"n": "digital core", "t": "advanced", "e": "🔮"}, {"n": "digital network", "t": "advanced", "e": "🔮"}, {"n": "digital lab", "t": "advanced", "e": "🔮"}, {"n": "digital station", "t": "advanced", "e": "🔮"}, {"n": "digital city", "t": "advanced", "e": "🔮"}, {"n": "digital world", "t": "advanced", "e": "🔮"}, {"n": "digital beast", "t": "advanced", "e": "🔮"}, {"n": "digital forest", "t": "advanced", "e": "🔮"}, {"n": "digital ocean", "t": "advanced", "e": "🔮"}, {"n": "digital crystal", "t": "advanced", "e": "🔮"}, {"n": "digital machine", "t": "advanced", "e": "🔮"}, {"n": "digital robot", "t": "advanced", "e": "🔮"}, {"n": "digital computer", "t": "advanced", "e": "🔮"}, {"n": "digital portal", "t": "advanced", "e": "🔮"}, {"n": "digital reactor", "t": "advanced", "e": "🔮"}, {"n": "digital battery", "t": "advanced", "e": "🔮"}, {"n": "digital planet", "t": "advanced", "e": "🔮"}, {"n": "digital star", "t": "advanced", "e": "🔮"}, {"n": "digital system", "t": "advanced", "e": "🔮"}, {"n": "digital device", "t": "advanced", "e": "🔮"}, {"n": "digital academy", "t": "advanced", "e": "🔮"}, {"n": "digital library", "t": "advanced", "e": "🔮"}, {"n": "digital factory", "t": "advanced", "e": "🔮"}, {"n": "digital market", "t": "advanced", "e": "🔮"}, {"n": "cyber engine", "t": "advanced", "e": "🔮"}, {"n": "cyber core", "t": "advanced", "e": "🔮"}, {"n": "cyber network", "t": "advanced", "e": "🔮"}, {"n": "cyber lab", "t": "advanced", "e": "🔮"}, {"n": "cyber station", "t": "advanced", "e": "🔮"}, {"n": "cyber world", "t": "advanced", "e": "🔮"}, {"n": "cyber beast", "t": "advanced", "e": "🔮"}, {"n": "cyber forest", "t": "advanced", "e": "🔮"}, {"n": "cyber ocean", "t": "advanced", "e": "🔮"}, {"n": "cyber crystal", "t": "advanced", "e": "🔮"}, {"n": "cyber machine", "t": "advanced", "e": "🔮"}, {"n": "cyber robot", "t": "advanced", "e": "🔮"}, {"n": "cyber computer", "t": "advanced", "e": "🔮"}, {"n": "cyber portal", "t": "advanced", "e": "🔮"}, {"n": "cyber reactor", "t": "advanced", "e": "🔮"}, {"n": "cyber battery", "t": "advanced", "e": "🔮"}, {"n": "cyber planet", "t": "advanced", "e": "🔮"}, {"n": "cyber star", "t": "advanced", "e": "🔮"}, {"n": "cyber system", "t": "advanced", "e": "🔮"}, {"n": "cyber device", "t": "advanced", "e": "🔮"}, {"n": "cyber academy", "t": "advanced", "e": "🔮"}, {"n": "cyber library", "t": "advanced", "e": "🔮"}, {"n": "cyber factory", "t": "advanced", "e": "🔮"}, {"n": "cyber market", "t": "advanced", "e": "🔮"}, {"n": "nano engine", "t": "advanced", "e": "🔮"}, {"n": "nano core", "t": "advanced", "e": "🔮"}, {"n": "nano network", "t": "advanced", "e": "🔮"}, {"n": "nano lab", "t": "advanced", "e": "🔮"}, {"n": "nano station", "t": "advanced", "e": "🔮"}, {"n": "nano city", "t": "advanced", "e": "🔮"}, {"n": "nano world", "t": "advanced", "e": "🔮"}, {"n": "nano beast", "t": "advanced", "e": "🔮"}, {"n": "nano forest", "t": "advanced", "e": "🔮"}, {"n": "nano ocean", "t": "advanced", "e": "🔮"}, {"n": "nano crystal", "t": "advanced", "e": "🔮"}, {"n": "nano machine", "t": "advanced", "e": "🔮"}, {"n": "nano robot", "t": "advanced", "e": "🔮"}, {"n": "nano computer", "t": "advanced", "e": "🔮"}, {"n": "nano portal", "t": "advanced", "e": "🔮"}, {"n": "nano reactor", "t": "advanced", "e": "🔮"}, {"n": "nano battery", "t": "advanced", "e": "🔮"}, {"n": "nano planet", "t": "advanced", "e": "🔮"}, {"n": "nano star", "t": "advanced", "e": "🔮"}, {"n": "nano system", "t": "advanced", "e": "🔮"}, {"n": "nano device", "t": "advanced", "e": "🔮"}, {"n": "nano academy", "t": "advanced", "e": "🔮"}, {"n": "nano library", "t": "advanced", "e": "🔮"}, {"n": "nano factory", "t": "advanced", "e": "🔮"}, {"n": "nano market", "t": "advanced", "e": "🔮"}, {"n": "bio engine", "t": "advanced", "e": "🔮"}, {"n": "bio core", "t": "advanced", "e": "🔮"}, {"n": "bio network", "t": "advanced", "e": "🔮"}, {"n": "bio lab", "t": "advanced", "e": "🔮"}, {"n": "bio station", "t": "advanced", "e": "🔮"}, {"n": "bio city", "t": "advanced", "e": "🔮"}, {"n": "bio world", "t": "advanced", "e": "🔮"}, {"n": "bio beast", "t": "advanced", "e": "🔮"}, {"n": "bio forest", "t": "advanced", "e": "🔮"}, {"n": "bio ocean", "t": "advanced", "e": "🔮"}, {"n": "bio crystal", "t": "advanced", "e": "🔮"}, {"n": "bio machine", "t": "advanced", "e": "🔮"}, {"n": "bio robot", "t": "advanced", "e": "🔮"}, {"n": "bio computer", "t": "advanced", "e": "🔮"}, {"n": "bio portal", "t": "advanced", "e": "🔮"}, {"n": "bio reactor", "t": "advanced", "e": "🔮"}, {"n": "bio battery", "t": "advanced", "e": "🔮"}, {"n": "bio planet", "t": "advanced", "e": "🔮"}, {"n": "bio star", "t": "advanced", "e": "🔮"}, {"n": "bio system", "t": "advanced", "e": "🔮"}, {"n": "bio device", "t": "advanced", "e": "🔮"}, {"n": "bio academy", "t": "advanced", "e": "🔮"}, {"n": "bio library", "t": "advanced", "e": "🔮"}, {"n": "bio factory", "t": "advanced", "e": "🔮"}, {"n": "bio market", "t": "advanced", "e": "🔮"}, {"n": "mega engine", "t": "advanced", "e": "🔮"}, {"n": "mega core", "t": "advanced", "e": "🔮"}, {"n": "mega network", "t": "advanced", "e": "🔮"}, {"n": "mega lab", "t": "advanced", "e": "🔮"}, {"n": "mega station", "t": "advanced", "e": "🔮"}, {"n": "mega city", "t": "advanced", "e": "🔮"}, {"n": "mega world", "t": "advanced", "e": "🔮"}, {"n": "mega beast", "t": "advanced", "e": "🔮"}, {"n": "mega forest", "t": "advanced", "e": "🔮"}, {"n": "mega ocean", "t": "advanced", "e": "🔮"}, {"n": "mega crystal", "t": "advanced", "e": "🔮"}, {"n": "mega machine", "t": "advanced", "e": "🔮"}, {"n": "mega robot", "t": "advanced", "e": "🔮"}, {"n": "mega computer", "t": "advanced", "e": "🔮"}, {"n": "mega portal", "t": "advanced", "e": "🔮"}, {"n": "mega reactor", "t": "advanced", "e": "🔮"}, {"n": "mega battery", "t": "advanced", "e": "🔮"}, {"n": "mega planet", "t": "advanced", "e": "🔮"}, {"n": "mega star", "t": "advanced", "e": "🔮"}, {"n": "mega system", "t": "advanced", "e": "🔮"}, {"n": "mega device", "t": "advanced", "e": "🔮"}, {"n": "mega academy", "t": "advanced", "e": "🔮"}, {"n": "mega library", "t": "advanced", "e": "🔮"}, {"n": "mega factory", "t": "advanced", "e": "🔮"}, {"n": "mega market", "t": "advanced", "e": "🔮"}, {"n": "hyper engine", "t": "advanced", "e": "🔮"}, {"n": "hyper core", "t": "advanced", "e": "🔮"}, {"n": "hyper network", "t": "advanced", "e": "🔮"}, {"n": "hyper lab", "t": "advanced", "e": "🔮"}, {"n": "hyper station", "t": "advanced", "e": "🔮"}, {"n": "hyper city", "t": "advanced", "e": "🔮"}, {"n": "hyper world", "t": "advanced", "e": "🔮"}, {"n": "hyper beast", "t": "advanced", "e": "🔮"}, {"n": "hyper forest", "t": "advanced", "e": "🔮"}, {"n": "hyper ocean", "t": "advanced", "e": "🔮"}, {"n": "hyper crystal", "t": "advanced", "e": "🔮"}, {"n": "hyper machine", "t": "advanced", "e": "🔮"}, {"n": "hyper robot", "t": "advanced", "e": "🔮"}, {"n": "hyper computer", "t": "advanced", "e": "🔮"}, {"n": "hyper portal", "t": "advanced", "e": "🔮"}, {"n": "hyper reactor", "t": "advanced", "e": "🔮"}, {"n": "hyper battery", "t": "advanced", "e": "🔮"}, {"n": "hyper planet", "t": "advanced", "e": "🔮"}, {"n": "hyper star", "t": "advanced", "e": "🔮"}, {"n": "hyper system", "t": "advanced", "e": "🔮"}, {"n": "hyper device", "t": "advanced", "e": "🔮"}, {"n": "hyper academy", "t": "advanced", "e": "🔮"}, {"n": "hyper library", "t": "advanced", "e": "🔮"}, {"n": "hyper factory", "t": "advanced", "e": "🔮"}, {"n": "hyper market", "t": "advanced", "e": "🔮"}, {"n": "smart engine", "t": "advanced", "e": "🔮"}, {"n": "smart core", "t": "advanced", "e": "🔮"}, {"n": "smart network", "t": "advanced", "e": "🔮"}, {"n": "smart lab", "t": "advanced", "e": "🔮"}, {"n": "smart station", "t": "advanced", "e": "🔮"}, {"n": "smart world", "t": "advanced", "e": "🔮"}, {"n": "smart beast", "t": "advanced", "e": "🔮"}, {"n": "smart forest", "t": "advanced", "e": "🔮"}, {"n": "smart ocean", "t": "advanced", "e": "🔮"}, {"n": "smart crystal", "t": "advanced", "e": "🔮"}, {"n": "smart machine", "t": "advanced", "e": "🔮"}, {"n": "smart robot", "t": "advanced", "e": "🔮"}, {"n": "smart computer", "t": "advanced", "e": "🔮"}, {"n": "smart portal", "t": "advanced", "e": "🔮"}, {"n": "smart reactor", "t": "advanced", "e": "🔮"}, {"n": "smart battery", "t": "advanced", "e": "🔮"}, {"n": "smart planet", "t": "advanced", "e": "🔮"}, {"n": "smart star", "t": "advanced", "e": "🔮"}, {"n": "smart system", "t": "advanced", "e": "🔮"}, {"n": "smart device", "t": "advanced", "e": "🔮"}, {"n": "smart academy", "t": "advanced", "e": "🔮"}, {"n": "smart library", "t": "advanced", "e": "🔮"}, {"n": "smart factory", "t": "advanced", "e": "🔮"}, {"n": "smart market", "t": "advanced", "e": "🔮"}, {"n": "electric engine", "t": "advanced", "e": "🔮"}, {"n": "electric core", "t": "advanced", "e": "🔮"}, {"n": "electric network", "t": "advanced", "e": "🔮"}, {"n": "electric lab", "t": "advanced", "e": "🔮"}, {"n": "electric station", "t": "advanced", "e": "🔮"}, {"n": "electric city", "t": "advanced", "e": "🔮"}, {"n": "electric world", "t": "advanced", "e": "🔮"}, {"n": "electric beast", "t": "advanced", "e": "🔮"}, {"n": "electric forest", "t": "advanced", "e": "🔮"}, {"n": "electric ocean", "t": "advanced", "e": "🔮"}, {"n": "electric crystal", "t": "advanced", "e": "🔮"}, {"n": "electric machine", "t": "advanced", "e": "🔮"}, {"n": "electric robot", "t": "advanced", "e": "🔮"}, {"n": "electric computer", "t": "advanced", "e": "🔮"}, {"n": "electric portal", "t": "advanced", "e": "🔮"}, {"n": "electric reactor", "t": "advanced", "e": "🔮"}, {"n": "electric battery", "t": "advanced", "e": "🔮"}, {"n": "electric planet", "t": "advanced", "e": "🔮"}, {"n": "electric star", "t": "advanced", "e": "🔮"}, {"n": "electric system", "t": "advanced", "e": "🔮"}, {"n": "electric device", "t": "advanced", "e": "🔮"}, {"n": "electric academy", "t": "advanced", "e": "🔮"}, {"n": "electric library", "t": "advanced", "e": "🔮"}, {"n": "electric factory", "t": "advanced", "e": "🔮"}, {"n": "electric market", "t": "advanced", "e": "🔮"}, {"n": "virtual engine", "t": "advanced", "e": "🔮"}, {"n": "virtual core", "t": "advanced", "e": "🔮"}, {"n": "virtual network", "t": "advanced", "e": "🔮"}, {"n": "virtual lab", "t": "advanced", "e": "🔮"}, {"n": "virtual station", "t": "advanced", "e": "🔮"}, {"n": "virtual city", "t": "advanced", "e": "🔮"}, {"n": "virtual beast", "t": "advanced", "e": "🔮"}, {"n": "virtual forest", "t": "advanced", "e": "🔮"}, {"n": "virtual ocean", "t": "advanced", "e": "🔮"}, {"n": "virtual crystal", "t": "advanced", "e": "🔮"}, {"n": "virtual machine", "t": "advanced", "e": "🔮"}, {"n": "virtual robot", "t": "advanced", "e": "🔮"}, {"n": "virtual computer", "t": "advanced", "e": "🔮"}, {"n": "virtual portal", "t": "advanced", "e": "🔮"}, {"n": "virtual reactor", "t": "advanced", "e": "🔮"}, {"n": "virtual battery", "t": "advanced", "e": "🔮"}, {"n": "virtual planet", "t": "advanced", "e": "🔮"}, {"n": "virtual star", "t": "advanced", "e": "🔮"}, {"n": "virtual system", "t": "advanced", "e": "🔮"}, {"n": "virtual device", "t": "advanced", "e": "🔮"}, {"n": "virtual academy", "t": "advanced", "e": "🔮"}, {"n": "virtual library", "t": "advanced", "e": "🔮"}, {"n": "virtual factory", "t": "advanced", "e": "🔮"}, {"n": "virtual market", "t": "advanced", "e": "🔮"}, {"n": "neural engine", "t": "advanced", "e": "🔮"}, {"n": "neural core", "t": "advanced", "e": "🔮"}, {"n": "neural network", "t": "advanced", "e": "🔮"}, {"n": "neural lab", "t": "advanced", "e": "🔮"}, {"n": "neural station", "t": "advanced", "e": "🔮"}, {"n": "neural city", "t": "advanced", "e": "🔮"}, {"n": "neural world", "t": "advanced", "e": "🔮"}, {"n": "neural beast", "t": "advanced", "e": "🔮"}, {"n": "neural forest", "t": "advanced", "e": "🔮"}, {"n": "neural ocean", "t": "advanced", "e": "🔮"}, {"n": "neural crystal", "t": "advanced", "e": "🔮"}, {"n": "neural machine", "t": "advanced", "e": "🔮"}, {"n": "neural robot", "t": "advanced", "e": "🔮"}, {"n": "neural computer", "t": "advanced", "e": "🔮"}, {"n": "neural portal", "t": "advanced", "e": "🔮"}, {"n": "neural reactor", "t": "advanced", "e": "🔮"}, {"n": "neural battery", "t": "advanced", "e": "🔮"}, {"n": "neural planet", "t": "advanced", "e": "🔮"}, {"n": "neural star", "t": "advanced", "e": "🔮"}, {"n": "neural system", "t": "advanced", "e": "🔮"}, {"n": "neural device", "t": "advanced", "e": "🔮"}, {"n": "neural academy", "t": "advanced", "e": "🔮"}, {"n": "neural library", "t": "advanced", "e": "🔮"}, {"n": "neural factory", "t": "advanced", "e": "🔮"}, {"n": "neural market", "t": "advanced", "e": "🔮"}, {"n": "atomic engine", "t": "advanced", "e": "🔮"}, {"n": "atomic core", "t": "advanced", "e": "🔮"}, {"n": "atomic network", "t": "advanced", "e": "🔮"}, {"n": "atomic lab", "t": "advanced", "e": "🔮"}, {"n": "atomic station", "t": "advanced", "e": "🔮"}, {"n": "atomic city", "t": "advanced", "e": "🔮"}, {"n": "atomic world", "t": "advanced", "e": "🔮"}, {"n": "atomic beast", "t": "advanced", "e": "🔮"}, {"n": "atomic forest", "t": "advanced", "e": "🔮"}, {"n": "atomic ocean", "t": "advanced", "e": "🔮"}, {"n": "atomic crystal", "t": "advanced", "e": "🔮"}, {"n": "atomic machine", "t": "advanced", "e": "🔮"}, {"n": "atomic robot", "t": "advanced", "e": "🔮"}, {"n": "atomic computer", "t": "advanced", "e": "🔮"}, {"n": "atomic portal", "t": "advanced", "e": "🔮"}, {"n": "atomic reactor", "t": "advanced", "e": "🔮"}, {"n": "atomic battery", "t": "advanced", "e": "🔮"}, {"n": "atomic planet", "t": "advanced", "e": "🔮"}, {"n": "atomic star", "t": "advanced", "e": "🔮"}, {"n": "atomic system", "t": "advanced", "e": "🔮"}, {"n": "atomic device", "t": "advanced", "e": "🔮"}, {"n": "atomic academy", "t": "advanced", "e": "🔮"}, {"n": "atomic library", "t": "advanced", "e": "🔮"}, {"n": "atomic factory", "t": "advanced", "e": "🔮"}, {"n": "atomic market", "t": "advanced", "e": "🔮"}, {"n": "molecular engine", "t": "advanced", "e": "🔮"}, {"n": "molecular core", "t": "advanced", "e": "🔮"}, {"n": "molecular network", "t": "advanced", "e": "🔮"}, {"n": "molecular lab", "t": "advanced", "e": "🔮"}, {"n": "molecular station", "t": "advanced", "e": "🔮"}, {"n": "molecular city", "t": "advanced", "e": "🔮"}, {"n": "molecular world", "t": "advanced", "e": "🔮"}, {"n": "molecular beast", "t": "advanced", "e": "🔮"}, {"n": "molecular forest", "t": "advanced", "e": "🔮"}, {"n": "molecular ocean", "t": "advanced", "e": "🔮"}, {"n": "molecular crystal", "t": "advanced", "e": "🔮"}, {"n": "molecular machine", "t": "advanced", "e": "🔮"}, {"n": "molecular robot", "t": "advanced", "e": "🔮"}, {"n": "molecular computer", "t": "advanced", "e": "🔮"}, {"n": "molecular portal", "t": "advanced", "e": "🔮"}, {"n": "molecular reactor", "t": "advanced", "e": "🔮"}, {"n": "molecular battery", "t": "advanced", "e": "🔮"}, {"n": "molecular planet", "t": "advanced", "e": "🔮"}, {"n": "molecular star", "t": "advanced", "e": "🔮"}, {"n": "molecular system", "t": "advanced", "e": "🔮"}, {"n": "molecular device", "t": "advanced", "e": "🔮"}, {"n": "molecular academy", "t": "advanced", "e": "🔮"}, {"n": "molecular library", "t": "advanced", "e": "🔮"}, {"n": "molecular factory", "t": "advanced", "e": "🔮"}, {"n": "molecular market", "t": "advanced", "e": "🔮"}, {"n": "organic engine", "t": "advanced", "e": "🔮"}, {"n": "organic core", "t": "advanced", "e": "🔮"}, {"n": "organic network", "t": "advanced", "e": "🔮"}, {"n": "organic lab", "t": "advanced", "e": "🔮"}, {"n": "organic station", "t": "advanced", "e": "🔮"}, {"n": "organic city", "t": "advanced", "e": "🔮"}, {"n": "organic world", "t": "advanced", "e": "🔮"}, {"n": "organic beast", "t": "advanced", "e": "🔮"}, {"n": "organic forest", "t": "advanced", "e": "🔮"}, {"n": "organic ocean", "t": "advanced", "e": "🔮"}, {"n": "organic crystal", "t": "advanced", "e": "🔮"}, {"n": "organic machine", "t": "advanced", "e": "🔮"}, {"n": "organic robot", "t": "advanced", "e": "🔮"}, {"n": "organic computer", "t": "advanced", "e": "🔮"}, {"n": "organic portal", "t": "advanced", "e": "🔮"}, {"n": "organic reactor", "t": "advanced", "e": "🔮"}, {"n": "organic battery", "t": "advanced", "e": "🔮"}, {"n": "organic planet", "t": "advanced", "e": "🔮"}, {"n": "organic star", "t": "advanced", "e": "🔮"}, {"n": "organic system", "t": "advanced", "e": "🔮"}, {"n": "organic device", "t": "advanced", "e": "🔮"}, {"n": "organic academy", "t": "advanced", "e": "🔮"}, {"n": "organic library", "t": "advanced", "e": "🔮"}, {"n": "organic factory", "t": "advanced", "e": "🔮"}, {"n": "organic market", "t": "advanced", "e": "🔮"}, {"n": "mechanical engine", "t": "advanced", "e": "🔮"}, {"n": "mechanical core", "t": "advanced", "e": "🔮"}, {"n": "mechanical network", "t": "advanced", "e": "🔮"}, {"n": "mechanical lab", "t": "advanced", "e": "🔮"}, {"n": "mechanical station", "t": "advanced", "e": "🔮"}, {"n": "mechanical city", "t": "advanced", "e": "🔮"}, {"n": "mechanical world", "t": "advanced", "e": "🔮"}, {"n": "mechanical beast", "t": "advanced", "e": "🔮"}, {"n": "mechanical forest", "t": "advanced", "e": "🔮"}, {"n": "mechanical ocean", "t": "advanced", "e": "🔮"}, {"n": "mechanical crystal", "t": "advanced", "e": "🔮"}, {"n": "mechanical machine", "t": "advanced", "e": "🔮"}, {"n": "mechanical robot", "t": "advanced", "e": "🔮"}, {"n": "mechanical computer", "t": "advanced", "e": "🔮"}, {"n": "mechanical portal", "t": "advanced", "e": "🔮"}, {"n": "mechanical reactor", "t": "advanced", "e": "🔮"}, {"n": "mechanical battery", "t": "advanced", "e": "🔮"}, {"n": "mechanical planet", "t": "advanced", "e": "🔮"}, {"n": "mechanical star", "t": "advanced", "e": "🔮"}, {"n": "mechanical system", "t": "advanced", "e": "🔮"}, {"n": "mechanical device", "t": "advanced", "e": "🔮"}, {"n": "mechanical academy", "t": "advanced", "e": "🔮"}, {"n": "mechanical library", "t": "advanced", "e": "🔮"}, {"n": "mechanical factory", "t": "advanced", "e": "🔮"}, {"n": "mechanical market", "t": "advanced", "e": "🔮"}, {"n": "ancient engine", "t": "advanced", "e": "🔮"}, {"n": "ancient core", "t": "advanced", "e": "🔮"}, {"n": "ancient network", "t": "advanced", "e": "🔮"}, {"n": "ancient lab", "t": "advanced", "e": "🔮"}, {"n": "ancient station", "t": "advanced", "e": "🔮"}, {"n": "ancient city", "t": "advanced", "e": "🔮"}, {"n": "ancient world", "t": "advanced", "e": "🔮"}, {"n": "ancient beast", "t": "advanced", "e": "🔮"}, {"n": "ancient forest", "t": "advanced", "e": "🔮"}, {"n": "ancient ocean", "t": "advanced", "e": "🔮"}, {"n": "ancient crystal", "t": "advanced", "e": "🔮"}, {"n": "ancient machine", "t": "advanced", "e": "🔮"}, {"n": "ancient robot", "t": "advanced", "e": "🔮"}, {"n": "ancient computer", "t": "advanced", "e": "🔮"}, {"n": "ancient portal", "t": "advanced", "e": "🔮"}, {"n": "ancient reactor", "t": "advanced", "e": "🔮"}, {"n": "ancient battery", "t": "advanced", "e": "🔮"}, {"n": "ancient planet", "t": "advanced", "e": "🔮"}, {"n": "ancient star", "t": "advanced", "e": "🔮"}, {"n": "ancient system", "t": "advanced", "e": "🔮"}, {"n": "ancient device", "t": "advanced", "e": "🔮"}, {"n": "ancient academy", "t": "advanced", "e": "🔮"}, {"n": "ancient library", "t": "advanced", "e": "🔮"}, {"n": "ancient factory", "t": "advanced", "e": "🔮"}, {"n": "ancient market", "t": "advanced", "e": "🔮"}];
+for (const x of EXTRA_ELEMENTS) BASE[x.n]={e:x.e,t:x.t};
+const EXTRA_POOL = EXTRA_ELEMENTS.map(x=>x.n);
+function autoResult(a,b){
+  const unused=EXTRA_POOL.filter(x=>!discovered.has(x));
+  if(!unused.length) return null;
+  let h=0, key=a+'|'+b;
+  for(let i=0;i&lt;key.length;i++) h=((h&lt;&lt;5)-h+key.charCodeAt(i))|0;
+  return unused[Math.abs(h)%unused.length];
+}
+
+const KEY=(a,b)=>[a,b].sort().join("+");
+const LS="uc_state";const STARTERS=["fire","water","earth","wind"];try{localStorage.removeItem("ic_discovered");localStorage.removeItem("ic2_state")}catch(e){}
+let st={};try{st=JSON.parse(localStorage.getItem(LS)||"{}")||{}}catch(e){}
+const discovered=new Set(st.d&amp;&amp;st.d.length?st.d:STARTERS);
+const learned=st.l||{};
+let nodes=[],uid=0,z=1,scale=st.s||1,pan=st.p||{x:0,y:0},deleteMode=false;
+const $=id=>document.getElementById(id),canvas=$("canvas"),workspace=$("workspace"),side=$("side");
+const clamp=s=>Math.max(.3,Math.min(2.5,s));
+function meta(n){return BASE[n]||{e:"✨",t:"mystery"}}
+function title(n){return n.replace(/\b\w/g,c=>c.toUpperCase())}
+let sT;function save(){clearTimeout(sT);sT=setTimeout(saveNow,200)}
+let wiped=false;function saveNow(){if(wiped)return;try{localStorage.setItem(LS,JSON.stringify({d:[...discovered],l:learned,s:scale,p:pan,n:nodes.map(n=>({a:n.name,x:Math.round(n.x+n.w/2),y:Math.round(n.y+n.h/2)}))}))}catch(e){}}
+addEventListener("pagehide",saveNow);document.addEventListener("visibilitychange",()=>{if(document.hidden)saveNow()});
+let tT;function toast(s){const t=$("toast");t.textContent=s;t.classList.add("show");clearTimeout(tT);tT=setTimeout(()=>t.classList.remove("show"),1600)}
+function applyView(){canvas.style.transform=`translate3d(${pan.x}px,${pan.y}px,0) scale(${scale})`;const g=28*scale;workspace.style.backgroundSize=g+"px "+g+"px";workspace.style.backgroundPosition=pan.x+"px "+pan.y+"px"}
+function toWorld(x,y){const r=workspace.getBoundingClientRect();return{x:(x-r.left-pan.x)/scale,y:(y-r.top-pan.y)/scale}}
+function stats(){$("count").textContent=discovered.size+" found · "+nodes.length+" on board";$("empty").style.opacity=nodes.length?0:1}
+function renderList(){
+ const q=$("search").value.trim().toLowerCase(),fr=document.createDocumentFragment();
+ const words=q.split(/\s+/).filter(Boolean),rank=n=>n===q?0:n.startsWith(q)?1:2;
+ const list=[...discovered].reverse().filter(n=>!words.length||words.every(w=>n.split(/[\s\-]+/).some(t=>t.startsWith(w)))).sort((a,b)=>q?rank(a)-rank(b):0);
+ if(q&amp;&amp;!list.length){const m=document.createElement("div");m.className="recipe";m.style.border="0";m.textContent="No matching elements";fr.appendChild(m)}
+ list.forEach(n=>{
+  const d=document.createElement("div");d.className="el";d.innerHTML=`&lt;span>${meta(n).e}&lt;/span>${title(n)}`;
+  d.addEventListener("pointerdown",e=>{
+   if(e.pointerType!=="mouse"||e.button!==0)return;e.preventDefault();
+   const p=toWorld(e.clientX,e.clientY),nd=mk(n,p.x,p.y);
+   startDrag(e,nd,()=>spawnCenter(nd));
+  });
+  d.addEventListener("click",e=>{if(e.pointerType==="mouse")return;spawnCenter(mk(n,0,0))});
+  fr.appendChild(d);
+ });
+ $("elements").replaceChildren(fr);stats();
+}
+function spawnCenter(n){const r=workspace.getBoundingClientRect(),c=toWorld(r.left+r.width/2+(Math.random()-.5)*140,r.top+r.height/2+(Math.random()-.5)*140);n.x=c.x-n.w/2;n.y=c.y-n.h/2;place(n);save()}
+function mk(name,cx,cy,fresh){
+ const n={id:++uid,name,z:++z},d=document.createElement("div");d.className="node";
+ d.innerHTML=`&lt;div class="chip${fresh?" fresh":""}">&lt;i>${meta(name).e}&lt;/i>${title(name)}&lt;/div>`;
+ n.el=d;n.chip=d.firstChild;canvas.appendChild(d);n.w=d.offsetWidth;n.h=d.offsetHeight;n.x=cx-n.w/2;n.y=cy-n.h/2;place(n);
+ d.addEventListener("pointerdown",e=>{if(e.pointerType==="mouse"&amp;&amp;e.button!==0)return;e.stopPropagation();e.preventDefault();if(deleteMode)kill(n);else startDrag(e,n)});
+ d.addEventListener("dblclick",()=>kill(n));
+ nodes.push(n);stats();return n;
+}
+function place(n){n.el.style.transform=`translate3d(${n.x}px,${n.y}px,0)`;n.el.style.zIndex=n.z}
+function drop(n){n.el.remove();nodes=nodes.filter(x=>x!==n)}
+function kill(n){nodes=nodes.filter(x=>x!==n);n.chip.classList.add("out");setTimeout(()=>n.el.remove(),160);stats();save()}
+function hit(a){let best=null,bd=1e9;for(const b of nodes){if(b===a)continue;const dx=Math.abs(a.x+a.w/2-b.x-b.w/2),dy=Math.abs(a.y+a.h/2-b.y-b.h/2);if(dx&lt;(a.w+b.w)*.4&amp;&amp;dy&lt;(a.h+b.h)*.6&amp;&amp;dx+dy&lt;bd){bd=dx+dy;best=b}}return best}
+function startDrag(e,n,tap){
+ n.z=++z;place(n);n.chip.classList.add("drag");
+ const p=toWorld(e.clientX,e.clientY),ox=p.x-n.x-(tap?0:0),oy=p.y-n.y,sx=e.clientX,sy=e.clientY;
+ let tgt=null,raf=0,last=e,moved=0,sr=side.getBoundingClientRect();
+ const over=ev=>ev.clientX>=sr.left&amp;&amp;ev.clientX&lt;=sr.right&amp;&amp;ev.clientY>=sr.top&amp;&amp;ev.clientY&lt;=sr.bottom;
+ const frame=()=>{raf=0;const q=toWorld(last.clientX,last.clientY);n.x=q.x-ox;n.y=q.y-oy;place(n);const t=hit(n);if(t!==tgt){tgt&amp;&amp;tgt.chip.classList.remove("hot");tgt=t;tgt&amp;&amp;tgt.chip.classList.add("hot")}side.classList.toggle("trash",moved>6&amp;&amp;over(last))};
+ const move=ev=>{if(ev.pointerId!==e.pointerId)return;last=ev;moved=Math.max(moved,Math.hypot(ev.clientX-sx,ev.clientY-sy));if(!raf)raf=requestAnimationFrame(frame)};
+ const up=ev=>{
+  if(ev.pointerId!==e.pointerId)return;
+  removeEventListener("pointermove",move);removeEventListener("pointerup",up);removeEventListener("pointercancel",up);
+  cancelAnimationFrame(raf);if(raf)frame();
+  n.chip.classList.remove("drag");side.classList.remove("trash");tgt&amp;&amp;tgt.chip.classList.remove("hot");
+  if(tap&amp;&amp;moved&lt;6){tap();return}
+  if(moved>6&amp;&amp;over(ev)){kill(n);return}
+  if(tgt)combine(n,tgt);else save();
+ };
+ addEventListener("pointermove",move);addEventListener("pointerup",up);addEventListener("pointercancel",up);
+}
+function burst(cx,cy){for(let i=0;i&lt;8;i++){const p=document.createElement("div"),a=i/8*6.283,r=50+Math.random()*40;p.className="p";p.textContent=["✦","·","✧"][i%3];p.style.left=cx+"px";p.style.top=cy+"px";p.style.setProperty("--x",Math.cos(a)*r+"px");p.style.setProperty("--y",Math.sin(a)*r+"px");canvas.appendChild(p);setTimeout(()=>p.remove(),650)}}
+function combine(a,b){
+ const k=KEY(a.name,b.name);let r=R[k]||learned[k];
+ if(!r){r=autoResult(a.name,b.name);if(r)learned[k]=r}
+ if(!r){toast("Nothing happens");[a,b].forEach(n=>{n.chip.classList.remove("shake");void n.chip.offsetWidth;n.chip.classList.add("shake")});save();return}
+ const cx=(a.x+a.w/2+b.x+b.w/2)/2,cy=(a.y+a.h/2+b.y+b.h/2)/2;
+ drop(a);drop(b);
+ const fresh=!discovered.has(r);discovered.add(r);
+ mk(r,cx,cy);burst(cx,cy);
+ renderList();save();
+}
+// pan / pinch / wheel
+const ptrs=new Map();let p0=null;
+function snap(){const a=[...ptrs.values()];p0={px:pan.x,py:pan.y,s:scale,a:a.map(p=>({...p})),d:a.length>1?Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y):0}}
+workspace.addEventListener("pointerdown",e=>{if(e.target!==workspace&amp;&amp;e.target!==canvas)return;if(e.pointerType==="mouse"&amp;&amp;e.button!==0)return;ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});workspace.setPointerCapture?.(e.pointerId);snap()});
+workspace.addEventListener("pointermove",e=>{
+ if(!ptrs.has(e.pointerId))return;ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ const a=[...ptrs.values()],r=workspace.getBoundingClientRect();
+ if(a.length===1){pan.x=p0.px+a[0].x-p0.a[0].x;pan.y=p0.py+a[0].y-p0.a[0].y}
+ else if(a.length>1&amp;&amp;p0.d&amp;&amp;p0.a.length>1){
+  const ns=clamp(p0.s*Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)/p0.d),m0x=(p0.a[0].x+p0.a[1].x)/2-r.left,m0y=(p0.a[0].y+p0.a[1].y)/2-r.top,mx=(a[0].x+a[1].x)/2-r.left,my=(a[0].y+a[1].y)/2-r.top;
+  pan.x=mx-(m0x-p0.px)/p0.s*ns;pan.y=my-(m0y-p0.py)/p0.s*ns;scale=ns;
+ }
+ applyView();
+});
+const endPan=e=>{if(!ptrs.delete(e.pointerId))return;if(ptrs.size)snap();save()};
+workspace.addEventListener("pointerup",endPan);workspace.addEventListener("pointercancel",endPan);
+workspace.addEventListener("wheel",e=>{e.preventDefault();const o=scale;scale=clamp(scale*Math.exp(-e.deltaY*(e.ctrlKey?.01:.0015)));const r=workspace.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;pan.x=mx-(mx-pan.x)*(scale/o);pan.y=my-(my-pan.y)*(scale/o);applyView();save()},{passive:false});
+// buttons
+function toggleDelete(){deleteMode=!deleteMode;document.body.classList.toggle("del",deleteMode);$("deleteBtn").classList.toggle("on",deleteMode);toast(deleteMode?"Tap an element to delete":"Delete mode off")}
+$("deleteBtn").onclick=toggleDelete;
+$("clearBtn").onclick=()=>{nodes.forEach(n=>n.el.remove());nodes=[];stats();save();toast("Board cleared")};
+$("recipesBtn").onclick=()=>{
+ const all={...R,...learned},list=Object.entries(all).filter(([k,v])=>discovered.has(v)&amp;&amp;k.split("+").every(x=>discovered.has(x)));
+ $("recipeList").innerHTML=list.length?list.map(([k,v])=>`&lt;div class="recipe">${k.split("+").map(title).join(" + ")} → &lt;b>${meta(v).e} ${title(v)}&lt;/b>&lt;/div>`).join(""):'&lt;div class="recipe">No recipes discovered yet.&lt;/div>';
+ $("modal").classList.add("show");
+};
+$("newBtn").onclick=()=>{
+ let kb="0";try{kb=((localStorage.getItem(LS)||"").length/1024).toFixed(1)}catch(e){}
+ $("dataInfo").innerHTML=`&lt;b>${discovered.size}&lt;/b> discoveries · &lt;b>${nodes.length}&lt;/b> pieces on board · &lt;b>${kb} KB&lt;/b> stored locally`;
+ $("wipeBtn").textContent="Delete all saved data";$("dataModal").classList.add("show");
+};
+$("dataClose").onclick=()=>$("dataModal").classList.remove("show");
+$("dataModal").onclick=e=>{if(e.target===$("dataModal"))$("dataModal").classList.remove("show")};
+$("clearBoardBtn").onclick=()=>{$("clearBtn").click();$("dataModal").classList.remove("show")};
+let wT;$("wipeBtn").onclick=()=>{
+ const b=$("wipeBtn");
+ if(!b.dataset.arm){b.dataset.arm=1;b.textContent="Tap again to confirm delete";clearTimeout(wT);wT=setTimeout(()=>{delete b.dataset.arm;b.textContent="Delete all saved data"},3000);return}
+ wiped=true;clearTimeout(sT);
+ try{Object.keys(localStorage).filter(k=>/^(ic|uc)/.test(k)).forEach(k=>localStorage.removeItem(k))}catch(e){}
+ location.reload();
+};
+$("close").onclick=()=>$("modal").classList.remove("show");
+$("modal").onclick=e=>{if(e.target===$("modal"))$("modal").classList.remove("show")};
+$("search").addEventListener("input",renderList);
+// boot
+applyView();renderList();
+if(Array.isArray(st.n))st.n.forEach(o=>{if(o&amp;&amp;o.a)mk(o.a,o.x,o.y)});
+else{const r=workspace.getBoundingClientRect(),c=toWorld(r.left+r.width/2,r.top+r.height/2),s=STARTERS;s.forEach((n,i)=>mk(n,c.x+(i-(s.length-1)/2)*130,c.y))}
+stats();saveNow();
+(()=>{const ld=$("loader"),t0=performance.now(),fonts=document.fonts&amp;&amp;document.fonts.ready?document.fonts.ready:Promise.resolve();
+ Promise.race([fonts,new Promise(r=>setTimeout(r,1500))]).then(()=>setTimeout(()=>{ld.classList.add("hide");setTimeout(()=>ld.remove(),600)},Math.max(0,1400-(performance.now()-t0))))})();
+&lt;/script>
+&lt;/body>
+&lt;/html></script>
+<script type="text/plain" id="g-ttt">&lt;!DOCTYPE html>
+&lt;html lang="en">
+&lt;head>
+&lt;meta charset="UTF-8">
+&lt;meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+&lt;meta name="mobile-web-app-capable" content="yes">
+&lt;meta name="apple-mobile-web-app-capable" content="yes">
+&lt;meta name="theme-color" content="#0a0a10">
+&lt;title>Tic Tac Toe — EV GAMES&lt;/title>
+&lt;link rel="preconnect" href="https://fonts.googleapis.com">
+&lt;link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&amp;display=swap" rel="stylesheet">
+&lt;style>
+  :root{--bg:#0a0a10;--panel:#12121b;--line:#24232f;--text:#f2f2f8;--muted:#9a9aae;--acc:#9d6bff;--o:#2ee6a6;--cell:#171722;--disp:"Unbounded","Arial Black",system-ui,sans-serif}
+  @media(prefers-color-scheme:light){:root{--bg:#f6f4fc;--panel:#fff;--line:#e4e2ee;--text:#0a0a0f;--muted:#6b6b7b;--acc:#6d28ff;--o:#0fa37a;--cell:#f6f4fc}}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+  html,body{height:100%;overscroll-behavior:none}
+  body{margin:0;-webkit-user-select:none;user-select:none;background:var(--bg);color:var(--text);font:500 16px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom));overflow-x:hidden}
+  .stage{width:100%;max-width:420px;animation:in .5s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes in{from{opacity:0;transform:translateY(14px)}}
+  .brand{text-align:center;margin-bottom:20px}
+  .brand .studio{font:800 clamp(22px,7vw,30px)/1 var(--disp);letter-spacing:-.02em}
+  .brand .studio b{color:var(--acc)}
+  .brand .sub{margin-top:8px;font:600 9px var(--disp);letter-spacing:.16em;color:var(--muted)}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px}
+  .setup h2{margin:0 0 16px;font:800 14px var(--disp);letter-spacing:.01em}
+  .field{margin-bottom:14px}
+  .field label{display:block;margin-bottom:6px;font-size:12px;color:var(--muted)}
+  .name-input-wrap{position:relative}
+  .name-input-wrap .mark{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:16px}
+  .mark.x{color:var(--acc)}.mark.o{color:var(--o)}
+  .name-input-wrap input{width:100%;padding:11px 12px 11px 38px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text);font:inherit;outline:0;-webkit-user-select:text;user-select:text;transition:border-color .15s}
+  .name-input-wrap input:focus{border-color:var(--acc)}
+  .btn{width:100%;margin-top:6px;padding:12px;border:0;border-radius:10px;background:var(--acc);color:#fff;font:600 14px inherit;font-family:inherit;cursor:pointer;transition:transform .12s,filter .15s}
+  .btn:hover{filter:brightness(1.1)}.btn:active{transform:scale(.98)}
+  .btn.ghost{background:none;border:1px solid var(--line);color:var(--text)}
+  .btn.ghost:hover{border-color:var(--acc);filter:none}
+  .hidden{display:none!important}
+  .scoreboard{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+  .score-card{text-align:center;padding:10px 6px;border-radius:12px;border:1px solid var(--line);transition:border-color .2s,background .2s}
+  .score-card .who{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .score-card .mk{font-size:15px;line-height:1.2;margin-top:2px}
+  .score-card.x .mk{color:var(--acc)}.score-card.o .mk{color:var(--o)}.score-card.draw .mk{color:var(--muted)}
+  .score-card .val{font:800 22px var(--disp);margin-top:2px}
+  .score-card.x.active{border-color:var(--acc);background:color-mix(in srgb,var(--acc) 10%,transparent)}
+  .score-card.o.active{border-color:var(--o);background:color-mix(in srgb,var(--o) 10%,transparent)}
+  .status{text-align:center;min-height:24px;margin-bottom:12px;color:var(--muted);font-size:14px}
+  .status .flag{color:var(--acc);font-weight:700}.status .flag.o{color:var(--o)}
+  .board{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+  .cell{aspect-ratio:1;border-radius:14px;background:var(--cell);border:1px solid var(--line);display:grid;place-items:center;cursor:pointer;transition:background .15s,border-color .15s,transform .15s}
+  .cell:hover:not(.filled){border-color:var(--acc)}.cell:active:not(.filled){transform:scale(.96)}
+  .cell.filled{cursor:default}
+  .cell svg{width:58%;height:58%;fill:none;stroke-width:9;stroke-linecap:round}
+  .cell .x-mark line{stroke:var(--acc);stroke-dasharray:80;stroke-dashoffset:80;animation:draw .3s ease-out forwards}
+  .cell .x-mark line+line{animation-delay:.12s}
+  .cell .o-mark circle{stroke:var(--o);stroke-dasharray:215;stroke-dashoffset:215;animation:draw .4s ease-out forwards}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  .cell.win{border-color:var(--acc);background:color-mix(in srgb,var(--acc) 14%,var(--cell));animation:pulse .5s ease-out}
+  .cell.win.win-o{border-color:var(--o);background:color-mix(in srgb,var(--o) 14%,var(--cell))}
+  @keyframes pulse{50%{transform:scale(1.05)}}
+  .controls{display:grid;grid-template-columns:1fr 1fr;gap:8px}.controls .btn{margin-top:0}
+  .footer-tag{text-align:center;margin-top:18px;font-size:11px;color:var(--muted)}
+  .footer-tag b{font-family:var(--disp);font-weight:800;color:var(--text)}.footer-tag b i{font-style:normal;color:var(--acc)}
+&lt;/style>
+&lt;/head>
+&lt;body>
+
+&lt;div class="stage">
+
+  &lt;div class="brand">
+    &lt;div class="studio">TIC TAC&lt;b>TOE&lt;/b>&lt;/div>
+    &lt;div class="sub">BY SN ENTERTAINMENT&lt;/div>
+  &lt;/div>
+
+  &lt;div class="panel">
+
+    &lt;!-- SETUP SCREEN -->
+    &lt;div class="setup" id="setupScreen">
+      &lt;h2>Players&lt;/h2>
+
+      &lt;div class="field">
+        &lt;label for="p1">Player One&lt;/label>
+        &lt;div class="name-input-wrap">
+          &lt;span class="mark x">✕&lt;/span>
+          &lt;input type="text" id="p1" placeholder="Player One" maxlength="14" autocomplete="off">
+        &lt;/div>
+      &lt;/div>
+
+      &lt;div class="field">
+        &lt;label for="p2">Player Two&lt;/label>
+        &lt;div class="name-input-wrap">
+          &lt;span class="mark o">○&lt;/span>
+          &lt;input type="text" id="p2" placeholder="Player Two" maxlength="14" autocomplete="off">
+        &lt;/div>
+      &lt;/div>
+
+      &lt;button class="btn" id="startBtn">Start Match&lt;/button>
+    &lt;/div>
+
+    &lt;!-- GAME SCREEN -->
+    &lt;div class="hidden" id="gameScreen">
+
+      &lt;div class="scoreboard">
+        &lt;div class="score-card x" id="cardX">
+          &lt;div class="who" id="nameX">Player One&lt;/div>
+          &lt;div class="mk">✕&lt;/div>
+          &lt;div class="val" id="scoreX">0&lt;/div>
+        &lt;/div>
+        &lt;div class="score-card draw" id="cardDraw">
+          &lt;div class="who">Draws&lt;/div>
+          &lt;div class="mk">—&lt;/div>
+          &lt;div class="val" id="scoreDraw">0&lt;/div>
+        &lt;/div>
+        &lt;div class="score-card o" id="cardO">
+          &lt;div class="who" id="nameO">Player Two&lt;/div>
+          &lt;div class="mk">○&lt;/div>
+          &lt;div class="val" id="scoreO">0&lt;/div>
+        &lt;/div>
+      &lt;/div>
+
+      &lt;div class="status" id="statusText">&lt;/div>
+
+      &lt;div class="board" id="board">&lt;/div>
+
+      &lt;div class="controls">
+        &lt;button class="btn ghost" id="resetScoreBtn">Reset Score&lt;/button>
+        &lt;button class="btn" id="newRoundBtn">Next Round&lt;/button>
+      &lt;/div>
+
+      &lt;button class="btn ghost" id="changePlayersBtn" style="margin-top:8px;">Change Players&lt;/button>
+    &lt;/div>
+
+  &lt;/div>
+
+  &lt;div class="footer-tag">&lt;b>EV&lt;i>GAMES&lt;/i>&lt;/b> · Developed by &lt;b>RISHI&lt;i>FORGE&lt;/i>&lt;/b>&lt;/div>
+
+&lt;/div>
+
+&lt;script>
+(function(){
+  const setupScreen = document.getElementById('setupScreen');
+  const gameScreen = document.getElementById('gameScreen');
+  const p1Input = document.getElementById('p1');
+  const p2Input = document.getElementById('p2');
+  const startBtn = document.getElementById('startBtn');
+  const changePlayersBtn = document.getElementById('changePlayersBtn');
+  const boardEl = document.getElementById('board');
+  const statusText = document.getElementById('statusText');
+  const nameXEl = document.getElementById('nameX');
+  const nameOEl = document.getElementById('nameO');
+  const scoreXEl = document.getElementById('scoreX');
+  const scoreOEl = document.getElementById('scoreO');
+  const scoreDrawEl = document.getElementById('scoreDraw');
+  const cardX = document.getElementById('cardX');
+  const cardO = document.getElementById('cardO');
+  const resetScoreBtn = document.getElementById('resetScoreBtn');
+  const newRoundBtn = document.getElementById('newRoundBtn');
+
+  const WIN_LINES = [
+    [0,1,2],[3,4,5],[6,7,8],
+    [0,3,6],[1,4,7],[2,5,8],
+    [0,4,8],[2,4,6]
+  ];
+
+  let names = { X: 'Player One', O: 'Player Two' };
+  let scores = { X: 0, O: 0, D: 0 };
+  let board = Array(9).fill(null);
+  let current = 'X';
+  let active = true;
+
+  function xIcon(){
+    return `&lt;svg class="x-mark" viewBox="0 0 100 100">&lt;line x1="20" y1="20" x2="80" y2="80"/>&lt;line x1="80" y1="20" x2="20" y2="80"/>&lt;/svg>`;
+  }
+  function oIcon(){
+    return `&lt;svg class="o-mark" viewBox="0 0 100 100">&lt;circle cx="50" cy="50" r="34"/>&lt;/svg>`;
+  }
+
+  function buildBoard(){
+    boardEl.innerHTML = '';
+    for(let i=0;i&lt;9;i++){
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.index = i;
+      cell.addEventListener('click', onCellClick);
+      boardEl.appendChild(cell);
+    }
+  }
+
+  function onCellClick(e){
+    const i = Number(e.currentTarget.dataset.index);
+    if(!active || board[i]) return;
+    placeMark(i, current);
+    const result = checkWin();
+    if(result){
+      endRound(result);
+    } else if(board.every(c => c)){
+      endRound({ draw:true });
+    } else {
+      current = current === 'X' ? 'O' : 'X';
+      updateStatus();
+    }
+  }
+
+  function placeMark(i, mark){
+    board[i] = mark;
+    const cell = boardEl.children[i];
+    cell.classList.add('filled');
+    cell.innerHTML = mark === 'X' ? xIcon() : oIcon();
+  }
+
+  function checkWin(){
+    for(const line of WIN_LINES){
+      const [a,b,c] = line;
+      if(board[a] &amp;&amp; board[a] === board[b] &amp;&amp; board[a] === board[c]){
+        return { winner: board[a], line };
+      }
+    }
+    return null;
+  }
+
+  function endRound(result){
+    active = false;
+    if(result.draw){
+      scores.D++;
+      scoreDrawEl.textContent = scores.D;
+      statusText.innerHTML = `Round drawn — &lt;span class="flag">no winner&lt;/span>`;
+    } else {
+      const { winner, line } = result;
+      line.forEach(i => {
+        boardEl.children[i].classList.add('win');
+        if(winner === 'O') boardEl.children[i].classList.add('win-o');
+      });
+      scores[winner]++;
+      (winner === 'X' ? scoreXEl : scoreOEl).textContent = scores[winner];
+      const winnerName = winner === 'X' ? names.X : names.O;
+      const flagClass = winner === 'O' ? 'flag o' : 'flag';
+      statusText.innerHTML = `&lt;span class="${flagClass}">${escapeHtml(winnerName)}&lt;/span> takes the round`;
+    }
+    highlightTurn(null);
+  }
+
+  function updateStatus(){
+    const playerName = current === 'X' ? names.X : names.O;
+    const flagClass = current === 'O' ? 'flag o' : 'flag';
+    statusText.innerHTML = `&lt;span class="${flagClass}">${escapeHtml(playerName)}&lt;/span>'s move`;
+    highlightTurn(current);
+  }
+
+  function highlightTurn(mark){
+    cardX.classList.toggle('active', mark === 'X');
+    cardO.classList.toggle('active', mark === 'O');
+  }
+
+  function newRound(){
+    board = Array(9).fill(null);
+    active = true;
+    current = 'X';
+    buildBoard();
+    updateStatus();
+  }
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  startBtn.addEventListener('click', () => {
+    names.X = p1Input.value.trim() || 'Player One';
+    names.O = p2Input.value.trim() || 'Player Two';
+    nameXEl.textContent = names.X;
+    nameOEl.textContent = names.O;
+    scores = { X:0, O:0, D:0 };
+    scoreXEl.textContent = 0;
+    scoreOEl.textContent = 0;
+    scoreDrawEl.textContent = 0;
+    setupScreen.classList.add('hidden');
+    gameScreen.classList.remove('hidden');
+    newRound();
+  });
+
+  [p1Input, p2Input].forEach(inp => {
+    inp.addEventListener('keydown', e => {
+      if(e.key === 'Enter') startBtn.click();
+    });
+  });
+
+  newRoundBtn.addEventListener('click', newRound);
+
+  resetScoreBtn.addEventListener('click', () => {
+    scores = { X:0, O:0, D:0 };
+    scoreXEl.textContent = 0;
+    scoreOEl.textContent = 0;
+    scoreDrawEl.textContent = 0;
+    newRound();
+  });
+
+  changePlayersBtn.addEventListener('click', () => {
+    gameScreen.classList.add('hidden');
+    setupScreen.classList.remove('hidden');
+  });
+
+  buildBoard();
+})();
+&lt;/script>
+
+&lt;/body>
+&lt;/html>
+</script>
+<script>
+(function(){
+const G={craft:{n:"UNLIMITED CRAFT",s:"g-craft"},ttt:{n:"TIC TAC TOE",s:"g-ttt"}},fr={},stage=document.getElementById("stage");
+const dec=t=>t.replace(/&lt;/g,"<").replace(/&amp;/g,"&");
+function saveCraft(){try{fr.craft&&fr.craft.contentWindow.saveNow&&fr.craft.contentWindow.saveNow()}catch(e){}}
+function info(){try{const s=JSON.parse(localStorage.getItem("uc_state")||"null");document.getElementById("saved").textContent=s&&s.d&&s.d.length>4?"Continue →":"Play →"}catch(e){}}
+function route(){
+ const id=location.hash.slice(1),g=G[id];
+ if(!g){saveCraft();document.body.classList.remove("play");document.title="EV GAMES — Home";info();return}
+ if(!fr[id]){const f=document.createElement("iframe");f.title=g.n;f.srcdoc=dec(document.getElementById(g.s).textContent);stage.appendChild(f);fr[id]=f}
+ for(const k in fr)fr[k].classList.toggle("on",k===id);
+ document.getElementById("gname").textContent=g.n;document.title=g.n+" — EV GAMES";document.body.classList.add("play");
+}
+document.getElementById("back").onclick=()=>{location.hash=""};
+addEventListener("hashchange",route);addEventListener("pagehide",saveCraft);
+route();
+})();
+</script>
+</body>
+</html>
