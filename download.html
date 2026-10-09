@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Download EV STREAMS — 130,000+ global TV channels</title>
+<meta name="description" content="Download EV STREAMS for Android 8+ (APK) or the Windows app. Free global OTT, sports, IPTV and live TV.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fff;--fg:#0a0a0f;--mute:#6b5662;--line:#f0d3e4;--accent:#e6008c;--accent-ink:#fff;--panel:#fff4fa;
+  --disp:"Unbounded","Arial Black",system-ui,sans-serif;--body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+:root[data-theme="dark"]{--bg:#0b0008;--fg:#fff;--mute:#c9a6bc;--line:#3a1229;--accent:#ff2ea6;--accent-ink:#fff;--panel:#18000f}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+body{margin:0;background:var(--bg);color:var(--fg);font:400 17px/1.65 var(--body);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+.wrap{max-width:960px;margin:0 auto;padding:0 24px}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+header .wrap{display:flex;align-items:center;justify-content:space-between;height:64px}
+.brand{display:flex;align-items:center;gap:10px;font:800 15px var(--disp);text-decoration:none}
+.brand b{color:var(--accent)}
+.logo{width:34px;height:34px;border-radius:10px;object-fit:cover;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font:800 13px var(--disp);overflow:hidden;flex:none}
+.logo img{width:100%;height:100%;object-fit:contain;padding:16%;display:block;filter:brightness(0) invert(1)}
+#theme{background:none;border:1px solid var(--line);color:var(--fg);width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:16px}
+#theme:hover{border-color:var(--accent)}
+
+header .wrap.bar{gap:16px}
+nav{display:flex;gap:4px;margin-left:auto}
+nav a{text-decoration:none;font-size:15px;font-weight:500;color:var(--mute);padding:8px 14px;border-radius:999px;transition:background .2s,color .2s}
+nav a:hover{color:var(--fg);background:var(--panel)}
+nav a.on{color:var(--accent);background:var(--panel);font-weight:600}
+.actions{display:flex;align-items:center;gap:10px}
+.navcta{text-decoration:none;font-weight:600;font-size:14px;background:var(--accent);color:var(--accent-ink);padding:9px 18px;border-radius:999px;white-space:nowrap}
+#menu{display:none;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:none;cursor:pointer;padding:0;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+#menu span{display:block;width:16px;height:2px;background:var(--fg);border-radius:2px;transition:transform .2s,opacity .2s}
+#menu[aria-expanded="true"] span:nth-child(1){transform:translateY(6px) rotate(45deg)}
+#menu[aria-expanded="true"] span:nth-child(2){opacity:0}
+#menu[aria-expanded="true"] span:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
+@media (max-width:820px){
+  #menu{display:flex}
+  .navcta{display:none}
+  nav{display:none;position:absolute;left:0;right:0;top:100%;flex-direction:column;gap:2px;padding:12px 16px 16px;background:var(--bg);border-bottom:1px solid var(--line);margin:0}
+  nav.open{display:flex}
+  nav a{padding:12px 16px;font-size:16px}
+  .actions{margin-left:auto}
+}
+.hero{text-align:center;padding:clamp(44px,8vw,92px) 0 48px}
+.big{width:clamp(96px,22vw,132px);height:clamp(96px,22vw,132px);border-radius:28px;margin:0 auto 28px;font-size:34px;box-shadow:0 24px 60px -24px var(--accent)}
+h1{font:800 clamp(34px,8vw,72px)/1 var(--disp);letter-spacing:-.035em;margin:0}
+h1 em{font-style:normal;color:var(--accent)}
+.lede{max-width:520px;margin:20px auto 0;color:var(--mute);font-size:19px}
+.stats{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;list-style:none;margin:30px 0 0;padding:0}
+.stats li{border:1px solid var(--line);background:var(--panel);border-radius:16px;padding:12px 22px;min-width:150px}
+.stats b{display:block;font:800 clamp(20px,4.5vw,28px)/1.1 var(--disp);color:var(--accent);letter-spacing:-.02em}
+.stats span{font-size:14px;color:var(--mute)}
+.detect{margin:26px auto 0;font-size:15px;color:var(--mute)}
+.detect b{color:var(--fg)}
+
+.dl{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;padding-bottom:72px}
+@media (max-width:760px){.dl{grid-template-columns:1fr}}
+.card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:clamp(24px,4vw,36px);display:flex;flex-direction:column;transition:border-color .2s,transform .2s}
+.card.rec{order:-1;border:2px solid transparent;background:linear-gradient(var(--panel),var(--panel)) padding-box,linear-gradient(135deg,#8a6a12 0%,#f7e08a 22%,#d4af37 45%,#fff3b0 58%,#c9971c 78%,#8a6a12 100%) border-box;box-shadow:0 22px 50px -28px #d4af37,0 0 0 1px #d4af3733}
+.card.rec::after{content:"★ Recommended for you";position:absolute;top:-14px;left:24px;background:linear-gradient(135deg,#8a6a12,#f7e08a 35%,#d4af37 55%,#fff3b0 70%,#a67c00);color:#3b2a00;font:700 12px var(--body);letter-spacing:.02em;padding:4px 14px;border-radius:999px;box-shadow:0 4px 12px -4px #d4af37}
+.card.rec .btn{background:linear-gradient(135deg,#8a6a12,#f7e08a 30%,#d4af37 52%,#fff3b0 68%,#a67c00);color:#3b2a00}
+.card.rec .badge{border-color:#d4af37}
+.badge{width:52px;height:52px;border-radius:15px;border:1px solid var(--line);background:var(--bg);display:grid;place-items:center;color:var(--accent)}
+.badge svg{width:28px;height:28px}
+.badge.two{width:auto;padding:0 12px;gap:8px;display:inline-flex;align-items:center}
+.card h2 small{display:block;font:500 13px var(--body);letter-spacing:0;color:var(--mute);margin-top:6px}
+.card h2{font:800 24px/1.1 var(--disp);letter-spacing:-.02em;margin:18px 0 6px}
+.card p{margin:0 0 18px;color:var(--mute)}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 24px;padding:0;list-style:none}
+.meta li{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:3px 12px;font-size:13px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:15px 24px;border-radius:999px;text-decoration:none;font-weight:600;background:var(--accent);color:var(--accent-ink);margin-top:auto;transition:transform .2s}
+.btn:hover{transform:translateY(-2px)}
+.btn svg{width:18px;height:18px}
+
+.card.soon .btn{background:none;color:var(--mute);border:1px dashed var(--line);pointer-events:none;cursor:default}
+.meta li.st{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600;position:relative;padding-left:26px}
+.meta li.st::before{content:"";position:absolute;left:10px;top:50%;width:8px;height:8px;margin-top:-4px;border-radius:50%;background:currentColor;animation:blink 1.4s infinite}
+@keyframes blink{50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.meta li.st::before{animation:none}}
+section{padding:64px 0;border-top:1px solid var(--line)}
+h3.t{font:800 clamp(22px,4vw,32px)/1.1 var(--disp);letter-spacing:-.025em;margin:0 0 28px}
+.steps{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media (max-width:760px){.steps{grid-template-columns:1fr}}
+.steps div{border:1px solid var(--line);border-radius:18px;padding:24px}
+.steps h4{font:600 16px var(--disp);margin:0 0 12px}
+.steps ol{margin:0;padding-left:20px;color:var(--mute)}
+.steps li{padding:3px 0}
+.web{text-align:center}
+.web p{color:var(--mute);margin:0 0 20px}
+.web .btn{background:none;color:var(--fg);border:1px solid var(--line);margin-top:0}
+.feat{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}
+.feat div{border:1px solid var(--line);background:var(--panel);border-radius:18px;padding:22px}
+.feat h4{font:600 15px var(--disp);margin:0 0 8px;color:var(--accent)}
+.feat p{margin:0;color:var(--mute);font-size:15px}
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;padding:0;list-style:none}
+.tags li{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:3px 12px;font-size:13px;color:var(--fg)}
+footer{padding:40px 0 64px;color:var(--mute);font-size:14px;text-align:center;border-top:1px solid var(--line)}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn,.card{transition:none}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap bar">
+    <a class="brand" href="#"><span class="logo"><img src="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/magenta.png" alt="" onerror="this.remove();this.parentNode&&0"><span class="fb">EV</span></span>EV<b>STREAMS</b></a>
+    <nav id="nav" aria-label="Main">
+      <a href="#download">Download</a>
+      <a href="#features">Features</a>
+      <a href="#platforms">Platforms</a>
+      <a href="#install">Install</a>
+      <a href="#web">Watch online</a>
+    </nav>
+    <div class="actions">
+      <a class="navcta" href="#download">Get the app</a>
+      <button id="theme" type="button" aria-label="Switch light or dark theme">◐</button>
+      <button id="menu" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="nav"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+
+<main>
+<div class="wrap hero">
+  <span class="logo big"><img src="https://raw.githubusercontent.com/saptarshiorg/saptarshiorg.github.io/refs/heads/main/magenta.png" alt="EV STREAMS logo"><span class="fb">EV</span></span>
+  <h1>Download <em>EV STREAMS</em></h1>
+  <p class="lede">130,000+ global TV channels, plus OTT, sports and IPTV. Free. Get the app for Android or Windows.</p>
+  <ul class="stats"><li><b>130,000+</b><span>Global TV channels</span></li><li><b>56</b><span>OTT platforms</span></li><li><b>Every</b><span>Sport, worldwide</span></li></ul>
+  <p class="detect" id="detect">Choose your device below.</p>
+</div>
+
+<div class="wrap dl" id="download">
+  <div class="card" id="c-android">
+    <span class="badge" style="color:#3DDC84"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 3.5l1.2 2.1A6.5 6.5 0 0 1 12 5c1.4 0 2.7.4 3.8 1.1L17 3.5l.9.5-1.2 2.1A6 6 0 0 1 19 11H5a6 6 0 0 1 2.3-4.9L6.1 4zM9.5 8.5a.8.8 0 1 0 0 1.6.8.8 0 0 0 0-1.6zm5 0a.8.8 0 1 0 0 1.6.8.8 0 0 0 0-1.6zM5 12.5h14V18a2 2 0 0 1-2 2h-1v2.2a1.3 1.3 0 0 1-2.6 0V20h-2.8v2.2a1.3 1.3 0 0 1-2.6 0V20H7a2 2 0 0 1-2-2z"/></svg></span>
+    <h2>Android</h2>
+    <p>APK for phones and tablets.</p>
+    <ul class="meta"><li>Android 8+ supported</li><li>APK</li></ul>
+    <a class="btn" href="https://github.com/saptarshiorg/evstreamsfinalboss/actions/runs/37934379727/artifacts/11618060638" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 20h16"/></svg>Download APK</a>
+  </div>
+  <div class="card" id="c-win11">
+    <span class="badge two"><svg viewBox="0 0 24 24" fill="#0078D4"><path d="M2 4.6l8.9-1.2v7.7H2zM12.1 3.2L22 1.8v9.3h-9.9zM2 12.3h8.9v7.7L2 18.8zM12.1 12.3H22v9.9l-9.9-1.4z"/></svg><svg viewBox="0 0 24 24" fill="#0078D4"><rect x="2.5" y="2.5" width="9" height="9"/><rect x="12.5" y="2.5" width="9" height="9"/><rect x="2.5" y="12.5" width="9" height="9"/><rect x="12.5" y="12.5" width="9" height="9"/></svg></span>
+    <h2>Windows 10 / 11<small>Latest PCs and laptops</small></h2>
+    <ul class="meta"><li>Windows 10</li><li>Windows 11</li><li>v1.0.0</li></ul>
+    <a class="btn" href="https://github.com/saptarshiorg/saptarshiorg.github.io/releases/download/evstreamsforpc/EV.Streams.Setup.1.0.0.exe" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 20h16"/></svg>Download App</a>
+  </div>
+  <div class="card" id="c-old">
+    <span class="badge two"><svg viewBox="0 0 24 24" stroke="#222" stroke-width="1" stroke-linejoin="round"><path fill="#F25022" d="M3 5l8-1.5 .6 7L3.6 11.6z"/><path fill="#7FBA00" d="M12.8 3.3L21 2l-.4 8.8-7.6.6z"/><path fill="#00A4EF" d="M3.8 12.8l7.8-.4.6 7.4-8 -1.4z"/><path fill="#FFB900" d="M13.4 12.4l7.2-.2-.5 9-6.7-1.2z"/></svg><svg viewBox="0 0 24 24"><path fill="#F25022" d="M3 6.5Q6.5 3.5 11 5.5l.4 6Q7 9.5 3.4 12.5z"/><path fill="#7FBA00" d="M12.6 5.8Q16.8 7.5 21 4.5l-.5 6.2Q16.4 13.4 12.9 11.9z"/><path fill="#00A4EF" d="M3.6 13.5Q7.2 10.6 11.5 12.8l.4 6.2Q7.8 17.2 4 20z"/><path fill="#FFB900" d="M13 13.2Q16.6 14.7 20.4 12l-.5 6.4Q16.4 21 13.4 19.4z"/></svg><svg viewBox="0 0 24 24"><path fill="#F25022" d="M3 5.4l7.6-1.4.5 7.2-7.7.3z"/><path fill="#7FBA00" d="M12.4 3.8L21 2.2l-.4 8.9-8.3.3z"/><path fill="#00A4EF" d="M3.4 12.7l7.7.3.5 7.2-8.2-1.5z"/><path fill="#FFB900" d="M12.4 13.1l8.2.2-.4 9-7.8-1.6z"/></svg><svg viewBox="0 0 24 24" fill="#00ADEF"><path d="M2 6.2l8.9-1.3v6.2H2zM12.1 4.7L22 3.2v7.9h-9.9zM2 12.3h8.9v6.2L2 17.8zM12.1 12.3H22v8.5l-9.9-1.4z"/></svg></span>
+    <h2>Windows 98 / XP / 7 / 8<small>Older PCs and laptops</small></h2>
+    <ul class="meta"><li>Windows 98</li><li>Windows XP</li><li>Windows 7</li><li>Windows 8 / 8.1</li><li>v1.0.0</li></ul>
+    <a class="btn" href="https://github.com/saptarshiorg/saptarshiorg.github.io/releases/download/evstreamsforpc/EV.Streams.Setup.1.0.0.exe" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 20h16"/></svg>Download App</a>
+  </div>
+  <div class="card soon" id="c-apple">
+    <span class="badge" style="color:var(--fg)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.37 12.6c-.03-2.7 2.2-4 2.3-4.06-1.25-1.83-3.2-2.08-3.9-2.1-1.65-.17-3.23.98-4.07.98-.84 0-2.14-.96-3.52-.93-1.8.03-3.48 1.06-4.4 2.68-1.9 3.3-.49 8.17 1.35 10.84.9 1.3 1.97 2.76 3.37 2.7 1.35-.05 1.86-.87 3.5-.87 1.63 0 2.1.87 3.53.84 1.46-.02 2.38-1.32 3.27-2.63 1.03-1.5 1.45-2.97 1.48-3.04-.03-.01-2.84-1.09-2.87-4.31zM13.7 4.6c.74-.9 1.24-2.15 1.1-3.4-1.07.04-2.37.71-3.14 1.61-.69.8-1.29 2.07-1.13 3.29 1.2.09 2.43-.61 3.17-1.5z"/></svg></span>
+    <h2>macOS / iPadOS / iOS<small>Mac, iPad and iPhone</small></h2>
+    <ul class="meta"><li class="st">In progress</li><li>macOS</li><li>iPadOS</li><li>iOS</li></ul>
+    <span class="btn" aria-disabled="true">Coming soon</span>
+  </div>
+</div>
+
+<section id="features">
+  <div class="wrap">
+    <h3 class="t">App features</h3>
+    <div class="feat">
+      <div><h4>Built-in player engine</h4><p>HLS and DASH streams play inside the app with its own engine, powered by VLC libraries.</p><ul class="tags"><li>HLS</li><li>DASH</li><li>VLC libs</li></ul></div>
+      <div><h4>Restricted browser</h4><p>Streams open in a locked in-app browser, so you stay inside EV STREAMS.</p></div>
+      <div><h4>Hotstar-style UI</h4><p>Banner carousel, Live Now, Trending and Upcoming rows, sport tabs and search.</p></div>
+      <div><h4>130,000+ TV channels</h4><p>Live TV and IPTV channels from every country, searchable by country, language and category.</p><ul class="tags"><li>News</li><li>Sports</li><li>Movies</li><li>Kids</li><li>Music</li></ul></div>
+      <div><h4>Movies and TV shows</h4><p>Movies, web series, TV serials, anime and live TV channels from across the world.</p><ul class="tags"><li>Movies</li><li>TV shows</li><li>Web series</li><li>Anime</li></ul></div>
+      <div><h4>Every sport</h4><p>Every sport, worldwide: leagues, tournaments, teams and one-off events, from football and cricket to niche sports.</p></div>
+      <div><h4>50+ platforms</h4><p>FanCode, Jio, SonyLIV, Netflix, Prime Video and many more in one hub.</p></div>
+      <div><h4>Every screen</h4><p>Android 8+, Windows and any browser. macOS, iPadOS and iOS are in progress.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="platforms">
+  <div class="wrap">
+    <h3 class="t">56 platforms in one hub</h3>
+    <div class="feat">
+      <div><h4>Sports (19)</h4><ul class="tags"><li>FanCode</li><li>JioHotstar</li><li>SonyLIV</li><li>DAZN</li><li>ESPN+</li><li>Sky Sports</li><li>TNT Sports</li><li>beIN Sports</li><li>Peacock</li><li>Paramount+</li><li>Fubo</li><li>Kayo Sports</li><li>Optus Sport</li><li>SuperSport</li><li>Willow TV</li><li>NBA League Pass</li><li>Eurosport</li><li>Viaplay</li><li>Canal+</li></ul></div>
+      <div><h4>Indian OTT and TV (17)</h4><ul class="tags"><li>JioTV</li><li>ZEE5</li><li>Netflix</li><li>Amazon Prime Video</li><li>MX Player</li><li>Aha</li><li>Sun NXT</li><li>Hoichoi</li><li>Eros Now</li><li>ALTBalaji</li><li>ShemarooMe</li><li>Lionsgate Play</li><li>Discovery+</li><li>Manorama MAX</li><li>Airtel Xstream</li><li>Tata Play Binge</li><li>Hungama Play</li></ul></div>
+      <div><h4>Global OTT (20)</h4><ul class="tags"><li>Disney+</li><li>Max (HBO)</li><li>Hulu</li><li>Apple TV+</li><li>YouTube</li><li>Tubi</li><li>Pluto TV</li><li>The Roku Channel</li><li>Crunchyroll</li><li>BBC iPlayer</li><li>ITVX</li><li>Channel 4</li><li>Stan</li><li>Crave</li><li>Viki</li><li>iQIYI</li><li>Viu</li><li>WeTV</li><li>Shahid</li><li>Starzplay</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap">
+    <h3 class="t">How to install</h3>
+    <div class="steps">
+      <div><h4>Android</h4><ol><li>Download the APK on your phone.</li><li>Open the file from Downloads.</li><li>If asked, allow installs from this source.</li><li>Tap Install, then open EV STREAMS.</li></ol></div>
+      <div><h4>Windows</h4><ol><li>Download the Windows app.</li><li>Double-click it to open and set it up.</li><li>If SmartScreen appears, choose More info, then Run anyway.</li><li>Finish setup and launch EV STREAMS.</li></ol></div>
+    </div>
+  </div>
+</section>
+
+<section id="web">
+  <div class="wrap web">
+    <h3 class="t">Prefer no install?</h3>
+    <p>EV STREAMS also runs in any browser.</p>
+    <a class="btn" href="https://evstreams.pages.dev" target="_blank" rel="noopener">Watch in browser</a>
+  </div>
+</section>
+</main>
+
+<footer>© <span id="yr"></span> EV STREAMS · Saptarshi Samanta</footer>
+
+<script>
+document.getElementById('yr').textContent = new Date().getFullYear();
+/* logo fallback: if the image fails, show the EV badge */
+document.querySelectorAll('.logo').forEach(function(l){
+  var img = l.querySelector('img'), fb = l.querySelector('.fb');
+  function show(){ if(img) img.remove(); fb.style.display=''; }
+  fb.style.display='none';
+  if(!img){ fb.style.display=''; return; }
+  img.addEventListener('error', show);
+  if(img.complete && img.naturalWidth===0) show();
+});
+/* highlight the right download for this device */
+var ua = navigator.userAgent, d = document.getElementById('detect');
+if (/Android/i.test(ua)) { document.getElementById('c-android').classList.add('rec'); d.innerHTML = 'Detected: <b>Android</b>'; }
+else if (/Windows NT (4|5|6\.[123])|Windows (95|98)/i.test(ua)) { var m=ua.match(/Windows NT ([\d.]+)/), n={'6.1':'7','6.2':'8','6.3':'8.1'}[m&&m[1]]||(m&&m[1].charAt(0)==='5'?'XP':'98'); document.getElementById('c-old').classList.add('rec'); d.innerHTML = 'Detected: <b>Windows '+n+'</b>'; }
+else if (/Windows/i.test(ua)) { document.getElementById('c-win11').classList.add('rec'); d.innerHTML = 'Detected: <b>Windows 10 / 11</b>'; }
+else if (/iPhone|iPad|Mac/i.test(ua)) { var os=/iPhone/i.test(ua)?'iOS':/iPad/i.test(ua)?'iPadOS':'macOS'; d.innerHTML='Detected: <b>'+os+'</b>. The Apple app is in progress. Use the browser version below.'; }
+var root = document.documentElement;
+document.getElementById('theme').addEventListener('click', function(){
+  var dark = root.getAttribute('data-theme') === 'dark';
+  root.setAttribute('data-theme', dark ? 'light' : 'dark');
+});
+
+var nav=document.getElementById('nav'),mb=document.getElementById('menu');
+mb.addEventListener('click',function(){var o=nav.classList.toggle('open');mb.setAttribute('aria-expanded',o)});
+nav.querySelectorAll('a').forEach(function(a){a.addEventListener('click',function(){nav.classList.remove('open');mb.setAttribute('aria-expanded','false')})});
+if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){nav.querySelectorAll('a').forEach(function(a){a.classList.toggle('on',a.getAttribute('href')==='#'+e.target.id)})}})},{rootMargin:'-40% 0px -55% 0px'});
+['download','features','platforms','install','web'].forEach(function(id){var el=document.getElementById(id);el&&io.observe(el)})}
+</script>
+</body>
+</html>
