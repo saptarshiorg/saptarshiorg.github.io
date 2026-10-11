@@ -839,7 +839,7 @@ function initHotUI(player, vid, pc, ch){
   var muteBtn = el("hs-mute"), volEl = el("hs-vol"), fsBtn = el("hs-fs"), pipBtn = el("hs-pip");
   var qVal = el("hs-q-val"), spinner = el("hs-spinner");
   var hideT = null, menuOpen = false, menuKind = "", dragging = false;
-  var enh = {smooth:false, frost:false, ambi:false, bloom:false, vivid:false, bright:false, cinema:false};
+  var enh = {smooth:false, frost:false, ambi:false, bloom:false, vivid:false, bright:false, cinema:false, track:false};
   var fx = {};   /* canvas layers: frost, ambi, bloom */
   var fxT = null, fxVfc = 0;
 
@@ -887,6 +887,8 @@ function initHotUI(player, vid, pc, ch){
       if(fx.bloom && fx.bloom.on){
         fx.bloom.ctx.drawImage(vid, 0, 0, fx.bloom.w, fx.bloom.h);
         place(fx.bloom, r);
+        fx.bloom.cv.style.transformOrigin = "50% 50%";
+        fx.bloom.cv.style.transform = fx.bloom.tf || "";
       }
     }catch(_){}
   }
@@ -918,7 +920,85 @@ function initHotUI(player, vid, pc, ch){
   }
   window.addEventListener("resize", function(){ if(fxT) fxTick(); });
 
+  /* ---- human motion tracking (person detection + smooth follow-zoom) ---- */
+  var trk = {on:false, model:null, loading:false, err:"", t:null, busy:false, cv:null, ctx:null,
+             s:1, bx:0.5, by:0.5, miss:0};
+  function loadScript(src){
+    return new Promise(function(ok, bad){
+      var sc = document.createElement("script");
+      sc.src = src; sc.onload = ok; sc.onerror = function(){ bad(new Error("load " + src)); };
+      document.head.appendChild(sc);
+    });
+  }
+  async function trkLoad(){
+    if(trk.model || trk.loading) return;
+    trk.loading = true; trk.err = "";
+    try{
+      if(!window.tf) await loadScript("https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js");
+      if(!window.cocoSsd) await loadScript("https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js");
+      trk.model = await window.cocoSsd.load({base:"lite_mobilenet_v2"});
+    }catch(e){
+      trk.err = "Tracking model could not load.";
+      enh.track = false; applyEnh();
+    }
+    trk.loading = false;
+  }
+  function trkApply(tf){
+    vid.style.transition = "transform .35s ease-out";
+    vid.style.transform = tf || "";
+    if(fx.bloom){ fx.bloom.cv.style.transition = "transform .35s ease-out"; fx.bloom.tf = tf || ""; }
+  }
+  async function trkStep(){
+    if(!trk.on || trk.busy || !trk.model || vid.paused || vid.readyState < 2 || !vid.videoWidth) return;
+    trk.busy = true;
+    try{
+      if(!trk.cv){ trk.cv = document.createElement("canvas"); trk.cv.width = 320; trk.cv.height = 180; trk.ctx = trk.cv.getContext("2d"); }
+      trk.ctx.drawImage(vid, 0, 0, 320, 180);
+      var res = await trk.model.detect(trk.cv, 6, 0.5);
+      var p = res.filter(function(d){ return d.class === "person"; });
+      var r = picRect();
+      var targetS = 1, tx = 0, ty = 0;
+      if(p.length){
+        trk.miss = 0;
+        var x1 = 1e9, y1 = 1e9, x2 = -1, y2 = -1;
+        p.forEach(function(d){
+          x1 = Math.min(x1, d.bbox[0]); y1 = Math.min(y1, d.bbox[1]);
+          x2 = Math.max(x2, d.bbox[0] + d.bbox[2]); y2 = Math.max(y2, d.bbox[1] + d.bbox[3]);
+        });
+        var nx = x1 / 320, ny = y1 / 180, nw = (x2 - x1) / 320, nh = (y2 - y1) / 180;
+        targetS = Math.max(1, Math.min(1.8, 0.6 / Math.max(nh, 0.05), 0.85 / Math.max(nw, 0.05)));
+        var cx = r.x + (nx + nw / 2) * r.w, cy = r.y + (ny + nh / 2) * r.h;
+        var ox = r.x + r.w / 2, oy = r.y + r.h / 2;
+        tx = -targetS * (cx - ox); ty = -targetS * (cy - oy);
+        var mx = (targetS - 1) * r.w / 2, my = (targetS - 1) * r.h / 2;
+        tx = Math.max(-mx, Math.min(mx, tx)); ty = Math.max(-my, Math.min(my, ty));
+      }else if(++trk.miss < 8){
+        trk.busy = false; return;          /* keep last framing briefly */
+      }
+      /* low-pass smoothing so the camera glides instead of jumping */
+      trk.s  += (targetS - trk.s)  * 0.3;
+      trk.bx += (tx - trk.bx) * 0.3;
+      trk.by += (ty - trk.by) * 0.3;
+      vid.style.transformOrigin = (r.x + r.w / 2) + "px " + (r.y + r.h / 2) + "px";
+      if(fx.bloom) fx.bloom.cv.style.transformOrigin = "50% 50%";
+      trkApply("translate(" + trk.bx.toFixed(1) + "px," + trk.by.toFixed(1) + "px) scale(" + trk.s.toFixed(3) + ")");
+    }catch(_){}
+    trk.busy = false;
+  }
+  function trkSet(on){
+    if(on && !trk.on){
+      trk.on = true; trk.s = 1; trk.bx = 0; trk.by = 0; trk.miss = 0;
+      trkLoad();
+      if(!trk.t) trk.t = setInterval(trkStep, 180);
+    }else if(!on && trk.on){
+      trk.on = false;
+      if(trk.t){ clearInterval(trk.t); trk.t = null; }
+      trkApply("");
+    }
+  }
+
   function applyEnh(){
+    trkSet(enh.track);
     var f = [];
     if(enh.smooth) f.push("blur(0.45px)");
     if(enh.vivid)  f.push("saturate(1.3)", "contrast(1.06)");
@@ -977,7 +1057,7 @@ function initHotUI(player, vid, pc, ch){
     try{ hdrScreen = window.matchMedia("(dynamic-range: high)").matches; }catch(_){}
     var r = {
       q:{max: !slow && maxH >= 720, hdr: hasHdr && hdrScreen, codec: hasMod},
-      e:{smooth:false, frost:false, ambi:false, bloom:false, vivid:false, bright:false, cinema:false}
+      e:{smooth:false, frost:false, ambi:false, bloom:false, vivid:false, bright:false, cinema:false, track:false}
     };
     if(!lowEnd){
       r.e.vivid = true;
@@ -1245,7 +1325,9 @@ function initHotUI(player, vid, pc, ch){
       });
     });
     addHead("Enhancement");
-    [["ambi","Ambient Reactive Glow"],["frost","Frosted Backdrop"],["bloom","Cinematic Bloom"],["smooth","Edge Smoothing"],["vivid","Vivid Colors"],["bright","Brightness Boost"],["cinema","Cinema Look"]].forEach(function(o){
+    if(trk.err) addNote(trk.err + " Check your connection and try again.");
+    else if(trk.loading) addNote("Loading tracking model\u2026");
+    [["ambi","Ambient Reactive Glow"],["frost","Frosted Backdrop"],["bloom","Cinematic Bloom"],["track","Human Motion Tracking"],["smooth","Edge Smoothing"],["vivid","Vivid Colors"],["bright","Brightness Boost"],["cinema","Cinema Look"]].forEach(function(o){
       addItem(o[1], enh[o[0]], function(){
         enh[o[0]] = !enh[o[0]];
         applyEnh();
@@ -1253,7 +1335,7 @@ function initHotUI(player, vid, pc, ch){
       });
     });
     addItem("Reset Enhancements", false, function(){
-      enh = {smooth:false, frost:false, ambi:false, bloom:false, vivid:false, bright:false, cinema:false};
+      enh = {smooth:false, frost:false, ambi:false, bloom:false, vivid:false, bright:false, cinema:false, track:false};
       qual = {max:false, hdr:false, codec:false};
       applyQual();
       applyEnh();
