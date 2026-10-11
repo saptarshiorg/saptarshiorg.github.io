@@ -396,6 +396,14 @@ video.mode-cover{object-fit:cover}
 </div>
 
 <div id="pc">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <filter id="enh-sharp" color-interpolation-filters="sRGB">
+      <feConvolveMatrix order="3" preserveAlpha="true" kernelMatrix="0 -0.4 0 -0.4 2.6 -0.4 0 -0.4 0"/>
+    </filter>
+    <filter id="enh-4k" color-interpolation-filters="sRGB">
+      <feConvolveMatrix order="3" preserveAlpha="true" kernelMatrix="-0.1 -0.5 -0.1 -0.5 3.4 -0.5 -0.1 -0.5 -0.1"/>
+    </filter>
+  </svg>
   <video id="v" playsinline webkit-playsinline preload="none" muted x5-video-player-type="h5" x5-video-player-fullscreen="true"></video>
 
   <div id="hs-spinner" class="hs-spinner"></div>
@@ -403,7 +411,6 @@ video.mode-cover{object-fit:cover}
   <div id="hs-flash-r" class="hs-flash r">+10s</div>
   <div id="hs" class="hs hs-show">
     <div class="hs-top">
-      <button class="hs-icon" id="hs-back" type="button" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20z"/></svg></button>
       <h2 id="hs-title"></h2>
       <div class="hs-top-right">
         <span id="hs-fit-slot"></span>
@@ -840,8 +847,18 @@ function initHotUI(player, vid, pc, ch){
   var muteBtn = el("hs-mute"), volEl = el("hs-vol"), fsBtn = el("hs-fs"), pipBtn = el("hs-pip");
   var qVal = el("hs-q-val"), spinner = el("hs-spinner");
   var hideT = null, menuOpen = false, menuKind = "", dragging = false;
+  var enhMode = "off";
+  var ENH = {
+    off:   {label:"Off",        css:""},
+    sharp: {label:"Sharpen",    css:"url(#enh-sharp) contrast(1.04) saturate(1.06)"},
+    k4:    {label:"4K Enhance", css:"url(#enh-4k) contrast(1.08) saturate(1.14) brightness(1.02)"}
+  };
+  function applyEnh(mode){
+    enhMode = mode;
+    vid.style.filter = ENH[mode].css;
+    refreshQ();
+  }
 
-  el("hs-title").textContent = ch.name || "";
 
   function fmt(s){
     s = Math.max(0, Math.floor(s));
@@ -1008,7 +1025,8 @@ function initHotUI(player, vid, pc, ch){
   }
   function refreshQ(){
     var cur = activeTrack();
-    qVal.textContent = (!abrOn() && cur && cur.height) ? cur.height + "p" : "Auto";
+    var base = (!abrOn() && cur && cur.height) ? cur.height + "p" : "Auto";
+    qVal.textContent = enhMode === "k4" ? base + " \u00b74K" : (enhMode === "sharp" ? base + " \u00b7HD+" : base);
   }
   function addHead(t){ var h = document.createElement("h4"); h.textContent = t; menu.appendChild(h); }
   function addItem(label, on, fn){
@@ -1041,6 +1059,10 @@ function initHotUI(player, vid, pc, ch){
         player.selectVariantTrack(byH[h], true);
         refreshQ(); closeMenu();
       });
+    });
+    addHead("Enhancement");
+    ["off","sharp","k4"].forEach(function(m){
+      addItem(ENH[m].label, enhMode === m, function(){ applyEnh(m); closeMenu(); });
     });
   }
   function buildAudioSubs(){
@@ -1100,10 +1122,6 @@ function initHotUI(player, vid, pc, ch){
   });
 
   /* ---------- buttons ---------- */
-  el("hs-back").addEventListener("click", function(){
-    try{ if(isFs()) (document.exitFullscreen || document.webkitExitFullscreen).call(document); }catch(_){}
-    location.href = location.pathname;
-  });
   el("hs-q-btn").addEventListener("click", function(e){ e.stopPropagation(); openMenu("q"); });
   el("hs-a-btn").addEventListener("click", function(e){ e.stopPropagation(); openMenu("a"); });
   playBtn.addEventListener("click", togglePlay);
@@ -1553,7 +1571,6 @@ async function main(){
   if(!id){ renderList(data.channels); return; }
   var ch = data.channels.find(function(c){ return c.id === id; });
   if(!ch){ errMsg("Channel Not Found."); return; }
-  document.title = ch.name;
   await startPlayer(ch);
 }
 
