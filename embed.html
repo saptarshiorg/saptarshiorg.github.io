@@ -839,7 +839,7 @@ function initHotUI(player, vid, pc, ch){
   var muteBtn = el("hs-mute"), volEl = el("hs-vol"), fsBtn = el("hs-fs"), pipBtn = el("hs-pip");
   var qVal = el("hs-q-val"), spinner = el("hs-spinner");
   var hideT = null, menuOpen = false, menuKind = "", dragging = false;
-  var enh = {smooth:false, frost:false, ambi:false, bloom:false, vivid:false, bright:false, cinema:false, track:false};
+  var enh = {smooth:false, frost:false, ambi:false, bloom:false, vivid:false, bright:false, cinema:false, track:false, bgblur:false};
   var fx = {};   /* canvas layers: frost, ambi, bloom */
   var fxT = null, fxVfc = 0;
 
@@ -866,6 +866,9 @@ function initHotUI(player, vid, pc, ch){
     return {x:(W - w) / 2, y:(H - h) / 2, w:w, h:h};
   }
   function place(l, r){
+    var key = r.x.toFixed(1) + "," + r.y.toFixed(1) + "," + r.w.toFixed(1) + "," + r.h.toFixed(1);
+    if(l.key === key) return;
+    l.key = key;
     var st = l.cv.style;
     st.left = r.x + "px"; st.top = r.y + "px"; st.width = r.w + "px"; st.height = r.h + "px";
   }
@@ -887,8 +890,7 @@ function initHotUI(player, vid, pc, ch){
       if(fx.bloom && fx.bloom.on){
         fx.bloom.ctx.drawImage(vid, 0, 0, fx.bloom.w, fx.bloom.h);
         place(fx.bloom, r);
-        fx.bloom.cv.style.transformOrigin = "50% 50%";
-        fx.bloom.cv.style.transform = fx.bloom.tf || "";
+
       }
     }catch(_){}
   }
@@ -920,88 +922,211 @@ function initHotUI(player, vid, pc, ch){
   }
   window.addEventListener("resize", function(){ if(fxT) fxTick(); });
 
-  /* ---- human motion tracking (person detection + smooth follow-zoom) ---- */
-  var trk = {on:false, model:null, loading:false, err:"", t:null, busy:false, cv:null, ctx:null,
-             s:1, bx:0.5, by:0.5, miss:0};
+  /* ---- object detection engine: shared by Human Motion Tracking and Background Blur ---- */
+  var trk = {on:false, model:null, loading:false, err:"", t:null, raf:0, busy:false, cv:null, ctx:null,
+             s:1, x:0, y:0, ts:1, tx:0, ty:0, miss:0, r:null};
+  var bg = {on:false, wrap:null, cv:null, ctx:null, l:null, objs:[], amt:0, tamt:0, none:0, W:192, H:108};
   function loadScript(src){
     return new Promise(function(ok, bad){
       var sc = document.createElement("script");
-      sc.src = src; sc.onload = ok; sc.onerror = function(){ bad(new Error("load " + src)); };
+      var to = setTimeout(function(){ bad(new Error("timeout")); }, 25000);
+      sc.src = src;
+      sc.onload = function(){ clearTimeout(to); ok(); };
+      sc.onerror = function(){ clearTimeout(to); bad(new Error("load")); };
       document.head.appendChild(sc);
     });
+  }
+  function refreshMenuIfOpen(){
+    if(menuOpen && menuKind === "q"){ menu.replaceChildren(); buildQuality(); }
   }
   async function trkLoad(){
     if(trk.model || trk.loading) return;
     trk.loading = true; trk.err = "";
+    refreshQ(); refreshMenuIfOpen();
     try{
       if(!window.tf) await loadScript("https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js");
       if(!window.cocoSsd) await loadScript("https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js");
-      trk.model = await window.cocoSsd.load({base:"lite_mobilenet_v2"});
+      try{ await tf.setBackend("webgl"); }catch(_){ try{ await tf.setBackend("cpu"); }catch(__){} }
+      await tf.ready();
+      var m = await Promise.race([
+        window.cocoSsd.load({base:"lite_mobilenet_v2"}),
+        new Promise(function(_, rej){ setTimeout(function(){ rej(new Error("timeout")); }, 40000); })
+      ]);
+      trk.model = m;
+      try{ var w = document.createElement("canvas"); w.width = 320; w.height = 180; await m.detect(w, 1, 0.9); }catch(_){}
     }catch(e){
-      trk.err = "Tracking model could not load.";
-      enh.track = false; applyEnh();
+      trk.err = "Detection model could not load.";
+      enh.track = false; enh.bgblur = false;
     }
     trk.loading = false;
+    applyEnh();
+    refreshMenuIfOpen();
   }
-  function trkApply(tf){
-    vid.style.transition = "transform .35s ease-out";
-    vid.style.transform = tf || "";
-    if(fx.bloom){ fx.bloom.cv.style.transition = "transform .35s ease-out"; fx.bloom.tf = tf || ""; }
+
+  /* ---- background blur layer: blurred copy on top, soft holes cut around every detected object ---- */
+  function bgMake(){
+    if(bg.wrap){ bg.wrap.style.display = "block"; return; }
+    var w = document.createElement("div");
+    w.style.cssText = "position:absolute;overflow:hidden;pointer-events:none;z-index:2";
+    var c = document.createElement("canvas");
+    c.width = bg.W; c.height = bg.H;
+    c.style.cssText = "position:absolute;left:0;top:0;width:100%;height:100%;filter:blur(7px) brightness(.96);transform:scale(1.1);opacity:0;will-change:opacity";
+    w.appendChild(c);
+    pc.insertBefore(w, hs);
+    bg.wrap = w; bg.cv = c; bg.ctx = c.getContext("2d"); bg.l = {cv:w, key:""};
   }
-  async function trkStep(){
-    if(!trk.on || trk.busy || !trk.model || vid.paused || vid.readyState < 2 || !vid.videoWidth) return;
+  function bgTargets(dets){
+    var objs = bg.objs, used = [];
+    dets.forEach(function(d){
+      var nw = d.bbox[2] / 320 * 1.12, nh = d.bbox[3] / 180 * 1.12;
+      var nx = (d.bbox[0] + d.bbox[2] / 2) / 320, ny = (d.bbox[1] + d.bbox[3] / 2) / 180;
+      var best = null, bd = 0.25;
+      objs.forEach(function(o){
+        if(used.indexOf(o) !== -1) return;
+        var dd = Math.hypot(o.tx - nx, o.ty - ny);
+        if(dd < bd){ bd = dd; best = o; }
+      });
+      if(best){ best.tx = nx; best.ty = ny; best.tw = nw; best.th = nh; best.ta = 1; best.miss = 0; used.push(best); }
+      else{ var o = {x:nx, y:ny, w:nw, h:nh, tx:nx, ty:ny, tw:nw, th:nh, a:0, ta:1, miss:0}; objs.push(o); used.push(o); }
+    });
+    objs.forEach(function(o){ if(used.indexOf(o) === -1 && ++o.miss >= 2) o.ta = 0; });
+    if(dets.length){ bg.none = 0; bg.tamt = 1; } else if(++bg.none >= 3){ bg.tamt = 0; }
+  }
+  function bgRender(r){
+    if(!bg.wrap || vid.readyState < 2) return;
+    place(bg.l, r);
+    var c = bg.ctx, W = bg.W, H = bg.H, objs = bg.objs, i;
+    bg.amt += (bg.tamt - bg.amt) * 0.12;
+    bg.cv.style.opacity = bg.amt.toFixed(3);
+    if(bg.amt < 0.01) return;
+    c.globalCompositeOperation = "source-over";
+    try{ c.drawImage(vid, 0, 0, W, H); }catch(_){ return; }
+    c.globalCompositeOperation = "destination-out";
+    for(i = objs.length - 1; i >= 0; i--){
+      var o = objs[i];
+      o.x += (o.tx - o.x) * 0.25; o.y += (o.ty - o.y) * 0.25;
+      o.w += (o.tw - o.w) * 0.25; o.h += (o.th - o.h) * 0.25;
+      o.a += (o.ta - o.a) * 0.2;
+      if(o.ta === 0 && o.a < 0.02){ objs.splice(i, 1); continue; }
+      c.save();
+      c.translate(o.x * W, o.y * H);
+      c.scale(Math.max(o.w * W / 2, 1), Math.max(o.h * H / 2, 1));
+      var g = c.createRadialGradient(0, 0, 0, 0, 0, 1.15);
+      g.addColorStop(0, "rgba(0,0,0," + o.a.toFixed(3) + ")");
+      g.addColorStop(0.78, "rgba(0,0,0," + o.a.toFixed(3) + ")");
+      g.addColorStop(1, "rgba(0,0,0,0)");
+      c.fillStyle = g;
+      c.beginPath(); c.arc(0, 0, 1.15, 0, 6.2832); c.fill();
+      c.restore();
+    }
+    c.globalCompositeOperation = "source-over";
+  }
+
+  /* ---- one detector pass feeds both features ---- */
+  async function detStep(){
+    if(!(trk.on || bg.on) || trk.busy || !trk.model || document.hidden || vid.paused || vid.readyState < 2 || !vid.videoWidth) return;
     trk.busy = true;
     try{
       if(!trk.cv){ trk.cv = document.createElement("canvas"); trk.cv.width = 320; trk.cv.height = 180; trk.ctx = trk.cv.getContext("2d"); }
       trk.ctx.drawImage(vid, 0, 0, 320, 180);
-      var res = await trk.model.detect(trk.cv, 6, 0.5);
-      var p = res.filter(function(d){ return d.class === "person"; });
-      var r = picRect();
-      var targetS = 1, tx = 0, ty = 0;
-      if(p.length){
-        trk.miss = 0;
-        var x1 = 1e9, y1 = 1e9, x2 = -1, y2 = -1;
-        p.forEach(function(d){
-          x1 = Math.min(x1, d.bbox[0]); y1 = Math.min(y1, d.bbox[1]);
-          x2 = Math.max(x2, d.bbox[0] + d.bbox[2]); y2 = Math.max(y2, d.bbox[1] + d.bbox[3]);
-        });
-        var nx = x1 / 320, ny = y1 / 180, nw = (x2 - x1) / 320, nh = (y2 - y1) / 180;
-        targetS = Math.max(1, Math.min(1.8, 0.6 / Math.max(nh, 0.05), 0.85 / Math.max(nw, 0.05)));
-        var cx = r.x + (nx + nw / 2) * r.w, cy = r.y + (ny + nh / 2) * r.h;
-        var ox = r.x + r.w / 2, oy = r.y + r.h / 2;
-        tx = -targetS * (cx - ox); ty = -targetS * (cy - oy);
-        var mx = (targetS - 1) * r.w / 2, my = (targetS - 1) * r.h / 2;
-        tx = Math.max(-mx, Math.min(mx, tx)); ty = Math.max(-my, Math.min(my, ty));
-      }else if(++trk.miss < 8){
-        trk.busy = false; return;          /* keep last framing briefly */
+      var res = await trk.model.detect(trk.cv, 10, 0.45);
+      var r = trk.r = picRect();
+      if(bg.on) bgTargets(res);
+      if(trk.on){
+        var p = res.filter(function(d){ return d.class === "person"; });
+        if(p.length){
+          trk.miss = 0;
+          var x1 = 1e9, y1 = 1e9, x2 = -1, y2 = -1;
+          p.forEach(function(d){
+            x1 = Math.min(x1, d.bbox[0]); y1 = Math.min(y1, d.bbox[1]);
+            x2 = Math.max(x2, d.bbox[0] + d.bbox[2]); y2 = Math.max(y2, d.bbox[1] + d.bbox[3]);
+          });
+          var nx = x1 / 320, ny = y1 / 180, nw = (x2 - x1) / 320, nh = (y2 - y1) / 180;
+          var ns = Math.max(1, Math.min(1.6, 0.6 / Math.max(nh, 0.05), 0.85 / Math.max(nw, 0.05)));
+          var px = r.x + (nx + nw / 2) * r.w, py = r.y + (ny + nh / 2) * r.h;
+          var ox = r.x + r.w / 2, oy = r.y + r.h / 2;
+          var ntx = -ns * (px - ox), nty = -ns * (py - oy);
+          var mx = (ns - 1) * r.w / 2, my = (ns - 1) * r.h / 2;
+          ntx = Math.max(-mx, Math.min(mx, ntx)); nty = Math.max(-my, Math.min(my, nty));
+          if(Math.abs(ns - trk.ts) > 0.04) trk.ts = trk.ts * 0.6 + ns * 0.4;
+          if(Math.abs(ntx - trk.tx) > r.w * 0.012) trk.tx = trk.tx * 0.6 + ntx * 0.4;
+          if(Math.abs(nty - trk.ty) > r.h * 0.012) trk.ty = trk.ty * 0.6 + nty * 0.4;
+          var smx = (trk.ts - 1) * r.w / 2, smy = (trk.ts - 1) * r.h / 2;
+          trk.tx = Math.max(-smx, Math.min(smx, trk.tx));
+          trk.ty = Math.max(-smy, Math.min(smy, trk.ty));
+        }else if(++trk.miss > 10){
+          trk.ts = 1; trk.tx = 0; trk.ty = 0;
+        }
       }
-      /* low-pass smoothing so the camera glides instead of jumping */
-      trk.s  += (targetS - trk.s)  * 0.3;
-      trk.bx += (tx - trk.bx) * 0.3;
-      trk.by += (ty - trk.by) * 0.3;
-      vid.style.transformOrigin = (r.x + r.w / 2) + "px " + (r.y + r.h / 2) + "px";
-      if(fx.bloom) fx.bloom.cv.style.transformOrigin = "50% 50%";
-      trkApply("translate(" + trk.bx.toFixed(1) + "px," + trk.by.toFixed(1) + "px) scale(" + trk.s.toFixed(3) + ")");
     }catch(_){}
     trk.busy = false;
   }
-  function trkSet(on){
-    if(on && !trk.on){
-      trk.on = true; trk.s = 1; trk.bx = 0; trk.by = 0; trk.miss = 0;
+
+  /* one smooth frame loop: zoom glide + background blur render */
+  function fxAnim(){
+    if(!(trk.on || bg.on)){ trk.raf = 0; return; }
+    var r = trk.r || (trk.r = picRect());
+    var tf = "", zoomed = false;
+    if(trk.on){
+      trk.s += (trk.ts - trk.s) * 0.08;
+      trk.x += (trk.tx - trk.x) * 0.08;
+      trk.y += (trk.ty - trk.y) * 0.08;
+      zoomed = Math.abs(trk.s - 1) > 0.002 || Math.abs(trk.x) > 0.3 || Math.abs(trk.y) > 0.3;
+      if(zoomed){
+        var cx = r.x + r.w / 2, cy = r.y + r.h / 2;
+        var X = cx * (1 - trk.s) + trk.x, Y = cy * (1 - trk.s) + trk.y;
+        vid.style.transformOrigin = "0 0";
+        vid.style.transform = "translate3d(" + X.toFixed(2) + "px," + Y.toFixed(2) + "px,0) scale(" + trk.s.toFixed(4) + ")";
+        vid.style.willChange = "transform";
+        tf = "translate3d(" + trk.x.toFixed(2) + "px," + trk.y.toFixed(2) + "px,0) scale(" + trk.s.toFixed(4) + ")";
+      }else{
+        vid.style.transform = ""; vid.style.willChange = "";
+      }
+    }
+    var layers = [];
+    if(fx.bloom) layers.push(fx.bloom.cv);
+    if(bg.wrap) layers.push(bg.wrap);
+    layers.forEach(function(el){ el.style.transformOrigin = "50% 50%"; el.style.transform = tf; });
+    if(bg.on && !vid.paused) bgRender(r);
+    trk.raf = requestAnimationFrame(fxAnim);
+  }
+  function engineSync(){
+    var need = trk.on || bg.on;
+    if(need){
       trkLoad();
-      if(!trk.t) trk.t = setInterval(trkStep, 180);
-    }else if(!on && trk.on){
-      trk.on = false;
+      if(!trk.t) trk.t = setInterval(detStep, 250);
+      if(!trk.raf) trk.raf = requestAnimationFrame(fxAnim);
+    }else{
       if(trk.t){ clearInterval(trk.t); trk.t = null; }
-      trkApply("");
+      if(trk.raf){ cancelAnimationFrame(trk.raf); trk.raf = 0; }
     }
   }
+  function trkSet(on){
+    if(on === trk.on) return;
+    trk.on = on;
+    if(on){ trk.s = 1; trk.x = trk.y = 0; trk.ts = 1; trk.tx = trk.ty = 0; trk.miss = 0; trk.r = null; }
+    else{
+      vid.style.transform = ""; vid.style.willChange = "";
+      if(fx.bloom) fx.bloom.cv.style.transform = "";
+      if(bg.wrap) bg.wrap.style.transform = "";
+    }
+    engineSync();
+  }
+  function bgSet(on){
+    if(on === bg.on) return;
+    bg.on = on;
+    if(on){ bgMake(); bg.objs = []; bg.amt = 0; bg.tamt = 0; bg.none = 0; }
+    else if(bg.wrap){ bg.wrap.style.display = "none"; bg.objs = []; }
+    engineSync();
+  }
+  window.addEventListener("resize", function(){ trk.r = null; });
 
   function applyEnh(){
-    trkSet(enh.track);
+    trkSet(!!enh.track);
+    bgSet(!!enh.bgblur);
     var f = [];
     if(enh.smooth) f.push("blur(0.45px)");
-    if(enh.vivid)  f.push("saturate(1.3)", "contrast(1.06)");
+    if(enh.vivid)  f.push("saturate(1.12)", "contrast(1.03)");
     if(enh.bright) f.push("brightness(1.15)");
     if(enh.cinema) f.push("contrast(1.15)", "saturate(.92)", "sepia(.08)");
     vid.style.filter = f.join(" ");
@@ -1057,7 +1182,7 @@ function initHotUI(player, vid, pc, ch){
     try{ hdrScreen = window.matchMedia("(dynamic-range: high)").matches; }catch(_){}
     var r = {
       q:{max: !slow && maxH >= 720, hdr: hasHdr && hdrScreen, codec: hasMod},
-      e:{smooth:false, frost:false, ambi:false, bloom:false, vivid:false, bright:false, cinema:false, track:false}
+      e:{smooth:false, frost:false, ambi:false, bloom:false, vivid:false, bright:false, cinema:false, track:false, bgblur:false}
     };
     if(!lowEnd){
       r.e.vivid = true;
@@ -1273,7 +1398,7 @@ function initHotUI(player, vid, pc, ch){
   function refreshQ(){
     var cur = activeTrack();
     var base = (!abrOn() && cur && cur.height) ? cur.height + "p" : "Auto";
-    qVal.textContent = enhCount() ? base + " \u00b7Enhanced" : base;
+    qVal.textContent = trk.loading ? base + " \u00b7Loading\u2026" : (enhCount() ? base + " \u00b7Enhanced" : base);
   }
   function addHead(t){ var h = document.createElement("h4"); h.textContent = t; menu.appendChild(h); }
   function addItem(label, on, fn){
@@ -1327,7 +1452,7 @@ function initHotUI(player, vid, pc, ch){
     addHead("Enhancement");
     if(trk.err) addNote(trk.err + " Check your connection and try again.");
     else if(trk.loading) addNote("Loading tracking model\u2026");
-    [["ambi","Ambient Reactive Glow"],["frost","Frosted Backdrop"],["bloom","Cinematic Bloom"],["track","Human Motion Tracking"],["smooth","Edge Smoothing"],["vivid","Vivid Colors"],["bright","Brightness Boost"],["cinema","Cinema Look"]].forEach(function(o){
+    [["bgblur","Background Blur"],["ambi","Ambient Reactive Glow"],["frost","Frosted Backdrop"],["bloom","Cinematic Bloom"],["track","Human Motion Tracking"],["smooth","Edge Smoothing"],["vivid","Vivid Colors"],["bright","Brightness Boost"],["cinema","Cinema Look"]].forEach(function(o){
       addItem(o[1], enh[o[0]], function(){
         enh[o[0]] = !enh[o[0]];
         applyEnh();
@@ -1335,7 +1460,7 @@ function initHotUI(player, vid, pc, ch){
       });
     });
     addItem("Reset Enhancements", false, function(){
-      enh = {smooth:false, frost:false, ambi:false, bloom:false, vivid:false, bright:false, cinema:false, track:false};
+      enh = {smooth:false, frost:false, ambi:false, bloom:false, vivid:false, bright:false, cinema:false, track:false, bgblur:false};
       qual = {max:false, hdr:false, codec:false};
       applyQual();
       applyEnh();
