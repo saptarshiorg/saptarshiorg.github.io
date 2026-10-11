@@ -957,6 +957,51 @@ function initHotUI(player, vid, pc, ch){
     return n + (qual.max?1:0) + (qual.hdr?1:0) + (qual.codec?1:0);
   }
   var qual = {max:false, hdr:false, codec:false};
+
+  /* ---- auto-suggest: pick the best option set for this stream + device + network ---- */
+  function suggest(){
+    var tr = [], maxH = 0, hasHdr = false, hasMod = false;
+    try{ tr = player.getVariantTracks(); }catch(_){}
+    tr.forEach(function(t){
+      if(t.height > maxH) maxH = t.height;
+      var c = String(t.codecs || t.videoCodec || "").toLowerCase();
+      if(t.hdr && t.hdr !== "SDR") hasHdr = true;
+      if(/av01|hvc1|hev1|vp09|vp9/.test(c)) hasMod = true;
+    });
+    var ua = navigator.userAgent, mobile = /Android|iPhone|iPad|iPod/i.test(ua);
+    var mem = navigator.deviceMemory || 4, cores = navigator.hardwareConcurrency || 4;
+    var cn = navigator.connection || {};
+    var slow = !!cn.saveData || /^(slow-2g|2g|3g)$/.test(cn.effectiveType || "") || (cn.downlink && cn.downlink < 5);
+    var lowEnd = mobile && (mem <= 2 || cores <= 4);
+    var hdrScreen = false;
+    try{ hdrScreen = window.matchMedia("(dynamic-range: high)").matches; }catch(_){}
+    var r = {
+      q:{max: !slow && maxH >= 720, hdr: hasHdr && hdrScreen, codec: hasMod},
+      e:{smooth:false, frost:false, ambi:false, bloom:false, vivid:false, bright:false, cinema:false}
+    };
+    if(!lowEnd){
+      r.e.vivid = true;
+      if(!slow && !mobile) r.e.ambi = true;
+    }
+    var parts = [];
+    parts.push(r.q.max ? (maxH ? maxH + "p max" : "Max bitrate") : "Auto quality");
+    if(r.q.hdr) parts.push("HDR");
+    if(r.q.codec) parts.push("AV1/HEVC");
+    if(r.e.vivid) parts.push("Vivid");
+    if(r.e.ambi) parts.push("Ambient Glow");
+    r.text = parts.join(" \u00b7 ");
+    r.why = slow ? "Slow or data-saver connection detected." : (lowEnd ? "Device looks low-power, so effects are kept off." : "Good connection and device.");
+    return r;
+  }
+  function sameAs(a, b){ for(var k in a) if(!!a[k] !== !!b[k]) return false; return true; }
+  function applySuggest(){
+    var r = suggest();
+    qual = r.q;
+    enh = r.e;
+    applyQual();
+    applyEnh();
+  }
+
   function applyQual(){
     try{
       player.configure({
@@ -1184,6 +1229,13 @@ function initHotUI(player, vid, pc, ch){
         refreshQ(); closeMenu();
       });
     });
+    var sg = suggest();
+    addHead("Suggested for you");
+    addItem("Auto Best", sameAs(sg.q, qual) && sameAs(sg.e, enh), function(){
+      applySuggest();
+      menu.replaceChildren(); buildQuality();
+    });
+    addNote(sg.text + ". " + sg.why);
     addHead("Picture Quality");
     [["max","Max Bitrate (best stream)"],["hdr","Prefer HDR / 10-bit"],["codec","Prefer AV1 / HEVC"]].forEach(function(o){
       addItem(o[1], qual[o[0]], function(){
