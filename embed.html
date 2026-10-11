@@ -872,8 +872,10 @@ function initHotUI(player, vid, pc, ch){
     var st = l.cv.style;
     st.left = r.x + "px"; st.top = r.y + "px"; st.width = r.w + "px"; st.height = r.h + "px";
   }
+  var fxN = 0;
   function fxTick(){
     if(vid.readyState < 2) return;
+    if((fxN++ & 1) === 1) return;     /* half rate: glow/bloom don't need every frame */
     var r = picRect();
     try{
       if(fx.frost && fx.frost.on){
@@ -976,7 +978,7 @@ function initHotUI(player, vid, pc, ch){
     bg.wrap = w; bg.cv = c; bg.ctx = c.getContext("2d"); bg.l = {cv:w, key:""};
   }
   function bgTargets(dets){
-    var objs = bg.objs, used = [];
+    var objs = bg.objs, used = [], now = performance.now();
     dets.forEach(function(d){
       var nw = d.bbox[2] / 320 * 1.12, nh = d.bbox[3] / 180 * 1.12;
       var nx = (d.bbox[0] + d.bbox[2] / 2) / 320, ny = (d.bbox[1] + d.bbox[3] / 2) / 180;
@@ -986,16 +988,72 @@ function initHotUI(player, vid, pc, ch){
         var dd = Math.hypot(o.tx - nx, o.ty - ny);
         if(dd < bd){ bd = dd; best = o; }
       });
-      if(best){ best.tx = nx; best.ty = ny; best.tw = nw; best.th = nh; best.ta = 1; best.miss = 0; used.push(best); }
-      else{ var o = {x:nx, y:ny, w:nw, h:nh, tx:nx, ty:ny, tw:nw, th:nh, a:0, ta:1, miss:0}; objs.push(o); used.push(o); }
+      if(best){
+        /* learn the object's velocity so the sharp area keeps moving between detections */
+        var dt = (now - best.lt) / 1000;
+        if(dt > 0.05 && dt < 1.5){
+          best.vx = Math.max(-1.5, Math.min(1.5, best.vx * 0.5 + ((nx - best.tx) / dt) * 0.5));
+          best.vy = Math.max(-1.5, Math.min(1.5, best.vy * 0.5 + ((ny - best.ty) / dt) * 0.5));
+        }
+        best.tx = nx; best.ty = ny; best.tw = nw; best.th = nh; best.ta = 1; best.miss = 0; best.lt = now;
+        used.push(best);
+      }else{
+        var o = {x:nx, y:ny, w:nw, h:nh, tx:nx, ty:ny, tw:nw, th:nh, vx:0, vy:0, lt:now, a:0, ta:1, miss:0};
+        objs.push(o); used.push(o);
+      }
     });
     objs.forEach(function(o){ if(used.indexOf(o) === -1 && ++o.miss >= 2) o.ta = 0; });
     if(dets.length){ bg.none = 0; bg.tamt = 1; } else if(++bg.none >= 3){ bg.tamt = 0; }
   }
+
+  /* per-pixel motion mask: anything that moves (even things the detector doesn't know) stays sharp */
+  var MW = 96, MH = 54;
+  function bgMotion(c){
+    if(bg.noMotion) return;
+    try{
+      if(!bg.mc){
+        bg.mc = document.createElement("canvas"); bg.mc.width = MW; bg.mc.height = MH;
+        bg.mctx = bg.mc.getContext("2d", {willReadFrequently:true});
+        bg.mk = document.createElement("canvas"); bg.mk.width = MW; bg.mk.height = MH;
+        bg.mkctx = bg.mk.getContext("2d");
+        bg.mimg = bg.mkctx.createImageData(MW, MH);
+        bg.prev = new Uint8Array(MW * MH);
+        bg.acc = new Float32Array(MW * MH);
+        bg.first = true;
+      }
+      bg.mctx.drawImage(vid, 0, 0, MW, MH);
+      var d = bg.mctx.getImageData(0, 0, MW, MH).data, n = MW * MH, i, cnt = 0, lum;
+      var prev = bg.prev, acc = bg.acc, out = bg.mimg.data, mv = bg.mv || (bg.mv = new Uint8Array(n));
+      for(i = 0; i < n; i++){
+        lum = (d[i * 4] * 54 + d[i * 4 + 1] * 183 + d[i * 4 + 2] * 19) >> 8;
+        var m = (!bg.first && Math.abs(lum - prev[i]) > 24) ? 1 : 0;
+        prev[i] = lum; mv[i] = m; cnt += m;
+      }
+      var global = cnt > n * 0.4;                     /* camera pan / scene cut: don't unblur everything */
+      for(i = 0; i < n; i++){
+        var x = i % MW, nb = 0;
+        if(mv[i] && !global){
+          /* ignore lone noisy pixels: need at least one moving neighbour */
+          if(x > 0 && mv[i - 1]) nb++;
+          if(x < MW - 1 && mv[i + 1]) nb++;
+          if(i >= MW && mv[i - MW]) nb++;
+          if(i < n - MW && mv[i + MW]) nb++;
+          if(nb >= 1) acc[i] = 1;
+        }
+        acc[i] *= 0.85;                                /* fade out ~0.3s after motion stops */
+        out[i * 4 + 3] = acc[i] > 0.04 ? Math.min(255, acc[i] * 255 * 1.2) : 0;
+      }
+      bg.first = false;
+      bg.mkctx.putImageData(bg.mimg, 0, 0);
+      c.imageSmoothingEnabled = true;
+      c.drawImage(bg.mk, 0, 0, bg.W, bg.H);
+    }catch(_){ bg.noMotion = true; }
+  }
+
   function bgRender(r){
     if(!bg.wrap || vid.readyState < 2) return;
     place(bg.l, r);
-    var c = bg.ctx, W = bg.W, H = bg.H, objs = bg.objs, i;
+    var c = bg.ctx, W = bg.W, H = bg.H, objs = bg.objs, i, now = performance.now();
     bg.amt += (bg.tamt - bg.amt) * 0.12;
     bg.cv.style.opacity = bg.amt.toFixed(3);
     if(bg.amt < 0.01) return;
@@ -1004,13 +1062,18 @@ function initHotUI(player, vid, pc, ch){
     c.globalCompositeOperation = "destination-out";
     for(i = objs.length - 1; i >= 0; i--){
       var o = objs[i];
-      o.x += (o.tx - o.x) * 0.25; o.y += (o.ty - o.y) * 0.25;
+      /* dead-reckon between detections: follow the learned velocity for up to half a second */
+      var h = Math.min(0.5, (now - o.lt) / 1000);
+      o.x += ((o.tx + o.vx * h) - o.x) * 0.35;
+      o.y += ((o.ty + o.vy * h) - o.y) * 0.35;
       o.w += (o.tw - o.w) * 0.25; o.h += (o.th - o.h) * 0.25;
       o.a += (o.ta - o.a) * 0.2;
       if(o.ta === 0 && o.a < 0.02){ objs.splice(i, 1); continue; }
+      /* a moving object gets a little extra margin so it never outruns its sharp area */
+      var sp = Math.min(0.25, Math.hypot(o.vx, o.vy) * 0.12);
       c.save();
       c.translate(o.x * W, o.y * H);
-      c.scale(Math.max(o.w * W / 2, 1), Math.max(o.h * H / 2, 1));
+      c.scale(Math.max((o.w + sp) * W / 2, 1), Math.max((o.h + sp) * H / 2, 1));
       var g = c.createRadialGradient(0, 0, 0, 0, 0, 1.15);
       g.addColorStop(0, "rgba(0,0,0," + o.a.toFixed(3) + ")");
       g.addColorStop(0.78, "rgba(0,0,0," + o.a.toFixed(3) + ")");
@@ -1019,6 +1082,7 @@ function initHotUI(player, vid, pc, ch){
       c.beginPath(); c.arc(0, 0, 1.15, 0, 6.2832); c.fill();
       c.restore();
     }
+    bgMotion(c);
     c.globalCompositeOperation = "source-over";
   }
 
@@ -1027,13 +1091,20 @@ function initHotUI(player, vid, pc, ch){
     if(!(trk.on || bg.on) || trk.busy || !trk.model || document.hidden || vid.paused || vid.readyState < 2 || !vid.videoWidth) return;
     trk.busy = true;
     try{
+      /* wait for an idle moment so detection never competes with video decoding */
+      await new Promise(function(ok){
+        if(window.requestIdleCallback) requestIdleCallback(ok, {timeout:400}); else setTimeout(ok, 0);
+      });
+      if(!(trk.on || bg.on)){ trk.busy = false; return; }
       if(!trk.cv){ trk.cv = document.createElement("canvas"); trk.cv.width = 320; trk.cv.height = 180; trk.ctx = trk.cv.getContext("2d"); }
       trk.ctx.drawImage(vid, 0, 0, 320, 180);
+      var t0 = performance.now();
       var res = await trk.model.detect(trk.cv, 10, 0.45);
+      trk.ms = performance.now() - t0;
       var r = trk.r = picRect();
       if(bg.on) bgTargets(res);
       if(trk.on){
-        var p = res.filter(function(d){ return d.class === "person"; });
+        var p = res;   /* every detected object drives the follow-zoom */
         if(p.length){
           trk.miss = 0;
           var x1 = 1e9, y1 = 1e9, x2 = -1, y2 = -1;
@@ -1062,7 +1133,56 @@ function initHotUI(player, vid, pc, ch){
     trk.busy = false;
   }
 
+  /* detection loop: spaces runs out by ~6x their own cost, so it uses at most ~15% of the CPU/GPU */
+  async function detLoop(){
+    trk.t = null; trk.looping = true;
+    try{ await detStep(); }catch(_){}
+    trk.looping = false;
+    if(trk.on || bg.on){
+      var d = Math.min(1500, Math.max(trk.slow ? 750 : 250, (trk.ms || 0) * 6));
+      trk.t = setTimeout(detLoop, d);
+    }
+  }
+
+  /* ---- playback guard: if effects ever cause dropped frames, back them off automatically ---- */
+  var guard = {t:null, d:0, f:0, bad:0, level:0, msg:""};
+  function heavyOn(){ return enh.ambi || enh.frost || enh.bloom || enh.track || enh.bgblur || enh.smooth; }
+  function guardReset(){
+    guard.bad = 0;
+    try{ var q = vid.getVideoPlaybackQuality(); guard.d = q.droppedVideoFrames; guard.f = q.totalVideoFrames; }catch(_){}
+  }
+  function guardTick(){
+    if(vid.paused || document.hidden || !vid.getVideoPlaybackQuality || !heavyOn()) return;
+    var q = vid.getVideoPlaybackQuality();
+    var dd = q.droppedVideoFrames - guard.d, df = q.totalVideoFrames - guard.f;
+    guard.d = q.droppedVideoFrames; guard.f = q.totalVideoFrames;
+    if(df < 20) return;
+    if(dd / df > 0.08){
+      if(++guard.bad >= 2){ guard.bad = 0; guardStepDown(); }
+    }else guard.bad = 0;
+  }
+  function guardStepDown(){
+    guard.level++;
+    if(guard.level === 1){
+      trk.slow = true;
+      enh.ambi = enh.frost = enh.bloom = false;
+    }else if(guard.level === 2){
+      enh.track = enh.bgblur = enh.smooth = false;
+    }else{
+      enh.vivid = enh.bright = enh.cinema = false;
+    }
+    guard.msg = "Effects were reduced to keep playback smooth.";
+    applyEnh();
+    refreshMenuIfOpen();
+  }
+  function guardSync(){
+    if(heavyOn()){
+      if(!guard.t){ guardReset(); guard.t = setInterval(guardTick, 2000); }
+    }else if(guard.t){ clearInterval(guard.t); guard.t = null; }
+  }
+
   /* one smooth frame loop: zoom glide + background blur render */
+  var bgN = 0;
   function fxAnim(){
     if(!(trk.on || bg.on)){ trk.raf = 0; return; }
     var r = trk.r || (trk.r = picRect());
@@ -1087,17 +1207,17 @@ function initHotUI(player, vid, pc, ch){
     if(fx.bloom) layers.push(fx.bloom.cv);
     if(bg.wrap) layers.push(bg.wrap);
     layers.forEach(function(el){ el.style.transformOrigin = "50% 50%"; el.style.transform = tf; });
-    if(bg.on && !vid.paused) bgRender(r);
+    if(bg.on && !vid.paused && (bgN++ & 1) === 0) bgRender(r);   /* ~30fps is plenty for a blurred layer */
     trk.raf = requestAnimationFrame(fxAnim);
   }
   function engineSync(){
     var need = trk.on || bg.on;
     if(need){
       trkLoad();
-      if(!trk.t) trk.t = setInterval(detStep, 250);
+      if(!trk.t && !trk.looping) trk.t = setTimeout(detLoop, 250);
       if(!trk.raf) trk.raf = requestAnimationFrame(fxAnim);
     }else{
-      if(trk.t){ clearInterval(trk.t); trk.t = null; }
+      if(trk.t){ clearTimeout(trk.t); trk.t = null; }
       if(trk.raf){ cancelAnimationFrame(trk.raf); trk.raf = 0; }
     }
   }
@@ -1115,7 +1235,7 @@ function initHotUI(player, vid, pc, ch){
   function bgSet(on){
     if(on === bg.on) return;
     bg.on = on;
-    if(on){ bgMake(); bg.objs = []; bg.amt = 0; bg.tamt = 0; bg.none = 0; }
+    if(on){ bgMake(); bg.objs = []; bg.amt = 0; bg.tamt = 0; bg.none = 0; bg.first = true; if(bg.acc) bg.acc.fill(0); }
     else if(bg.wrap){ bg.wrap.style.display = "none"; bg.objs = []; }
     engineSync();
   }
@@ -1152,6 +1272,7 @@ function initHotUI(player, vid, pc, ch){
         "z-index:2;filter:blur(14px) brightness(1.15) contrast(1.35);mix-blend-mode:screen;opacity:.32", false);
     });
 
+    guardSync();
     var any = enh.frost || enh.ambi || enh.bloom;
     if(any){ fxLoop(); fxTick(); } else fxStopLoop();
     refreshQ();
@@ -1450,11 +1571,13 @@ function initHotUI(player, vid, pc, ch){
       });
     });
     addHead("Enhancement");
+    if(guard.msg) addNote(guard.msg);
     if(trk.err) addNote(trk.err + " Check your connection and try again.");
     else if(trk.loading) addNote("Loading tracking model\u2026");
     [["bgblur","Background Blur"],["ambi","Ambient Reactive Glow"],["frost","Frosted Backdrop"],["bloom","Cinematic Bloom"],["track","Human Motion Tracking"],["smooth","Edge Smoothing"],["vivid","Vivid Colors"],["bright","Brightness Boost"],["cinema","Cinema Look"]].forEach(function(o){
       addItem(o[1], enh[o[0]], function(){
         enh[o[0]] = !enh[o[0]];
+        guard.msg = "";
         applyEnh();
         menu.replaceChildren(); buildQuality();
       });
@@ -1462,6 +1585,7 @@ function initHotUI(player, vid, pc, ch){
     addItem("Reset Enhancements", false, function(){
       enh = {smooth:false, frost:false, ambi:false, bloom:false, vivid:false, bright:false, cinema:false, track:false, bgblur:false};
       qual = {max:false, hdr:false, codec:false};
+      guard.level = 0; guard.msg = ""; trk.slow = false;
       applyQual();
       applyEnh();
       menu.replaceChildren(); buildQuality();
