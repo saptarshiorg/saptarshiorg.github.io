@@ -396,14 +396,6 @@ video.mode-cover{object-fit:cover}
 </div>
 
 <div id="pc">
-  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
-    <filter id="enh-sharp" color-interpolation-filters="sRGB">
-      <feConvolveMatrix order="3" preserveAlpha="true" kernelMatrix="0 -0.4 0 -0.4 2.6 -0.4 0 -0.4 0"/>
-    </filter>
-    <filter id="enh-4k" color-interpolation-filters="sRGB">
-      <feConvolveMatrix order="3" preserveAlpha="true" kernelMatrix="-0.1 -0.5 -0.1 -0.5 3.4 -0.5 -0.1 -0.5 -0.1"/>
-    </filter>
-  </svg>
   <video id="v" playsinline webkit-playsinline preload="none" muted x5-video-player-type="h5" x5-video-player-fullscreen="true"></video>
 
   <div id="hs-spinner" class="hs-spinner"></div>
@@ -847,15 +839,145 @@ function initHotUI(player, vid, pc, ch){
   var muteBtn = el("hs-mute"), volEl = el("hs-vol"), fsBtn = el("hs-fs"), pipBtn = el("hs-pip");
   var qVal = el("hs-q-val"), spinner = el("hs-spinner");
   var hideT = null, menuOpen = false, menuKind = "", dragging = false;
-  var enhMode = "off";
-  var ENH = {
-    off:   {label:"Off",        css:""},
-    sharp: {label:"Sharpen",    css:"url(#enh-sharp) contrast(1.04) saturate(1.06)"},
-    k4:    {label:"4K Enhance", css:"url(#enh-4k) contrast(1.08) saturate(1.14) brightness(1.02)"}
-  };
-  function applyEnh(mode){
-    enhMode = mode;
-    vid.style.filter = ENH[mode].css;
+  var enh = {smooth:false, frost:false, ambi:false, bloom:false, vivid:false, bright:false, cinema:false};
+  var fx = {};   /* canvas layers: frost, ambi, bloom */
+  var fxT = null, fxVfc = 0;
+
+  function fxLayer(name, w, h, css, behind){
+    var l = fx[name];
+    if(!l){
+      var cv = document.createElement("canvas");
+      cv.width = w; cv.height = h;
+      cv.style.cssText = "position:absolute;pointer-events:none;" + css;
+      l = fx[name] = {cv:cv, ctx:cv.getContext("2d"), w:w, h:h};
+      if(behind) pc.insertBefore(cv, pc.firstChild); else pc.insertBefore(cv, hs);
+    }
+    l.cv.style.display = "block";
+    return l;
+  }
+  /* on-screen rectangle the video picture occupies (honours fit mode) */
+  function picRect(){
+    var W = pc.clientWidth, H = pc.clientHeight, vw = vid.videoWidth, vh = vid.videoHeight;
+    if(!vw || !vh) return {x:0, y:0, w:W, h:H};
+    var m = vid.classList.contains("mode-fill") ? "fill" : (vid.classList.contains("mode-cover") ? "cover" : "contain");
+    if(m === "fill") return {x:0, y:0, w:W, h:H};
+    var sc = (m === "cover") ? Math.max(W / vw, H / vh) : Math.min(W / vw, H / vh);
+    var w = vw * sc, h = vh * sc;
+    return {x:(W - w) / 2, y:(H - h) / 2, w:w, h:h};
+  }
+  function place(l, r){
+    var st = l.cv.style;
+    st.left = r.x + "px"; st.top = r.y + "px"; st.width = r.w + "px"; st.height = r.h + "px";
+  }
+  function fxTick(){
+    if(vid.readyState < 2) return;
+    var r = picRect();
+    try{
+      if(fx.frost && fx.frost.on){
+        fx.frost.ctx.drawImage(vid, 0, 0, fx.frost.w, fx.frost.h);
+      }
+      if(fx.ambi && fx.ambi.on){
+        /* low alpha over the previous frame = smooth, motion-following glow */
+        var c = fx.ambi.ctx;
+        c.globalAlpha = 0.35;
+        c.drawImage(vid, 0, 0, fx.ambi.w, fx.ambi.h);
+        c.globalAlpha = 1;
+        place(fx.ambi, r);
+      }
+      if(fx.bloom && fx.bloom.on){
+        fx.bloom.ctx.drawImage(vid, 0, 0, fx.bloom.w, fx.bloom.h);
+        place(fx.bloom, r);
+      }
+    }catch(_){}
+  }
+  function fxLoop(){
+    if(fxT) return;
+    if(vid.requestVideoFrameCallback){
+      var step = function(){
+        if(!fxT) return;
+        fxTick();
+        fxVfc = vid.requestVideoFrameCallback(step);
+      };
+      fxT = 1; fxVfc = vid.requestVideoFrameCallback(step);
+    }else{
+      fxT = setInterval(fxTick, 50);
+    }
+  }
+  function fxStopLoop(){
+    if(!fxT) return;
+    if(vid.requestVideoFrameCallback){ try{ vid.cancelVideoFrameCallback(fxVfc); }catch(_){} }
+    else clearInterval(fxT);
+    fxT = null;
+  }
+  function fxSet(name, on, mk){
+    if(on){
+      var l = mk(); l.on = true;
+    }else if(fx[name]){
+      fx[name].on = false; fx[name].cv.style.display = "none";
+    }
+  }
+  window.addEventListener("resize", function(){ if(fxT) fxTick(); });
+
+  function applyEnh(){
+    var f = [];
+    if(enh.smooth) f.push("blur(0.45px)");
+    if(enh.vivid)  f.push("saturate(1.3)", "contrast(1.06)");
+    if(enh.bright) f.push("brightness(1.15)");
+    if(enh.cinema) f.push("contrast(1.15)", "saturate(.92)", "sepia(.08)");
+    vid.style.filter = f.join(" ");
+
+    var behind = enh.frost || enh.ambi;
+    vid.style.position = behind ? "relative" : "";
+    vid.style.zIndex = behind ? "1" : "";
+    vid.style.background = behind ? "transparent" : "";
+
+    /* Frosted backdrop: whole screen behind the picture */
+    fxSet("frost", enh.frost, function(){
+      return fxLayer("frost", 64, 36,
+        "inset:0;width:100%;height:100%;z-index:0;filter:blur(30px) brightness(.7) saturate(1.5);transform:scale(1.3)", true);
+    });
+    /* Ambient reactive glow: bleeds colour out from the picture edges */
+    fxSet("ambi", enh.ambi, function(){
+      return fxLayer("ambi", 48, 27,
+        "z-index:0;filter:blur(46px) saturate(1.7) brightness(1.1);transform:scale(1.18);opacity:.9", true);
+    });
+    /* Cinematic bloom: soft-focus highlights layered over the picture */
+    fxSet("bloom", enh.bloom, function(){
+      return fxLayer("bloom", 160, 90,
+        "z-index:2;filter:blur(14px) brightness(1.15) contrast(1.35);mix-blend-mode:screen;opacity:.32", false);
+    });
+
+    var any = enh.frost || enh.ambi || enh.bloom;
+    if(any){ fxLoop(); fxTick(); } else fxStopLoop();
+    refreshQ();
+  }
+  function enhCount(){
+    var n = 0;
+    for(var k in enh) if(enh[k]) n++;
+    return n + (qual.max?1:0) + (qual.hdr?1:0) + (qual.codec?1:0);
+  }
+  var qual = {max:false, hdr:false, codec:false};
+  function applyQual(){
+    try{
+      player.configure({
+        preferredVideoHdrLevel: qual.hdr ? "PQ" : "AUTO",
+        preferredVideoCodecs: qual.codec ? ["av01","hvc1","hev1","vp09","avc1"] : []
+      });
+    }catch(_){}
+    if(qual.max){
+      try{
+        player.configure({abr:{enabled:false, restrictions:{maxHeight:Infinity, maxBandwidth:Infinity}}});
+        var cur = activeTrack(), lang = cur ? cur.language : null, best = null;
+        player.getVariantTracks().forEach(function(t){
+          if(!t.height) return;
+          if(lang && t.language !== lang) return;
+          if(!best || t.height > best.height || (t.height === best.height && t.bandwidth > best.bandwidth)) best = t;
+        });
+        if(best) player.selectVariantTrack(best, true);
+      }catch(_){}
+    }else{
+      try{ player.configure({abr:{enabled:true}}); }catch(_){}
+    }
     refreshQ();
   }
 
@@ -1026,7 +1148,7 @@ function initHotUI(player, vid, pc, ch){
   function refreshQ(){
     var cur = activeTrack();
     var base = (!abrOn() && cur && cur.height) ? cur.height + "p" : "Auto";
-    qVal.textContent = enhMode === "k4" ? base + " \u00b74K" : (enhMode === "sharp" ? base + " \u00b7HD+" : base);
+    qVal.textContent = enhCount() ? base + " \u00b7Enhanced" : base;
   }
   function addHead(t){ var h = document.createElement("h4"); h.textContent = t; menu.appendChild(h); }
   function addItem(label, on, fn){
@@ -1050,19 +1172,40 @@ function initHotUI(player, vid, pc, ch){
     var auto = abrOn();
     addHead("Quality");
     addItem("Auto", auto, function(){
+      qual.max = false;
       player.configure({abr:{enabled:true}});
       refreshQ(); closeMenu();
     });
     heights.forEach(function(h){
       addItem(h + "p", !auto && cur && cur.height === h, function(){
+        qual.max = false;
         player.configure({abr:{enabled:false}});
         player.selectVariantTrack(byH[h], true);
         refreshQ(); closeMenu();
       });
     });
+    addHead("Picture Quality");
+    [["max","Max Bitrate (best stream)"],["hdr","Prefer HDR / 10-bit"],["codec","Prefer AV1 / HEVC"]].forEach(function(o){
+      addItem(o[1], qual[o[0]], function(){
+        qual[o[0]] = !qual[o[0]];
+        applyQual();
+        menu.replaceChildren(); buildQuality();
+      });
+    });
     addHead("Enhancement");
-    ["off","sharp","k4"].forEach(function(m){
-      addItem(ENH[m].label, enhMode === m, function(){ applyEnh(m); closeMenu(); });
+    [["ambi","Ambient Reactive Glow"],["frost","Frosted Backdrop"],["bloom","Cinematic Bloom"],["smooth","Edge Smoothing"],["vivid","Vivid Colors"],["bright","Brightness Boost"],["cinema","Cinema Look"]].forEach(function(o){
+      addItem(o[1], enh[o[0]], function(){
+        enh[o[0]] = !enh[o[0]];
+        applyEnh();
+        menu.replaceChildren(); buildQuality();
+      });
+    });
+    addItem("Reset Enhancements", false, function(){
+      enh = {smooth:false, frost:false, ambi:false, bloom:false, vivid:false, bright:false, cinema:false};
+      qual = {max:false, hdr:false, codec:false};
+      applyQual();
+      applyEnh();
+      menu.replaceChildren(); buildQuality();
     });
   }
   function buildAudioSubs(){
