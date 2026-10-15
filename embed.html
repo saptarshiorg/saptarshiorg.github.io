@@ -354,6 +354,112 @@ video.mode-cover{object-fit:cover}
   #hs-a-btn b{display:none}
   .hs-btn svg{width:26px;height:26px}
   .hs-play svg{width:40px;height:40px}
+
+  /* ---- top bar: compact, no wrapping/overflow ---- */
+  .hs-top{gap:6px;padding:max(10px,env(safe-area-inset-top,0px)) max(10px,env(safe-area-inset-right,0px)) 30px max(10px,env(safe-area-inset-left,0px))}
+  #hs-title{font-size:15px}
+  .hs-top-right{gap:2px;flex:0 0 auto}
+  #hs-fit-slot{height:36px}
+  .hs-txtbtn{padding:6px 4px;gap:4px;font-size:13px}
+  .hs-txtbtn svg{width:22px;height:22px}
+  .hs-txtbtn b{display:none}
+  #hs-q-val{font-size:12px;max-width:52px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sp-fit-btn{padding:0 4px!important}
+  .fit-pill{font-size:9px;padding:3px 5px}
+  .hs-menu{top:calc(max(10px,env(safe-area-inset-top,0px)) + 48px);right:10px;left:10px;min-width:0;max-width:none;max-height:55vh}
+
+  /* ---- bottom: seek bar + one tidy row that never overflows ---- */
+  .hs-bottom{padding:50px max(10px,env(safe-area-inset-right,0px)) max(10px,env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px))}
+  .hs-seek-row{gap:10px}
+  .hs-seek{height:34px}
+  .hs-time{min-width:48px;font-size:13px}
+  .hs-ctrl-row{gap:0;margin-top:0;justify-content:space-between}
+  .hs-btn{padding:6px;gap:2px;font-size:13px;border-radius:8px;min-width:40px;min-height:40px;justify-content:center}
+  .hs-btn svg{width:24px;height:24px}
+  .hs-skip svg{width:24px;height:20px}
+  .hs-play svg{width:34px;height:34px}
+  .hs-spacer{flex:1 1 0;min-width:0}
+  .hs-vol{flex:0 0 auto}
+
+  /* ---- center play button: smaller, truly centered, easy to tap ---- */
+  .hs-center{width:64px;height:64px;background:rgba(0,0,0,.6);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+  .hs-center svg{width:34px;height:34px;margin-left:3px}
+  .hs-spinner{width:44px;height:44px;margin:-22px 0 0 -22px;border-width:3px}
+  .hs-flash{font-size:14px;padding:10px 14px}
+  #status{top:68px;max-width:calc(100vw - 24px)}
+}
+@media(max-width:380px){
+  #hs-title{font-size:14px}
+  .hs-btn{padding:4px;min-width:36px}
+  .hs-btn svg{width:22px;height:22px}
+  .hs-skip svg{width:22px;height:18px}
+  .hs-play svg{width:30px;height:30px}
+  .hs-time{min-width:42px;font-size:12px}
+  .hs-center{width:56px;height:56px}
+  .hs-center svg{width:30px;height:30px}
+}
+/* phone in landscape: little vertical room */
+@media(max-height:480px) and (orientation:landscape){
+  .hs-top{padding-top:max(8px,env(safe-area-inset-top,0px));padding-bottom:20px}
+  .hs-bottom{padding-top:30px}
+  .hs-seek{height:26px}
+  .hs-btn{min-height:34px}
+  .hs-center{width:54px;height:54px}
+  .hs-center svg{width:28px;height:28px}
+  #status{top:54px}
+}
+/* ===== Phone: smallest compact UI, every control still usable ===== */
+@media(max-width:640px){
+  .hs-top{gap:4px;padding:max(6px,env(safe-area-inset-top,0px)) max(8px,env(safe-area-inset-right,0px)) 20px max(8px,env(safe-area-inset-left,0px))}
+  #hs-title{font-size:13px;font-weight:600}
+  .hs-top-right{gap:0}
+  #hs-fit-slot{height:30px}
+  .fit-pill{font-size:8px;padding:2px 4px;border-width:1px}
+  .hs-txtbtn{padding:4px 3px;gap:3px;font-size:11px;min-height:30px}
+  .hs-txtbtn svg{width:18px;height:18px}
+  #hs-q-val{font-size:10px;max-width:40px}
+  .hs-menu{top:calc(max(6px,env(safe-area-inset-top,0px)) + 38px);left:8px;right:8px;max-height:50vh;padding:4px}
+  .hs-menu h4{padding:6px 10px 4px;font-size:10px}
+  .hs-menu button{padding:8px 10px;font-size:13px}
+
+  .hs-bottom{padding:30px max(8px,env(safe-area-inset-right,0px)) max(6px,env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
+  .hs-seek-row{gap:8px}
+  .hs-seek{height:24px}
+  .hs-track{height:3px}
+  .hs-seek.drag .hs-track{height:5px}
+  #hs-thumb{width:12px;height:12px;margin:-6px 0 0 -6px}
+  .hs-time{min-width:38px;font-size:11px;gap:4px}
+  .hs-time.hs-live i{width:6px;height:6px}
+  .hs-ctrl-row{gap:0;margin-top:0}
+  .hs-btn{padding:4px;gap:1px;font-size:11px;min-width:32px;min-height:32px;border-radius:6px}
+  .hs-btn svg{width:20px;height:20px}
+  .hs-skip svg{width:20px;height:16px}
+  .hs-play svg{width:26px;height:26px}
+
+  .hs-center{width:48px;height:48px}
+  .hs-center svg{width:26px;height:26px;margin-left:2px}
+  .hs-spinner{width:34px;height:34px;margin:-17px 0 0 -17px;border-width:3px}
+  .hs-flash{font-size:12px;padding:7px 11px;margin-top:-16px}
+  #status{top:50px;height:22px;min-width:0;font-size:8px;padding:0 10px 0 8px}
+}
+@media(max-width:380px){
+  #hs-title{font-size:12px}
+  .hs-btn{min-width:28px;min-height:30px;padding:3px}
+  .hs-btn svg{width:18px;height:18px}
+  .hs-skip svg{width:18px;height:14px}
+  .hs-play svg{width:24px;height:24px}
+  .hs-time{min-width:34px;font-size:10px}
+  .hs-center{width:42px;height:42px}
+  .hs-center svg{width:22px;height:22px}
+}
+@media(max-height:480px) and (orientation:landscape){
+  .hs-top{padding-bottom:12px}
+  .hs-bottom{padding-top:18px}
+  .hs-seek{height:20px}
+  .hs-btn{min-height:28px}
+  .hs-center{width:40px;height:40px}
+  .hs-center svg{width:22px;height:22px}
+  #status{top:40px}
 }
 /* Unbounded only for EV branding */
 .logo,#ch-title{font-family:var(--brand)}
