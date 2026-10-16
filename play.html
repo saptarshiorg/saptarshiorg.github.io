@@ -275,6 +275,22 @@ video.mode-cover{object-fit:cover}
   #status{top:40px}
 }
 @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition:none!important}}
+
+/* ===== Shared compact mobile switchers (Fit / Quality / Audio & Subs) — identical in play + embed ===== */
+@media(max-width:640px),(pointer:coarse) and (max-height:520px){
+  .hs-top-right{gap:2px;flex:0 0 auto;align-items:center}
+  #hs-fit-slot{height:26px}
+  .fit-pill{font-size:8px;padding:2px 4px;border-width:1px;border-radius:3px}
+  .sp-fit-btn{padding:0 2px!important;min-width:0!important}
+  .hs-txtbtn{padding:2px 4px;gap:3px;font-size:10px;min-height:26px;border-radius:6px}
+  .hs-txtbtn b{display:none}
+  .hs-txtbtn svg{width:16px;height:16px}
+  #hs-q-val{font-size:9px;font-weight:700;max-width:34px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .hs-menu{top:calc(max(6px,env(safe-area-inset-top,0px)) + 36px)!important;left:auto!important;right:8px!important;width:140px!important;min-width:0!important;max-width:calc(100vw - 16px)!important;max-height:46vh;padding:3px!important;border-radius:10px}
+  .hs-menu h4{padding:5px 8px 3px;font-size:9px}
+  .hs-menu p{padding:6px 8px;font-size:11px;line-height:1.35}
+  .hs-menu button{padding:6px 8px;font-size:11px;gap:6px;border-radius:6px;line-height:1.25}
+}
 </style>
 </head>
 <body>
