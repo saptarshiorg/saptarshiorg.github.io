@@ -178,7 +178,7 @@ video.mode-cover{object-fit:cover}
 .hs-flash.l{left:12%}.hs-flash.r{right:12%}.hs-flash.on{opacity:1}
 .hs-menu{
   position:absolute;top:calc(max(16px,env(safe-area-inset-top,0px)) + 66px);right:clamp(14px,3vw,40px);
-  min-width:240px;max-width:min(320px,calc(100vw - 28px));max-height:60vh;overflow:auto;padding:8px;
+  width:176px;max-height:60vh;overflow:auto;padding:4px;
   background:rgba(20,20,24,.96);border:1px solid rgba(255,255,255,.1);border-radius:12px;
   -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)
 }
@@ -188,8 +188,8 @@ video.mode-cover{object-fit:cover}
 .hs-menu h4{margin:0;padding:10px 12px 6px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.5)}
 .hs-menu p{margin:0;padding:12px;font-size:14px;color:rgba(255,255,255,.6)}
 .hs-menu button{
-  display:flex;width:100%;align-items:center;justify-content:space-between;gap:12px;padding:12px;
-  background:none;border:0;border-radius:8px;color:#fff;font-size:16px;font-weight:500;text-align:left;cursor:pointer
+  display:flex;width:100%;align-items:center;justify-content:space-between;gap:12px;padding:9px 10px;
+  background:none;border:0;border-radius:8px;color:#fff;font-size:14px;font-weight:500;text-align:left;cursor:pointer
 }
 .hs-menu button:hover{background:rgba(255,255,255,.1)}
 .hs-menu button.on{font-weight:700}
@@ -218,7 +218,7 @@ video.mode-cover{object-fit:cover}
 .esoc-d{color:#b3b9ff}.esoc-t{color:#86d6fb}
 
 /* ---- phone ---- */
-@media(max-width:640px){
+@media(max-width:640px),(pointer:coarse) and (max-height:520px){
   #hs-a-btn b{display:none}
   .hs-top{gap:4px;padding:max(6px,env(safe-area-inset-top,0px)) max(8px,env(safe-area-inset-right,0px)) 20px max(8px,env(safe-area-inset-left,0px))}
   #hs-title{font-size:13px;font-weight:600}
@@ -232,9 +232,9 @@ video.mode-cover{object-fit:cover}
   .hs-txtbtn b{display:none}
   .hs-txtbtn svg{width:18px;height:18px}
   #hs-q-val{font-size:10px;max-width:40px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .hs-menu{top:calc(max(6px,env(safe-area-inset-top,0px)) + 38px);left:8px;right:8px;min-width:0;max-width:none;max-height:50vh;padding:4px}
+  .hs-menu{top:calc(max(6px,env(safe-area-inset-top,0px)) + 38px);left:auto;right:8px;width:150px;min-width:0;max-width:none;max-height:50vh;padding:3px}
   .hs-menu h4{padding:6px 10px 4px;font-size:10px}
-  .hs-menu button{padding:8px 10px;font-size:13px}
+  .hs-menu button{padding:7px 9px;font-size:12px}
   .hs-bottom{padding:30px max(8px,env(safe-area-inset-right,0px)) max(6px,env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
   .hs-seek-row{gap:8px}
   .hs-seek{height:24px}
@@ -925,7 +925,7 @@ async function loadStream(url,fallbacks){
   hasError=false;
   var urls=[url].concat((fallbacks||[]).filter(function(u){return u&&u!==url;}));
   var lastErr=null, used=null;
-  if(shaka.Player.isBrowserSupported()){
+  if(window.shaka && shaka.Player.isBrowserSupported()){
     for(var i=0;i<urls.length;i++){
       if(!urls[i]) continue;
       try{ await tryShaka(urls[i]); lastErr=null; used=urls[i]; break; }
@@ -983,7 +983,7 @@ function resolve(data){
   return {type:'single',url:u,fallbacks:fb};
 }
 
-shaka.polyfill.installAll();
+if(window.shaka) shaka.polyfill.installAll();
 function start(){
   clearTimeout(retryT);
   showLoad();
