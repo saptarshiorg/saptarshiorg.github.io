@@ -9943,7 +9943,7 @@ html:root:root body #stream-player-loading #sp-loading-spinner{
 
 /* ===== EVORA sidebar logo: same mark both states (larger), bold coloured name when expanded ===== */
 html:root:root:root:root:root body #hs-rail .in .logo .evw{ display:none !important; }
-html:root:root:root:root:root body #hs-rail .in .logo{ padding-left:9px !important; gap:10px; height:44px !important; align-items:center !important; }
+html:root:root:root:root:root body #hs-rail .in .logo{ padding-left:1px !important; gap:10px; height:44px !important; align-items:center !important; }
 html:root:root:root:root:root body #hs-rail .in .logo .rail-logo-img,
 html:root:root:root:root:root body #hs-rail:hover .in .logo .rail-logo-img,
 html:root:root:root:root:root body #hs-rail:hover .in .logo img{

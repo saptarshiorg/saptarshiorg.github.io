@@ -2822,6 +2822,22 @@ function sxFmtMatchStartTime(info) {
 // screen when there's more than one server, otherwise falls straight
 // through to sxGoToMatchUrl exactly like before. serversEnc / matchInfoEnc
 // are URI-encoded JSON strings built by sxServersEnc / sxMatchInfoEnc.
+/* Redirect links: URLs that must open on their own site instead of the in-app player
+   (YouTube channel / @handle / streams / watch / youtu.be pages — NOT /embed/ links). */
+function sxIsRedirectUrl(url) {
+  const u = String(url || '').trim();
+  if (!/^https?:\/\//i.test(u)) return false;
+  let p; try { p = new URL(u); } catch (err) { return false; }
+  const h = p.hostname.replace(/^(www|m)\./, '');
+  if (h === 'youtu.be') return true;
+  if (h === 'youtube.com') return !/^\/embed\//.test(p.pathname);
+  return false;
+}
+function sxRedirectTo(url) {
+  const w = window.open(url, '_blank', 'noopener');
+  if (!w) window.location.href = url; // popup blocked -> same tab
+}
+
 function sxHandleMatchWatch(e, serversEnc, fallbackUrl, name, matchInfoEnc) {
   let servers = [];
   try { servers = JSON.parse(decodeURIComponent(serversEnc || '')); } catch (err) { servers = []; }
@@ -2829,6 +2845,11 @@ function sxHandleMatchWatch(e, serversEnc, fallbackUrl, name, matchInfoEnc) {
   // links yet (the selector then shows an empty "no servers" state).
   if (e && e.preventDefault) e.preventDefault();
   if (e && e.stopPropagation) e.stopPropagation();
+  // Redirect-only links (YouTube channel/streams/watch pages) can't be embedded:
+  // if the match's only stream is one of these, go straight to YouTube.
+  const _valid = (servers || []).filter(function (sv) { return sv && sv.url && String(sv.url).trim(); });
+  if (_valid.length === 1 && sxIsRedirectUrl(_valid[0].url)) { sxRedirectTo(_valid[0].url); return false; }
+  if (!_valid.length && sxIsRedirectUrl(fallbackUrl)) { sxRedirectTo(fallbackUrl); return false; }
   let info = { name };
   try { info = JSON.parse(decodeURIComponent(matchInfoEnc || '')); } catch (err) { /* keep fallback */ }
   openMatchWatchScreen(servers || [], info);
