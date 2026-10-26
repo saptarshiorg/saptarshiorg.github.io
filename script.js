@@ -2403,8 +2403,8 @@ function renderNav(rows) {
     const mclick = r.onclick ? ` onclick="closeDrawer();${r.onclick}"` : ' onclick="closeDrawer()"';
     mHtml += `<a href="${r.href}"${sxtab}${target}${mclick}>${r.label}</a>`;
   });
-  // VIP Player — hamburger drawer only (desktop already has the header button)
-  mHtml += `<a href="#" class="drawer-vip" onclick="closeDrawer();openVip();return false;"><span class="drawer-vip-icon"><svg viewBox="0 0 24 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2 6.5a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm20 0a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm-10-2a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zM2 7.8l4.6 3.4L12 5l5.4 6.2L22 7.8 20 17H4L2 7.8z"/></svg></span>VIP Player</a>`;
+  // GOLD — hamburger drawer only (desktop already has the header button)
+  mHtml += `<a href="#" class="drawer-vip" onclick="closeDrawer();openVip();return false;"><span class="drawer-vip-icon"><svg viewBox="0 0 24 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2 6.5a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm20 0a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm-10-2a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zM2 7.8l4.6 3.4L12 5l5.4 6.2L22 7.8 20 17H4L2 7.8z"/></svg></span>GOLD</a>`;
   desktop.innerHTML = dHtml;
   drawerNav.innerHTML = mHtml;
   // MOVIES — reuses the nav-movies-link / drawer-movies styling that was
@@ -8430,7 +8430,7 @@ window.sxHeroCustom=function(base,all){
     ['Movies',ic('<rect x="3" y="8" width="18" height="13" rx="2"/><path d="M3 12.5h18M6.5 8 9 3.5M12 8l2.5-4.5M17.5 8 20 4"/>'),function(){if(window.hsmOpen)hsmOpen('movie');else if(window.openMoviesOverlay)openMoviesOverlay();},1],
     ['TV Shows',ic('<rect x=\"3\" y=\"7\" width=\"18\" height=\"13\" rx=\"2\"/><path d=\"M8 3l4 4 4-4\"/>'),function(){if(window.hsmOpen)hsmOpen('tv');},1],
     'sep',
-    ['VIP Player',ic('<path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"/>'),D('openVip')],
+    ['GOLD',ic('<path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"/>'),D('openVip')],
     ['Discord',cl('.btn-discord svg',ic('<circle cx="12" cy="12" r="9"/>')),'https://discord.gg/w46C6mQgrY'],
     ['Telegram',cl('.btn-telegram svg',ic('<path d="M21 4L3 11l6 2.5L11.5 20l3-4.5L19 19z"/>')),'https://t.me/rishievofficial'],
   ];
@@ -11636,6 +11636,7 @@ document.addEventListener('DOMContentLoaded',function(){scan(document);try{new M
     el.style.setProperty('color',css,'important'); el.style.setProperty('-webkit-text-fill-color',css,'important'); el.dataset.wtc3=1;
   }
   function fix(el){
+    if(document.documentElement.getAttribute('data-theme')==='dark') return; /* dark theme: nothing to fix (measured 0 repaints) — skip the costly style scan */
     if(el.nodeType!==1||SKIP[el.tagName.toUpperCase()]||el.closest('svg,#stream-player-overlay,[data-wtkeep],#wt-stripes,#wt-eye,video,#sxs-pop,#hsm-pop,#evt-pop,#va-tv-modal,#hs-rail,#sxv,.fcx-carousel-slide,#dmca-modal,.footer-vip,.sxs-time,.sxs-end,.sxs-live,.sxs-tl,.hsm-vg')) return;
     var has=false,n=el.firstChild;while(n){if(n.nodeType===3&&n.nodeValue.trim()){has=true;break;}n=n.nextSibling;}
     if(!has) return;
@@ -12265,4 +12266,31 @@ I.addEventListener('keydown',function(e){
 window.evTerm=term;
 function init(){var m=root.getAttribute('data-ui');if(NEW.indexOf(m)>=0)window.evXBuild(m)}
 init();setTimeout(init,600);setTimeout(init,2000);window.addEventListener('load',function(){init();setTimeout(init,800)});
+})();
+
+
+;
+/* ===== GOLD membership: replaces the old VIP Player. Membership is currently unavailable. ===== */
+(function(){
+  var MSG='Membership is currently unavailable due to some unknown reasons.';
+  function build(){
+    if(document.getElementById('gold-modal')) return;
+    var st=document.createElement('style');
+    st.textContent='#gold-modal{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.72);backdrop-filter:blur(6px)}'+
+    '#gold-modal.open{display:flex}#gold-modal .gm{width:min(420px,100%);background:#0c0c10;border:1px solid rgba(255,196,60,.35);border-radius:22px;padding:30px 26px 24px;text-align:center;color:#f2f4f8;font:500 14px system-ui,-apple-system,Segoe UI,sans-serif;box-shadow:0 30px 80px -20px rgba(0,0,0,.8),0 0 60px -20px rgba(255,190,50,.35)}'+
+    '#gold-modal .gi{width:56px;height:56px;margin:0 auto 14px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#ffd76a,#d9962b);color:#2a1a00}'+
+    '#gold-modal .gi svg{width:28px;height:28px}#gold-modal h2{font-size:22px;font-weight:800;letter-spacing:.14em;background:linear-gradient(90deg,#ffe08a,#e0a030);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:10px}'+
+    '#gold-modal p{color:#b4b9c5;line-height:1.55;margin-bottom:20px}#gold-modal button{border:0;border-radius:999px;padding:11px 28px;font:700 14px inherit;font-family:inherit;color:#2a1a00;background:linear-gradient(135deg,#ffd76a,#e0a030);cursor:pointer}';
+    document.head.appendChild(st);
+    var m=document.createElement('div');m.id='gold-modal';m.setAttribute('role','dialog');m.setAttribute('aria-modal','true');m.setAttribute('aria-label','GOLD');
+    m.innerHTML='<div class="gm"><div class="gi"><svg viewBox="0 0 24 20" fill="currentColor"><path d="M2 6.5a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm20 0a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zm-10-2a1.8 1.8 0 100-3.6 1.8 1.8 0 000 3.6zM2 7.8l4.6 3.4L12 5l5.4 6.2L22 7.8 20 17H4L2 7.8z"/></svg></div><h2>GOLD</h2><p>'+MSG+'</p><button type="button">OK</button></div>';
+    m.addEventListener('click',function(e){ if(e.target===m||e.target.tagName==='BUTTON') closeGold(); });
+    document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeGold(); });
+    document.body.appendChild(m);
+  }
+  function openGold(e){ if(e&&e.preventDefault) e.preventDefault(); build(); document.getElementById('gold-modal').classList.add('open'); return false; }
+  function closeGold(){ var m=document.getElementById('gold-modal'); if(m) m.classList.remove('open'); }
+  window.openGold=openGold; window.closeGold=closeGold;
+  window.openVip=openGold;   /* every old VIP Player button now opens GOLD */
+  window.closeVip=closeGold;
 })();

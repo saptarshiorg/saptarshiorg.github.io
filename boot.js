@@ -1,3 +1,17 @@
+/* No splash loader on every page: show it only on the first home visit of a session.
+   Section pages (/movies, /tv, /live, /sports, /search, /vip) and repeat visits skip it. */
+(function(){
+  try{
+    var home=/(^\/$|\/index\.html$|\/$)/.test(location.pathname)||location.pathname==='';
+    var seen=sessionStorage.getItem('ev_loader_seen')==='1';
+    if(!home||seen){
+      var st=document.createElement('style');
+      st.textContent='#cms-loader{display:none!important}';
+      document.head.appendChild(st);
+    }
+    sessionStorage.setItem('ev_loader_seen','1');
+  }catch(e){}
+})();
 try{localStorage.removeItem('ev_ui_mode');}catch(e){}
 ;
 
@@ -134,3 +148,19 @@ try{localStorage.removeItem('ev_ui_mode');}catch(e){}
 ;
 
   // ↑↑↑  PASTE YOUR GOOGLE SHEETS ID ABOVE  ↑↑↑
+
+/* Offline-first app shell: JS/CSS come from the service-worker cache (instant) after the first visit. */
+(function(){
+  if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol)) return;
+  addEventListener('load',function(){ navigator.serviceWorker.register('/sw.js').catch(function(){}); });
+})();
+
+/* Section pages (/movies /tv /live): the home content sits hidden behind the full-screen section, so
+   don't lay it out or paint it — thousands of fewer elements for the browser to style. Closing the section
+   returns to home, which renders everything normally. */
+(function(){
+  if(!/^\/(movies|tv|live)(\.html)?\/?$/.test(location.pathname)) return;
+  var st=document.createElement('style');
+  st.textContent='#hero-section,#sxTabPanels,#sxs-home,.social-bar,body>footer{display:none!important}';
+  document.head.appendChild(st);
+})();
