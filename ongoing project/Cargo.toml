@@ -1,0 +1,8 @@
+[package]
+name = "rishi-forge"
+version = "0.1.0"
+edition = "2021"
+description = "A small Rust utility that generates a clearly labeled 30 MB demo data file"
+license = "MIT"
+
+[dependencies]
