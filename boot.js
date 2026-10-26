@@ -1,10 +1,64 @@
+/* EVORA fast-data layer: parallel prefetch of every API at page open, in-flight de-dupe,
+   stale-while-revalidate disk cache (Cache API) for the first seconds of a visit, network-first after. */
+(function(){
+  if (!window.fetch || !window.caches || window.__evFast) return;
+  window.__evFast = 1;
+  var orig = window.fetch.bind(window), C = window.EV_CONFIG || {}, T0 = Date.now();
+  var inflight = {}, CN = 'ev-data-v1';
+  var HOSTS = /^(docs\.google\.com|raw\.githubusercontent\.com|sonujson-v5\.pages\.dev|vidapi\.ru|iptv-org\.github\.io|api\.allorigins\.win|corsproxy\.io)$/;
+  function keyOf(u){ try { var x = new URL(u, location.href); x.searchParams.delete('t'); return x.href; } catch(e){ return u; } }
+  function hostOK(u){ try { return HOSTS.test(new URL(u, location.href).hostname); } catch(e){ return false; } }
+  function ttl(u){ return /docs\.google\.com/.test(u) ? 600000 : /vidapi|iptv/.test(u) ? 1800000 : 180000; }  /* max age usable instantly */
+  function meta(){ try { return JSON.parse(localStorage.getItem('ev_fm') || '{}'); } catch(e){ return {}; } }
+  function setMeta(k){ try { var m = meta(); m[k] = Date.now(); localStorage.setItem('ev_fm', JSON.stringify(m)); } catch(e){} }
+
+  function net(input, init, key){
+    if (inflight[key]) return inflight[key].then(function(r){ return r.clone(); });
+    var p = orig(input, init).then(function(res){
+      if (res && res.ok){ var cp = res.clone(); caches.open(CN).then(function(c){ return c.put(key, cp); }).then(function(){ setMeta(key); }).catch(function(){}); }
+      return res;
+    });
+    inflight[key] = p;
+    var done = function(){ setTimeout(function(){ if (inflight[key] === p) delete inflight[key]; }, 0); };
+    p.then(done, done);
+    return p.then(function(r){ return r.clone(); });
+  }
+
+  window.fetch = function(input, init){
+    var url = typeof input === 'string' ? input : (input && input.url);
+    var method = ((init && init.method) || (input && input.method) || 'GET').toUpperCase();
+    if (method !== 'GET' || !url || !hostOK(url)) return orig(input, init);
+    var key = keyOf(url), age = Date.now() - (meta()[key] || 0), warm = Date.now() - T0 < 20000;
+    return caches.open(CN).then(function(c){ return c.match(key); }).catch(function(){ return null; }).then(function(hit){
+      if (hit && warm && age < ttl(url)){                      /* instant paint from last visit; refresh quietly for next time */
+        net(input, init, key).catch(function(){});
+        return hit;
+      }
+      var n = net(input, init, key);
+      if (!hit) return n;
+      return new Promise(function(res){                         /* network wins if quick, else cached copy after 3.5s / on error */
+        var t = setTimeout(function(){ res(hit); }, 3500);
+        n.then(function(r){ clearTimeout(t); res(r); }, function(){ clearTimeout(t); res(hit); });
+      });
+    });
+  };
+
+  /* ---- prefetch everything in parallel, right now ---- */
+  try {
+    var urls = [C.FANCODE_CNPTV, C.FANCODE_WORLD, C.SONYLIV_API].concat(C.WILLOW_APIS || []);
+    if (C.SHEET_ID && C.SHEET_URL) ['SETTINGS','TICKER','NAVBAR','HERO SLIDES','MATCH CARDS','LIVE CHANNELS','CATEGORIES','BROADCAST','SCHEDULE','SOCIAL LINKS','FOOTER','WATCH POPUP','PANELS'].forEach(function(n){ urls.push(C.SHEET_URL(C.SHEET_ID, n)); });
+    ['movies','tvshows'].forEach(function(p){ urls.push('https://vidapi.ru/' + p + '/latest/page-1.json'); });
+    urls.forEach(function(u){ if (u) window.fetch(u).catch(function(){}); });
+  } catch(e){}
+})();
+
 /* No splash loader on every page: show it only on the first home visit of a session.
    Section pages (/movies, /tv, /live, /sports, /search, /vip) and repeat visits skip it. */
 (function(){
   try{
     var home=/(^\/$|\/index\.html$|\/$)/.test(location.pathname)||location.pathname==='';
     var seen=sessionStorage.getItem('ev_loader_seen')==='1';
-    if(!home||seen){
+    if(!home){
       var st=document.createElement('style');
       st.textContent='#cms-loader{display:none!important}';
       document.head.appendChild(st);
@@ -120,7 +174,7 @@ try{localStorage.removeItem('ev_ui_mode');}catch(e){}
 })();
 
 ;
-(function(){try{window.__hsmEarly={};window.__hsmKick=function(){if(window.__hsmKicked)return;window.__hsmKicked=true;['movies','tvshows'].forEach(function(p){var u='https://vidapi.ru/'+p+'/latest/page-1.json',ac=window.AbortController?new AbortController():null,tm=ac?setTimeout(function(){ac.abort();},4500):0;window.__hsmEarly[p]=fetch(u,ac?{signal:ac.signal}:undefined).then(function(r){clearTimeout(tm);if(!r.ok)throw 0;return r.json();}).catch(function(){return null;});});};window.addEventListener('sx:feeds-ready',function(){setTimeout(window.__hsmKick,500);});setTimeout(window.__hsmKick,9000);}catch(e){}})();
+(function(){try{window.__hsmEarly={};window.__hsmKick=function(){if(window.__hsmKicked)return;window.__hsmKicked=true;['movies','tvshows'].forEach(function(p){var u='https://vidapi.ru/'+p+'/latest/page-1.json',ac=window.AbortController?new AbortController():null,tm=ac?setTimeout(function(){ac.abort();},4500):0;window.__hsmEarly[p]=fetch(u,ac?{signal:ac.signal}:undefined).then(function(r){clearTimeout(tm);if(!r.ok)throw 0;return r.json();}).catch(function(){return null;});});};window.__hsmKick();window.addEventListener('sx:feeds-ready',function(){window.__hsmKick();});}catch(e){}})();
 ;
 
 /* PERF: pause 1s+ interval timers while the tab is hidden; console.log off unless ?debug */
@@ -163,4 +217,44 @@ try{localStorage.removeItem('ev_ui_mode');}catch(e){}
   var st=document.createElement('style');
   st.textContent='#hero-section,#sxTabPanels,#sxs-home,.social-bar,body>footer{display:none!important}';
   document.head.appendChild(st);
+})();
+
+/* EVORA rotating loader messages: every circular section loader gets short, context-aware lines that change every ~2.4s */
+(function(){
+  var SETS = {
+    movies:['Getting the best movies for you','Picking fresh releases','Lining up top-rated titles','Almost ready for movie night'],
+    tv:['Finding binge-worthy shows','Loading the latest episodes','Gathering trending series','Setting up your watchlist'],
+    live:['Tuning into live channels','Checking who is on air','Finding the clearest signals','Warming up your channels'],
+    sports:['Getting high quality sports feeds','Finding live matches near kickoff','Syncing scores and servers','Lining up the best streams'],
+    generic:['Getting things ready','Fetching the latest for you','Hang tight, almost there','Loading something good']
+  };
+  function ctx(el){
+    var t='', n=el, i=0;
+    while(n && n!==document.body && i++<6){ t+=' '+(n.id||'')+' '+(typeof n.className==='string'?n.className:''); n=n.parentElement; }
+    t=t.toLowerCase();
+    if(/movie|film|poster/.test(t)) return 'movies';
+    if(/\btv\b|tvshow|series|show/.test(t)) return 'tv';
+    if(/channel|live-?tv|epg|ch-/.test(t)) return 'live';
+    if(/fixture|match|smo|fcx|sport|schedule|slide|hero|hsm|sxs/.test(t)) return 'sports';
+    return 'generic';
+  }
+  function mk(host, abs){
+    if(host.__evm) return; host.__evm=1;
+    var set=SETS[ctx(host)]||SETS.generic, i=Math.floor(Math.random()*set.length);
+    var d=document.createElement('div'); d.className='ev-msg'+(abs?' ev-msg-abs':''); d.textContent=set[i];
+    host.appendChild(d);
+    var iv=setInterval(function(){
+      if(!d.isConnected){ clearInterval(iv); return; }
+      d.style.opacity=0;
+      setTimeout(function(){ i=(i+1)%set.length; d.textContent=set[i]; d.style.opacity=1; },260);
+    },2400);
+  }
+  function scan(){
+    try{
+      document.querySelectorAll(':is(div,section,ul):not(.sk-row):has(> .sk), :is(div,section):has(> .sk-row), .mh-slide.mh-sk').forEach(function(h){ if(h.offsetParent!==null || h.classList.contains('mh-sk')) mk(h,true); });
+      document.querySelectorAll('.ev-rl-wrap, .hsm-loading, .sxs-empty, .epg-no-results').forEach(function(h){ if(h.querySelector('.ev-rl')) mk(h,false); });
+    }catch(e){}
+  }
+  function start(){ scan(); new MutationObserver(function(){ clearTimeout(start.t); start.t=setTimeout(scan,60); }).observe(document.documentElement,{childList:true,subtree:true}); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start); else start();
 })();

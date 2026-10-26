@@ -49,7 +49,9 @@ video.mode-cover{object-fit:cover}
   transition:opacity .4s;pointer-events:none
 }
 #overlay.gone{opacity:0}
-#overlay svg{width:32px;height:32px;animation:ks-spin .8s linear infinite;display:block}
+#overlay .ev-rl{--s:72px;position:relative;display:block;width:72px;height:72px}
+#overlay .ev-rl::before{content:"";position:absolute;inset:0;border-radius:50%;border:3px solid rgba(255,255,255,.14);border-top-color:#9d6bff;animation:ks-spin .85s linear infinite}
+#overlay .ev-rl::after{content:"";position:absolute;inset:20%;border-radius:50%;background:url(evora-icon.png) center/contain no-repeat}
 #overlay p{color:#686868;font-size:11px;letter-spacing:.8px;text-align:center;padding:0 24px;text-transform:uppercase}
 
 /* ---- status pill ---- */
@@ -347,7 +349,7 @@ video.mode-cover{object-fit:cover}
   <div id="status"></div>
 
   <div id="overlay">
-    <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><circle cx="16" cy="16" r="13" fill="none" stroke="#F0146E" stroke-width="3" stroke-linecap="round" stroke-dasharray="21.24 60.44"/></svg>
+    <span class="ev-rl" aria-hidden="true"></span>
     <p>Connecting to stream</p>
   </div>
 

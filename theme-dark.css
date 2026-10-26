@@ -503,3 +503,70 @@ html:root:root body #dmca-modal :is(#dmca-close){background:#181B22 !important;c
 
 html:root:root body #stream-player-overlay #sp-adblock-banner :is(a,b,strong){color:#c4a5ff !important;-webkit-text-fill-color:#c4a5ff !important}
 
+
+/* ── section smoothness: soft enter on filter/tab change, cheaper off-screen sections ── */
+@keyframes smoEnter{from{opacity:0;transform:translate3d(0,10px,0)}to{opacity:1;transform:none}}
+.smo-section.smo-enter,.smo-card.smo-enter{animation:smoEnter .38s cubic-bezier(.22,.61,.36,1) both}
+.smo-section,.sxs-sec{content-visibility:auto;contain-intrinsic-size:auto 420px}
+.smo-section,.smo-card,.fx2-card{backface-visibility:hidden}
+@media (prefers-reduced-motion:reduce){.smo-section.smo-enter,.smo-card.smo-enter{animation:none}}
+
+/* server selector: channel logos sit directly on the row, no box / tile behind them */
+.mws-server-icon,.mws-server-thumb,.mws-server-logo-lg,.mws-server-thumb img{background:transparent !important;background-color:transparent !important;border:0 !important;box-shadow:none !important;border-radius:0 !important;padding:0 !important}
+.mws-server-icon{width:auto !important;height:34px !important;max-width:96px !important;object-fit:contain !important}
+.mws-server-thumb{overflow:visible !important;aspect-ratio:auto !important;width:auto !important;max-width:96px !important;height:40px !important;display:flex !important;align-items:center !important}
+.mws-server-thumb img{width:auto !important;height:100% !important;max-width:96px !important;object-fit:contain !important}
+html:root:root body #sxv .sxv-ic{background:transparent !important;border-radius:0 !important;box-shadow:none !important;border:0 !important;flex:0 0 64px !important;height:40px !important}
+html:root:root body #sxv .sxv-ic img{background:transparent !important;max-width:100% !important;max-height:100% !important;object-fit:contain !important;border-radius:0 !important}
+
+/* ═══ EVORA ROUND LOADER — one loader everywhere: spinning ring around the EVORA icon (replaces Tigress One logo / skeletons) ═══ */
+@keyframes evSpin{to{transform:rotate(360deg)}}
+.ev-rl,.ev-rl-wrap{--s:64px}
+.ev-rl-wrap{display:flex;align-items:center;justify-content:center;width:100%;padding:36px 0;grid-column:1/-1}
+.ev-rl{position:relative;display:inline-block;width:var(--s);height:var(--s);flex:none}
+.ev-rl::before{content:"";position:absolute;inset:0;border-radius:50%;border:3px solid rgba(255,255,255,.12);border-top-color:#9d6bff;animation:evSpin .85s linear infinite}
+.ev-rl::after{content:"";position:absolute;inset:20%;border-radius:50%;background:url(evora-icon.png) center/contain no-repeat}
+@media (prefers-reduced-motion:reduce){.ev-rl::before{animation-duration:2.4s}}
+
+/* player loading + splash: drop the Tigress One logo, use the round loader */
+html:root:root:root body #stream-player-loading #sp-loading-spinner{
+  position:relative !important;width:84px !important;height:84px !important;aspect-ratio:1 !important;border-radius:50% !important;
+  background:url(evora-icon.png) center/64% no-repeat !important;-webkit-mask:none !important;mask:none !important;
+  animation:none !important;clip-path:none !important;filter:none !important;margin:0 auto !important}
+html:root:root:root body #stream-player-loading #sp-loading-spinner::before{content:"";position:absolute;inset:0;border-radius:50%;border:3px solid rgba(255,255,255,.14);border-top-color:#9d6bff;animation:evSpin .85s linear infinite}
+html:root:root:root body #stream-player-loading{display:flex;align-items:center;justify-content:center}
+
+/* section skeletons -> one round loader (same size layout kept small) */
+.sk{display:none !important}
+:is(div,section,ul):not(.sk-row):has(> .sk),:is(div,section):has(> .sk-row),.mh-slide.mh-sk{position:relative !important;min-height:190px;display:block !important}
+:is(div,section,ul):not(.sk-row):has(> .sk)::before,:is(div,section):has(> .sk-row)::before,.mh-slide.mh-sk::before{content:"";position:absolute;left:50%;top:50%;width:60px;height:60px;margin:-30px 0 0 -30px;border-radius:50%;border:3px solid rgba(255,255,255,.12);border-top-color:#9d6bff;animation:evSpin .85s linear infinite}
+:is(div,section,ul):not(.sk-row):has(> .sk)::after,:is(div,section):has(> .sk-row)::after,.mh-slide.mh-sk::after{content:"";position:absolute;left:50%;top:50%;width:36px;height:36px;margin:-18px 0 0 -18px;border-radius:50%;background:url(evora-icon.png) center/contain no-repeat}
+.sk-row{display:none !important}
+.hsm-loading,.sxs-empty:has(.ev-rl),.epg-no-results:has(.ev-rl){display:flex;justify-content:center;padding:30px 0;border:0;background:none}
+
+/* ═══ server selector: flat cards, no borders (like Claude's file cards) ═══ */
+html:root:root:root body #sxv .sxv-s,
+html:root:root:root body .mws-server-btn{background:#262629 !important;border:0 !important;outline:0 !important;box-shadow:none !important;border-radius:14px !important;color:#F2F4F8 !important}
+html:root:root:root body #sxv .sxv-s:hover,
+html:root:root:root body .mws-server-btn:hover{background:#2f2f33 !important;border:0 !important;transform:none !important;box-shadow:none !important}
+html:root:root:root body #sxv .sxv-s.pri,html:root:root:root body .mws-server-btn-fcx{border:0 !important;box-shadow:none !important}
+html:root:root:root body #sxv .sxv-s.lock,html:root:root:root body .mws-server-btn.mws-server-locked{border:0 !important}
+html:root:root:root body #sxv .sxv-go,html:root:root:root body .mws-play-disc{background:rgba(255,255,255,.1) !important;color:#F2F4F8 !important;-webkit-text-fill-color:#F2F4F8 !important;box-shadow:none !important}
+html:root:root:root body #sxv .sxv-s:hover .sxv-go{background:rgba(255,255,255,.18) !important}
+html:root:root:root body #sxv .sxv-s.lock .sxv-go{background:transparent !important}
+html:root:root:root body #sxv .sxv-n em{border-radius:6px !important;padding:2px 6px !important}
+html:root:root:root body #sxv .sxv-box,html:root:root:root body .mws-panel,html:root:root:root body .watch-modal{border:0 !important;box-shadow:none !important}
+html:root:root:root body #sxv .sxv-list{gap:10px !important}
+
+/* rotating loader messages */
+.ev-msg{font:500 13px/1.4 "Figtree","Google Sans",system-ui,sans-serif;color:rgba(242,244,248,.62);text-align:center;letter-spacing:.01em;transition:opacity .26s ease;pointer-events:none}
+.ev-msg-abs{position:absolute;left:12px;right:12px;top:calc(50% + 44px);z-index:1}
+.ev-rl-wrap,.hsm-loading,.sxs-empty:has(.ev-rl),.epg-no-results:has(.ev-rl){flex-direction:column;gap:14px;align-items:center}
+.ev-rl-wrap .ev-msg,.hsm-loading .ev-msg,.sxs-empty .ev-msg,.epg-no-results .ev-msg{position:static}
+
+/* 18+ erotic movies section */
+.hsm-18gate{margin:26px 16px 10px;padding:22px;border-radius:16px;background:#262629;display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.hsm-18t{font:700 18px/1.2 "Figtree",system-ui,sans-serif;color:#F2F4F8}
+.hsm-18t b{display:inline-block;background:#e5484d;color:#fff;border-radius:6px;padding:2px 7px;margin-right:6px;font-size:14px}
+.hsm-18gate p{margin:0;color:rgba(242,244,248,.6);font-size:13px}
+.hsm-18gate button{margin-top:6px;border:0;border-radius:10px;padding:10px 16px;background:#e5484d;color:#fff;font:700 13px system-ui;cursor:pointer}
