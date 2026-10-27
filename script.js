@@ -12371,3 +12371,27 @@ init();setTimeout(init,600);setTimeout(init,2000);window.addEventListener('load'
   window.openVip=openGold;   /* every old VIP Player button now opens GOLD */
   window.closeVip=closeGold;
 })();
+
+/* ── Visitor counter (footer) ── */
+(function(){
+  var C = window.EV_CONFIG || {};
+  if (!C.COUNTER_URL) return;
+  function run(){
+    var box = document.getElementById('ev-counter'), n = document.getElementById('ev-counter-n');
+    if (!box || !n) return;
+    var key = encodeURIComponent(C.COUNTER_KEY || 'evora'), base = C.COUNTER_URL.replace(/\/$/, '');
+    var flag = 'ev_counted_' + key, counted = false;
+    try { counted = !!sessionStorage.getItem(flag); } catch(e){}
+    /* first page of a session -> /hit (adds 1); later pages -> /get (just reads) */
+    fetch(base + (counted ? '/get' : '/hit') + '?key=' + key, { cache: 'no-store' })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        var v = d && d.total;
+        if (typeof v !== 'number') return;
+        n.textContent = v.toLocaleString(); box.hidden = false;
+        try { sessionStorage.setItem(flag, '1'); } catch(e){}
+      })
+      .catch(function(){ /* non-essential; stay hidden */ });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run); else run();
+})();

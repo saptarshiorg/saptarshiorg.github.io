@@ -20,6 +20,10 @@ window.EV_CONFIG = {
   /* Live TV playlist */
   IPTV_PLAYLIST: 'https://iptv-org.github.io/iptv/index.country.m3u',
 
+  /* Visitor counter (Hit-Get-Counter on Vercel). /hit once per browser session, /get afterwards; shows total visits. */
+  COUNTER_URL: 'https://sayancounter-two.vercel.app/api',   /* base; script uses /hit (adds 1) and /get (read only) */
+  COUNTER_KEY: 'evora',          /* change to use a different counter */
+
   /* Geo check */
   IP_API: 'https://ipwho.is/'
 };

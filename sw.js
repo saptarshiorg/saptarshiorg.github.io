@@ -1,6 +1,6 @@
 /* EVORA service worker — same-origin app files are served from cache instantly,
    then refreshed in the background (stale-while-revalidate). Bump VER to force an update. */
-const VER = 'evora-v3';
+const VER = 'evora-v4';
 const SHELL = ['/', '/movies', '/tv', '/live', '/sports', '/search', '/play', '/player',
   'script.js', 'api.js', 'config.js', 'boot.js', 'pages.js', 'style.css', 'theme-dark.css',
   'evora-mark.png', 'evora-icon.png', 'evora-logo.png'];
